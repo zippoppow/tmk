@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LATIN PROGRESSION MORPH SORT</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #4a4a4a;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-top: 20px;
+        }
+        .morpheme-input {
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        .instructions {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #333;
+        }
+        .box {
+            border: 2px solid #4a4a4a;
+            background-color: white;
+            padding: 10px;
+            flex: 1; /* Flex to take equal space */
+            margin: 0 10px;
+        }
+        .vertical-box {
+            border: 2px solid #4a4a4a;
+            background-color: #e0e0e0;
+            margin: 5px 0;
+            height: 40px; /* Fixed height for vertical boxes */
+        }
+        .flex-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>LATIN PROGRESSION MORPH SORT</h1>
+    </header>
+    <div class="morpheme-input">
+        <label for="morpheme">Morpheme(s):</label>
+        <input type="text" id="morpheme" placeholder="Enter morpheme(s)">
+    </div>
+    <p class="instructions">Find the families: sort the words into two columns based on their related meanings:</p>
+    <div class="container">
+        <div class="box">
+            <h2>Column 1</h2>
+            <div class="flex-container">
+                <div class="vertical-box"></div>
+                <div class="vertical-box"></div>
+                <div class="vertical-box"></div>
+                <div class="vertical-box"></div>
+                <div class="vertical-box"></div>
+                <div class="vertical-box"></div>
+                <div class="vertical-box"></div>
+                <div class="vertical-box"></div>
+            </div>
+        </div>
+        <div class="box">
+            <h2></h2>
+        </div>
+        <div class="box">
+            <h2>Column 2</h2>
+            <div class="flex-container">
+                <div class="vertical-box"></div>
+                <div class="vertical-box"></div>
+                <div class="vertical-box"></div>
+                <div class="vertical-box"></div>
+                <div class="vertical-box"></div>
+                <div class="vertical-box"></div>
+                <div class="vertical-box"></div>
+                <div class="vertical-box"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

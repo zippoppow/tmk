@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latin Progression Worksheet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        h2 {
+            text-align: center;
+            color: #666;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px auto;
+            max-width: 1200px;
+            border: 1px solid #ccc;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .word-bank {
+            flex: 1;
+            margin-right: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #eef;
+        }
+        .paragraph-section {
+            flex: 2;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #fff;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .instructions {
+            margin-bottom: 20px;
+            font-style: italic;
+            color: #555;
+        }
+        .paragraph {
+            border: 1px dashed #ccc;
+            height: 150px;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>LATIN PROGRESSION</h1>
+    <h2>FILL IN THE MORPH -- paragraphs</h2>
+
+    <div class="container">
+        <div class="word-bank">
+            <label for="morphemeInput">Morpheme(s):</label>
+            <input type="text" id="morphemeInput" placeholder="Enter morphemes here...">
+            <div class="instructions">
+                Highlight the [[morpheme]] in the word bank. Read the words and discuss their meanings before filling in the blanks in the paragraphs.
+            </div>
+            <label>Word Bank:</label>
+            <ul>
+                <li>morpheme1</li>
+                <li>morpheme2</li>
+                <li>morpheme3</li>
+                <li>morpheme4</li>
+                <li>morpheme5</li>
+            </ul>
+        </div>
+
+        <div class="paragraph-section">
+            <label>Fill in the paragraphs:</label>
+            <div class="paragraph" contenteditable="true">Paragraph here ___________.</div>
+            <div class="paragraph" contenteditable="true">Paragraph here ___________.</div>
+            <div class="paragraph" contenteditable="true">Paragraph here ___________.</div>
+        </div>
+    </div>
+
+</body>
+</html>

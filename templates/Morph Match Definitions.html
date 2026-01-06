@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latin Progression Morph Match Definitions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        .morpheme-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+        }
+        .instructions {
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.1em;
+            color: #555;
+        }
+        .columns {
+            display: flex;
+            justify-content: space-between;
+        }
+        .column {
+            flex: 1;
+            margin: 0 10px;
+        }
+        .column h3 {
+            text-align: center;
+            color: #007bff;
+        }
+        .input-box {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+        }
+        .definition-box {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            background-color: #f0f8ff;
+        }
+        @media (max-width: 600px) {
+            .columns {
+                flex-direction: column;
+            }
+            .column {
+                margin: 0 0 20px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>LATIN PROGRESSION</h1>
+    <h2>MORPH MATCH -- definitions</h2>
+    <input type="text" class="morpheme-input" placeholder="Enter Morpheme(s):" />
+    
+    <div class="instructions">
+        <p>Based on your knowledge of the morpheme, match the words on the left to the definitions on the right.</p>
+    </div>
+
+    <div class="columns">
+        <div class="column">
+            <h3>Morphology words</h3>
+            <input type="text" class="input-box" placeholder="1." />
+            <input type="text" class="input-box" placeholder="2." />
+            <input type="text" class="input-box" placeholder="3." />
+            <input type="text" class="input-box" placeholder="4." />
+            <input type="text" class="input-box" placeholder="5." />
+            <input type="text" class="input-box" placeholder="6." />
+            <input type="text" class="input-box" placeholder="7." />
+            <input type="text" class="input-box" placeholder="8." />
+            <input type="text" class="input-box" placeholder="9." />
+            <input type="text" class="input-box" placeholder="10." />
+            <input type="text" class="input-box" placeholder="11." />
+            <input type="text" class="input-box" placeholder="12." />
+        </div>
+        <div class="column">
+            <h3>Definitions</h3>
+            <input type="text" class="definition-box" placeholder="1." />
+            <input type="text" class="definition-box" placeholder="2." />
+            <input type="text" class="definition-box" placeholder="3." />
+            <input type="text" class="definition-box" placeholder="4." />
+            <input type="text" class="definition-box" placeholder="5." />
+            <input type="text" class="definition-box" placeholder="6." />
+            <input type="text" class="definition-box" placeholder="7." />
+            <input type="text" class="definition-box" placeholder="8." />
+            <input type="text" class="definition-box" placeholder="9." />
+            <input type="text" class="definition-box" placeholder="10." />
+            <input type="text" class="definition-box" placeholder="11." />
+            <input type="text" class="definition-box" placeholder="12." />
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

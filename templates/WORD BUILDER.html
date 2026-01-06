@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LATIN PROGRESSION WORD BUILDER</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f7f7f7;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .column {
+            flex: 1;
+            margin: 0 10px;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .prefixes {
+            background-color: #cce5ff; /* Light blue */
+        }
+
+        .base-element {
+            background-color: #ffecb5; /* Light yellow/gold */
+        }
+
+        .suffixes {
+            background-color: #d4edda; /* Light green */
+        }
+
+        .instruction {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .input-box {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>LATIN PROGRESSION WORD BUILDER</h1>
+    <div class="instruction">
+        <label for="morpheme-input">Morpheme(s):</label>
+        <input type="text" id="morpheme-input" class="input-box" placeholder="Enter morphemes here..." />
+    </div>
+    <p class="instruction">Build as many words as you can from the following morphemes.</p>
+    <div class="container">
+        <div class="column prefixes">
+            <h2>PREFIXES</h2>
+            <input type="text" class="input-box" placeholder="Prefix 1" />
+            <input type="text" class="input-box" placeholder="Prefix 2" />
+            <input type="text" class="input-box" placeholder="Prefix 3" />
+            <input type="text" class="input-box" placeholder="Prefix 4" />
+            <input type="text" class="input-box" placeholder="Prefix 5" />
+        </div>
+        <div class="column base-element">
+            <h2>BASE ELEMENT</h2>
+            <input type="text" class="input-box" placeholder="Base Element" />
+        </div>
+        <div class="column suffixes">
+            <h2>SUFFIXES</h2>
+            <input type="text" class="input-box" placeholder="Suffix 1" />
+            <input type="text" class="input-box" placeholder="Suffix 2" />
+            <input type="text" class="input-box" placeholder="Suffix 3" />
+            <input type="text" class="input-box" placeholder="Suffix 4" />
+            <input type="text" class="input-box" placeholder="Suffix 5" />
+        </div>
+    </div>
+    <footer>
+        © Sound Literacy Solutions, LLC, 2024 <br>
+        www.soundliteracysolutions.com
+    </footer>
+</body>
+
+</html>

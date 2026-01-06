@@ -1,0 +1,31 @@
+{
+    "Morpheme": "-AN",
+    "LessonType": "FILL IN THE MORPH",
+    "LessonName": "Fill in the Morph with -AN Words",
+    "LessonTitle": "Fill in the Morph - Sentences",
+    "Instructions": "Highlight the suffix in the word bank. Read the words and discuss their meanings before filling in the blanks in the sentences.",
+    "WordBank": [
+        "metropolitan",
+        "artisan",
+        "librarian",
+        "custodian",
+        "electrician",
+        "dietitian",
+        "comedian",
+        "technician",
+        "historian",
+        "pediatrician"
+    ],
+    "Sentences": [
+        "The _____________ recommended an exciting novel about a young magician's adventures.",
+        "My cousin is training to become a skilled _____________ after high school.",
+        "When no one is laughing at your jokes, it's difficult to be a _____________.",
+        "The _____________ gave a fascinating lecture on ancient Roman civilization.",
+        "When Tor caught the flu, the _____________ prescribed lots of rest and Vitamin C.",
+        "The _____________ crafted beautiful ceramic vases with intricate designs.",
+        "The _____________ troubleshot the computer issue and restored functionality.",
+        "The _____________ ensured the school cafeteria was spotlessly clean.",
+        "The _____________ advised us to incorporate more vegetables into our daily meals.",
+        "The _____________ museum housed an impressive collection of Renaissance art."
+    ]
+}

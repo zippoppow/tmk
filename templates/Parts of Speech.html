@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latin Progression: Parts of Speech</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .morpheme-input {
+            margin: 20px 0;
+        }
+        .instructions {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        .column {
+            display: inline-block;
+            width: 23%;
+            vertical-align: top;
+            margin-right: 2%;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background-color: #fff;
+        }
+        .adjective {
+            background-color: #ffcfcb; /* Red/Orange */
+        }
+        .noun {
+            background-color: #cce5ff; /* Blue */
+        }
+        .verb {
+            background-color: #d4edda; /* Green */
+        }
+        .adverb {
+            background-color: #fff3cd; /* Orange */
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .word-space {
+            border: 1px dashed #ccc;
+            min-height: 50px;
+            margin-top: 10px;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>LATIN PROGRESSION: PARTS OF SPEECH</h1>
+</header>
+
+<div class="morpheme-input">
+    <label for="morpheme">Morpheme(s):</label>
+    <input type="text" id="morpheme" placeholder="Enter morpheme here...">
+</div>
+
+<div class="instructions">
+    Sort words into their correct part of speech category. (hint: some could be more than one part of speech depending on the sentence)
+</div>
+
+<div class="column adjective">
+    <h3>Adjective</h3>
+    <div class="word-space" id="adjective-space"></div>
+</div>
+
+<div class="column noun">
+    <h3>Noun</h3>
+    <div class="word-space" id="noun-space"></div>
+</div>
+
+<div class="column verb">
+    <h3>Verb</h3>
+    <div class="word-space" id="verb-space"></div>
+</div>
+
+<div class="column adverb">
+    <h3>Adverb</h3>
+    <div class="word-space" id="adverb-space"></div>
+</div>
+
+<footer>
+    © Sound Literacy Solutions, LLC, 2024 | www.soundliteracysolutions.com
+</footer>
+
+</body>
+</html>

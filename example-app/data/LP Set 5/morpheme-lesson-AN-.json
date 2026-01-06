@@ -1,0 +1,399 @@
+{
+    "Product": "Latin Progression",
+    "Set": 5,
+    "MorphemeLessons": [
+        {
+            "Morpheme": "-AN",
+            "LessonSections": [
+                {
+                    "Section": "Core Lesson",
+                    "lessons": [
+                        {
+                            "LessonType": "REVIEW",
+                            "LessonName": "Previous Morphemes",
+                            "LessonTitle": "Previous Morphemes",
+                            "ReviewMorphemes": [
+                                "sus-",
+                                "seg-",
+                                "script",
+                                "scribe",
+                                "facte-",
+                                "sum-",
+                                "fict",
+                                "dis-",
+                                "tract",
+                                "spect",
+                                "-(c)ial",
+                                "-ic",
+                                "pre-",
+                                "inter-",
+                                "du-",
+                                "ced",
+                                "duct",
+                                "-ous",
+                                "-(t)ious",
+                                "-(c)ious",
+                                "-ious",
+                                "-(g)ious",
+                                "capt",
+                                "cept",
+                                "ceit",
+                                "ceive",
+                                "plex",
+                                "ply",
+                                "pose",
+                                "pone-",
+                                "-ify"
+                            ],
+                            "Instructions": "Review and discuss the previous morphemes."
+                        },
+                        {
+                            "LessonType": "SPELLING REVIEW/SAY AND SPELL",
+                            "LessonName": "Spelling Review",
+                            "LessonTitle": "Spelling Review",
+                            "Instructions": "Say and spell the following words."
+                        },
+                        {
+                            "LessonType": "WORD MEANING",
+                            "LessonName": "Word Meaning",
+                            "LessonTitle": "Words with -AN Suffix",
+                            "Morpheme": "-an",
+                            "WordsList": [
+                                {
+                                    "word": "Egyptian",
+                                    "meaning": "belonging to"
+                                },
+                                {
+                                    "word": "Asian",
+                                    "meaning": "belonging to"
+                                },
+                                {
+                                    "word": "Italian",
+                                    "meaning": "belonging to"
+                                },
+                                {
+                                    "word": "American",
+                                    "meaning": "belonging to"
+                                },
+                                {
+                                    "word": "Parisian",
+                                    "meaning": "belonging to"
+                                },
+                                {
+                                    "word": "Indian",
+                                    "meaning": "belonging to"
+                                },
+                                {
+                                    "word": "Roman",
+                                    "meaning": "belonging to"
+                                },
+                                {
+                                    "word": "clinician",
+                                    "meaning": "having to do with"
+                                },
+                                {
+                                    "word": "dietitian",
+                                    "meaning": "having to do with"
+                                },
+                                {
+                                    "word": "guardian",
+                                    "meaning": "having to do with"
+                                },
+                                {
+                                    "word": "comedian",
+                                    "meaning": "having to do with"
+                                },
+                                {
+                                    "word": "musician",
+                                    "meaning": "having to do with"
+                                },
+                                {
+                                    "word": "artisan",
+                                    "meaning": "having to do with"
+                                },
+                                {
+                                    "word": "historian",
+                                    "meaning": "having to do with"
+                                },
+                                {
+                                    "word": "politician",
+                                    "meaning": "having to do with"
+                                }
+                            ],
+                            "Instructions": "Discuss meanings of the listed words."
+                        },
+                        {
+                            "LessonType": "HOW DO YOU SAY?",
+                            "LessonName": "Pronunciation Variations",
+                            "LessonTitle": "Pronunciation of -AN",
+                            "Instructions": "Explore the pronunciation variations of -an in different words.",
+                            "PronunciationExamples": [
+                                {
+                                    "word": "comedian",
+                                    "pronunciation": "/ee-uhn/"
+                                },
+                                {
+                                    "word": "Italian",
+                                    "pronunciation": "/ee-uhn/"
+                                },
+                                {
+                                    "word": "Australian",
+                                    "pronunciation": "/ee-uhn/"
+                                },
+                                {
+                                    "word": "civilian",
+                                    "pronunciation": "/ee-uhn/"
+                                },
+                                {
+                                    "word": "valedictorian",
+                                    "pronunciation": "/ee-uhn/"
+                                },
+                                {
+                                    "word": "dietitian",
+                                    "pronunciation": "/shun/"
+                                },
+                                {
+                                    "word": "Croatian",
+                                    "pronunciation": "/shun/"
+                                },
+                                {
+                                    "word": "Egyptian",
+                                    "pronunciation": "/shun/"
+                                },
+                                {
+                                    "word": "Venetian",
+                                    "pronunciation": "/shun/"
+                                },
+                                {
+                                    "word": "Haitian",
+                                    "pronunciation": "/shun/"
+                                },
+                                {
+                                    "word": "musician",
+                                    "pronunciation": "/shun/"
+                                },
+                                {
+                                    "word": "technician",
+                                    "pronunciation": "/shun/"
+                                },
+                                {
+                                    "word": "electrician",
+                                    "pronunciation": "/shun/"
+                                },
+                                {
+                                    "word": "magician",
+                                    "pronunciation": "/shun/"
+                                },
+                                {
+                                    "word": "physician",
+                                    "pronunciation": "/shun/"
+                                },
+                                {
+                                    "word": "Persian",
+                                    "pronunciation": "/zhun/"
+                                },
+                                {
+                                    "word": "Asian",
+                                    "pronunciation": "/zhun/"
+                                },
+                                {
+                                    "word": "Parisian",
+                                    "pronunciation": "/zhun/"
+                                },
+                                {
+                                    "word": "artesian",
+                                    "pronunciation": "/zhun/"
+                                }
+                            ]
+                        },
+                        {
+                            "LessonType": "CONSTRUCTOR",
+                            "LessonName": "Adding -AN",
+                            "LessonTitle": "Constructor Activity",
+                            "Instructions": "Add the suffix -an to the following base words. Remember, sometimes an 'i' is added or a 'y' changes to 'i'.",
+                            "BaseWords": [
+                                "electric + an",
+                                "Asia + an",
+                                "Haiti + an",
+                                "civil + an",
+                                "comedy + an",
+                                "Mars + an"
+                            ]
+                        },
+                        {
+                            "LessonType": "MORPH, MORPH? Match",
+                            "LessonName": "Matching Base Words",
+                            "LessonTitle": "Match Base Words to -AN Derivatives",
+                            "Instructions": "Match the base word to its related word ending in the -an suffix.",
+                            "Pairs": [
+                                {
+                                    "base": "magic",
+                                    "derivative": "magician"
+                                },
+                                {
+                                    "base": "Venice",
+                                    "derivative": "Venetian"
+                                },
+                                {
+                                    "base": "guard",
+                                    "derivative": "guardian"
+                                },
+                                {
+                                    "base": "beauty",
+                                    "derivative": "beautician"
+                                },
+                                {
+                                    "base": "Mars",
+                                    "derivative": "Martian"
+                                },
+                                {
+                                    "base": "math",
+                                    "derivative": "mathematician"
+                                },
+                                {
+                                    "base": "diet",
+                                    "derivative": "dietitian"
+                                },
+                                {
+                                    "base": "civil",
+                                    "derivative": "civilian"
+                                },
+                                {
+                                    "base": "electric",
+                                    "derivative": "electrician"
+                                },
+                                {
+                                    "base": "comedy",
+                                    "derivative": "comedian"
+                                },
+                                {
+                                    "base": "Asia",
+                                    "derivative": "Asian"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Section": "Activities",
+                    "lessons": [
+                        {
+                            "LessonType": "FILL IN THE MORPH",
+                            "LessonName": "Fill in the Morph with -AN Words",
+                            "LessonTitle": "Fill in the Morph - Sentences",
+                            "Instructions": "Highlight the suffix in the word bank. Read the words and discuss their meanings before filling in the blanks in the sentences.",
+                            "WordBank": [
+                                "metropolitan",
+                                "artisan",
+                                "librarian",
+                                "custodian",
+                                "electrician",
+                                "dietitian",
+                                "comedian",
+                                "technician",
+                                "historian",
+                                "pediatrician"
+                            ],
+                            "Sentences": [
+                                "The _____________ recommended an exciting novel about a young magician's adventures.",
+                                "My cousin is training to become a skilled _____________ after high school.",
+                                "When no one is laughing at your jokes, it’s difficult to be a _____________.",
+                                "The _____________ gave a fascinating lecture on ancient Roman civilization.",
+                                "When Tor caught the flu, the _____________ prescribed lots of rest and Vitamin C.",
+                                "The _____________ crafted beautiful ceramic vases with intricate designs.",
+                                "The _____________ troubleshot the computer issue and restored functionality.",
+                                "The _____________ ensured the school cafeteria was spotlessly clean.",
+                                "The _____________ advised us to incorporate more vegetables into our daily meals.",
+                                "The _____________ museum housed an impressive collection of Renaissance art."
+                            ]
+                        },
+                        {
+                            "LessonType": "FILL IN THE MORPH",
+                            "LessonName": "Fill in the Morph with -AN Words",
+                            "LessonTitle": "Fill in the Morph - Sentences",
+                            "Instructions": "Read the sentences and complete the words.",
+                            "Sentences": [
+                                "The politic_____ recommended a new bill to congress.",
+                                "Yesterday, I danced in the kitchen. My mom said I caused a commot_____ .",
+                                "The construct_____ of the new bridge will begin next month.",
+                                "The pollut_____ in the city has become a serious concern.",
+                                "The histor_____ gave a detailed account of the ancient civilization.",
+                                "The guard_____ stood watch over the sacred grounds.",
+                                "The invent_____ of the telephone revolutionized communication.",
+                                "The creat_____ of the art piece took several weeks.",
+                                "The villagers joined the rebell_____ to fight for their freedom and rights.",
+                                "The librar_____ helped the students find the right books."
+                            ]
+                        },
+                        {
+                            "LessonType": "CONSTRUCTOR",
+                            "LessonName": "Adding -AN to Words",
+                            "LessonTitle": "Constructor Activity",
+                            "Instructions": "Add the suffix -an to the following words. Remember that sometimes an 'i' is added, a 'y' changes to 'i', or a final e drops.",
+                            "BaseWords": [
+                                "clinic + an",
+                                "republic + an",
+                                "library + an",
+                                "civil + an",
+                                "technic + an",
+                                "guard + an",
+                                "politic + an",
+                                "veterinary + an",
+                                "physic + an",
+                                "Rome + an"
+                            ]
+                        },
+                        {
+                            "LessonType": "MORPH MATCH",
+                            "LessonName": "Match Morphology Words",
+                            "LessonTitle": "Match Words to Definitions",
+                            "Instructions": "Based on your knowledge of the morpheme, match the words on the left to the definitions on the right.",
+                            "Pairs": [
+                                {
+                                    "word": "human",
+                                    "definition": "Relating to the characteristic of people or humanity."
+                                },
+                                {
+                                    "word": "artisan",
+                                    "definition": "A skilled craftsperson who makes items by hand, often with artistic quality."
+                                },
+                                {
+                                    "word": "suburban",
+                                    "definition": "Pertaining to a city or town."
+                                },
+                                {
+                                    "word": "vegetarian",
+                                    "definition": "Someone who does not eat meat."
+                                },
+                                {
+                                    "word": "urban",
+                                    "definition": "Relating to India or its people."
+                                },
+                                {
+                                    "word": "civilian",
+                                    "definition": "A person who is not a member of the military, police, or other armed forces."
+                                },
+                                {
+                                    "word": "Indian",
+                                    "definition": "Relating to India or its people."
+                                },
+                                {
+                                    "word": "historian",
+                                    "definition": "A person who studies or writes about history."
+                                },
+                                {
+                                    "word": "pedestrian",
+                                    "definition": "A person walking along a road."
+                                },
+                                {
+                                    "word": "median",
+                                    "definition": "The middle value in a set of data."
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

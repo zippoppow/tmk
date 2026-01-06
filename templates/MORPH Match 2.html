@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LATIN PROGRESSION MORPH MATCH</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .morpheme-input {
+            margin: 10px 0;
+            padding: 8px;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            width: 300px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .grid-box {
+            height: 60px;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .instruction {
+            margin: 20px 0;
+            text-align: center;
+            font-style: italic;
+        }
+        .large-box {
+            height: 100px;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            background-color: white;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>LATIN PROGRESSION MORPH MATCH</h1>
+        <input type="text" class="morpheme-input" placeholder="Enter Morpheme(s):">
+    </header>
+    <div class="grid">
+        <div class="grid-box"></div>
+        <div class="grid-box"></div>
+        <div class="grid-box"></div>
+        <div class="grid-box"></div>
+        <div class="grid-box"></div>
+        <div class="grid-box"></div>
+        <div class="grid-box"></div>
+        <div class="grid-box"></div>
+        <div class="grid-box"></div>
+        <div class="grid-box"></div>
+        <div class="grid-box"></div>
+        <div class="grid-box"></div>
+    </div>
+    <div class="instruction">Makes a word when you add [[morph]]</div>
+    <div class="large-box"></div>
+    <div class="large-box"></div>
+</body>
+</html>

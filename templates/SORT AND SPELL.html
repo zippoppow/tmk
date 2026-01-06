@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LATIN PROGRESSION - SORT AND SPELL</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        h2 {
+            text-align: center;
+            color: #666;
+        }
+        .instructions {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #555;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .cat-column {
+            text-align: center;
+            font-size: 1.2em;
+            padding: 10px;
+        }
+        .yes-cat {
+            color: #ff4081; /* Pink/Purple color for Yes */
+        }
+        .no-cat {
+            color: #3f51b5; /* Blue color for No */
+        }
+        .yes-no {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 600px) {
+            .yes-no {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LATIN PROGRESSION</h1>
+        <h2>SORT AND SPELL (Suffix review)</h2>
+        <div class="instructions">
+            Based on the spelling question, mark the appropriate Yes Cat or No Cat column. If Yes Cat, then, please spell the word.
+        </div>
+        <div class="yes-no">
+            <div class="cat-column yes-cat">
+                <img src="path_to_yes_cat_image.png" alt="Yes Cat" width="100">
+                <p>Yes Cat</p>
+            </div>
+            <div class="cat-column no-cat">
+                <img src="path_to_no_cat_image.png" alt="No Cat" width="100">
+                <p>No Cat</p>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Word</th>
+                    <th>Answer</th>
+                    <th>Mark</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="text" placeholder="Enter word here"></td>
+                    <td><input type="text" placeholder="Enter answer here"></td>
+                    <td>
+                        <select>
+                            <option value="">Select</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td><input type="text" placeholder="Enter word here"></td>
+                    <td><input type="text" placeholder="Enter answer here"></td>
+                    <td>
+                        <select>
+                            <option value="">Select</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td><input type="text" placeholder="Enter word here"></td>
+                    <td><input type="text" placeholder="Enter answer here"></td>
+                    <td>
+                        <select>
+                            <option value="">Select</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

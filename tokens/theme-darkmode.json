@@ -1,0 +1,182 @@
+{
+  "color-darkMode": {
+    "Interactive": {
+      "Primary": {
+        "Active": {
+          "value": "{Vivid.Purple.200}",
+          "type": "color",
+          "description": "The highest level of visual hierarchy, used very sparingly for CTAs and primary buttons."
+        },
+        "Hover": {
+          "value": "{Vivid.Purple.300}",
+          "type": "color",
+          "description": "The highest level of visual hierarchy, used very sparingly for CTAs and primary buttons."
+        },
+        "Default": {
+          "value": "{Vivid.Purple.400}",
+          "type": "color",
+          "description": "The highest level of visual hierarchy, used very sparingly for CTAs and primary buttons."
+        },
+        "Disabled": {
+          "value": "{Vivid.Purple.800}",
+          "type": "color",
+          "description": "The highest level of visual hierarchy, used very sparingly for CTAs and primary buttons."
+        },
+        "Subtle": {
+          "value": "{Vivid.Purple.800}",
+          "type": "color",
+          "description": "The highest level of visual hierarchy, used very sparingly for CTAs and primary buttons."
+        },
+        "Offset": {
+          "value": "{Vivid.Purple.900}",
+          "type": "color",
+          "description": "The highest level of visual hierarchy, used very sparingly for CTAs and primary buttons."
+        }
+      },
+      "Secondary": {
+        "Active": {
+          "value": "{Neutral.White}",
+          "type": "color",
+          "description": "Used for interactive elements of the lowest-level of hierarchy. Examples include tabs and inactive inputs."
+        },
+        "Hover": {
+          "value": "{Neutral.Slate.300}",
+          "type": "color",
+          "description": "Used for interactive elements of the lowest-level of hierarchy. Examples include tabs and inactive inputs."
+        },
+        "Default": {
+          "value": "{Neutral.Slate.400}",
+          "type": "color",
+          "description": "Used for interactive elements of the lowest-level of hierarchy. Examples include tabs and inactive inputs."
+        },
+        "Inactive": {
+          "value": "{Neutral.Slate.600}",
+          "type": "color",
+          "description": "Used for interactive elements of the lowest-level of hierarchy. Examples include tabs and inactive inputs."
+        },
+        "Disabled": {
+          "value": "{Neutral.Slate.700}",
+          "type": "color",
+          "description": "Used for interactive elements of the lowest-level of hierarchy. Examples include tabs and inactive inputs."
+        },
+        "Subtle": {
+          "value": "{Neutral.Slate.800}",
+          "type": "color",
+          "description": "Used for interactive elements of the lowest-level of hierarchy. Examples include tabs and inactive inputs."
+        },
+        "Offset": {
+          "value": "{Neutral.Slate.900}",
+          "type": "color",
+          "description": "Used for interactive elements of the lowest-level of hierarchy. Examples include tabs and inactive inputs."
+        }
+      }
+    },
+    "Static": {
+      "Primary": {
+        "value": "{Neutral.White}",
+        "type": "color",
+        "description": "Used as the main colors for neutral elements such as text headers, body copy, icons, etc. that don’t have any interactivity or have states for the user to engage with."
+      },
+      "Secondary": {
+        "value": "{Neutral.Slate.200}",
+        "type": "color",
+        "description": "Used as the main colors for neutral elements such as text headers, body copy, icons, etc. that don’t have any interactivity or have states for the user to engage with."
+      },
+      "Tertiary": {
+        "value": "{Neutral.Slate.300}",
+        "type": "color",
+        "description": "Used as the main colors for neutral elements such as text headers, body copy, icons, etc. that don’t have any interactivity or have states for the user to engage with."
+      },
+      "Icon": {
+        "value": "{Neutral.Slate.600}",
+        "type": "color",
+        "description": "Used as the main colors for neutral elements such as text headers, body copy, icons, etc. that don’t have any interactivity or have states for the user to engage with."
+      },
+      "Subtle": {
+        "value": "{Neutral.Slate.700}",
+        "type": "color",
+        "description": "Used as the main colors for neutral elements such as text headers, body copy, icons, etc. that don’t have any interactivity or have states for the user to engage with."
+      },
+      "Offset": {
+        "value": "{Neutral.Slate.900}",
+        "type": "color",
+        "description": "Used as the main colors for neutral elements such as text headers, body copy, icons, etc. that don’t have any interactivity or have states for the user to engage with."
+      },
+      "Background": {
+        "value": "{Neutral.Black}",
+        "type": "color",
+        "description": "Used as the main colors for neutral elements such as text headers, body copy, icons, etc. that don’t have any interactivity or have states for the user to engage with."
+      }
+    },
+    "Status": {
+      "Informative": {
+        "Text": {
+          "value": "{Vivid.Cobalt.200}",
+          "type": "color",
+          "description": "Used for the display of neutral or helpful information to users. Gently reminds or hints to users a status or update on the product."
+        },
+        "Accent": {
+          "value": "{Vivid.Cobalt.500}",
+          "type": "color",
+          "description": "Used for the display of neutral or helpful information to users. Gently reminds or hints to users a status or update on the product."
+        },
+        "Background": {
+          "value": "{Vivid.Cobalt.900}",
+          "type": "color",
+          "description": "Used for the display of neutral or helpful information to users. Gently reminds or hints to users a status or update on the product."
+        }
+      },
+      "Success": {
+        "Text": {
+          "value": "{Vivid.Cucumber.200}",
+          "type": "color",
+          "description": "Confirms to the user that a process or status is confirmed or a successful transaction has taken place. Also used to represent positive change in data visualization."
+        },
+        "Accent": {
+          "value": "{Vivid.Cucumber.500}",
+          "type": "color",
+          "description": "Confirms to the user that a process or status is confirmed or a successful transaction has taken place. Also used to represent positive change in data visualization."
+        },
+        "Background": {
+          "value": "{Vivid.Cucumber.900}",
+          "type": "color",
+          "description": "Confirms to the user that a process or status is confirmed or a successful transaction has taken place. Also used to represent positive change in data visualization."
+        }
+      },
+      "Warning": {
+        "Text": {
+          "value": "{Vivid.Honey.200}",
+          "type": "color",
+          "description": "Cautions the user about the potential for problems or warning users ahead of time that there may be an issue moving forward."
+        },
+        "Accent": {
+          "value": "{Vivid.Honey.500}",
+          "type": "color",
+          "description": "Cautions the user about the potential for problems or warning users ahead of time that there may be an issue moving forward."
+        },
+        "Background": {
+          "value": "{Vivid.Honey.900}",
+          "type": "color",
+          "description": "Cautions the user about the potential for problems or warning users ahead of time that there may be an issue moving forward."
+        }
+      },
+      "Error": {
+        "Text": {
+          "value": "{Vivid.Ruby.200}",
+          "type": "color",
+          "description": "Alerts the user that an error has taken place or something went wrong with a process they submitted. Also used to represent a negative change in data visualization."
+        },
+        "Accent": {
+          "value": "{Vivid.Ruby.500}",
+          "type": "color",
+          "description": "Alerts the user that an error has taken place or something went wrong with a process they submitted. Also used to represent a negative change in data visualization."
+        },
+        "Background": {
+          "value": "{Vivid.Ruby.900}",
+          "type": "color",
+          "description": "Alerts the user that an error has taken place or something went wrong with a process they submitted. Also used to represent a negative change in data visualization."
+        }
+      }
+    }
+  }
+}

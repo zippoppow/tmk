@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LATIN PROGRESSION - MORPH, MORPH? Match</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .morpheme-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .dog-bones {
+            display: flex;
+            justify-content: space-evenly;
+            margin-bottom: 20px;
+        }
+        .bone {
+            width: 100px;
+            height: 50px;
+            background-color: #f9c74f;
+            border-radius: 10px;
+            position: relative;
+        }
+        .bone:before, .bone:after {
+            content: '';
+            width: 30px;
+            height: 30px;
+            background-color: #f9c74f;
+            border-radius: 50%;
+            position: absolute;
+        }
+        .bone:before {
+            left: -15px;
+            top: 10px;
+        }
+        .bone:after {
+            right: -15px;
+            top: 10px;
+        }
+        .dog-silhouette {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        .dog {
+            width: 150px;
+            height: 150px;
+            background-color: #a6dcef;
+            border-radius: 20px;
+            position: relative;
+        }
+        .overlaid-rectangle {
+            position: absolute;
+            width: 100px;
+            height: 25px;
+            background-color: rgba(255, 255, 255, 0.8);
+            left: 10%;
+            top: 10%;
+            border-radius: 5px;
+        }
+        .instructions {
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .copyright {
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            margin-top: 30px;
+        }
+        .dog-bowl {
+            background-color: #f94144;
+            width: 80px;
+            height: 40px;
+            border-radius: 20px;
+            margin: 0 auto;
+            position: relative;
+            top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LATIN PROGRESSION</h1>
+        <h2>MORPH, MORPH? Match</h2>
+        <input type="text" class="morpheme-input" placeholder="Enter Morpheme(s)" />
+        
+        <div class="dog-bones">
+            <div class="bone"></div>
+            <div class="bone"></div>
+            <div class="bone"></div>
+        </div>
+        
+        <div class="dog-silhouette">
+            <div class="dog">
+                <div class="overlaid-rectangle"></div>
+            </div>
+            <div class="dog">
+                <div class="overlaid-rectangle"></div>
+            </div>
+        </div>
+        
+        <div class="dog-bowl"></div>
+
+        <p class="instructions">Draw a line from each sentence (bone) to its correct prefix meaning.</p>
+        
+        <div class="copyright">
+            ©Sound Literacy Solutions, LLC, 2024
+        </div>
+    </div>
+</body>
+</html>

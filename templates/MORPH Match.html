@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LATIN PROGRESSION MORPH MATCH</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        .morpheme-input {
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .column {
+            width: 45%;
+        }
+        .box {
+            border: 1px solid #007BFF;
+            border-radius: 4px;
+            padding: 10px;
+            height: 40px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>LATIN PROGRESSION MORPH MATCH</h1>
+</header>
+
+<section class="morpheme-input">
+    <label for="morpheme">Morpheme(s):</label>
+    <input type="text" id="morpheme" name="morpheme" placeholder="Enter morpheme(s)" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+</section>
+
+<div class="container">
+    <div class="column">
+        <label for="focus-word">Focus word</label>
+        <div id="focus-word">
+            <div class="box"></div>
+            <div class="box"></div>
+            <div class="box"></div>
+            <div class="box"></div>
+            <div class="box"></div>
+            <div class="box"></div>
+            <div class="box"></div>
+        </div>
+    </div>
+    <div class="column">
+        <label for="related-word">Related word</label>
+        <div id="related-word">
+            <div class="box"></div>
+            <div class="box"></div>
+            <div class="box"></div>
+            <div class="box"></div>
+            <div class="box"></div>
+            <div class="box"></div>
+            <div class="box"></div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    © Sound Literacy Solutions, LLC, 2024. All rights reserved.
+</footer>
+
+</body>
+</html>

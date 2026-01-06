@@ -1,0 +1,135 @@
+{
+  "Product": "Latin Progression",
+  "Set": 6,
+  "MorphemeLessons": 
+  [  {  
+    "Morpheme": "RE-",
+    "LessonSections": [
+      {
+        "Section": "Core Lesson",
+        "lessons": [
+          {
+            "LessonType": "REVIEW",
+            "LessonName": "REVIEW",
+            "LessonTitle": "Text",
+            "ReviewMorphemes": [],
+            "Instructions": "Text",
+            "ReferenceDocs": []
+          },
+          {
+            "LessonType": "SPELLING REVIEW/SAY AND SPELL",
+            "LessonName": "SPELLING REVIEW/SAY AND SPELL",
+            "LessonTitle": "Text",
+            "Instructions": "Text",
+            "ReferenceDocs": []
+          },
+          {
+            "LessonType": "PRIMER 1",
+            "LessonName": "PRIMER 1",
+            "LessonTitle": "Text",
+            "SayItText": "Text",
+            "SayItIcon": "Image",
+            "SpellItText": "Text",
+            "SpellitIcon": "Image",
+            "Prompt": "Text",
+            "Instructions": "Text",
+            "ReferenceDocs": []
+          },
+          {
+            "LessonType": "PRIMER 2",
+            "LessonName": "PRIMER 2",
+            "Morpheme": "Text",
+            "LessonTitle": "Text",
+            "LessonDescription": "Text",
+            "NumberOfTextboxes": "Integer",
+            "Prompt": "Text",
+            "Instructions": "Text",
+            "ReferenceDocs": []
+          },
+          {
+            "LessonType": "PRIMER -- Chameleon Prefixes",
+            "LessonName": "PRIMER -- Chameleon Prefixes",
+            "Morpheme": "Text",
+            "LessonTitle": "Text",
+            "LessonDescription": "Text",
+            "MorphemeList": [],
+            "WordsList": [],
+            "Instructions": "Text",
+            "ReferenceDocs": []
+          },
+          {
+            "LessonType": "CONSTRUCTOR/DECONSTRUCTOR",
+            "LessonName": "CONSTRUCTOR/DECONSTRUCTOR",
+            "Morpheme": "Text",
+            "LessonTitle": "Text",
+            "LessonDescription": "Text",
+            "ReferenceDocs": [],
+            "ConstructorInstructions": "Text",
+            "ConstructorWordsList": [],
+            "DeconstructorInstructions": "Text",
+            "DeconstructorWordsList": []
+          },
+          {
+            "LessonType": "WORD BULDER",
+            "LessonName": "WORD BULDER",
+            "Morpheme": "Text",
+            "LessonTitle": "Text",
+            "LessonDescription": "Text",
+            "Instructions": "Text",
+            "ReferenceDocs": [],
+            "Prefixes": [],
+            "BaseElement": "Text",
+            "Suffixes": []
+          }
+   
+      ]
+      },{
+         "Section": "Activities",
+        "lessons": [
+          {
+            "LessonType": "HOW DO YOU SAY?",
+            "LessonName": "Text",
+            "Morpheme": "Text",
+            "LessonTitle": "Text",
+            "LessonDescription": "Text",
+            "Instructions": "Text",
+            "ReferenceDocs": [],
+            "Notes": "Text",
+            "MorphemeWords": []
+          },
+          {
+            "LessonType": "CONSTRUCTOR",
+            "LessonName": "Text",
+            "Morpheme": "Text",
+            "LessonTitle": "Text",
+            "LessonDescription": "Text",
+            "Instructions": "Text",
+            "ReferenceDocs": [],
+            "ConstructorWordsList": []
+          },
+          {
+            "LessonType": "SUFFIX COMPLETER",
+            "LessonName": "Text",
+            "Morpheme": "Text",
+            "LessonTitle": "Text",
+            "LessonDescription": "Text",
+            "Instructions": "Text",
+            "ReferenceDocs": [],
+            "MorphemeWords": []
+          },
+          {
+            "LessonType": "SUFFIX TRANSFORMER",
+            "LessonName": "Text",
+            "Morpheme": "Text",
+            "LessonTitle": "Text",
+            "LessonDescription": "Text",
+            "Instructions": "Text",
+            "ReferenceDocs": [],
+            "MorphemeWords": []
+          }
+        ]
+      }
+    ]
+    },{}
+  ]
+}

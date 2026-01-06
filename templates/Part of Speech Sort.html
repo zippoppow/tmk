@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latin Progression - Part of Speech Sort</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        header {
+            text-align: center;
+            padding: 20px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        h1 {
+            margin: 0;
+        }
+        .morpheme-input {
+            margin-top: 10px;
+            padding: 10px;
+            width: 80%;
+            font-size: 16px;
+        }
+        .cats-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        .cat {
+            text-align: center;
+        }
+        .cat img {
+            width: 70px;
+            height: auto;
+        }
+        .central-area {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px;
+        }
+        .part-of-speech {
+            width: 23%;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .word-lines {
+            margin-top: 20px;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #e9ecef;
+        }
+        footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>LATIN PROGRESSION</h1>
+        <input type="text" class="morpheme-input" placeholder="Enter Morpheme(s)">
+    </header>
+    
+    <section class="cats-container">
+        <div class="cat">
+            <img src="cat-noun.png" alt="Cat holding NOUN sign">
+            <p>NOUN</p>
+        </div>
+        <div class="cat">
+            <img src="cat-adjective.png" alt="Cat holding ADJECTIVE sign">
+            <p>ADJECTIVE</p>
+        </div>
+        <div class="cat">
+            <img src="cat-verb.png" alt="Cat holding VERB sign">
+            <p>VERB</p>
+        </div>
+        <div class="cat">
+            <img src="cat-adverb.png" alt="Cat holding ADVERB sign">
+            <p>ADVERB</p>
+        </div>
+    </section>
+    
+    <section class="central-area">
+        <div class="part-of-speech">
+            <h2>Sort Here</h2>
+            <div class="word-lines">
+                <p>1. ____________________</p>
+                <p>2. ____________________</p>
+                <p>3. ____________________</p>
+                <p>4. ____________________</p>
+                <p>5. ____________________</p>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <p>© Sound Literacy Solutions, LLC, 2024 | www.soundliteracysolutions.com</p>
+    </footer>
+</body>
+</html>
