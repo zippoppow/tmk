@@ -60,6 +60,19 @@ export interface Wordfamily {
 }
 
 /**
+ * Part of Speech model - Lookup table for grammatical categories
+ */
+export interface PartOfSpeech {
+  id?: string;
+  _id?: string;
+  name: string;
+  code: string;
+  abbreviation?: string;
+  description?: string;
+  [key: string]: any;
+}
+
+/**
  * Generic API response wrapper
  */
 export interface APIResponse<T> {

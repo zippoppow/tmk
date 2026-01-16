@@ -1,3 +1,4 @@
 {
-  "/tmk-api-demo/page": "app/tmk-api-demo/page.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api-test/page": "app/api-test/page.js"
 }

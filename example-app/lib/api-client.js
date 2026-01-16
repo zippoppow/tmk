@@ -30,6 +30,32 @@ async function fetchFromAPI(endpoint) {
 }
 
 /**
+ * Generic fetch wrapper with error handling for POST requests
+ */
+async function postToAPI(endpoint, data) {
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`API Error Body: ${errorBody}`);
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Failed to post to ${endpoint}:`, error);
+    throw error;
+  }
+}
+
+/**
  * Morphemes API
  */
 export const morphemesAPI = {
@@ -60,6 +86,15 @@ export const morphemesAPI = {
   async search(query) {
     const params = new URLSearchParams({ search: query });
     return fetchFromAPI(`/api/morphemes/search?${params}`);
+  },
+
+  /**
+   * Create a new morpheme
+   * @param {Object} morphemeData - Data for the new morpheme
+   * @returns {Promise<Object>}
+   */
+  async create(morphemeData) {
+    return postToAPI('/api/morphemes', morphemeData);
   },
 };
 
@@ -202,6 +237,38 @@ export const wordfamiliesAPI = {
 };
 
 /**
+ * Lookup Tables API
+ */
+export const lookupTablesAPI = {
+  /**
+   * Get all parts of speech
+   * @returns {Promise<Array>}
+   */
+  async getPartsOfSpeech() {
+    return fetchFromAPI('/api/parts-of-speech');
+  },
+
+  /**
+   * Get a specific part of speech by ID
+   * @param {string} id - Part of speech ID
+   * @returns {Promise<Object>}
+   */
+  async getPartOfSpeechById(id) {
+    return fetchFromAPI(`/api/parts-of-speech/${id}`);
+  },
+
+  /**
+   * Get part of speech by code/abbreviation
+   * @param {string} code - Part of speech code (e.g., 'n', 'v', 'adj')
+   * @returns {Promise<Object>}
+   */
+  async getPartOfSpeechByCode(code) {
+    const params = new URLSearchParams({ code });
+    return fetchFromAPI(`/api/parts-of-speech/code?${params}`);
+  },
+};
+
+/**
  * Export all APIs as a single object for convenience
  */
 export const tmkAPI = {
@@ -209,4 +276,5 @@ export const tmkAPI = {
   words: wordsAPI,
   wordlists: wordlistsAPI,
   wordfamilies: wordfamiliesAPI,
+  lookupTables: lookupTablesAPI,
 };

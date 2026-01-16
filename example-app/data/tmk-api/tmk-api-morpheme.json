@@ -1,0 +1,49 @@
+{
+      "morphemeLookupTables": {
+        "morphemeWordRoles": [
+          { "id": 1, "name": "Base Element" },
+          { "id": 2, "name": "Suffix" },
+          { "id": 3, "name": "Prefix" }
+        ],
+        "morphemeWordOrigins": [
+          { "id": 1, "name": "Latin" },
+          { "id": 2, "name": "Greek" },
+          { "id": 3, "name": "Anglo-Saxon" }
+        ]
+      },
+      "morphemes": [
+        {
+          "name": "pre-",
+          "senseOfMeaning": "before",
+          "variants": [],
+          "pronunciations": ["/riː/"],
+          "morphemeWordRoleId": 3,
+          "morphemeWordOriginId": 2
+        }
+      ],
+      "wordLookupTables": {
+        "parts-of-speech": [
+          { "id": 1, "name": "Noun" },
+          { "id": 2, "name": "Verb" },
+          { "id": 3, "name": "Adjective" }
+        ],
+        "wordFormationConventions": [
+          { "id": 1, "name": "Compounding" },
+          { "id": 2, "name": "Affixation" },
+          { "id": 3, "name": "Reduplication" }
+        ]
+      },
+      "words": [
+            { 
+                  "name": "transport",
+                  "baseMorphemeId": 1,
+                  "wordConstructor": "trans + port",
+                  "totalSyllables": 2,
+                  "dictionaryRef": "MW-54321",
+                  "instructionalTier": ["Tier 2"],
+                  "partOfSpeechId": 1, 
+                  "prefixes": ["trans-"],
+                  "wordFormationConventionId": 2
+            }
+      ]
+}

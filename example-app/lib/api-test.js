@@ -107,6 +107,44 @@ export const testAPI = {
   },
 
   /**
+   * Test parts of speech lookup table
+   */
+  async testPartsOfSpeech() {
+    console.log('Testing Parts of Speech API...');
+    try {
+      const data = await tmkAPI.lookupTables.getPartsOfSpeech();
+      console.log('✓ Parts of Speech API working', data);
+      return { success: true, data };
+    } catch (error) {
+      console.error('✗ Parts of Speech API failed', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  /**
+   * Test creating a morpheme
+   */
+  async testCreateMorpheme() {
+    console.log('Testing Morpheme Creation...');
+    try {
+      // Example morpheme data. In a real scenario, you might want to randomize this
+      // or clean it up after the test.
+      const morphemeData = {
+        name: `test-morpheme-${Date.now()}`,
+        type: 'root',
+        meaning: 'A test morpheme',
+        etymology: 'From a test case',
+      };
+      const data = await tmkAPI.morphemes.create(morphemeData);
+      console.log('✓ Morpheme creation working', data);
+      return { success: true, data };
+    } catch (error) {
+      console.error('✗ Morpheme creation failed', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  /**
    * Run all tests and provide a summary
    */
   async testAllEndpoints() {
@@ -121,6 +159,8 @@ export const testAPI = {
       wordfamilies: await this.testWordfamilies(),
       wordSearch: await this.testWordSearch(),
       morphemeSearch: await this.testMorphemeSearch(),
+      partsOfSpeech: await this.testPartsOfSpeech(),
+      createMorpheme: await this.testCreateMorpheme(),
     };
 
     console.log('\n' + '='.repeat(50));

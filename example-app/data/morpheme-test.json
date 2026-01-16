@@ -1,0 +1,40 @@
+{
+  "morphemes": [
+  {
+    "id": 1,
+    "senseOfMeaning": "not or opposite of",
+    "name": "un",
+    "variants": ["un-"],
+    "pronunciations": ['ʌn'],
+    "examples": [
+        {
+        "word": "unhappy",
+        "meaning": "not happy",
+        "usage": 'She felt unhappy about the news.'
+        },
+        {
+        "word": "unfair",
+        "meaning": "not fair",
+        "usage": 'The decision was considered unfair by many.'
+        }]
+},
+  {
+    "id": 2,
+    "senseOfMeaning": "to do again",
+    "name": "re",
+    "variants": ["re-"],
+    "pronunciations": ["riː"],
+    "examples": [
+      {
+        "word": "repeat",
+        "meaning": "to do again",
+        "usage": "Please repeat the instructions."
+      },
+      {
+        "word": "rewrite",
+        "meaning": "to write again",
+        "usage": "She rewrote the essay."
+      }
+    ]
+  }
+]}

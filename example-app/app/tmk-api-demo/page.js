@@ -67,6 +67,11 @@ export default function TMKAPIPage() {
   const [wordfamiliesLoading, setWordfamiliesLoading] = useState(false);
   const [wordfamiliesError, setWordfamiliesError] = useState(null);
 
+  // Parts of Speech state
+  const [partsOfSpeech, setPartsOfSpeech] = useState([]);
+  const [partsOfSpeechLoading, setPartsOfSpeechLoading] = useState(false);
+  const [partsOfSpeechError, setPartsOfSpeechError] = useState(null);
+
   // Fetch morphemes
   const fetchMorphemes = async () => {
     setMorphemesLoading(true);
@@ -127,6 +132,21 @@ export default function TMKAPIPage() {
     }
   };
 
+  // Fetch parts of speech
+  const fetchPartsOfSpeech = async () => {
+    setPartsOfSpeechLoading(true);
+    setPartsOfSpeechError(null);
+    try {
+      const data = await tmkAPI.lookupTables.getPartsOfSpeech();
+      setPartsOfSpeech(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setPartsOfSpeechError(err.message);
+      setPartsOfSpeech([]);
+    } finally {
+      setPartsOfSpeechLoading(false);
+    }
+  };
+
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
@@ -150,6 +170,7 @@ export default function TMKAPIPage() {
             <Tab label="Words" id="tab-1" />
             <Tab label="Wordlists" id="tab-2" />
             <Tab label="Wordfamilies" id="tab-3" />
+            <Tab label="Parts of Speech" id="tab-4" />
           </Tabs>
         </Box>
 
@@ -264,6 +285,36 @@ export default function TMKAPIPage() {
                       <Typography variant="h6">{family.name || family.text}</Typography>
                       <Typography variant="body2" color="textSecondary">
                         {JSON.stringify(family).substring(0, 100)}...
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+            </Box>
+          )}
+        </TabPanel>
+
+        {/* Parts of Speech Tab */}
+        <TabPanel value={activeTab} index={4}>
+          <Button variant="contained" onClick={fetchPartsOfSpeech} sx={{ marginBottom: '2rem' }}>
+            Load Parts of Speech
+          </Button>
+
+          {partsOfSpeechLoading && <CircularProgress />}
+          {partsOfSpeechError && <Alert severity="error">{partsOfSpeechError}</Alert>}
+
+          {partsOfSpeech.length > 0 && (
+            <Box>
+              <Typography variant="h6" sx={{ marginBottom: '1rem' }}>
+                Loaded {partsOfSpeech.length} parts of speech:
+              </Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+                {partsOfSpeech.map((pos) => (
+                  <Card key={pos.id || pos._id}>
+                    <CardContent>
+                      <Typography variant="h6">{pos.name || pos.text}</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        {JSON.stringify(pos).substring(0, 100)}...
                       </Typography>
                     </CardContent>
                   </Card>
