@@ -1,19 +1,19 @@
 {
   "pages": {
-    "/api-test/page": [
+    "/tmk-api-demo/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api-test/page.js"
+      "static/chunks/app/tmk-api-demo/page.js"
     ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/layout.js"
     ],
-    "/_not-found/page": [
+    "/utilities/data-mgmt/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
+      "static/chunks/app/utilities/data-mgmt/page.js"
     ]
   }
 }

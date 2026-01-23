@@ -58,3 +58,13 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 /generated/prisma
 
+example-app/.next/trace
+example-app/.next/cache/webpack/client-development/*
+example-app/.next/cache/webpack/client-development-fallback/*
+example-app/.next/cache/webpack/server-development/*
+
+template-source/*
+
+template-source/images/*
+template-source/fonts/*
+template-source/styles/*
