@@ -96,9 +96,9 @@ export default function DataManagementPage() {
 
   const getRoleLabel = (roleId) => {
     const labels = {
-      1: 'Root/Base',
-      2: 'Prefix',
-      3: 'Suffix',
+      4: 'Base Element',
+      3: 'Prefix',
+      5: 'Suffix',
     };
     return labels[roleId] || 'Unknown';
   };
@@ -206,17 +206,17 @@ export default function DataManagementPage() {
                       Prefixes
                     </Typography>
                     <Typography variant="h4">
-                      {morphemes.filter((m) => m.morphemeWordRoleId === 2).length}
+                      {morphemes.filter((m) => m.morphemeWordRoleId === 3).length}
                     </Typography>
                   </CardContent>
                 </Card>
                 <Card sx={{ flex: 1, minWidth: 150 }}>
                   <CardContent sx={{ p: 2 }}>
                     <Typography color="textSecondary" gutterBottom>
-                      Roots/Bases
+                      Base Elements
                     </Typography>
                     <Typography variant="h4">
-                      {morphemes.filter((m) => m.morphemeWordRoleId === 1).length}
+                      {morphemes.filter((m) => m.morphemeWordRoleId === 4).length}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -226,7 +226,7 @@ export default function DataManagementPage() {
                       Suffixes
                     </Typography>
                     <Typography variant="h4">
-                      {morphemes.filter((m) => m.morphemeWordRoleId === 3).length}
+                      {morphemes.filter((m) => m.morphemeWordRoleId === 5).length}
                     </Typography>
                   </CardContent>
                 </Card>
