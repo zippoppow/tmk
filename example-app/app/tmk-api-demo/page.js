@@ -22,6 +22,13 @@ import {
   Alert,
   Tabs,
   Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -186,20 +193,40 @@ export default function TMKAPIPage() {
           {morphemes.length > 0 && (
             <Box>
               <Typography variant="h6" sx={{ marginBottom: '1rem' }}>
-                Loaded {morphemes.length} morphemes:
+                Loaded {morphemes.length} morphemes
               </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-                {morphemes.map((morpheme) => (
-                  <Card key={morpheme.id || morpheme._id}>
-                    <CardContent>
-                      <Typography variant="h6">{morpheme.text || morpheme.name}</Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {JSON.stringify(morpheme).substring(0, 100)}...
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Box>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#004a99' }}>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ID</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Meaning</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Role</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Origin</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Variants</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {morphemes.map((morpheme) => (
+                      <TableRow
+                        key={morpheme.id || morpheme._id}
+                        sx={{
+                          '&:nth-of-type(odd)': { bgcolor: '#f5f5f5' },
+                          '&:hover': { bgcolor: '#e8f0f8' },
+                        }}
+                      >
+                        <TableCell>{morpheme.id}</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>{morpheme.name}</TableCell>
+                        <TableCell>{morpheme.senseOfMeaning}</TableCell>
+                        <TableCell>{morpheme.wordRole?.name || 'N/A'}</TableCell>
+                        <TableCell>{morpheme.morphemeOrigin?.name || 'N/A'}</TableCell>
+                        <TableCell>{morpheme.variants?.join(', ') || '—'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Box>
           )}
         </TabPanel>
@@ -216,20 +243,38 @@ export default function TMKAPIPage() {
           {words.length > 0 && (
             <Box>
               <Typography variant="h6" sx={{ marginBottom: '1rem' }}>
-                Loaded {words.length} words:
+                Loaded {words.length} words
               </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-                {words.map((word) => (
-                  <Card key={word.id || word._id}>
-                    <CardContent>
-                      <Typography variant="h6">{word.text || word.name}</Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {JSON.stringify(word).substring(0, 100)}...
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Box>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#004a99' }}>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ID</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Text</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Part of Speech</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Definition</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Morphemes</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {words.map((word) => (
+                      <TableRow
+                        key={word.id || word._id}
+                        sx={{
+                          '&:nth-of-type(odd)': { bgcolor: '#f5f5f5' },
+                          '&:hover': { bgcolor: '#e8f0f8' },
+                        }}
+                      >
+                        <TableCell>{word.id}</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>{word.text}</TableCell>
+                        <TableCell>{word.partOfSpeech?.name || 'N/A'}</TableCell>
+                        <TableCell>{word.definition || '—'}</TableCell>
+                        <TableCell>{word.morphemes?.length || 0}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Box>
           )}
         </TabPanel>
@@ -246,20 +291,36 @@ export default function TMKAPIPage() {
           {wordlists.length > 0 && (
             <Box>
               <Typography variant="h6" sx={{ marginBottom: '1rem' }}>
-                Loaded {wordlists.length} wordlists:
+                Loaded {wordlists.length} wordlists
               </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-                {wordlists.map((wordlist) => (
-                  <Card key={wordlist.id || wordlist._id}>
-                    <CardContent>
-                      <Typography variant="h6">{wordlist.name || wordlist.text}</Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {JSON.stringify(wordlist).substring(0, 100)}...
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Box>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#004a99' }}>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ID</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Description</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Word Count</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {wordlists.map((wordlist) => (
+                      <TableRow
+                        key={wordlist.id || wordlist._id}
+                        sx={{
+                          '&:nth-of-type(odd)': { bgcolor: '#f5f5f5' },
+                          '&:hover': { bgcolor: '#e8f0f8' },
+                        }}
+                      >
+                        <TableCell>{wordlist.id}</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>{wordlist.name}</TableCell>
+                        <TableCell>{wordlist.description || '—'}</TableCell>
+                        <TableCell>{wordlist.words?.length || 0}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Box>
           )}
         </TabPanel>
@@ -276,20 +337,38 @@ export default function TMKAPIPage() {
           {wordfamilies.length > 0 && (
             <Box>
               <Typography variant="h6" sx={{ marginBottom: '1rem' }}>
-                Loaded {wordfamilies.length} wordfamilies:
+                Loaded {wordfamilies.length} wordfamilies
               </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-                {wordfamilies.map((family) => (
-                  <Card key={family.id || family._id}>
-                    <CardContent>
-                      <Typography variant="h6">{family.name || family.text}</Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {JSON.stringify(family).substring(0, 100)}...
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Box>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#004a99' }}>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ID</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Root</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Description</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Word Count</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {wordfamilies.map((family) => (
+                      <TableRow
+                        key={family.id || family._id}
+                        sx={{
+                          '&:nth-of-type(odd)': { bgcolor: '#f5f5f5' },
+                          '&:hover': { bgcolor: '#e8f0f8' },
+                        }}
+                      >
+                        <TableCell>{family.id}</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>{family.name}</TableCell>
+                        <TableCell>{family.root?.name || family.rootId || '—'}</TableCell>
+                        <TableCell>{family.description || '—'}</TableCell>
+                        <TableCell>{family.words?.length || 0}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Box>
           )}
         </TabPanel>
@@ -306,20 +385,36 @@ export default function TMKAPIPage() {
           {partsOfSpeech.length > 0 && (
             <Box>
               <Typography variant="h6" sx={{ marginBottom: '1rem' }}>
-                Loaded {partsOfSpeech.length} parts of speech:
+                Loaded {partsOfSpeech.length} parts of speech
               </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-                {partsOfSpeech.map((pos) => (
-                  <Card key={pos.id || pos._id}>
-                    <CardContent>
-                      <Typography variant="h6">{pos.name || pos.text}</Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {JSON.stringify(pos).substring(0, 100)}...
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Box>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#004a99' }}>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ID</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Abbreviation</TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Description</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {partsOfSpeech.map((pos) => (
+                      <TableRow
+                        key={pos.id || pos._id}
+                        sx={{
+                          '&:nth-of-type(odd)': { bgcolor: '#f5f5f5' },
+                          '&:hover': { bgcolor: '#e8f0f8' },
+                        }}
+                      >
+                        <TableCell>{pos.id}</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>{pos.name}</TableCell>
+                        <TableCell>{pos.abbreviation || '—'}</TableCell>
+                        <TableCell>{pos.description || '—'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Box>
           )}
         </TabPanel>
