@@ -96,9 +96,9 @@ export default function DataManagementPage() {
 
   const getRoleLabel = (roleId) => {
     const labels = {
-      4: 'Base Element',
-      3: 'Prefix',
-      5: 'Suffix',
+      2: 'Base Element',
+      1: 'Prefix',
+      3: 'Suffix',
     };
     return labels[roleId] || 'Unknown';
   };
@@ -206,7 +206,7 @@ export default function DataManagementPage() {
                       Prefixes
                     </Typography>
                     <Typography variant="h4">
-                      {morphemes.filter((m) => m.morphemeWordRoleId === 3).length}
+                      {morphemes.filter((m) => m.morphemeWordRoleId === 1).length}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -216,7 +216,7 @@ export default function DataManagementPage() {
                       Base Elements
                     </Typography>
                     <Typography variant="h4">
-                      {morphemes.filter((m) => m.morphemeWordRoleId === 4).length}
+                      {morphemes.filter((m) => m.morphemeWordRoleId === 2).length}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -226,7 +226,7 @@ export default function DataManagementPage() {
                       Suffixes
                     </Typography>
                     <Typography variant="h4">
-                      {morphemes.filter((m) => m.morphemeWordRoleId === 5).length}
+                      {morphemes.filter((m) => m.morphemeWordRoleId === 3).length}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -251,7 +251,7 @@ export default function DataManagementPage() {
                       Role
                     </TableCell>
                     <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>
-                      Meaning
+                      Sense of Meaning
                     </TableCell>
                     <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>
                       Variants
