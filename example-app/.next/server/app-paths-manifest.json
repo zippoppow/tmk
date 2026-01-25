@@ -1,5 +1,0 @@
-{
-  "/tmk-api-demo/page": "app/tmk-api-demo/page.js",
-  "/utilities/data-mgmt/page": "app/utilities/data-mgmt/page.js",
-  "/api/morphemes/import/route": "app/api/morphemes/import/route.js"
-}
