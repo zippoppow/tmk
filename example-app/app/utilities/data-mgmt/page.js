@@ -87,18 +87,18 @@ export default function DataManagementPage() {
 
   const getRoleColor = (roleId) => {
     const colors = {
-      1: 'info',    // Root/Base
-      2: 'primary', // Prefix
-      3: 'success', // Suffix
+      14: 'info',    // Root/Base
+      13: 'primary', // Prefix
+      15: 'success', // Suffix
     };
     return colors[roleId] || 'default';
   };
 
   const getRoleLabel = (roleId) => {
     const labels = {
-      2: 'Base Element',
-      1: 'Prefix',
-      3: 'Suffix',
+      14: 'Base Element',
+      13: 'Prefix',
+      15: 'Suffix',
     };
     return labels[roleId] || 'Unknown';
   };
@@ -206,7 +206,7 @@ export default function DataManagementPage() {
                       Prefixes
                     </Typography>
                     <Typography variant="h4">
-                      {morphemes.filter((m) => m.morphemeWordRoleId === 1).length}
+                      {morphemes.filter((m) => m.morphemeWordRoleId === 13).length}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -216,7 +216,7 @@ export default function DataManagementPage() {
                       Base Elements
                     </Typography>
                     <Typography variant="h4">
-                      {morphemes.filter((m) => m.morphemeWordRoleId === 2).length}
+                      {morphemes.filter((m) => m.morphemeWordRoleId === 14).length}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -226,7 +226,7 @@ export default function DataManagementPage() {
                       Suffixes
                     </Typography>
                     <Typography variant="h4">
-                      {morphemes.filter((m) => m.morphemeWordRoleId === 3).length}
+                      {morphemes.filter((m) => m.morphemeWordRoleId === 15).length}
                     </Typography>
                   </CardContent>
                 </Card>

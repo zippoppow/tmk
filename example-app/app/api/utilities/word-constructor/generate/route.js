@@ -45,72 +45,103 @@ async function fetchAllMorphemes() {
 /**
  * Find morpheme matches in a word
  * Uses a greedy algorithm to identify the best morpheme decomposition
+ * 
+ * Algorithm:
+ * 1. Build a list of all matchable morpheme forms (name + all variants)
+ * 2. Strip hyphens from morpheme text for matching
+ * 3. Sort by length (longest first)
+ * 4. Starting from position 0, try to match the longest morpheme at the current position
+ * 5. If a match is found, add it to results and move position forward
+ * 6. If no match, keep a single unmatched character and move forward by 1
+ * 7. Repeat until end of word
  */
 function findMorphemeMatches(word, morphemesDb) {
   const word_lower = word.toLowerCase();
   const matches = [];
 
-  // Build a map of morpheme text -> morpheme object for quick lookup
-  const morphemeMap = {};
+  // Build a list of all matchable morpheme forms (main name + variants)
+  const matchableMorphemes = [];
+  
   (morphemesDb || []).forEach((m) => {
-    const text = (m.text || m.morpheme || '').toLowerCase();
-    if (text) {
-      morphemeMap[text] = m;
+    // Determine the type from wordRole
+    let type = 'base';
+    if (m.wordRole && m.wordRole.name) {
+      const roleName = m.wordRole.name.toLowerCase();
+      if (roleName === 'prefix') type = 'prefix';
+      else if (roleName === 'suffix') type = 'suffix';
+      else if (roleName === 'base element') type = 'base';
+    }
+
+    // Process main name
+    const mainName = (m.name || '').toLowerCase().trim();
+    if (mainName) {
+      // Strip hyphens for matching purposes
+      const matchText = mainName.replace(/^-+|-+$/g, '');
+      if (matchText) {
+        matchableMorphemes.push({
+          matchText,
+          displayText: mainName,
+          originalMorpheme: m,
+          type,
+        });
+      }
+    }
+
+    // Process variants
+    if (Array.isArray(m.variants) && m.variants.length > 0) {
+      m.variants.forEach((variant) => {
+        const variantText = (variant || '').toLowerCase().trim();
+        if (variantText) {
+          // Strip hyphens for matching purposes
+          const matchText = variantText.replace(/^-+|-+$/g, '');
+          if (matchText) {
+            matchableMorphemes.push({
+              matchText,
+              displayText: variantText,
+              originalMorpheme: m,
+              type,
+            });
+          }
+        }
+      });
     }
   });
 
-  // Sort morphemes by length (longest first) to match longer morphemes first
-  const sortedMorphemeTexts = Object.keys(morphemeMap).sort(
-    (a, b) => b.length - a.length
+  // Sort morphemes by length (longest first) for greedy matching
+  const sortedMorphemes = matchableMorphemes.sort(
+    (a, b) => b.matchText.length - a.matchText.length
   );
 
-  let remaining = word_lower;
   let position = 0;
 
-  while (remaining.length > 0 && position < word.length) {
+  while (position < word.length) {
+    const remaining = word_lower.substring(position);
     let found = false;
 
-    // Try to match from the start of remaining word
-    for (const morphemeText of sortedMorphemeTexts) {
-      if (remaining.startsWith(morphemeText)) {
+    // Try to match the longest morpheme first (greedy approach)
+    for (const morphemeForm of sortedMorphemes) {
+      if (remaining.startsWith(morphemeForm.matchText)) {
+        const matchLength = morphemeForm.matchText.length;
         matches.push({
-          text: word.substring(position, position + morphemeText.length),
-          morpheme: morphemeMap[morphemeText],
+          text: word.substring(position, position + matchLength),
+          morpheme: {
+            ...morphemeForm.originalMorpheme,
+            type: morphemeForm.type,
+          },
         });
-        position += morphemeText.length;
-        remaining = remaining.substring(morphemeText.length);
+        position += matchLength;
         found = true;
         break;
       }
     }
 
-    // If no match found, move forward one character
+    // If no morpheme matched, keep the single character as unmatched
     if (!found) {
-      // Try to find the longest prefix that matches
-      let matched = false;
-      for (let i = remaining.length - 1; i > 0; i--) {
-        const prefix = remaining.substring(0, i);
-        if (morphemeMap[prefix]) {
-          matches.push({
-            text: word.substring(position, position + prefix.length),
-            morpheme: morphemeMap[prefix],
-          });
-          position += prefix.length;
-          remaining = remaining.substring(prefix.length);
-          matched = true;
-          break;
-        }
-      }
-
-      // No morpheme found, keep as unmatched segment
-      if (!matched) {
-        matches.push({
-          text: word.substring(position, position + 1),
-          morpheme: null,
-        });
-        position += 1;
-        remaining = remaining.substring(1);
-      }
+      matches.push({
+        text: word.substring(position, position + 1),
+        morpheme: null,
+      });
+      position += 1;
     }
   }
 
@@ -124,12 +155,11 @@ function generateWordConstructor(matches) {
   return matches
     .map((m) => {
       const text = m.text;
-      const isPrefix = m.morpheme?.type === 'prefix';
-      const isSuffix = m.morpheme?.type === 'suffix';
+      const type = m.morpheme?.type;
 
-      if (isPrefix && !text.endsWith('-')) {
+      if (type === 'prefix' && !text.endsWith('-')) {
         return text + '-';
-      } else if (isSuffix && !text.startsWith('-')) {
+      } else if (type === 'suffix' && !text.startsWith('-')) {
         return '-' + text;
       }
       return text;

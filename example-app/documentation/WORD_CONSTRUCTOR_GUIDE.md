@@ -36,7 +36,7 @@ This tool uses the **TMK API morpheme database** to intelligently match morpheme
 
 Navigate to:
 ```
-http://localhost:3001/utilities/data-mgmt/generators/word-constructor
+http://localhost:3001/utilities/generators/word-constructor
 ```
 
 (Port may vary based on your NextJS setup)
