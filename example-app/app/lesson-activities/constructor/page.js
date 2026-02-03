@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Box,
   Card,
@@ -12,20 +12,25 @@ import {
   Button,
   Grid,
 } from '@mui/material';
+import html2pdf from 'html2pdf.js';
 
 export default function ConstructorPage() {
+  const [wordParts] = useState([
+    { prefix: 'pre-', base: 'dict', suffix: '-ed' },
+    { prefix: 'pre-', base: 'dict', suffix: '-able' },
+    { prefix: 'pre-', base: 'dict', suffix: '-ion' },
+    { prefix: 'pre-', base: 'dict', suffix: '-or' },
+    { prefix: 'contra-', base: 'dict', suffix: '-ion' },
+    { prefix: 'ab-', base: 'dice', suffix: '-ate' },
+  ]);
+  const [constructors, setConstructors] = useState(
+    Array(12).fill('')
+  );
   const [answers, setAnswers] = useState(
     Array(12).fill('') // 12 items based on XML structure
   );
+  const contentRef = useRef(null);
 
-  const wordParts = [
-    { prefix: 'pre', base: 'dict', suffix: 'ed' },
-    { prefix: 'un', base: 'dict', suffix: 'able' },
-    { prefix: 're', base: 'dict', suffix: 'ion' },
-    { prefix: 'mis', base: 'dict', suffix: 'ate' },
-    { prefix: 'con', base: 'dict', suffix: '' },
-    { prefix: '', base: 'dict', suffix: 'or' },
-  ];
 
   const handleInputChange = (index, value) => {
     const newAnswers = [...answers];
@@ -33,9 +38,30 @@ export default function ConstructorPage() {
     setAnswers(newAnswers);
   };
 
+  const handleConstructorChange = (index, value) => {
+    const newConstructors = [...constructors];
+    newConstructors[index] = value;
+    setConstructors(newConstructors);
+  };
+
+  const generatePDF = () => {
+    if (!contentRef.current) return;
+
+    const element = contentRef.current;
+    const opt = {
+      margin: 10,
+      filename: 'constructor-activity.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
+    };
+
+    html2pdf().set(opt).from(element).save();
+  };
+
   const handleSubmit = () => {
     console.log('Constructor answers:', answers);
-    alert('Answers submitted! Check the console for details.');
+    generatePDF();
   };
 
   const handleClear = () => {
@@ -46,7 +72,7 @@ export default function ConstructorPage() {
     <Box component="main" sx={{ py: 4, bgcolor: '#f9f9f9', minHeight: '100vh' }}>
       <Container maxWidth="lg">
         <Card sx={{ boxShadow: 3 }}>
-          <CardContent sx={{ p: 4 }}>
+          <CardContent sx={{ p: 4 }} ref={contentRef}>
             {/* Header */}
             <Typography
               variant="h4"
@@ -105,92 +131,66 @@ export default function ConstructorPage() {
 
             {/* Word Construction Grid */}
             <Box sx={{ mb: 4 }}>
-              {wordParts.map((parts, idx) => (
-                <Box
-                  key={idx}
-                  sx={{
-                    mb: 3,
-                    p: 2,
-                    bgcolor: '#f5f5f5',
-                    border: '1px solid #ddd',
-                    borderRadius: 1,
-                  }}
-                >
-                  <Grid container spacing={2} alignItems="flex-end">
-                    {/* Prefix */}
-                    <Grid item xs={3} sm={2}>
-                      <Paper
-                        sx={{
-                          p: 1.5,
-                          textAlign: 'center',
-                          bgcolor: '#fff3e0',
-                          border: '2px solid #ff9800',
-                        }}
-                      >
-                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                          {parts.prefix || '—'}
+              {wordParts.map((parts, idx) => {
+                const defaultConstructor = `${parts.prefix} + ${parts.base} + ${parts.suffix}`;
+                return (
+                  <Box
+                    key={idx}
+                    sx={{
+                      mb: 3,
+                      p: 2,
+                      bgcolor: '#f5f5f5',
+                      border: '1px solid #ddd',
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Grid container spacing={2} alignItems="flex-end">
+                      <Grid item xs={12} sm={5}>
+                        <TextField
+                          fullWidth
+                          placeholder={defaultConstructor}
+                          value={constructors[idx]}
+                          onChange={(e) => handleConstructorChange(idx, e.target.value)}
+                          variant="outlined"
+                          size="small"
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: '#e8f4f8',
+                            },
+                            '& .MuiOutlinedInput-input::placeholder': {
+                              color: '#000000',
+                              opacity: 1,
+                            },
+                          }}
+                        />
+                      </Grid>
+
+                      {/* Equals */}
+                      <Grid item xs={1} sx={{ textAlign: 'center' }}>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                          =
                         </Typography>
-                      </Paper>
-                    </Grid>
+                      </Grid>
 
-                    {/* Base */}
-                    <Grid item xs={3} sm={2}>
-                      <Paper
-                        sx={{
-                          p: 1.5,
-                          textAlign: 'center',
-                          bgcolor: '#e3f2fd',
-                          border: '2px solid #2196f3',
-                        }}
-                      >
-                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                          {parts.base}
-                        </Typography>
-                      </Paper>
+                      {/* Answer Input */}
+                      <Grid item xs={12} sm={5}>
+                        <TextField
+                          fullWidth
+                          value={answers[idx]}
+                          onChange={(e) => handleInputChange(idx, e.target.value)}
+                          variant="outlined"
+                          size="small"
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: '#ffffff',
+                            },
+                          }}
+                        />
+                      </Grid>
                     </Grid>
-
-                    {/* Suffix */}
-                    <Grid item xs={3} sm={2}>
-                      <Paper
-                        sx={{
-                          p: 1.5,
-                          textAlign: 'center',
-                          bgcolor: '#f3e5f5',
-                          border: '2px solid #9c27b0',
-                        }}
-                      >
-                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                          {parts.suffix || '—'}
-                        </Typography>
-                      </Paper>
-                    </Grid>
-
-                    {/* Equals */}
-                    <Grid item xs={1} sx={{ textAlign: 'center' }}>
-                      <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                        =
-                      </Typography>
-                    </Grid>
-
-                    {/* Answer Input */}
-                    <Grid item xs={10} sm={4}>
-                      <TextField
-                        fullWidth
-                        placeholder="Type the word..."
-                        value={answers[idx]}
-                        onChange={(e) => handleInputChange(idx, e.target.value)}
-                        variant="outlined"
-                        size="small"
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#ffffff',
-                          },
-                        }}
-                      />
-                    </Grid>
-                  </Grid>
-                </Box>
-              ))}
+                  </Box>
+                );
+              })}
             </Box>
 
             {/* Action Buttons */}
