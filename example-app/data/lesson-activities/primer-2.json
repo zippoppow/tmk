@@ -1,0 +1,35 @@
+{
+    "Product": "Latin Progression",
+    "Set": 5,
+    "MorphemeLessons": [
+        {
+            "Morpheme": "-AN",
+            "LessonSections": {
+                "Section": "Core Lesson",
+                "LessonActivity": {
+                    "LessonType": "PRIMER",
+                    "LessonName": "Understanding Latin Morphemes - Primer 2",
+                    "LessonTitle": "Building Words from Latin Morphemes",
+                    "Instructions": "Explore how Latin-based morphemes combine to create English words.",
+                    "Content": {
+                        "introduction": "Many English words come from Latin. Understanding Latin morphemes helps us decode unfamiliar words.",
+                        "exampleMorphemes": [
+                            {
+                                "morpheme": "dict",
+                                "meaning": "to say or speak",
+                                "origin": "Latin dicere",
+                                "examples": ["dictate", "predict", "dictionary"]
+                            },
+                            {
+                                "morpheme": "duct",
+                                "meaning": "to lead or carry",
+                                "origin": "Latin ducere",
+                                "examples": ["conduct", "product", "aqueduct"]
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}

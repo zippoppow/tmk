@@ -1,0 +1,36 @@
+{
+    "Product": "Latin Progression",
+    "Set": 5,
+    "MorphemeLessons": [
+        {
+            "Morpheme": "-AN",
+            "LessonSections": {
+                "Section": "Activities",
+                "LessonActivity": {
+                    "LessonType": "MORPH MATCH",
+                    "LessonName": "Match Morphology Words - Chameleons",
+                    "LessonTitle": "Match Words to Definitions - Chameleon Roots",
+                    "Instructions": "Match words with chameleon roots to their definitions.",
+                    "Pairs": [
+                        {
+                            "word": "dictate",
+                            "definition": "to speak authoritatively"
+                        },
+                        {
+                            "word": "predict",
+                            "definition": "to say beforehand"
+                        },
+                        {
+                            "word": "conduct",
+                            "definition": "to lead or direct"
+                        },
+                        {
+                            "word": "produce",
+                            "definition": "to bring forth or make"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

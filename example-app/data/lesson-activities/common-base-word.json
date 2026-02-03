@@ -1,0 +1,28 @@
+{
+    "Product": "Latin Progression",
+    "Set": 5,
+    "MorphemeLessons": [
+        {
+            "Morpheme": "-AN",
+            "LessonSections": {
+                "Section": "Core Lesson",
+                "LessonActivity": {
+                    "LessonType": "COMMON BASE WORD",
+                    "LessonName": "Common Base Word",
+                    "LessonTitle": "Identifying Common Base Words",
+                    "Instructions": "Identify the common base word in each word group.",
+                    "WordGroups": [
+                        {
+                            "baseWord": "dict",
+                            "words": ["dictate", "dictionary", "dictator", "contradiction", "predict"]
+                        },
+                        {
+                            "baseWord": "duct",
+                            "words": ["conduct", "reduce", "aqueduct", "introduce", "produce"]
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

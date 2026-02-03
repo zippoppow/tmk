@@ -1,0 +1,35 @@
+{
+    "Product": "Latin Progression",
+    "Set": 5,
+    "MorphemeLessons": [
+        {
+            "Morpheme": "-AN",
+            "LessonSections": {
+                "Section": "Activities",
+                "LessonActivity": {
+                    "LessonType": "FILL IN THE MORPH",
+                    "LessonName": "Fill in the Morph with -AN Words",
+                    "LessonTitle": "Fill in the Morph - Sentences",
+                    "Instructions": "Read the sentences and fill in the blanks with appropriate words from the word bank.",
+                    "WordBank": [
+                        "dictate",
+                        "predict",
+                        "contradiction",
+                        "dictator",
+                        "prediction",
+                        "dictionary",
+                        "indict",
+                        "edict"
+                    ],
+                    "Sentences": [
+                        "I checked my _____________ to find the correct spelling.",
+                        "The weather forecast will _____________ rain tomorrow.",
+                        "The _____________ issued a new law for all citizens.",
+                        "There is a _____________ between what he said and what he did.",
+                        "She will _____________ the terms of the agreement."
+                    ]
+                }
+            }
+        }
+    ]
+}

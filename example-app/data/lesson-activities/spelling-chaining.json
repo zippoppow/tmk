@@ -1,0 +1,36 @@
+{
+    "Product": "Latin Progression",
+    "Set": 5,
+    "MorphemeLessons": [
+        {
+            "Morpheme": "-AN",
+            "LessonSections": {
+                "Section": "Activities",
+                "LessonActivity": {
+                    "LessonType": "SPELLING CHAINING",
+                    "LessonName": "Spelling Chaining Activity",
+                    "LessonTitle": "Spelling Chain",
+                    "Instructions": "Chain words together by changing one letter at a time. Instructor version with answers.",
+                    "Chain": [
+                        {
+                            "word": "dict",
+                            "clue": "Base morpheme meaning to say"
+                        },
+                        {
+                            "word": "dicta",
+                            "clue": "Add one letter"
+                        },
+                        {
+                            "word": "dictate",
+                            "clue": "Add morpheme ending"
+                        },
+                        {
+                            "word": "predicate",
+                            "clue": "Change beginning"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

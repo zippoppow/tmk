@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -15,21 +15,35 @@ import {
 import html2pdf from 'html2pdf.js';
 
 export default function ConstructorPage() {
-  const [wordParts] = useState([
-    { prefix: 'pre-', base: 'dict', suffix: '-ed' },
-    { prefix: 'pre-', base: 'dict', suffix: '-able' },
-    { prefix: 'pre-', base: 'dict', suffix: '-ion' },
-    { prefix: 'pre-', base: 'dict', suffix: '-or' },
-    { prefix: 'contra-', base: 'dict', suffix: '-ion' },
-    { prefix: 'ab-', base: 'dice', suffix: '-ate' },
-  ]);
-  const [constructors, setConstructors] = useState(
-    Array(12).fill('')
-  );
-  const [answers, setAnswers] = useState(
-    Array(12).fill('') // 12 items based on XML structure
-  );
+  const [lessonData, setLessonData] = useState(null);
+  const [constructors, setConstructors] = useState([]);
+  const [answers, setAnswers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const contentRef = useRef(null);
+
+  // Fetch JSON data on component mount
+  useEffect(() => {
+    const fetchLessonData = async () => {
+      try {
+        const response = await fetch('/lesson-activities/constructor.json');
+        const data = await response.json();
+        setLessonData(data);
+
+        // Get WordConstructors from JSON
+        const lessonActivity = data.MorphemeLessons[0].LessonSections.LessonActivity;
+        const wordConstructorCount = lessonActivity.WordConstructors?.length || 0;
+
+        setConstructors(Array(wordConstructorCount).fill(''));
+        setAnswers(Array(wordConstructorCount).fill(''));
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading lesson data:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchLessonData();
+  }, []);
 
 
   const handleInputChange = (index, value) => {
@@ -65,8 +79,26 @@ export default function ConstructorPage() {
   };
 
   const handleClear = () => {
-    setAnswers(Array(12).fill(''));
+    const wordConstructorCount =
+      lessonData?.MorphemeLessons[0]?.LessonSections?.LessonActivity?.WordConstructors?.length || 0;
+    setAnswers(Array(wordConstructorCount).fill(''));
   };
+
+  if (loading) {
+    return (
+      <Box component="main" sx={{ py: 4, bgcolor: '#f9f9f9', minHeight: '100vh' }}>
+        <Container maxWidth="lg">
+          <Card sx={{ boxShadow: 3 }}>
+            <CardContent sx={{ p: 4 }}>
+              <Typography variant="h6" sx={{ textAlign: 'center' }}>
+                Loading lesson activity...
+              </Typography>
+            </CardContent>
+          </Card>
+        </Container>
+      </Box>
+    );
+  }
 
   return (
     <Box component="main" sx={{ py: 4, bgcolor: '#f9f9f9', minHeight: '100vh' }}>
@@ -110,7 +142,8 @@ export default function ConstructorPage() {
               }}
             >
               <Typography variant="body2">
-                <strong>Morpheme(s):</strong> dict (to say)
+                <strong>Morpheme(s):</strong>{' '}
+                {lessonData?.MorphemeLessons[0]?.Morpheme || 'Loading...'}
               </Typography>
             </Paper>
 
@@ -124,16 +157,16 @@ export default function ConstructorPage() {
               }}
             >
               <Typography variant="body1">
-                <strong>Instructions:</strong> Create words from the word parts
-                by combining the prefix, base element, and suffix.
+                <strong>Instructions:</strong>{' '}
+                {lessonData?.MorphemeLessons[0]?.LessonSections?.LessonActivity
+                  ?.Instructions || 'Create words from the word parts by combining the prefix, base element, and suffix.'}
               </Typography>
             </Paper>
 
             {/* Word Construction Grid */}
             <Box sx={{ mb: 4 }}>
-              {wordParts.map((parts, idx) => {
-                const defaultConstructor = `${parts.prefix} + ${parts.base} + ${parts.suffix}`;
-                return (
+              {lessonData?.MorphemeLessons[0]?.LessonSections?.LessonActivity?.WordConstructors?.map(
+                (constructor, idx) => (
                   <Box
                     key={idx}
                     sx={{
@@ -148,7 +181,7 @@ export default function ConstructorPage() {
                       <Grid item xs={12} sm={5}>
                         <TextField
                           fullWidth
-                          placeholder={defaultConstructor}
+                          placeholder={constructor}
                           value={constructors[idx]}
                           onChange={(e) => handleConstructorChange(idx, e.target.value)}
                           variant="outlined"
@@ -189,8 +222,8 @@ export default function ConstructorPage() {
                       </Grid>
                     </Grid>
                   </Box>
-                );
-              })}
+                )
+              )}
             </Box>
 
             {/* Action Buttons */}

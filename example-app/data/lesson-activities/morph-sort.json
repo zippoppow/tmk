@@ -1,0 +1,28 @@
+{
+    "Product": "Latin Progression",
+    "Set": 5,
+    "MorphemeLessons": [
+        {
+            "Morpheme": "-AN",
+            "LessonSections": {
+                "Section": "Activities",
+                "LessonActivity": {
+                    "LessonType": "MORPH SORT",
+                    "LessonName": "Sort Words by Morpheme",
+                    "LessonTitle": "Categorize Words by Base Morpheme",
+                    "Instructions": "Sort the words into categories based on their base morpheme.",
+                    "Categories": [
+                        {
+                            "morpheme": "dict (to say)",
+                            "words": ["dictate", "predict", "contradiction", "dictionary", "dictation"]
+                        },
+                        {
+                            "morpheme": "duct/duce (to lead)",
+                            "words": ["conduct", "produce", "reduce", "introduce", "aqueduct"]
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

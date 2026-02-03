@@ -1,0 +1,55 @@
+{
+    "Product": "Latin Progression",
+    "Set": 5,
+    "MorphemeLessons": [
+        {
+            "Morpheme": "-AN",
+            "LessonSections": {
+                "Section": "Activities",
+                "LessonActivity": {
+                    "LessonType": "WORD BUILDER",
+                    "LessonName": "Build Words from Morphemes",
+                    "LessonTitle": "Construct Words Step by Step",
+                    "Instructions": "Build words by combining morpheme parts in sequence.",
+                    "BuildingSequences": [
+                        {
+                            "steps": [
+                                {
+                                    "step": 1,
+                                    "morpheme": "dict",
+                                    "partial_word": "dict"
+                                },
+                                {
+                                    "step": 2,
+                                    "morpheme": "-ate",
+                                    "partial_word": "dictate"
+                                }
+                            ],
+                            "final_word": "dictate"
+                        },
+                        {
+                            "steps": [
+                                {
+                                    "step": 1,
+                                    "morpheme": "pre-",
+                                    "partial_word": "pre"
+                                },
+                                {
+                                    "step": 2,
+                                    "morpheme": "dict",
+                                    "partial_word": "predict"
+                                },
+                                {
+                                    "step": 3,
+                                    "morpheme": "-ion",
+                                    "partial_word": "prediction"
+                                }
+                            ],
+                            "final_word": "prediction"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

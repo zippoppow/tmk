@@ -1,0 +1,25 @@
+{
+    "Product": "Latin Progression",
+    "Set": 5,
+    "MorphemeLessons": [
+        {
+            "Morpheme": "-AN",
+            "LessonSections": {
+                "Section": "Core Lesson",
+                "LessonActivity": {
+                    "LessonType": "CONSTRUCTOR",
+                    "LessonName": "Constructor 2",
+                    "LessonTitle": "Constructor Activity",
+                    "Instructions": "Build words by adding prefixes, base elements, and suffixes together.",
+                    "WordConstructors": [
+                        "pre- + dict + -ion",
+                        "contra- + dict",
+                        "inter- + dict + -ion",
+                        "re- + produce",
+                        "in- + duct"
+                    ]
+                }
+            }
+        }
+    ]
+}

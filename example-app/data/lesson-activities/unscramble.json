@@ -1,0 +1,36 @@
+{
+    "Product": "Latin Progression",
+    "Set": 5,
+    "MorphemeLessons": [
+        {
+            "Morpheme": "-AN",
+            "LessonSections": {
+                "Section": "Activities",
+                "LessonActivity": {
+                    "LessonType": "UNSCRAMBLE",
+                    "LessonName": "Unscramble Morpheme Parts",
+                    "LessonTitle": "Rearrange Morphemes to Form Words",
+                    "Instructions": "Unscramble the morpheme parts to form correct words.",
+                    "Puzzles": [
+                        {
+                            "scrambled": "dict + -tion + -a",
+                            "answer": "dict + -ation"
+                        },
+                        {
+                            "scrambled": "-ion + dict + pre-",
+                            "answer": "pre- + dict + -ion"
+                        },
+                        {
+                            "scrambled": "duce + pro-",
+                            "answer": "pro- + duce"
+                        },
+                        {
+                            "scrambled": "duct + con-",
+                            "answer": "con- + duct"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

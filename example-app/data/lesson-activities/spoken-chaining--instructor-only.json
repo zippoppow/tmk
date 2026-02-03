@@ -1,0 +1,41 @@
+{
+    "Product": "Latin Progression",
+    "Set": 5,
+    "MorphemeLessons": [
+        {
+            "Morpheme": "-AN",
+            "LessonSections": {
+                "Section": "Activities",
+                "LessonActivity": {
+                    "LessonType": "SPOKEN CHAINING",
+                    "LessonName": "Spoken Chaining Activity",
+                    "LessonTitle": "Spoken Spelling Chain - Instructor Only",
+                    "Instructions": "Guide students through spoken spelling chains. Instructor version with answers and timing.",
+                    "TeachingTips": "Allow adequate time for students to spell each word aloud. Repeat as needed.",
+                    "Chains": [
+                        {
+                            "baseWord": "dict",
+                            "steps": [
+                                {
+                                    "word": "dict",
+                                    "pronunciation": "/dikt/",
+                                    "meaning": "to say"
+                                },
+                                {
+                                    "word": "dictate",
+                                    "pronunciation": "/DIK-tayt/",
+                                    "meaning": "to say for another to write"
+                                },
+                                {
+                                    "word": "prediction",
+                                    "pronunciation": "/prih-DIK-shun/",
+                                    "meaning": "statement about the future"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

@@ -211,7 +211,7 @@
                             "LessonName": "Adding -AN",
                             "LessonTitle": "Constructor Activity",
                             "Instructions": "Add the suffix -an to the following base words. Remember, sometimes an 'i' is added or a 'y' changes to 'i'.",
-                            "BaseWords": [
+                            "WordConstructors": [
                                 "electric + an",
                                 "Asia + an",
                                 "Haiti + an",

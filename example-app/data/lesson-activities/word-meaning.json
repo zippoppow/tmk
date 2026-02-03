@@ -1,0 +1,81 @@
+{
+    "Product": "Latin Progression",
+    "Set": 5,
+    "MorphemeLessons": [
+        {
+            "Morpheme": "-AN",
+            "LessonSections": {
+                    "Section": "Core Lesson",
+                    "LessonActivity": {
+                            "LessonType": "WORD MEANING",
+                            "LessonName": "Word Meaning",
+                            "LessonTitle": "Words with -AN Suffix",
+                            "Morpheme": "-an",
+                            "WordsList": [
+                                {
+                                    "word": "Egyptian",
+                                    "meaning": "belonging to"
+                                },
+                                {
+                                    "word": "Asian",
+                                    "meaning": "belonging to"
+                                },
+                                {
+                                    "word": "Italian",
+                                    "meaning": "belonging to"
+                                },
+                                {
+                                    "word": "American",
+                                    "meaning": "belonging to"
+                                },
+                                {
+                                    "word": "Parisian",
+                                    "meaning": "belonging to"
+                                },
+                                {
+                                    "word": "Indian",
+                                    "meaning": "belonging to"
+                                },
+                                {
+                                    "word": "Roman",
+                                    "meaning": "belonging to"
+                                },
+                                {
+                                    "word": "clinician",
+                                    "meaning": "having to do with"
+                                },
+                                {
+                                    "word": "dietitian",
+                                    "meaning": "having to do with"
+                                },
+                                {
+                                    "word": "guardian",
+                                    "meaning": "having to do with"
+                                },
+                                {
+                                    "word": "comedian",
+                                    "meaning": "having to do with"
+                                },
+                                {
+                                    "word": "musician",
+                                    "meaning": "having to do with"
+                                },
+                                {
+                                    "word": "artisan",
+                                    "meaning": "having to do with"
+                                },
+                                {
+                                    "word": "historian",
+                                    "meaning": "having to do with"
+                                },
+                                {
+                                    "word": "politician",
+                                    "meaning": "having to do with"
+                                }
+                            ],
+                            "Instructions": "Discuss meanings of the listed words."
+                        }
+                }
+        }
+    ]
+}

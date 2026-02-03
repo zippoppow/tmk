@@ -1,0 +1,28 @@
+{
+    "Product": "Latin Progression",
+    "Set": 5,
+    "MorphemeLessons": [
+        {
+            "Morpheme": "-AN",
+            "LessonSections": {
+                "Section": "Activities",
+                "LessonActivity": {
+                    "LessonType": "SORT AND SPELL",
+                    "LessonName": "Sort Words and Practice Spelling",
+                    "LessonTitle": "Categorize and Spell Words",
+                    "Instructions": "Sort the words into categories and practice spelling them correctly.",
+                    "Activities": [
+                        {
+                            "category": "Words with dict",
+                            "words": ["dictate", "dictionary", "predict", "prediction"]
+                        },
+                        {
+                            "category": "Words with duct",
+                            "words": ["conduct", "product", "reduce", "produce"]
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
