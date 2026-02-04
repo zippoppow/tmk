@@ -31,7 +31,7 @@ export default function Main() {
       <CssBaseline />
       <Box component="main" sx={{ padding: '2rem' }}>
         <Typography variant="h1" sx={{ marginBottom: '2rem' }}>
-          Pegasus Component Library Example
+          The Morphology Kit® Admin
         </Typography>
 
         {/* Card Example */}

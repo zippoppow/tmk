@@ -30,7 +30,7 @@ import { bulkImport } from './bulk-import.js';
 
 const theme = createTheme();
 
-export default function DataManagementPage() {
+export default function ImportMorphemesPage() {
   const [morphemes, setMorphemes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -119,7 +119,7 @@ export default function DataManagementPage() {
                   color: '#004a99',
                 }}
               >
-                Data Management
+                Import Morphemes
               </Typography>
               <Typography
                 variant="body1"

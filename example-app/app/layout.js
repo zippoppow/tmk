@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Pegasus Component Library Example',
+  title: 'The Morphology Kit® Admin',
   description: 'NextJS app consuming Pegasus Design System',
 };
 
