@@ -1,0 +1,30 @@
+{
+    "LessonActivity": {
+        "LessonType": "SUFFIX COMPLETER",
+        "LessonName": "Complete Words with Suffixes",
+        "LessonTitle": "Add the Correct Suffix",
+        "Instructions": "Complete the words by adding the correct suffix.",
+        "Activities": [
+            {
+                "base": "dict",
+                "suffix": "-ation",
+                "result": "dictation"
+            },
+            {
+                "base": "predict",
+                "suffix": "-ion",
+                "result": "prediction"
+            },
+            {
+                "base": "conduct",
+                "suffix": "-or",
+                "result": "conductor"
+            },
+            {
+                "base": "produce",
+                "suffix": "-tion",
+                "result": "production"
+            }
+        ]
+    }
+}

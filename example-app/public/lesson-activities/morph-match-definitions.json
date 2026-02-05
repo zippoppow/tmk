@@ -1,0 +1,30 @@
+{
+    "LessonActivity": {
+        "LessonType": "MORPH MATCH",
+        "LessonName": "Match Words to Definitions",
+        "LessonTitle": "Match Words to Morpheme Definitions",
+        "Instructions": "Match words to the correct definitions based on their morpheme parts.",
+        "Pairs": [
+            {
+                "word": "dictate",
+                "definition": "to say something for another to write"
+            },
+            {
+                "word": "predict",
+                "definition": "to say what will happen beforehand"
+            },
+            {
+                "word": "dict",
+                "definition": "to say or speak"
+            },
+            {
+                "word": "duct",
+                "definition": "to lead or carry"
+            },
+            {
+                "word": "conduct",
+                "definition": "to lead or direct"
+            }
+        ]
+    }
+}

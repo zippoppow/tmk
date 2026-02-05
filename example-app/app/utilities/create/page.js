@@ -20,6 +20,7 @@ const createPages = [
   { label: 'Vocabulary Tier', path: '/utilities/create/vocabulary-tier' },
   { label: 'Word Family', path: '/utilities/create/word-family' },
   { label: 'Word List', path: '/utilities/create/word-list' },
+  { label: 'Lesson Activity Type', path: '/utilities/create/lesson-activity-type' },
 ];
 
 export default function CreatePage() {

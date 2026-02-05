@@ -1,0 +1,22 @@
+{
+    "LessonActivity": {
+        "LessonType": "PART OF SPEECH SORT",
+        "LessonName": "Sort Words by Part of Speech",
+        "LessonTitle": "Categorize Words by Part of Speech",
+        "Instructions": "Sort the words into categories based on their part of speech.",
+        "Categories": [
+            {
+                "partOfSpeech": "Noun",
+                "words": ["dictionary", "dictation", "prediction", "conductor", "product"]
+            },
+            {
+                "partOfSpeech": "Verb",
+                "words": ["dictate", "predict", "conduct", "produce", "reduce"]
+            },
+            {
+                "partOfSpeech": "Adjective",
+                "words": ["contradictory", "productive"]
+            }
+        ]
+    }
+}

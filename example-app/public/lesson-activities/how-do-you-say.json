@@ -1,0 +1,25 @@
+{
+    "LessonActivity": {
+        "LessonType": "HOW DO YOU SAY",
+        "LessonName": "Pronunciation Variations",
+        "LessonTitle": "Pronunciation of Words",
+        "Instructions": "Explore the pronunciation variations of morphemes in different words.",
+        "PronunciationExamples": [
+            {
+                "word": "dictate",
+                "pronunciation": "/DIK-tayt/",
+                "morphemes": "dict + -ate"
+            },
+            {
+                "word": "prediction",
+                "pronunciation": "/prih-DIK-shun/",
+                "morphemes": "pre- + dict + -ion"
+            },
+            {
+                "word": "contradict",
+                "pronunciation": "/KON-truh-dikt/",
+                "morphemes": "contra- + dict"
+            }
+        ]
+    }
+}

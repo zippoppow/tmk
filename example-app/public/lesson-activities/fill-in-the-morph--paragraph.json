@@ -1,0 +1,21 @@
+{
+    "LessonActivity": {
+        "LessonType": "FILL IN THE MORPH",
+        "LessonName": "Fill in the Morph with -AN Words",
+        "LessonTitle": "Fill in the Morph - Paragraph",
+        "Instructions": "Read the paragraph and fill in the blanks with appropriate words from the word bank.",
+        "WordBank": [
+            "dictate",
+            "predict",
+            "contradiction",
+            "dictator",
+            "duction"
+        ],
+        "Paragraphs": [
+            {
+                "id": 1,
+                "text": "The ancient _____________ would _____________ orders to his subjects. Some people tried to _____________ what would happen next. However, there was a _____________ in his policies that confused everyone. The _____________ of justice was slow but inevitable."
+            }
+        ]
+    }
+}

@@ -1,0 +1,20 @@
+{
+    "LessonActivity": {
+        "LessonType": "CONSTRUCTOR-DECONSTRUCTOR",
+        "LessonName": "Constructor-Deconstructor",
+        "LessonTitle": "Build and Break Down Words",
+        "Instructions": "Construct words from morphemes and then deconstruct them back into parts.",
+        "Activities": [
+            {
+                "constructor": "pre- + dict + -ion",
+                "word": "prediction",
+                "deconstruction": "pre- + dict + -ion"
+            },
+            {
+                "constructor": "contra- + dict",
+                "word": "contradict",
+                "deconstruction": "contra- + dict"
+            }
+        ]
+    }
+}

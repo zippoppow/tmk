@@ -1,0 +1,26 @@
+{
+    "LessonActivity": {
+        "LessonType": "MORPH, MORPH? MATCH",
+        "LessonName": "Matching Base Words",
+        "LessonTitle": "Match Base Words to Derivatives",
+        "Instructions": "Match the base word to its related word with added morphemes.",
+        "Pairs": [
+            {
+                "base": "dict",
+                "derivative": "dictate"
+            },
+            {
+                "base": "predict",
+                "derivative": "prediction"
+            },
+            {
+                "base": "conduct",
+                "derivative": "conductor"
+            },
+            {
+                "base": "produce",
+                "derivative": "product"
+            }
+        ]
+    }
+}

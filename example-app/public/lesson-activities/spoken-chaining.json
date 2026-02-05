@@ -1,0 +1,27 @@
+{
+    "LessonActivity": {
+        "LessonType": "SPOKEN CHAINING",
+        "LessonName": "Spoken Chaining Activity",
+        "LessonTitle": "Spoken Spelling Chain",
+        "Instructions": "Students spell words aloud as they build them step by step using morphemes.",
+        "Chains": [
+            {
+                "baseWord": "dict",
+                "steps": [
+                    {
+                        "word": "dict",
+                        "instruction": "Spell the base morpheme"
+                    },
+                    {
+                        "word": "dicta",
+                        "instruction": "Add a vowel"
+                    },
+                    {
+                        "word": "dictate",
+                        "instruction": "Add the suffix -ate"
+                    }
+                ]
+            }
+        ]
+    }
+}

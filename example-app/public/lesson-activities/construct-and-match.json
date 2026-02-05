@@ -1,0 +1,18 @@
+{
+    "LessonActivity": {
+        "LessonType": "CONSTRUCT AND MATCH",
+        "LessonName": "Construct and Match",
+        "LessonTitle": "Construct Words and Match to Meanings",
+        "Instructions": "Construct words by combining morpheme parts and match them to their definitions.",
+        "Pairs": [
+            {
+                "constructor": "pre- + dict + -ion",
+                "definition": "a statement made in advance"
+            },
+            {
+                "constructor": "contra- + dict",
+                "definition": "to go against what was said"
+            }
+        ]
+    }
+}

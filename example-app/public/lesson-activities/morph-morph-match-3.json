@@ -1,0 +1,30 @@
+{
+    "LessonActivity": {
+        "LessonType": "MORPH, MORPH? MATCH",
+        "LessonName": "Matching Related Words",
+        "LessonTitle": "Match Related Words",
+        "Instructions": "Match related words based on shared morphemes.",
+        "Pairs": [
+            {
+                "word1": "dictate",
+                "word2": "dictation"
+            },
+            {
+                "word1": "predict",
+                "word2": "prediction"
+            },
+            {
+                "word1": "conduct",
+                "word2": "conductor"
+            },
+            {
+                "word1": "produce",
+                "word2": "production"
+            },
+            {
+                "word1": "reduce",
+                "word2": "reduction"
+            }
+        ]
+    }
+}

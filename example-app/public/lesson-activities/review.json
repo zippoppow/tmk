@@ -1,0 +1,41 @@
+{
+    "LessonActivity": {
+        "LessonType": "REVIEW",
+        "LessonName": "Previous Morphemes",
+        "LessonTitle": "Previous Morphemes",
+        "ReviewMorphemes": [
+            "sus-",
+            "seg-",
+            "script",
+            "scribe",
+            "facte-",
+            "sum-",
+            "fict",
+            "dis-",
+            "tract",
+            "spect",
+            "-(c)ial",
+            "-ic",
+            "pre-",
+            "inter-",
+            "du-",
+            "ced",
+            "duct",
+            "-ous",
+            "-(t)ious",
+            "-(c)ious",
+            "-ious",
+            "-(g)ious",
+            "capt",
+            "cept",
+            "ceit",
+            "ceive",
+            "plex",
+            "ply",
+            "pose",
+            "pone-",
+            "-ify"
+        ],
+        "Instructions": "Review and discuss the previous morphemes."
+    }
+}

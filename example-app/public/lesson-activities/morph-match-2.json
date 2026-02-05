@@ -1,0 +1,30 @@
+{
+    "LessonActivity": {
+        "LessonType": "MORPH MATCH",
+        "LessonName": "Match Morphology Words",
+        "LessonTitle": "Match Words to Definitions",
+        "Instructions": "Match words to their definitions based on morpheme knowledge.",
+        "Pairs": [
+            {
+                "word": "dictation",
+                "definition": "the act of speaking for someone to write down"
+            },
+            {
+                "word": "prediction",
+                "definition": "a statement about what will happen"
+            },
+            {
+                "word": "contradiction",
+                "definition": "a statement that contradicts or opposes another"
+            },
+            {
+                "word": "reduction",
+                "definition": "the act of making something smaller"
+            },
+            {
+                "word": "introduction",
+                "definition": "a formal presentation of someone or something"
+            }
+        ]
+    }
+}
