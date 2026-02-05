@@ -1,33 +1,23 @@
 {
-    "Product": "Latin Progression",
-    "Set": 5,
-    "MorphemeLessons": [
-        {
-            "Morpheme": "-AN",
-            "LessonSections": {
-                "Section": "Activities",
-                "LessonActivity": {
-                    "LessonType": "SPELLING CHAINING",
-                    "LessonName": "Spelling Chaining Activity",
-                    "LessonTitle": "Spelling Chain - Instructor Only",
-                    "Instructions": "Guide students through spelling chains. Instructor version with answers and teaching notes.",
-                    "TeachingNotes": "Use morpheme knowledge to help students build words progressively.",
-                    "Chains": [
-                        {
-                            "startWord": "dict",
-                            "endWord": "dictation",
-                            "steps": [
-                                "dict",
-                                "dicta",
-                                "dictat",
-                                "dictate",
-                                "dictated",
-                                "dictation"
-                            ]
-                        }
-                    ]
-                }
+    "LessonActivity": {
+        "LessonType": "SPELLING CHAINING",
+        "LessonName": "Spelling Chaining Activity",
+        "LessonTitle": "Spelling Chain - Instructor Only",
+        "Instructions": "Guide students through spelling chains. Instructor version with answers and teaching notes.",
+        "TeachingNotes": "Use morpheme knowledge to help students build words progressively.",
+        "Chains": [
+            {
+                "startWord": "dict",
+                "endWord": "dictation",
+                "steps": [
+                    "dict",
+                    "dicta",
+                    "dictat",
+                    "dictate",
+                    "dictated",
+                    "dictation"
+                ]
             }
-        }
-    ]
+        ]
+    }
 }

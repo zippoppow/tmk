@@ -1,20 +1,8 @@
 {
-    "Product": "Latin Progression",
-    "Set": 5,
-    "MorphemeLessons": [
-        {
-            "Morpheme": "-AN",
-            "LessonSections": 
-                {
-                    "Section": "Core Lesson",
-                    "LessonActivity": 
-                        {
-                            "LessonType": "SPELLING REVIEW/SAY AND SPELL",
-                            "LessonName": "Spelling Review",
-                            "LessonTitle": "Spelling Review",
-                            "Instructions": "Say and spell the following words."
-                        }
-                }
-        }
-    ]
+    "LessonActivity": {
+        "LessonType": "SPELLING REVIEW/SAY AND SPELL",
+        "LessonName": "Spelling Review",
+        "LessonTitle": "Spelling Review",
+        "Instructions": "Say and spell the following words."
+    }
 }

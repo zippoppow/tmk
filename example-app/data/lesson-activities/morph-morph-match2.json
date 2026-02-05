@@ -1,32 +1,22 @@
 {
-    "Product": "Latin Progression",
-    "Set": 5,
-    "MorphemeLessons": [
-        {
-            "Morpheme": "-AN",
-            "LessonSections": {
-                "Section": "Activities",
-                "LessonActivity": {
-                    "LessonType": "MORPH, MORPH? MATCH",
-                    "LessonName": "Matching Morpheme Parts",
-                    "LessonTitle": "Match Words with Common Morphemes",
-                    "Instructions": "Match words that share the same morpheme.",
-                    "Pairs": [
-                        {
-                            "word1": "dictate",
-                            "word2": "predict"
-                        },
-                        {
-                            "word1": "conduct",
-                            "word2": "produce"
-                        },
-                        {
-                            "word1": "reduce",
-                            "word2": "introduce"
-                        }
-                    ]
-                }
+    "LessonActivity": {
+        "LessonType": "MORPH, MORPH? MATCH",
+        "LessonName": "Matching Morpheme Parts",
+        "LessonTitle": "Match Words with Common Morphemes",
+        "Instructions": "Match words that share the same morpheme.",
+        "Pairs": [
+            {
+                "word1": "dictate",
+                "word2": "predict"
+            },
+            {
+                "word1": "conduct",
+                "word2": "produce"
+            },
+            {
+                "word1": "reduce",
+                "word2": "introduce"
             }
-        }
-    ]
+        ]
+    }
 }

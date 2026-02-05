@@ -1,40 +1,30 @@
 {
-    "Product": "Latin Progression",
-    "Set": 5,
-    "MorphemeLessons": [
-        {
-            "Morpheme": "-AN",
-            "LessonSections": {
-                "Section": "Activities",
-                "LessonActivity": {
-                    "LessonType": "MORPH SPELL",
-                    "LessonName": "Spell Words with Morphemes",
-                    "LessonTitle": "Spelling Practice with Morphemes",
-                    "Instructions": "Spell the words correctly using knowledge of morpheme structure.",
-                    "Words": [
-                        {
-                            "word": "dictate",
-                            "hint": "dict + -ate"
-                        },
-                        {
-                            "word": "prediction",
-                            "hint": "pre- + dict + -ion"
-                        },
-                        {
-                            "word": "contradiction",
-                            "hint": "contra- + dict + -ion"
-                        },
-                        {
-                            "word": "conductor",
-                            "hint": "conduct + -or"
-                        },
-                        {
-                            "word": "produce",
-                            "hint": "pro- + duce"
-                        }
-                    ]
-                }
+    "LessonActivity": {
+        "LessonType": "MORPH SPELL",
+        "LessonName": "Spell Words with Morphemes",
+        "LessonTitle": "Spelling Practice with Morphemes",
+        "Instructions": "Spell the words correctly using knowledge of morpheme structure.",
+        "Words": [
+            {
+                "word": "dictate",
+                "hint": "dict + -ate"
+            },
+            {
+                "word": "prediction",
+                "hint": "pre- + dict + -ion"
+            },
+            {
+                "word": "contradiction",
+                "hint": "contra- + dict + -ion"
+            },
+            {
+                "word": "conductor",
+                "hint": "conduct + -or"
+            },
+            {
+                "word": "produce",
+                "hint": "pro- + duce"
             }
-        }
-    ]
+        ]
+    }
 }

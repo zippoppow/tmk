@@ -1,48 +1,38 @@
 {
-    "Product": "Latin Progression",
-    "Set": 5,
-    "MorphemeLessons": [
-        {
-            "Morpheme": "-AN",
-            "LessonSections": {
-                "Section": "Core Lesson",
-                "LessonActivity": {
-                    "LessonType": "LATIN PROGRESSION PRIMER",
-                    "LessonName": "Latin Progression Primer - Chameleon Roots",
-                    "LessonTitle": "Chameleon Root Morphemes",
-                    "Instructions": "Explore root morphemes that change form in different words (chameleon roots).",
-                    "ChameleonRoots": [
-                        {
-                            "baseForm": "dict",
-                            "meaning": "to say or speak",
-                            "variations": [
-                                {
-                                    "form": "dict",
-                                    "examples": ["dictate", "dictator", "dictionary"]
-                                },
-                                {
-                                    "form": "dic",
-                                    "examples": ["predict", "contradict", "indict"]
-                                }
-                            ]
-                        },
-                        {
-                            "baseForm": "duct",
-                            "meaning": "to lead or carry",
-                            "variations": [
-                                {
-                                    "form": "duct",
-                                    "examples": ["conduct", "aqueduct", "product"]
-                                },
-                                {
-                                    "form": "duce",
-                                    "examples": ["produce", "reduce", "introduce"]
-                                }
-                            ]
-                        }
-                    ]
-                }
+    "LessonActivity": {
+        "LessonType": "LATIN PROGRESSION PRIMER",
+        "LessonName": "Latin Progression Primer - Chameleon Roots",
+        "LessonTitle": "Chameleon Root Morphemes",
+        "Instructions": "Explore root morphemes that change form in different words (chameleon roots).",
+        "ChameleonRoots": [
+            {
+                "baseForm": "dict",
+                "meaning": "to say or speak",
+                "variations": [
+                    {
+                        "form": "dict",
+                        "examples": ["dictate", "dictator", "dictionary"]
+                    },
+                    {
+                        "form": "dic",
+                        "examples": ["predict", "contradict", "indict"]
+                    }
+                ]
+            },
+            {
+                "baseForm": "duct",
+                "meaning": "to lead or carry",
+                "variations": [
+                    {
+                        "form": "duct",
+                        "examples": ["conduct", "aqueduct", "product"]
+                    },
+                    {
+                        "form": "duce",
+                        "examples": ["produce", "reduce", "introduce"]
+                    }
+                ]
             }
-        }
-    ]
+        ]
+    }
 }

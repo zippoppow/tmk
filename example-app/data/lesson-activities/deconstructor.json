@@ -1,36 +1,26 @@
 {
-    "Product": "Latin Progression",
-    "Set": 5,
-    "MorphemeLessons": [
-        {
-            "Morpheme": "-AN",
-            "LessonSections": {
-                "Section": "Core Lesson",
-                "LessonActivity": {
-                    "LessonType": "DECONSTRUCTOR",
-                    "LessonName": "Deconstructor",
-                    "LessonTitle": "Breaking Down Words into Morphemes",
-                    "Instructions": "Deconstruct words into their morpheme parts.",
-                    "Words": [
-                        {
-                            "word": "prediction",
-                            "deconstruction": "pre- + dict + -ion"
-                        },
-                        {
-                            "word": "contradict",
-                            "deconstruction": "contra- + dict"
-                        },
-                        {
-                            "word": "dictation",
-                            "deconstruction": "dict + -ation"
-                        },
-                        {
-                            "word": "interdiction",
-                            "deconstruction": "inter- + dict + -ion"
-                        }
-                    ]
-                }
+    "LessonActivity": {
+        "LessonType": "DECONSTRUCTOR",
+        "LessonName": "Deconstructor",
+        "LessonTitle": "Breaking Down Words into Morphemes",
+        "Instructions": "Deconstruct words into their morpheme parts.",
+        "Words": [
+            {
+                "word": "prediction",
+                "deconstruction": "pre- + dict + -ion"
+            },
+            {
+                "word": "contradict",
+                "deconstruction": "contra- + dict"
+            },
+            {
+                "word": "dictation",
+                "deconstruction": "dict + -ation"
+            },
+            {
+                "word": "interdiction",
+                "deconstruction": "inter- + dict + -ion"
             }
-        }
-    ]
+        ]
+    }
 }

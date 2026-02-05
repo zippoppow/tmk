@@ -1,38 +1,28 @@
 {
-    "Product": "Latin Progression",
-    "Set": 5,
-    "MorphemeLessons": [
-        {
-            "Morpheme": "-AN",
-            "LessonSections": {
-                "Section": "Core Lesson",
-                "LessonActivity": {
-                    "LessonType": "PRIMER",
-                    "LessonName": "Introduction to Morphemes - Primer 1",
-                    "LessonTitle": "Introduction to Morpheme Structure",
-                    "Instructions": "Learn the basic structure of morphemes and how they combine.",
-                    "Content": {
-                        "introduction": "Morphemes are the smallest meaningful units in language. They combine to form words.",
-                        "morphemeTypes": [
-                            {
-                                "type": "Prefix",
-                                "definition": "A morpheme added to the beginning of a word",
-                                "examples": ["pre-", "con-", "re-"]
-                            },
-                            {
-                                "type": "Root/Base",
-                                "definition": "The main meaningful part of a word",
-                                "examples": ["dict", "duct", "duce"]
-                            },
-                            {
-                                "type": "Suffix",
-                                "definition": "A morpheme added to the end of a word",
-                                "examples": ["-tion", "-ate", "-ary"]
-                            }
-                        ]
-                    }
+    "LessonActivity": {
+        "LessonType": "PRIMER",
+        "LessonName": "Introduction to Morphemes - Primer 1",
+        "LessonTitle": "Introduction to Morpheme Structure",
+        "Instructions": "Learn the basic structure of morphemes and how they combine.",
+        "Content": {
+            "introduction": "Morphemes are the smallest meaningful units in language. They combine to form words.",
+            "morphemeTypes": [
+                {
+                    "type": "Prefix",
+                    "definition": "A morpheme added to the beginning of a word",
+                    "examples": ["pre-", "con-", "re-"]
+                },
+                {
+                    "type": "Root/Base",
+                    "definition": "The main meaningful part of a word",
+                    "examples": ["dict", "duct", "duce"]
+                },
+                {
+                    "type": "Suffix",
+                    "definition": "A morpheme added to the end of a word",
+                    "examples": ["-tion", "-ate", "-ary"]
                 }
-            }
+            ]
         }
-    ]
+    }
 }

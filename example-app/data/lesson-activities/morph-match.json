@@ -1,40 +1,30 @@
 {
-    "Product": "Latin Progression",
-    "Set": 5,
-    "MorphemeLessons": [
-        {
-            "Morpheme": "-AN",
-            "LessonSections": {
-                "Section": "Activities",
-                "LessonActivity": {
-                    "LessonType": "MORPH MATCH",
-                    "LessonName": "Match Morphology Words",
-                    "LessonTitle": "Match Words to Definitions",
-                    "Instructions": "Based on your knowledge of the morphemes, match the words on the left to the definitions on the right.",
-                    "Pairs": [
-                        {
-                            "word": "dictate",
-                            "definition": "to speak or say authoritatively"
-                        },
-                        {
-                            "word": "predict",
-                            "definition": "to say or tell beforehand"
-                        },
-                        {
-                            "word": "contradict",
-                            "definition": "to speak against or deny"
-                        },
-                        {
-                            "word": "conduct",
-                            "definition": "to lead or direct"
-                        },
-                        {
-                            "word": "product",
-                            "definition": "something produced or made"
-                        }
-                    ]
-                }
+    "LessonActivity": {
+        "LessonType": "MORPH MATCH",
+        "LessonName": "Match Morphology Words",
+        "LessonTitle": "Match Words to Definitions",
+        "Instructions": "Based on your knowledge of the morphemes, match the words on the left to the definitions on the right.",
+        "Pairs": [
+            {
+                "word": "dictate",
+                "definition": "to speak or say authoritatively"
+            },
+            {
+                "word": "predict",
+                "definition": "to say or tell beforehand"
+            },
+            {
+                "word": "contradict",
+                "definition": "to speak against or deny"
+            },
+            {
+                "word": "conduct",
+                "definition": "to lead or direct"
+            },
+            {
+                "word": "product",
+                "definition": "something produced or made"
             }
-        }
-    ]
+        ]
+    }
 }

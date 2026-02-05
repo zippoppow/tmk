@@ -17,54 +17,85 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const TMK_API_URL = process.env.NEXT_PUBLIC_TMK_API_URL || 'http://localhost:3000';
 
 export default function CreateMorphemePage() {
   const [formData, setFormData] = useState({
     name: '',
-    type: '',
-    meaning: '',
-    definition: '',
-    etymology: '',
-    language: '',
-    notes: '',
+    senseOfMeaning: '',
+    variants: [],
+    pronunciations: [],
+    morphemeWordRoleId: '',
+    morphemeWordOriginId: '',
+    wordFormationConventionId: '',
   });
 
+  const [newVariant, setNewVariant] = useState('');
+  const [newPronunciation, setNewPronunciation] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
-  const [morphemeTypes, setMorphemeTypes] = useState([]);
+  const [wordRoles, setWordRoles] = useState([]);
+  const [morphemeOrigins, setMorphemeOrigins] = useState([]);
+  const [wordFormationConventions, setWordFormationConventions] = useState([]);
   const [loadingLookups, setLoadingLookups] = useState(true);
   const [lookupError, setLookupError] = useState('');
 
-  // Fetch morpheme types on component mount
+  // Fetch lookup tables on component mount
   useEffect(() => {
-    const fetchMorphemeTypes = async () => {
+    const fetchLookupTables = async () => {
       try {
         setLoadingLookups(true);
         setLookupError('');
 
-        const response = await fetch(`${TMK_API_URL}/api/morpheme-types`);
+        const [rolesRes, originsRes, conventionsRes] = await Promise.all([
+          fetch(`${TMK_API_URL}/api/morpheme-word-roles`),
+          fetch(`${TMK_API_URL}/api/morpheme-word-origins`),
+          fetch(`${TMK_API_URL}/api/word-formation-conventions`),
+        ]);
 
-        if (!response.ok) {
-          console.error('Morpheme types fetch failed:', response.status, response.statusText);
-          throw new Error(`Morpheme types fetch failed: ${response.status}`);
+        if (!rolesRes.ok) {
+          console.error('Word roles fetch failed:', rolesRes.status, rolesRes.statusText);
+          throw new Error(`Word roles fetch failed: ${rolesRes.status}`);
+        }
+        if (!originsRes.ok) {
+          console.error('Morpheme origins fetch failed:', originsRes.status, originsRes.statusText);
+          throw new Error(`Morpheme origins fetch failed: ${originsRes.status}`);
+        }
+        if (!conventionsRes.ok) {
+          console.error('Word formation conventions fetch failed:', conventionsRes.status, conventionsRes.statusText);
+          throw new Error(`Word formation conventions fetch failed: ${conventionsRes.status}`);
         }
 
-        const data = await response.json();
-        console.log('Morpheme types data:', data);
+        const rolesData = await rolesRes.json();
+        const originsData = await originsRes.json();
+        const conventionsData = await conventionsRes.json();
 
-        setMorphemeTypes(data.data || data || []);
+        console.log('Word roles data:', rolesData);
+        console.log('Morpheme origins data:', originsData);
+        console.log('Word formation conventions data:', conventionsData);
+
+        setWordRoles(rolesData.data || rolesData || []);
+        setMorphemeOrigins(originsData.data || originsData || []);
+        setWordFormationConventions(conventionsData.data || conventionsData || []);
       } catch (error) {
-        console.error('Error fetching morpheme types:', error);
-        setLookupError(`Failed to load morpheme types: ${error.message}`);
+        console.error('Error fetching lookup tables:', error);
+        setLookupError(`Failed to load lookup tables: ${error.message}`);
       } finally {
         setLoadingLookups(false);
       }
     };
 
-    fetchMorphemeTypes();
+    fetchLookupTables();
   }, []);
 
   const handleInputChange = (e) => {
@@ -72,6 +103,40 @@ export default function CreateMorphemePage() {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleAddVariant = () => {
+    if (newVariant.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        variants: [...prev.variants, newVariant.trim()],
+      }));
+      setNewVariant('');
+    }
+  };
+
+  const handleRemoveVariant = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      variants: prev.variants.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleAddPronunciation = () => {
+    if (newPronunciation.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        pronunciations: [...prev.pronunciations, newPronunciation.trim()],
+      }));
+      setNewPronunciation('');
+    }
+  };
+
+  const handleRemovePronunciation = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      pronunciations: prev.pronunciations.filter((_, i) => i !== index),
     }));
   };
 
@@ -83,17 +148,17 @@ export default function CreateMorphemePage() {
     try {
       const payload = {
         name: formData.name,
-        type: formData.type,
-        meaning: formData.meaning,
-        definition: formData.definition,
-        etymology: formData.etymology,
-        language: formData.language,
-        notes: formData.notes,
+        senseOfMeaning: formData.senseOfMeaning,
+        variants: formData.variants.length > 0 ? formData.variants : undefined,
+        pronunciations: formData.pronunciations.length > 0 ? formData.pronunciations : undefined,
+        morphemeWordRoleId: formData.morphemeWordRoleId ? parseInt(formData.morphemeWordRoleId) : undefined,
+        morphemeWordOriginId: formData.morphemeWordOriginId ? parseInt(formData.morphemeWordOriginId) : undefined,
+        wordFormationConventionId: formData.wordFormationConventionId ? parseInt(formData.wordFormationConventionId) : undefined,
       };
 
-      // Remove empty fields
+      // Remove undefined fields
       Object.keys(payload).forEach(
-        (key) => payload[key] === '' && delete payload[key]
+        (key) => payload[key] === undefined && delete payload[key]
       );
 
       console.log('Submitting payload:', payload);
@@ -122,13 +187,15 @@ export default function CreateMorphemePage() {
       // Reset form
       setFormData({
         name: '',
-        type: '',
-        meaning: '',
-        definition: '',
-        etymology: '',
-        language: '',
-        notes: '',
+        senseOfMeaning: '',
+        variants: [],
+        pronunciations: [],
+        morphemeWordRoleId: '',
+        morphemeWordOriginId: '',
+        wordFormationConventionId: '',
       });
+      setNewVariant('');
+      setNewPronunciation('');
     } catch (error) {
       console.error('Error creating morpheme:', error);
       setMessage({
@@ -222,19 +289,19 @@ export default function CreateMorphemePage() {
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <FormControl fullWidth>
-                        <InputLabel>Type</InputLabel>
+                        <InputLabel>Word Role</InputLabel>
                         <Select
-                          label="Type"
-                          name="type"
-                          value={formData.type}
+                          label="Word Role"
+                          name="morphemeWordRoleId"
+                          value={formData.morphemeWordRoleId}
                           onChange={handleInputChange}
                         >
                           <MenuItem value="">
-                            <em>Select type</em>
+                            <em>Select word role</em>
                           </MenuItem>
-                          {morphemeTypes.map((type) => (
-                            <MenuItem key={type.id} value={type.id}>
-                              {type.name} ({type.id})
+                          {wordRoles.map((role) => (
+                            <MenuItem key={role.id} value={role.id}>
+                              {role.name} ({role.id})
                             </MenuItem>
                           ))}
                         </Select>
@@ -243,60 +310,182 @@ export default function CreateMorphemePage() {
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        label="Meaning"
-                        name="meaning"
-                        value={formData.meaning}
+                        label="Sense of Meaning"
+                        name="senseOfMeaning"
+                        value={formData.senseOfMeaning}
                         onChange={handleInputChange}
-                        placeholder="e.g., to speak, before, act of"
-                        multiline
-                        rows={2}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Definition"
-                        name="definition"
-                        value={formData.definition}
-                        onChange={handleInputChange}
-                        placeholder="Detailed definition of the morpheme"
+                        placeholder="e.g., above, to speak, able to"
                         multiline
                         rows={2}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Etymology"
-                        name="etymology"
-                        value={formData.etymology}
-                        onChange={handleInputChange}
-                        placeholder="e.g., Latin, Greek, Anglo-Saxon"
-                      />
+                      <FormControl fullWidth>
+                        <InputLabel>Morpheme Origin</InputLabel>
+                        <Select
+                          label="Morpheme Origin"
+                          name="morphemeWordOriginId"
+                          value={formData.morphemeWordOriginId}
+                          onChange={handleInputChange}
+                        >
+                          <MenuItem value="">
+                            <em>Select origin</em>
+                          </MenuItem>
+                          {morphemeOrigins.map((origin) => (
+                            <MenuItem key={origin.id} value={origin.id}>
+                              {origin.name} ({origin.id})
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
                     </Grid>
                     <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Language"
-                        name="language"
-                        value={formData.language}
-                        onChange={handleInputChange}
-                        placeholder="e.g., Latin, Greek"
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Notes"
-                        name="notes"
-                        value={formData.notes}
-                        onChange={handleInputChange}
-                        placeholder="Additional notes or comments"
-                        multiline
-                        rows={2}
-                      />
+                      <FormControl fullWidth>
+                        <InputLabel>Word Formation Convention</InputLabel>
+                        <Select
+                          label="Word Formation Convention"
+                          name="wordFormationConventionId"
+                          value={formData.wordFormationConventionId}
+                          onChange={handleInputChange}
+                        >
+                          <MenuItem value="">
+                            <em>Select convention</em>
+                          </MenuItem>
+                          {wordFormationConventions.map((convention) => (
+                            <MenuItem key={convention.id} value={convention.id}>
+                              {convention.name} ({convention.id})
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
                     </Grid>
                   </Grid>
+
+                  {/* Variants Section */}
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 'bold', mb: 2, mt: 3 }}
+                  >
+                    Variants
+                  </Typography>
+
+                  <Paper sx={{ p: 2, mb: 3, bgcolor: '#f0f8ff', border: '1px solid #b3e5fc' }}>
+                    <Grid container spacing={2} sx={{ mb: 2 }}>
+                      <Grid item xs={12} sm={9}>
+                        <TextField
+                          fullWidth
+                          label="Variant"
+                          size="small"
+                          value={newVariant}
+                          onChange={(e) => setNewVariant(e.target.value)}
+                          placeholder="e.g., COL-, COR-, COM-"
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          fullWidth
+                          onClick={handleAddVariant}
+                          sx={{ height: '40px' }}
+                        >
+                          Add Variant
+                        </Button>
+                      </Grid>
+                    </Grid>
+
+                    {formData.variants.length > 0 && (
+                      <TableContainer>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow sx={{ bgcolor: '#e1f5fe' }}>
+                              <TableCell>Variant</TableCell>
+                              <TableCell align="center">Action</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {formData.variants.map((variant, idx) => (
+                              <TableRow key={idx}>
+                                <TableCell>{variant}</TableCell>
+                                <TableCell align="center">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleRemoveVariant(idx)}
+                                    color="error"
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    )}
+                  </Paper>
+
+                  {/* Pronunciations Section */}
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 'bold', mb: 2, mt: 3 }}
+                  >
+                    Pronunciations
+                  </Typography>
+
+                  <Paper sx={{ p: 2, mb: 3, bgcolor: '#f0f8ff', border: '1px solid #b3e5fc' }}>
+                    <Grid container spacing={2} sx={{ mb: 2 }}>
+                      <Grid item xs={12} sm={9}>
+                        <TextField
+                          fullWidth
+                          label="Pronunciation"
+                          size="small"
+                          value={newPronunciation}
+                          onChange={(e) => setNewPronunciation(e.target.value)}
+                          placeholder="e.g., /kɒn/, /trænz/"
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          fullWidth
+                          onClick={handleAddPronunciation}
+                          sx={{ height: '40px' }}
+                        >
+                          Add Pronunciation
+                        </Button>
+                      </Grid>
+                    </Grid>
+
+                    {formData.pronunciations.length > 0 && (
+                      <TableContainer>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow sx={{ bgcolor: '#e1f5fe' }}>
+                              <TableCell>Pronunciation</TableCell>
+                              <TableCell align="center">Action</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {formData.pronunciations.map((pronunciation, idx) => (
+                              <TableRow key={idx}>
+                                <TableCell>{pronunciation}</TableCell>
+                                <TableCell align="center">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleRemovePronunciation(idx)}
+                                    color="error"
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    )}
+                  </Paper>
 
                   {/* Action Buttons */}
                   <Box

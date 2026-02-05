@@ -1,41 +1,31 @@
 {
-    "Product": "Latin Progression",
-    "Set": 5,
-    "MorphemeLessons": [
-        {
-            "Morpheme": "-AN",
-            "LessonSections": {
-                "Section": "Activities",
-                "LessonActivity": {
-                    "LessonType": "SUFFIX TRANSFORMER",
-                    "LessonName": "Transform Words with Suffixes",
-                    "LessonTitle": "Change the Ending to Transform Words",
-                    "Instructions": "Transform words by changing or adding different suffixes.",
-                    "Transformations": [
-                        {
-                            "original": "dict",
-                            "original_meaning": "base word",
-                            "transformed": "dictation",
-                            "suffix": "-ation",
-                            "new_meaning": "noun - act of dictating"
-                        },
-                        {
-                            "original": "predict",
-                            "original_meaning": "verb",
-                            "transformed": "prediction",
-                            "suffix": "-ion",
-                            "new_meaning": "noun - act of predicting"
-                        },
-                        {
-                            "original": "conduct",
-                            "original_meaning": "verb",
-                            "transformed": "conductor",
-                            "suffix": "-or",
-                            "new_meaning": "noun - person who conducts"
-                        }
-                    ]
-                }
+    "LessonActivity": {
+        "LessonType": "SUFFIX TRANSFORMER",
+        "LessonName": "Transform Words with Suffixes",
+        "LessonTitle": "Change the Ending to Transform Words",
+        "Instructions": "Transform words by changing or adding different suffixes.",
+        "Transformations": [
+            {
+                "original": "dict",
+                "original_meaning": "base word",
+                "transformed": "dictation",
+                "suffix": "-ation",
+                "new_meaning": "noun - act of dictating"
+            },
+            {
+                "original": "predict",
+                "original_meaning": "verb",
+                "transformed": "prediction",
+                "suffix": "-ion",
+                "new_meaning": "noun - act of predicting"
+            },
+            {
+                "original": "conduct",
+                "original_meaning": "verb",
+                "transformed": "conductor",
+                "suffix": "-or",
+                "new_meaning": "noun - person who conducts"
             }
-        }
-    ]
+        ]
+    }
 }

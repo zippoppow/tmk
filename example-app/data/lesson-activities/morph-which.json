@@ -1,35 +1,25 @@
 {
-    "Product": "Latin Progression",
-    "Set": 5,
-    "MorphemeLessons": [
-        {
-            "Morpheme": "-AN",
-            "LessonSections": {
-                "Section": "Activities",
-                "LessonActivity": {
-                    "LessonType": "MORPH WHICH",
-                    "LessonName": "Identify the Morpheme",
-                    "LessonTitle": "Which Morpheme Completes the Word?",
-                    "Instructions": "Choose the correct morpheme to complete each word.",
-                    "Questions": [
-                        {
-                            "question": "_____ + dict + -ion = prediction",
-                            "options": ["pre-", "con-", "re-"],
-                            "answer": "pre-"
-                        },
-                        {
-                            "question": "contra- + _____ = contradict",
-                            "options": ["duct", "dict", "duce"],
-                            "answer": "dict"
-                        },
-                        {
-                            "question": "pro- + _____ = produce",
-                            "options": ["dict", "duce", "duct"],
-                            "answer": "duce"
-                        }
-                    ]
-                }
+    "LessonActivity": {
+        "LessonType": "MORPH WHICH",
+        "LessonName": "Identify the Morpheme",
+        "LessonTitle": "Which Morpheme Completes the Word?",
+        "Instructions": "Choose the correct morpheme to complete each word.",
+        "Questions": [
+            {
+                "question": "_____ + dict + -ion = prediction",
+                "options": ["pre-", "con-", "re-"],
+                "answer": "pre-"
+            },
+            {
+                "question": "contra- + _____ = contradict",
+                "options": ["duct", "dict", "duce"],
+                "answer": "dict"
+            },
+            {
+                "question": "pro- + _____ = produce",
+                "options": ["dict", "duce", "duct"],
+                "answer": "duce"
             }
-        }
-    ]
+        ]
+    }
 }

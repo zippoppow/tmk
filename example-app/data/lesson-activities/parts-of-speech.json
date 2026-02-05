@@ -1,45 +1,35 @@
 {
-    "Product": "Latin Progression",
-    "Set": 5,
-    "MorphemeLessons": [
-        {
-            "Morpheme": "-AN",
-            "LessonSections": {
-                "Section": "Core Lesson",
-                "LessonActivity": {
-                    "LessonType": "PARTS OF SPEECH",
-                    "LessonName": "Identify Parts of Speech",
-                    "LessonTitle": "Words and Their Parts of Speech",
-                    "Instructions": "Identify the part of speech for each word based on its morpheme structure.",
-                    "Words": [
-                        {
-                            "word": "dictate",
-                            "partOfSpeech": "Verb",
-                            "morphemes": "dict + -ate"
-                        },
-                        {
-                            "word": "dictionary",
-                            "partOfSpeech": "Noun",
-                            "morphemes": "dict + -ary"
-                        },
-                        {
-                            "word": "conduct",
-                            "partOfSpeech": "Verb/Noun",
-                            "morphemes": "con- + duct"
-                        },
-                        {
-                            "word": "product",
-                            "partOfSpeech": "Noun",
-                            "morphemes": "pro- + duct"
-                        },
-                        {
-                            "word": "prediction",
-                            "partOfSpeech": "Noun",
-                            "morphemes": "pre- + dict + -ion"
-                        }
-                    ]
-                }
+    "LessonActivity": {
+        "LessonType": "PARTS OF SPEECH",
+        "LessonName": "Identify Parts of Speech",
+        "LessonTitle": "Words and Their Parts of Speech",
+        "Instructions": "Identify the part of speech for each word based on its morpheme structure.",
+        "Words": [
+            {
+                "word": "dictate",
+                "partOfSpeech": "Verb",
+                "morphemes": "dict + -ate"
+            },
+            {
+                "word": "dictionary",
+                "partOfSpeech": "Noun",
+                "morphemes": "dict + -ary"
+            },
+            {
+                "word": "conduct",
+                "partOfSpeech": "Verb/Noun",
+                "morphemes": "con- + duct"
+            },
+            {
+                "word": "product",
+                "partOfSpeech": "Noun",
+                "morphemes": "pro- + duct"
+            },
+            {
+                "word": "prediction",
+                "partOfSpeech": "Noun",
+                "morphemes": "pre- + dict + -ion"
             }
-        }
-    ]
+        ]
+    }
 }
