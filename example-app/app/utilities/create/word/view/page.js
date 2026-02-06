@@ -21,6 +21,7 @@ import {
   Chip,
   Button,
 } from '@mui/material';
+import { findBestMorphemeVariant } from './morpheme-utils.js';
 
 const TMK_API_URL = process.env.NEXT_PUBLIC_TMK_API_URL || 'http://localhost:3000';
 
@@ -30,35 +31,44 @@ export default function ViewWordsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [morphemes, setMorphemes] = useState([]);
 
-  // Fetch words on mount
+  // Fetch words and morphemes on mount
   useEffect(() => {
-    const fetchWords = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError('');
 
-        const response = await fetch(`${TMK_API_URL}/api/words`);
+        const [wordsRes, morphemesRes] = await Promise.all([
+          fetch(`${TMK_API_URL}/api/words`),
+          fetch(`${TMK_API_URL}/api/morphemes`),
+        ]);
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch words: ${response.status}`);
+        if (!wordsRes.ok || !morphemesRes.ok) {
+          throw new Error(`Failed to fetch data: ${wordsRes.status} / ${morphemesRes.status}`);
         }
 
-        const data = await response.json();
-        console.log('Words data:', data);
+        const wordsData = await wordsRes.json();
+        const morphemesData = await morphemesRes.json();
+        console.log('Words data:', wordsData);
+        console.log('Morphemes data:', morphemesData);
 
-        const wordsList = data.data || data || [];
+        const wordsList = wordsData.data || wordsData || [];
+        const morphemesList = morphemesData.data || morphemesData || [];
+        
         setWords(wordsList);
         setFilteredWords(wordsList);
+        setMorphemes(morphemesList);
       } catch (error) {
-        console.error('Error fetching words:', error);
-        setError(`Failed to load words: ${error.message}`);
+        console.error('Error fetching data:', error);
+        setError(`Failed to load data: ${error.message}`);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchWords();
+    fetchData();
   }, []);
 
   // Handle search filtering
@@ -68,29 +78,62 @@ export default function ViewWordsPage() {
     } else {
       const term = searchTerm.toLowerCase();
       const filtered = words.filter((w) => {
+        const baseMorphemeName = morphemes.find(m => m.id === w.baseMorphemeId)?.name || '';
         return (
           w.name?.toLowerCase().includes(term) ||
           w.wordConstructor?.toLowerCase().includes(term) ||
           w.partOfSpeech?.name?.toLowerCase().includes(term) ||
-          w.vocabularyTier?.name?.toLowerCase().includes(term)
+          w.vocabularyTier?.name?.toLowerCase().includes(term) ||
+          baseMorphemeName?.toLowerCase().includes(term)
         );
       });
       setFilteredWords(filtered);
     }
-  }, [searchTerm, words]);
+  }, [searchTerm, words, morphemes]);
+
+  // Helper function to get the best matching base morpheme variant with display text
+  const getBaseMorphemeVariant = (word) => {
+    if (!word.baseMorphemeId || morphemes.length === 0) {
+      return '';
+    }
+    
+    const baseMorpheme = morphemes.find(m => m.id === word.baseMorphemeId);
+    if (!baseMorpheme) {
+      return '';
+    }
+
+    // Use the utility function to find the best matching variant
+    const variant = findBestMorphemeVariant(word.wordConstructor, baseMorpheme);
+    
+    // If variant differs from base name, show variant with note
+    if (variant && variant !== baseMorpheme.name) {
+      return `${variant} (variant of ${baseMorpheme.name})`;
+    }
+    
+    return variant;
+  };
 
   const handleRefresh = async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`${TMK_API_URL}/api/words`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      const wordsList = data.data || data || [];
+      const [wordsRes, morphemesRes] = await Promise.all([
+        fetch(`${TMK_API_URL}/api/words`),
+        fetch(`${TMK_API_URL}/api/morphemes`),
+      ]);
+      if (!wordsRes.ok || !morphemesRes.ok) throw new Error(`HTTP ${wordsRes.status} / ${morphemesRes.status}`);
+      
+      const wordsData = await wordsRes.json();
+      const morphemesData = await morphemesRes.json();
+      
+      const wordsList = wordsData.data || wordsData || [];
+      const morphemesList = morphemesData.data || morphemesData || [];
+      
       setWords(wordsList);
       setFilteredWords(wordsList);
+      setMorphemes(morphemesList);
     } catch (error) {
-      console.error('Error refreshing words:', error);
+      console.error('Error refreshing data:', error);
       setError(`Failed to refresh: ${error.message}`);
     } finally {
       setLoading(false);
@@ -104,12 +147,13 @@ export default function ViewWordsPage() {
     }
 
     try {
-      const headers = ['name', 'wordConstructor', 'totalSyllables', 'partOfSpeech', 'vocabularyTier', 'instructionalLevel', 'dictionaryRef', 'prefixes', 'suffixes'];
+      const headers = ['name', 'wordConstructor', 'totalSyllables', 'baseElement', 'partOfSpeech', 'vocabularyTier', 'instructionalLevel', 'dictionaryRef', 'prefixes', 'suffixes'];
       
       const rows = filteredWords.map((word) => [
         word.name,
         word.wordConstructor || '',
         word.totalSyllables || '',
+        getBaseMorphemeVariant(word),
         word.partOfSpeech?.name || '',
         word.vocabularyTier?.name || '',
         word.instructionalLevel?.name || '',
@@ -177,7 +221,7 @@ export default function ViewWordsPage() {
             >
               <Typography variant="body2">
                 <strong>Instructions:</strong> Below is a list of all words in the TMK-API
-                database. Use the search box to filter by name, constructor, part of speech, or vocabulary tier. Click Refresh
+                database. Use the search box to filter by name, constructor, part of speech, base element, or vocabulary tier. Click Refresh
                 to reload the list.
               </Typography>
             </Paper>
@@ -198,7 +242,7 @@ export default function ViewWordsPage() {
                     <TextField
                       fullWidth
                       label="Search"
-                      placeholder="Search by name, constructor, part of speech, or tier..."
+                      placeholder="Search by name, constructor, part of speech, base element, or tier..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       size="small"
@@ -233,6 +277,7 @@ export default function ViewWordsPage() {
                         <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>Constructor</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>Syllables</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Base Element</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>Part of Speech</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>Vocabulary Tier</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>Instructional Level</TableCell>
@@ -250,6 +295,9 @@ export default function ViewWordsPage() {
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center' }}>
                               {word.totalSyllables || '—'}
+                            </TableCell>
+                            <TableCell>
+                              {getBaseMorphemeVariant(word) || '—'}
                             </TableCell>
                             <TableCell>
                               {word.partOfSpeech?.name || '—'}
@@ -302,7 +350,7 @@ export default function ViewWordsPage() {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={8} sx={{ textAlign: 'center', py: 3, color: '#999' }}>
+                          <TableCell colSpan={9} sx={{ textAlign: 'center', py: 3, color: '#999' }}>
                             {searchTerm ? 'No words match your search' : 'No words found'}
                           </TableCell>
                         </TableRow>
