@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ThemeProvider,
   createTheme,
@@ -25,10 +25,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  TextField,
 } from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { bulkImport } from './bulk-import.js';
 
 const theme = createTheme();
+const TMK_API_URL = process.env.NEXT_PUBLIC_TMK_API_URL || 'http://localhost:3000';
 
 export default function ImportMorphemesPage() {
   const [morphemes, setMorphemes] = useState([]);
@@ -37,25 +40,72 @@ export default function ImportMorphemesPage() {
   const [importResults, setImportResults] = useState(null);
   const [error, setError] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [lookupTables, setLookupTables] = useState(null);
+  const [parsedRows, setParsedRows] = useState([]);
+  const fileInputRef = useRef(null);
 
-  // Load morphemes from JSON file on component mount
+  // Load lookup tables on component mount
   useEffect(() => {
-    const loadMorphemes = async () => {
-      setLoading(true);
+    const fetchLookupTables = async () => {
       try {
-        const data = await bulkImport.loadMorphemesFromFile();
-        setMorphemes(data);
-        setError(null);
+        const [rolesRes, originsRes, conventionsRes] = await Promise.all([
+          fetch(`${TMK_API_URL}/api/morpheme-word-roles`),
+          fetch(`${TMK_API_URL}/api/morpheme-word-origins`),
+          fetch(`${TMK_API_URL}/api/word-formation-conventions`),
+        ]);
+
+        if (!rolesRes.ok || !originsRes.ok || !conventionsRes.ok) {
+          throw new Error('Failed to fetch lookup tables');
+        }
+
+        const rolesData = await rolesRes.json();
+        const originsData = await originsRes.json();
+        const conventionsData = await conventionsRes.json();
+
+        setLookupTables({
+          roles: rolesData.data || rolesData || [],
+          origins: originsData.data || originsData || [],
+          conventions: conventionsData.data || conventionsData || [],
+        });
       } catch (err) {
-        setError(`Failed to load morphemes: ${err.message}`);
-        console.error(err);
-      } finally {
-        setLoading(false);
+        console.error('Failed to load lookup tables:', err);
       }
     };
 
-    loadMorphemes();
+    fetchLookupTables();
   }, []);
+
+  const handleFileSelect = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.csv')) {
+      setError('Please upload a CSV file');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setMorphemes([]);
+    setParsedRows([]);
+
+    try {
+      const text = await file.text();
+      const result = await bulkImport.parseCSVAndMapIds(text, lookupTables);
+      
+      if (result.errors.length > 0) {
+        setError(`Parsing completed with ${result.errors.length} error(s):\n${result.errors.join('\n')}`);
+      }
+      
+      setMorphemes(result.morphemes);
+      setParsedRows(result.rows);
+    } catch (err) {
+      setError(`Failed to parse CSV: ${err.message}`);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleImportClick = () => {
     setShowConfirm(true);
@@ -83,6 +133,27 @@ export default function ImportMorphemesPage() {
 
   const handleCancelImport = () => {
     setShowConfirm(false);
+  };
+
+  const downloadSampleCSV = () => {
+    const headers = ['name', 'senseOfMeaning', 'variants', 'pronunciations', 'wordRole', 'wordOrigin', 'wordFormationConvention'];
+    const sampleRows = [
+      ['ambi', 'both', 'ambo', '', 'Prefix', 'Latin', 'Combining form'],
+      ['aud', 'hear', '', '', 'Base Element', 'Latin', 'Root'],
+      ['ible', 'able to be', 'able', '', 'Suffix', 'Latin', ''],
+    ];
+
+    const csvContent = [
+      headers.join(','),
+      ...sampleRows.map(row => row.map(cell => (cell.includes(',') ? `"${cell}"` : cell)).join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'morpheme-import-sample.csv';
+    a.click();
   };
 
   const getRoleColor = (roleId) => {
@@ -119,7 +190,7 @@ export default function ImportMorphemesPage() {
                   color: '#004a99',
                 }}
               >
-                Import Morphemes
+                Import Morphemes from CSV
               </Typography>
               <Typography
                 variant="body1"
@@ -128,7 +199,7 @@ export default function ImportMorphemesPage() {
                   mb: 3,
                 }}
               >
-                Import morpheme data into the TMK database. Review the data below before importing.
+                Upload a CSV file with morpheme data. Use text values (e.g., "Prefix", "Latin") instead of IDs—they will be automatically mapped to database values.
               </Typography>
 
               {error && (
@@ -156,7 +227,7 @@ export default function ImportMorphemesPage() {
                       </Typography>
                       {importResults.errors.map((err, idx) => (
                         <Typography key={idx} variant="caption" sx={{ display: 'block' }}>
-                          • {err.morpheme}: {err.error}
+                          • Row {err.index + 1}: {err.error}
                         </Typography>
                       ))}
                     </Box>
@@ -164,8 +235,37 @@ export default function ImportMorphemesPage() {
                 </Alert>
               )}
 
+              {/* CSV Upload Section */}
+              <Card sx={{ bgcolor: '#f0f8ff', p: 2, mb: 3, border: '2px dashed #004a99' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <CloudUploadIcon sx={{ fontSize: 40, color: '#004a99' }} />
+                  <Box>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                      Choose CSV File
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#666' }}>
+                      CSV should have columns: name, senseOfMeaning, variants, pronunciations, wordRole, wordOrigin, wordFormationConvention
+                    </Typography>
+                  </Box>
+                </Box>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileSelect}
+                  style={{ marginTop: 12 }}
+                />
+              </Card>
+
               {/* Action Buttons */}
-              <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+              <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={downloadSampleCSV}
+                >
+                  Download Sample CSV
+                </Button>
                 <Button
                   variant="contained"
                   color="primary"
@@ -181,56 +281,51 @@ export default function ImportMorphemesPage() {
                     `Import ${morphemes.length} Morphemes`
                   )}
                 </Button>
-                <Button
-                  variant="outlined"
-                  onClick={() => window.location.reload()}
-                  disabled={importing}
-                >
-                  Refresh Data
-                </Button>
               </Box>
 
               {/* Data Summary */}
-              <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-                <Card sx={{ flex: 1, minWidth: 150 }}>
-                  <CardContent sx={{ p: 2 }}>
-                    <Typography color="textSecondary" gutterBottom>
-                      Total Morphemes
-                    </Typography>
-                    <Typography variant="h4">{morphemes.length}</Typography>
-                  </CardContent>
-                </Card>
-                <Card sx={{ flex: 1, minWidth: 150 }}>
-                  <CardContent sx={{ p: 2 }}>
-                    <Typography color="textSecondary" gutterBottom>
-                      Prefixes
-                    </Typography>
-                    <Typography variant="h4">
-                      {morphemes.filter((m) => m.morphemeWordRoleId === 13).length}
-                    </Typography>
-                  </CardContent>
-                </Card>
-                <Card sx={{ flex: 1, minWidth: 150 }}>
-                  <CardContent sx={{ p: 2 }}>
-                    <Typography color="textSecondary" gutterBottom>
-                      Base Elements
-                    </Typography>
-                    <Typography variant="h4">
-                      {morphemes.filter((m) => m.morphemeWordRoleId === 14).length}
-                    </Typography>
-                  </CardContent>
-                </Card>
-                <Card sx={{ flex: 1, minWidth: 150 }}>
-                  <CardContent sx={{ p: 2 }}>
-                    <Typography color="textSecondary" gutterBottom>
-                      Suffixes
-                    </Typography>
-                    <Typography variant="h4">
-                      {morphemes.filter((m) => m.morphemeWordRoleId === 15).length}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Box>
+              {morphemes.length > 0 && (
+                <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+                  <Card sx={{ flex: 1, minWidth: 150 }}>
+                    <CardContent sx={{ p: 2 }}>
+                      <Typography color="textSecondary" gutterBottom>
+                        Total Morphemes
+                      </Typography>
+                      <Typography variant="h4">{morphemes.length}</Typography>
+                    </CardContent>
+                  </Card>
+                  <Card sx={{ flex: 1, minWidth: 150 }}>
+                    <CardContent sx={{ p: 2 }}>
+                      <Typography color="textSecondary" gutterBottom>
+                        Prefixes
+                      </Typography>
+                      <Typography variant="h4">
+                        {morphemes.filter((m) => m.morphemeWordRoleId === 13).length}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                  <Card sx={{ flex: 1, minWidth: 150 }}>
+                    <CardContent sx={{ p: 2 }}>
+                      <Typography color="textSecondary" gutterBottom>
+                        Base Elements
+                      </Typography>
+                      <Typography variant="h4">
+                        {morphemes.filter((m) => m.morphemeWordRoleId === 14).length}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                  <Card sx={{ flex: 1, minWidth: 150 }}>
+                    <CardContent sx={{ p: 2 }}>
+                      <Typography color="textSecondary" gutterBottom>
+                        Suffixes
+                      </Typography>
+                      <Typography variant="h4">
+                        {morphemes.filter((m) => m.morphemeWordRoleId === 15).length}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Box>
+              )}
             </CardContent>
           </Card>
 
@@ -239,7 +334,7 @@ export default function ImportMorphemesPage() {
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
               <CircularProgress />
             </Box>
-          ) : (
+          ) : morphemes.length > 0 ? (
             <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
               <Table>
                 <TableHead>
@@ -262,9 +357,9 @@ export default function ImportMorphemesPage() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {morphemes.map((morpheme) => (
+                  {morphemes.map((morpheme, idx) => (
                     <TableRow
-                      key={morpheme.id}
+                      key={idx}
                       sx={{
                         '&:nth-of-type(odd)': { bgcolor: '#f5f5f5' },
                         '&:hover': { bgcolor: '#e8f0f8' },
@@ -287,13 +382,15 @@ export default function ImportMorphemesPage() {
                           ? morpheme.variants.join(', ')
                           : '—'}
                       </TableCell>
-                      <TableCell>{morpheme.morphemeOrigin?.name || 'N/A'}</TableCell>
+                      <TableCell>
+                        {lookupTables?.origins.find(o => o.id === morpheme.morphemeWordOriginId)?.name || 'N/A'}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </TableContainer>
-          )}
+          ) : null}
         </Container>
       </Box>
 
