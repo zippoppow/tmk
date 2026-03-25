@@ -53,6 +53,7 @@ export default function IntroPage() {
 	const [questionMorpheme, setQuestionMorpheme] = useState('');
 	const [authUser, setAuthUser] = useState(null);
 	const [authLoading, setAuthLoading] = useState(true);
+	const [authFromSuccessRedirect, setAuthFromSuccessRedirect] = useState(false);
 	const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
 	const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, targetType: '', index: -1 });
 
@@ -89,34 +90,31 @@ export default function IntroPage() {
 		return () => clearTimeout(timeout);
 	}, [morpheme, words, questionMorpheme]);
 
-	useEffect(() => {
-		const applyAuthQueryHint = () => {
-			if (typeof window === 'undefined') {
-				return;
-			}
+	const runAuthCheck = async () => {
+		setAuthLoading(true);
+		try {
+			const user = await fetchAuthenticatedUser(apiOrigin);
+			setAuthUser(user);
+		} catch {
+			setAuthUser(null);
+		} finally {
+			setAuthLoading(false);
+		}
+	};
 
+	useEffect(() => {
+		if (typeof window !== 'undefined') {
 			const url = new URL(window.location.href);
 			if (url.searchParams.get('auth') === 'success') {
+				setAuthFromSuccessRedirect(true);
 				showNotice('success', 'Teachable login successful.');
 				url.searchParams.delete('auth');
 				window.history.replaceState({}, '', url.toString());
 			}
-		};
+		}
 
-		const checkAuth = async () => {
-			setAuthLoading(true);
-			try {
-				const user = await fetchAuthenticatedUser(apiOrigin);
-				setAuthUser(user);
-			} catch (_error) {
-				setAuthUser(null);
-			} finally {
-				setAuthLoading(false);
-			}
-		};
-
-		applyAuthQueryHint();
-		checkAuth();
+		runAuthCheck();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [apiOrigin]);
 
 	const handleWordChange = (index, value) => {
@@ -282,7 +280,9 @@ export default function IntroPage() {
 		? 'Checking login...'
 		: authUser
 			? `Logged in: ${authUser.name || authUser.email || 'Teachable'}`
-			: 'Not logged in';
+			: authFromSuccessRedirect
+				? 'Login flow completed — verifying session…'
+				: 'Not logged in';
 
 	return (
 		<Box
@@ -331,22 +331,33 @@ export default function IntroPage() {
 					</Button>
 				</Stack>
 
-				<Box
-					sx={{
-						display: 'inline-flex',
-						alignItems: 'center',
-						px: 1.5,
-						py: 0.75,
-						borderRadius: 1,
-						mb: 2,
-						backgroundColor: authUser ? '#d4edda' : '#fff3cd',
-						color: authUser ? '#155724' : '#856404',
-						border: `1px solid ${authUser ? '#c3e6cb' : '#ffeaa7'}`,
-						fontWeight: 700,
-						fontSize: '0.85rem',
-					}}
-				>
-					{authLabel}
+				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+					<Box
+						sx={{
+							display: 'inline-flex',
+							alignItems: 'center',
+							px: 1.5,
+							py: 0.75,
+							borderRadius: 1,
+							backgroundColor: authUser ? '#d4edda' : authFromSuccessRedirect ? '#cce5ff' : '#fff3cd',
+							color: authUser ? '#155724' : authFromSuccessRedirect ? '#004085' : '#856404',
+							border: `1px solid ${authUser ? '#c3e6cb' : authFromSuccessRedirect ? '#b8daff' : '#ffeaa7'}`,
+							fontWeight: 700,
+							fontSize: '0.85rem',
+						}}
+					>
+						{authLabel}
+					</Box>
+					{!authLoading && !authUser && authFromSuccessRedirect && (
+						<Button
+							size="small"
+							variant="outlined"
+							sx={{ textTransform: 'none', bgcolor: 'white', fontSize: '0.8rem' }}
+							onClick={runAuthCheck}
+						>
+							Retry session check
+						</Button>
+					)}
 				</Box>
 
 				<Card sx={{ borderRadius: 2, boxShadow: 8 }}>

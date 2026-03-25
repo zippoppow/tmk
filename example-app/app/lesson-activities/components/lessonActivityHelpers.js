@@ -68,17 +68,25 @@ export function extractAuthenticatedUser(data) {
 		return null;
 	}
 
+	// Unwrap common Railway/Express envelope shapes: { data: {...} } or { result: {...} }
+	const root =
+		data.data && typeof data.data === 'object' && !Array.isArray(data.data)
+			? data.data
+			: data.result && typeof data.result === 'object' && !Array.isArray(data.result)
+				? data.result
+				: data;
+
 	const explicitAuth =
-		typeof data.authenticated === 'boolean'
-			? data.authenticated
-			: typeof data.isAuthenticated === 'boolean'
-				? data.isAuthenticated
-				: typeof data.loggedIn === 'boolean'
-					? data.loggedIn
+		typeof root.authenticated === 'boolean'
+			? root.authenticated
+			: typeof root.isAuthenticated === 'boolean'
+				? root.isAuthenticated
+				: typeof root.loggedIn === 'boolean'
+					? root.loggedIn
 					: null;
 
-	const user = data.user || data.member || data.currentUser || null;
-	const inferredUser = user || (data.email || data.id || data.name ? data : null);
+	const user = root.user || root.member || root.currentUser || null;
+	const inferredUser = user || (root.email || root.id || root.name ? root : null);
 
 	if (explicitAuth === false) {
 		return null;
@@ -97,12 +105,22 @@ export async function fetchAuthenticatedUser(apiOrigin) {
 		});
 
 		if (!response.ok) {
+			if (process.env.NODE_ENV !== 'production') {
+				console.warn('[TMK auth] /me returned', response.status, response.statusText);
+			}
 			return null;
 		}
 
 		const data = await response.json();
-		return extractAuthenticatedUser(data);
-	} catch {
+		const user = extractAuthenticatedUser(data);
+		if (!user && process.env.NODE_ENV !== 'production') {
+			console.warn('[TMK auth] /me returned 200 but could not extract user. Raw response:', data);
+		}
+		return user;
+	} catch (err) {
+		if (process.env.NODE_ENV !== 'production') {
+			console.error('[TMK auth] /me fetch failed (possible CORS or network error):', err?.message || err);
+		}
 		return null;
 	}
 }
