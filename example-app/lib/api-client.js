@@ -9,7 +9,9 @@
  * - Wordfamilies
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_TMK_API_URL || 'http://localhost:3000';
+//const API_BASE_URL = process.env.NEXT_PUBLIC_TMK_API_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_TMK_API_URL_PRODUCTION || 'https://web-production-ed842.up.railway.app';
+
 
 /**
  * Generic fetch wrapper with error handling

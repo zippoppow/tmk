@@ -1,0 +1,2148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Morphology Kit - INTRO">
+    <title>INTRO</title>
+    
+    <!-- OAuth Configuration -->
+    <script>
+        const TMK_API_ORIGINS = {
+            production: 'https://tmk-api.up.railway.app',
+            staging: 'https://tmk-api.up.railway.app'
+        };
+
+        function resolveTmkApiOrigin() {
+            const { protocol, hostname } = window.location;
+
+            if (
+                protocol === 'file:' ||
+                !hostname ||
+                hostname === 'localhost' ||
+                hostname === '127.0.0.1' ||
+                hostname.endsWith('.local') ||
+                hostname.includes('railway.app') ||
+                hostname.includes('staging')
+            ) {
+                return TMK_API_ORIGINS.staging;
+            }
+
+            if (hostname === 'tmk.themorphologykit.com' || hostname.endsWith('.themorphologykit.com')) {
+                return TMK_API_ORIGINS.production;
+            }
+
+            return TMK_API_ORIGINS.production;
+        }
+
+        const OAUTH_CONFIG = {
+            API_ORIGIN: resolveTmkApiOrigin(),
+            START_ENDPOINT: '/api/auth/teachable/start',
+            ME_ENDPOINT: '/api/auth/teachable/me',
+            LOGOUT_ENDPOINT: '/api/auth/teachable/logout'
+        };
+
+        const AUTH_QUERY_PARAM = 'auth';
+        const AUTH_SUCCESS_VALUE = 'success';
+        const AUTH_HINT_STORAGE_KEY = 'tmk_teachable_auth_hint';
+        const AUTH_EMAIL_STORAGE_KEY = 'tmk_teachable_user_email';
+    </script>
+
+    <style>
+        .container {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            position: relative;
+        }
+
+        .container > div:not(.header-controls):not(#printWrapper) {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        #printWrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .header-controls {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            margin-bottom: 5px;
+            min-width: 900px;
+            max-width: 900px;
+            gap: 8px;
+        }
+
+        .header {
+            text-align: left;
+            border: none;
+            border-bottom: 3px solid #4020A7;
+            padding-bottom: 8px;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 10px;
+        }
+
+        .header-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-column img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .title {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 2px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #000;
+            margin-bottom: 0;
+            margin-top: 0;
+            font-style: italic;
+        }
+
+        .header-morpheme-input {
+            border: 1px solid #4020A7;
+            padding: 8px 0;
+            font-size: 1.2em;
+            color: #4020A7;
+            transition: border-color 0.6s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+            max-width: 150px;
+        }
+
+        .header-morpheme-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .instructions {
+            font-size: 1em;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+
+        .grid-intro-inputs-container {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .grid-intro-input {
+            border: none;
+            border-bottom: 2px solid #ddd;
+            padding: 8px 0;
+            font-size: 1em;
+            color: #333;
+            transition: border-color 0.3s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+            width: 33%;
+        }
+
+        .grid-intro-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .grid-intro-input::placeholder {
+            color: #ccc;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-width: 150px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #4020A7;
+            min-width: 150px;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .btn-clear:active {
+            background: #d0d0d0;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .feedback.show {
+            display: block;
+        }
+
+        .feedback.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .feedback.partial {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .feedback.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .title {
+                font-size: 1.4em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+
+        .btn-download {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-download:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+        .btn-login {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-login:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(0, 86, 179, 0.3);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .auth-status {
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: bold;
+            display: none;
+        }
+
+        .auth-status.authenticated {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: inline-block;
+        }
+
+        .auth-status.not-authenticated {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            display: inline-block;
+        }
+
+        .introGrid {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .introGrid .row {
+            display: grid;
+            grid-template-columns: repeat(3, 3fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .introWordCell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .introWordCell input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #4020A7;
+            border-radius: 4px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .introWordCell input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+
+        .introWordCell input::placeholder {
+            color: #ccc;
+        }
+
+        .morphemeQuestion {
+            margin-top: 30px;
+            font-size: 1.1em;
+            color: #333;
+            text-align: center;
+        }
+
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            min-width: 200px;
+            display: none;
+        }
+
+        .context-menu.show {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #333;
+            transition: background-color 0.2s ease;
+        }
+
+        .context-menu-item:hover {
+            background-color: #667eea;
+            color: white;
+        }
+
+        /* ===== PROJECT MANAGER ===== */
+        .project-manager {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 360px;
+            height: 100vh;
+            background: white;
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0.22);
+            z-index: 9998;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .project-manager.show {
+            display: flex;
+        }
+
+        .pm-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .pm-header h2 {
+            font-size: 1.05em;
+            margin: 0;
+            letter-spacing: 0.3px;
+        }
+
+        .pm-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.3em;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+            opacity: 0.8;
+            font-weight: bold;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .pm-close:hover {
+            opacity: 1;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .pm-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .pm-section-title {
+            font-size: 0.78em;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #888;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .pm-save-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .pm-name-input {
+            flex: 1;
+            padding: 8px 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.95em;
+            font-family: 'Segoe UI', sans-serif;
+            transition: border-color 0.2s;
+        }
+
+        .pm-name-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .pm-btn {
+            border: none;
+            border-radius: 4px;
+            padding: 7px 14px;
+            font-size: 0.85em;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: none;
+            letter-spacing: 0;
+            transition: opacity 0.2s, background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .pm-btn:hover { opacity: 0.88; transform: none; box-shadow: none; }
+        .pm-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .pm-btn-load { background: #007bff; color: white; padding: 5px 10px; font-size: 0.8em; }
+        .pm-btn-new-activity { background: #20c997; color: white; padding: 5px 10px; font-size: 0.8em; }
+        .pm-btn-delete { background: #dc3545; color: white; padding: 5px 10px; font-size: 0.8em; }
+        .pm-btn-sync { background: #28a745; color: white; }
+        .pm-btn-refresh { background: #17a2b8; color: white; }
+        .pm-btn-create-project { background: #20c997; color: white; }
+
+        .pm-project-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .pm-project-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: #fafafa;
+            transition: background 0.15s;
+        }
+
+        .pm-project-item:hover {
+            background: #f0f0ff;
+            border-color: #c5c5f0;
+        }
+
+        .pm-project-item.selected {
+            border-color: #667eea;
+            box-shadow: inset 0 0 0 1px rgba(102, 126, 234, 0.35);
+            background: #eef2ff;
+        }
+
+        .pm-project-info { flex: 1; min-width: 0; }
+
+        .pm-project-name {
+            font-size: 0.92em;
+            font-weight: bold;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pm-project-title-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .pm-activity-count-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 18px;
+            padding: 0 6px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #3f37c9;
+            font-size: 0.72em;
+            font-weight: bold;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .pm-project-meta { font-size: 0.76em; color: #999; margin-top: 2px; }
+        .pm-project-synced { font-size: 0.75em; color: #28a745; margin-left: 6px; }
+        .pm-empty { text-align: center; color: #bbb; font-size: 0.9em; padding: 20px 0; }
+
+        .pm-activity-list {
+            margin-top: 8px;
+            border-top: 1px dashed #ddd;
+            padding-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .pm-activity-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .pm-activity-label {
+            font-size: 0.77em;
+            color: #555;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pm-btn-load-activity {
+            background: #6f42c1;
+            color: white;
+            padding: 4px 8px;
+            font-size: 0.75em;
+        }
+
+        .pm-btn-update-activity {
+            background: #fd7e14;
+            color: white;
+            padding: 4px 8px;
+            font-size: 0.75em;
+        }
+
+        .pm-btn-delete-activity {
+            background: #dc3545;
+            color: white;
+            padding: 4px 8px;
+            font-size: 0.75em;
+        }
+
+        .pm-activity-name-input {
+            flex: 1;
+            min-width: 130px;
+            padding: 5px 7px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.76em;
+        }
+
+        .pm-activity-name-input.selected {
+            border: 2px solid #667eea;
+            background: #eef2ff;
+        }
+
+        .pm-activity-actions {
+            display: inline-flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .pm-sync-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.83em;
+            gap: 8px;
+        }
+
+        .pm-sync-status { color: #555; flex: 1; }
+
+        .pm-cloud-status {
+            display: none;
+            margin-top: -8px;
+            font-size: 0.78em;
+            color: #b02a37;
+            padding: 0 4px;
+        }
+
+        .pm-cloud-status.success {
+            color: #1f7a3e;
+        }
+
+        .pm-current-project {
+            margin-top: 4px;
+            font-size: 0.78em;
+            color: #666;
+        }
+
+        .btn-pm-toggle {
+            background: #4020A7;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-pm-toggle:hover {
+            background: #2e1580;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(64, 32, 167, 0.35);
+        }
+
+        .btn-pm-toggle.active {
+            background: #2e1580;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-pm-toggle:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        @media print { .project-manager { display: none !important; } }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+                max-width: 100%;
+            }
+
+            .header-controls {
+                display: none;
+            }
+
+            .controls {
+                display: none !important;
+            }
+
+            .grid-intro-input {
+                border-bottom: 1px solid #000;
+            }
+
+            .title {
+                page-break-after: avoid;
+            }
+
+            .introGrid .row {
+                page-break-inside: avoid;
+            }
+
+            input {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-controls">
+            <button type="button" id="loginBtn" class="btn-login">Login with Teachable</button>
+            <span id="authStatus" class="auth-status"></span>
+            <button type="button" id="pmToggleBtn" class="btn-pm-toggle">&#128193; Projects</button>
+            <button type="button" id="downloadPdfBtn" class="btn-download">Download as PDF</button>
+            <button type="button" id="openChildBtn" class="btn-download" style="background:#007bff;">Open in Pop-up Screen</button>
+            <button type="button" id="saveSessionBtn" class="btn-download" style="background:#6c757d;">Save Session</button>
+            <button type="button" id="clearSessionBtn" class="btn-download" style="background:#dc3545;">Clear Saved Data</button>
+        </div>
+        <div id="printWrapper">
+            <div class="header">
+                <div class="header-column">
+                    <h1 class="title">INTRO</h1>
+                    <p class="subtitle">Morpheme(s): <input type="text" placeholder="" class="header-morpheme-input"></p>
+                    <p class="instructions">Fill-in the correct form of the morpheme and read the following words.</p>
+                </div>
+                <div class="header-column">
+                    <p><img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit®"></p>
+                </div>
+            </div>
+            <form id="introWordForm">
+                <div class="introGrid">
+                    <div class="row">
+                        <div class="introWordCell"><input type="text" name="item1" placeholder="" class="grid-intro-input"></div>
+                        <div class="introWordCell"><input type="text" name="item2" placeholder="" class="grid-intro-input"></div>
+                        <div class="introWordCell"><input type="text" name="item3" placeholder="" class="grid-intro-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="introWordCell"><input type="text" name="item4" placeholder="" class="grid-intro-input"></div>
+                        <div class="introWordCell"><input type="text" name="item5" placeholder="" class="grid-intro-input"></div>
+                        <div class="introWordCell"><input type="text" name="item6" placeholder="" class="grid-intro-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="introWordCell"><input type="text" name="item7" placeholder="" class="grid-intro-input"></div>
+                        <div class="introWordCell"><input type="text" name="item8" placeholder="" class="grid-intro-input"></div>
+                        <div class="introWordCell"><input type="text" name="item9" placeholder="" class="grid-intro-input"></div>
+                    </div>
+                </div>
+            </form>
+            <div id="morphemeQuestion" class="morphemeQuestion">
+                How does <input type="text" placeholder="" name="questionMorpheme" class="grid-intro-input"> affect the meaning of these words?
+            </div>
+            <div class="controls">
+                <button type="button" class="btn-clear">Clear</button>   
+            </div>
+        </div>
+    </div>
+    <div id="contextMenu" class="context-menu"></div>
+
+    <div id="projectManager" class="project-manager">
+        <div class="pm-header">
+            <h2>&#128193; Project Manager</h2>
+            <button class="pm-close pm-btn" id="pmCloseBtn" title="Close">&#10005;</button>
+        </div>
+        <div class="pm-body">
+            <div>
+                <div class="pm-section-title">Project &amp; Lesson Activity</div>
+                <div class="pm-save-form">
+                    <input type="text" id="pmNameInput" class="pm-name-input" placeholder="Project name&hellip;" maxlength="80">
+                    <button class="pm-btn pm-btn-create-project" id="pmCreateProjectBtn">Create Project</button>
+                </div>
+                <div id="pmCurrentProject" class="pm-current-project">No project selected. Create and select a project to manage lesson activities.</div>
+            </div>
+            <div>
+                <div class="pm-section-title">Saved Projects</div>
+                <div id="pmProjectList" class="pm-project-list"></div>
+            </div>
+            <div id="pmSyncBar" class="pm-sync-bar" style="display:none">
+                <span class="pm-sync-status" id="pmSyncStatus">Not synced to cloud</span>
+                <button class="pm-btn pm-btn-sync" id="pmSyncBtn">&#8593; Sync All</button>
+                <button class="pm-btn pm-btn-refresh" id="pmRefreshCloudBtn">Refresh Cloud</button>
+            </div>
+            <div id="pmCloudStatus" class="pm-cloud-status"></div>
+        </div>
+    </div>
+
+    <script>
+        // ===== STORAGE UTILITIES =====
+        const FORM_NAME = 'intro';
+        const STORAGE_KEY = 'tmk-diy-sessions';
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func(...args), delay);
+            };
+        }
+
+        function saveToStorage() {
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const data = { timestamp: Date.now() };
+            inputs.forEach(input => {
+                data[input.name || input.className] = input.value;
+            });
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            allSessions[FORM_NAME] = data;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+        }
+
+        function restoreFromStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const data = allSessions[FORM_NAME];
+            if (data) {
+                const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+                inputs.forEach(input => {
+                    const key = input.name || input.className;
+                    if (data.hasOwnProperty(key)) {
+                        input.value = data[key];
+                    }
+                });
+            }
+        }
+
+        function clearFormStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            delete allSessions[FORM_NAME];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            inputs.forEach(input => input.value = '');
+        }
+
+        function saveSelectedLessonActivityFromForm() {
+            if (!selectedLessonActivity || !selectedLessonActivity.projectId || !Number.isInteger(selectedLessonActivity.activityIndex)) {
+                return;
+            }
+
+            const projects = getAllProjects();
+            const project = projects.find(p => p.id === selectedLessonActivity.projectId && p.formName === FORM_NAME);
+            if (!project) {
+                return;
+            }
+
+            const activities = getProjectLessonActivities(project);
+            const targetIndex = selectedLessonActivity.activityIndex;
+            if (!activities[targetIndex]) {
+                return;
+            }
+
+            activities[targetIndex] = {
+                ...activities[targetIndex],
+                'modified-at': Date.now(),
+                'lesson-input-data': normalizeIntroLessonInputData(captureCurrentFormData())
+            };
+
+            project.lessonActivities = activities;
+            project.modifiedAtMs = Date.now();
+            project.syncedAt = null;
+            saveAllProjects(projects);
+        }
+
+        function persistFormAndSelectedLessonActivity() {
+            saveToStorage();
+            saveSelectedLessonActivityFromForm();
+        }
+
+        const debouncedSave = debounce(persistFormAndSelectedLessonActivity, 300);
+
+        // ===== FORM CONTROLS =====
+        const clearBtn = document.querySelector('.btn-clear');
+
+        // Auto-save on input event (debounced)
+        const allInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+        allInputs.forEach(input => {
+            input.addEventListener('input', debouncedSave);
+        });
+
+        // ===== STORAGE BUTTON HANDLERS =====
+        const saveSessionBtn = document.getElementById('saveSessionBtn');
+        const clearSessionBtn = document.getElementById('clearSessionBtn');
+
+        if (saveSessionBtn) {
+            saveSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                saveToStorage();
+                
+                if (isUserAuthenticated()) {
+                    alert('Session saved locally. Your Teachable login is active.');
+                } else {
+                    alert('Session saved locally.');
+                }
+            });
+        }
+
+        if (clearSessionBtn) {
+            clearSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Clear all saved data for this exercise?')) {
+                    clearFormStorage();
+                    alert('Saved data cleared!');
+                }
+            });
+        }
+
+        // Form reset handler
+        clearBtn.addEventListener('click', function() {
+            const inputs = document.querySelectorAll('.grid-intro-input');
+            inputs.forEach((input) => {
+                input.value = '';
+                input.style.borderBottomColor = '#ddd';
+                input.style.backgroundColor = 'transparent';
+            });
+            debouncedSave();
+        });
+
+        // Add keyboard navigation
+        const inputs = document.querySelectorAll('.grid-intro-input');
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                }
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                }
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                }
+            });
+        });
+
+        function clearAuthQueryParamsFromUrl() {
+            const url = new URL(window.location.href);
+            if (url.searchParams.has(AUTH_QUERY_PARAM)) {
+                url.searchParams.delete(AUTH_QUERY_PARAM);
+                const cleanQuery = url.searchParams.toString();
+                const cleanUrl = `${url.pathname}${cleanQuery ? `?${cleanQuery}` : ''}${url.hash}`;
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
+        }
+
+        async function handleAuthRedirectState() {
+            const params = new URLSearchParams(window.location.search);
+            const authState = params.get(AUTH_QUERY_PARAM);
+            if (authState !== AUTH_SUCCESS_VALUE) {
+                return;
+            }
+
+            setAuthHint(true);
+            currentAuthUser = { name: 'Teachable' };
+            renderAuthStatus();
+
+            await updateAuthStatus({ allowHintFallback: true });
+
+            // Give the session cookie a moment to settle if callback and frontend are on different domains.
+            if (!isUserAuthenticated()) {
+                for (let attempt = 0; attempt < 2; attempt += 1) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    await updateAuthStatus({ allowHintFallback: true });
+                    if (isUserAuthenticated()) {
+                        break;
+                    }
+                }
+            }
+
+            clearAuthQueryParamsFromUrl();
+        }
+
+        // Restore saved data on load
+        window.addEventListener('load', async function() {
+            restoreFromStorage();
+            await handleAuthRedirectState();
+            if (!isUserAuthenticated()) {
+                if (hasAuthHint()) {
+                    currentAuthUser = { name: 'Teachable' };
+                    renderAuthStatus();
+                }
+                await updateAuthStatus({ allowHintFallback: true });
+            }
+            const firstInput = document.querySelector('#printWrapper input');
+            if (firstInput) firstInput.focus();
+        });
+
+        // Sync with child window
+        window.addEventListener('storage', function(e) {
+            if (e.key === STORAGE_KEY) {
+                restoreFromStorage();
+            }
+        });
+
+        // Context menu
+        const contextMenu = document.getElementById('contextMenu');
+        document.addEventListener('click', function() {
+            contextMenu.classList.remove('show');
+        });
+
+        // Download as PDF
+        const downloadBtn = document.getElementById('downloadPdfBtn');
+        downloadBtn.addEventListener('click', function() {
+            const printWrapper = document.getElementById('printWrapper');
+            const printContent = printWrapper.cloneNode(true);
+            const printWindow = window.open('', '', 'width=800,height=600');
+            
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>INTRO</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 10px; }
+                        .container { background: white; max-width: 900px; width: 100%; padding: 40px; margin: 0 auto; }
+                        .header { text-align: left; border-bottom: 3px solid #4020A7; padding-bottom: 8px; display: grid; grid-template-columns: 3fr 1fr; gap: 10px; }
+                        .header-column { display: flex; flex-direction: column; gap: 4px; }
+                        .header-column img { max-width: 200px; height: auto; }
+                        .title { font-size: 1.6em; font-weight: bold; color: #000; margin-bottom: 2px; letter-spacing: 1px; }
+                        .subtitle { font-size: 1.2em; color: #000; font-style: italic; }
+                        .header-morpheme-input { border: 1px solid #4020A7; padding: 8px 0; font-size: 1.2em; color: #4020A7; background: transparent; font-family: 'Courier New', monospace; max-width: 150px; }
+                        .instructions { font-size: 1em; color: #555; line-height: 1.6; margin-top: 8px; }
+                        .grid-intro-input { border: none; border-bottom: 2px solid #ddd; padding: 8px 0; font-size: 1em; color: #333; background: transparent; font-family: 'Courier New', monospace; }
+                        .introGrid { margin-top: 30px; margin-bottom: 30px; }
+                        .introGrid .row { display: grid; grid-template-columns: repeat(3, 3fr); gap: 15px; margin-bottom: 15px; }
+                        .introWordCell { display: flex; align-items: center; justify-content: center; }
+                        .introWordCell input { width: 100%; padding: 12px; border: 2px solid #4020A7; border-radius: 4px; font-size: 1em; font-family: 'Courier New', monospace; text-align: center; }
+                        .morphemeQuestion { margin-top: 30px; font-size: 1.1em; color: #333; text-align: center; }
+                        .controls { display: none !important; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+            `);
+            
+            const sourceInputs = document.querySelectorAll('#printWrapper input');
+            const clonedInputs = printContent.querySelectorAll('input');
+            sourceInputs.forEach((input, index) => {
+                if (clonedInputs[index]) {
+                    clonedInputs[index].value = input.value;
+                    clonedInputs[index].setAttribute('value', input.value);
+                }
+            });
+
+            printWindow.document.write(printContent.innerHTML);
+            printWindow.document.write(`
+                    </div>
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            };
+        });
+
+        // Open in Pop-up Screen
+        const openChildBtn = document.getElementById('openChildBtn');
+        if (openChildBtn) {
+            openChildBtn.addEventListener('click', function() {
+                const printWrapper = document.getElementById('printWrapper');
+                const printContent = printWrapper.cloneNode(true);
+                const styleEl = document.querySelector('head style');
+                const styleHTML = styleEl ? styleEl.innerHTML : '';
+                const child = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+                child.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${document.title} — Browser View</title><style>${styleHTML}</style></head><body>`);
+                child.document.write(printContent.outerHTML);
+                child.document.write('</body></html>');
+                child.document.close();
+            });
+        }
+
+        // ===== OAUTH INTEGRATION =====
+        let currentAuthUser = null;
+
+        function setAuthHint(enabled) {
+            if (enabled) {
+                sessionStorage.setItem(AUTH_HINT_STORAGE_KEY, '1');
+            } else {
+                sessionStorage.removeItem(AUTH_HINT_STORAGE_KEY);
+            }
+        }
+
+        function hasAuthHint() {
+            return sessionStorage.getItem(AUTH_HINT_STORAGE_KEY) === '1';
+        }
+
+        function isUserAuthenticated() {
+            return !!currentAuthUser;
+        }
+
+        function initiateOAuthLogin() {
+            const authUrl = new URL(`${OAUTH_CONFIG.API_ORIGIN}${OAUTH_CONFIG.START_ENDPOINT}`);
+            authUrl.searchParams.set('redirectTo', window.location.href);
+            window.location.href = authUrl.toString();
+        }
+
+        function extractAuthenticatedUser(data) {
+            if (!data || typeof data !== 'object') {
+                return null;
+            }
+
+            const explicitAuth =
+                typeof data.authenticated === 'boolean' ? data.authenticated :
+                typeof data.isAuthenticated === 'boolean' ? data.isAuthenticated :
+                typeof data.loggedIn === 'boolean' ? data.loggedIn :
+                null;
+
+            const user = data.user || data.member || data.currentUser || null;
+            const inferredUser = user || ((data.email || data.id || data.name) ? data : null);
+
+            if (explicitAuth === false) {
+                return null;
+            }
+
+            if (explicitAuth === true) {
+                return inferredUser || {};
+            }
+
+            return inferredUser;
+        }
+
+        async function fetchAuthStatus() {
+            try {
+                const response = await fetch(`${OAUTH_CONFIG.API_ORIGIN}${OAUTH_CONFIG.ME_ENDPOINT}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    return null;
+                }
+
+                const data = await response.json();
+                return extractAuthenticatedUser(data);
+            } catch (error) {
+                console.error('Failed to check auth status:', error);
+                return null;
+            }
+        }
+
+        function setStoredUserEmail(email) {
+            if (email) {
+                sessionStorage.setItem(AUTH_EMAIL_STORAGE_KEY, email);
+            } else {
+                sessionStorage.removeItem(AUTH_EMAIL_STORAGE_KEY);
+            }
+        }
+
+        function getStoredUserEmail() {
+            return sessionStorage.getItem(AUTH_EMAIL_STORAGE_KEY) || '';
+        }
+
+        function getUserEmail() {
+            if (currentAuthUser && currentAuthUser.email) {
+                return currentAuthUser.email;
+            }
+            return getStoredUserEmail();
+        }
+
+        async function logoutFromTeachable() {
+            try {
+                await fetch(`${OAUTH_CONFIG.API_ORIGIN}${OAUTH_CONFIG.LOGOUT_ENDPOINT}`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (error) {
+                console.error('Failed to log out:', error);
+            } finally {
+                currentAuthUser = null;
+                setAuthHint(false);
+                setStoredUserEmail('');
+            }
+        }
+
+        function updateProjectManagerAccess() {
+            const pmToggleBtn = document.getElementById('pmToggleBtn');
+            if (!pmToggleBtn) return;
+            const authenticated = isUserAuthenticated();
+            pmToggleBtn.disabled = !authenticated;
+            pmToggleBtn.title = authenticated
+                ? 'Open Project Manager'
+                : 'Login with Teachable to use Project Manager';
+        }
+
+        function renderAuthStatus() {
+            const authStatus = document.getElementById('authStatus');
+            const loginBtn = document.getElementById('loginBtn');
+
+            if (isUserAuthenticated()) {
+                const userLabel = currentAuthUser.name || currentAuthUser.email || 'Teachable';
+                authStatus.textContent = `✓ Authenticated as ${userLabel}`;
+                authStatus.classList.remove('not-authenticated');
+                authStatus.classList.add('authenticated');
+                loginBtn.textContent = 'Logout';
+            } else {
+                authStatus.textContent = '✗ Not Authenticated';
+                authStatus.classList.remove('authenticated');
+                authStatus.classList.add('not-authenticated');
+                loginBtn.textContent = 'Login with Teachable';
+                hideProjectManager();
+            }
+
+            updateProjectManagerAccess();
+        }
+
+        async function updateAuthStatus(options = {}) {
+            const authStatus = document.getElementById('authStatus');
+            const loginBtn = document.getElementById('loginBtn');
+            const { allowHintFallback = false } = options;
+
+            authStatus.textContent = 'Checking authentication...';
+            authStatus.classList.remove('authenticated');
+            authStatus.classList.add('not-authenticated');
+            loginBtn.disabled = true;
+
+            const verifiedUser = await fetchAuthStatus();
+            if (verifiedUser) {
+                currentAuthUser = verifiedUser;
+                setAuthHint(true);
+                if (verifiedUser.email) {
+                    setStoredUserEmail(verifiedUser.email);
+                }
+            } else if (allowHintFallback && hasAuthHint()) {
+                currentAuthUser = currentAuthUser || { name: 'Teachable' };
+            } else {
+                currentAuthUser = null;
+            }
+
+            renderAuthStatus();
+            loginBtn.disabled = false;
+        }
+
+        // ===== PROJECT MANAGER =====
+        const PROJECTS_STORAGE_KEY = 'tmk-diy-projects';
+        const DIY_PROJECTS_ENDPOINT = '/api/diy-projects';
+        let cloudProjects = [];
+        let isLoadingCloudProjects = false;
+        let cloudLoadError = '';
+        let cloudStatusTimerId = null;
+        let selectedLocalProjectId = null;
+        let selectedLessonActivity = null;
+
+        function getAllProjects() {
+            try {
+                return JSON.parse(localStorage.getItem(PROJECTS_STORAGE_KEY) || '[]');
+            } catch {
+                return [];
+            }
+        }
+
+        function saveAllProjects(projects) {
+            localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
+        }
+
+        function setCloudLoadStatus(message, type = 'error') {
+            cloudLoadError = message || '';
+            const statusEl = document.getElementById('pmCloudStatus');
+            if (!statusEl) return;
+
+            if (cloudStatusTimerId) {
+                clearTimeout(cloudStatusTimerId);
+                cloudStatusTimerId = null;
+            }
+
+            if (cloudLoadError) {
+                statusEl.textContent = cloudLoadError;
+                statusEl.classList.toggle('success', type === 'success');
+                statusEl.style.display = 'block';
+            } else {
+                statusEl.textContent = '';
+                statusEl.classList.remove('success');
+                statusEl.style.display = 'none';
+            }
+        }
+
+        function showCloudRefreshSuccess() {
+            setCloudLoadStatus('Cloud refreshed.', 'success');
+            cloudStatusTimerId = setTimeout(() => {
+                setCloudLoadStatus('');
+            }, 2000);
+        }
+
+        function updateRefreshCloudButtonState() {
+            const btn = document.getElementById('pmRefreshCloudBtn');
+            if (!btn) return;
+            btn.disabled = isLoadingCloudProjects || !isUserAuthenticated();
+            btn.textContent = isLoadingCloudProjects ? 'Refreshing...' : 'Refresh Cloud';
+        }
+
+        function getLocalProjectById(projectId) {
+            return getAllProjects().find(p => p.id === projectId && p.formName === FORM_NAME) || null;
+        }
+
+        function getSelectedLocalProject() {
+            if (!selectedLocalProjectId) {
+                return null;
+            }
+            return getLocalProjectById(selectedLocalProjectId);
+        }
+
+        function updateProjectContextUI() {
+            const contextEl = document.getElementById('pmCurrentProject');
+            const selectedProject = getSelectedLocalProject();
+
+            if (selectedProject) {
+                if (contextEl) {
+                    contextEl.textContent = `Selected project: ${selectedProject.name}`;
+                }
+                return;
+            }
+
+            if (contextEl) {
+                contextEl.textContent = 'No project selected. Create and select a project to manage lesson activities.';
+            }
+        }
+
+        function setSelectedLocalProject(projectId) {
+            const previousProjectId = selectedLocalProjectId;
+            const localProject = projectId ? getLocalProjectById(projectId) : null;
+            selectedLocalProjectId = localProject ? localProject.id : null;
+            if (!selectedLocalProjectId || previousProjectId !== selectedLocalProjectId) {
+                selectedLessonActivity = null;
+            }
+            updateProjectContextUI();
+        }
+
+        function setSelectedLessonActivity(projectId, activityIndex) {
+            if (!projectId || !Number.isInteger(activityIndex) || activityIndex < 0) {
+                selectedLessonActivity = null;
+                return;
+            }
+            selectedLessonActivity = {
+                projectId,
+                activityIndex
+            };
+        }
+
+        function captureCurrentFormData() {
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const data = {};
+            inputs.forEach(input => {
+                const key = input.name || input.className;
+                if (key) data[key] = input.value;
+            });
+            return data;
+        }
+
+        function normalizeIntroLessonInputData(rawData) {
+            const source = rawData && typeof rawData === 'object' ? rawData : {};
+            return {
+                'header-morpheme-input': String(source['header-morpheme-input'] || ''),
+                item1: String(source.item1 || ''),
+                item2: String(source.item2 || ''),
+                item3: String(source.item3 || ''),
+                item4: String(source.item4 || ''),
+                item5: String(source.item5 || ''),
+                item6: String(source.item6 || ''),
+                item7: String(source.item7 || ''),
+                item8: String(source.item8 || ''),
+                item9: String(source.item9 || ''),
+                questionMorpheme: String(source.questionMorpheme || '')
+            };
+        }
+
+        function createEmptyIntroLessonInputData() {
+            return normalizeIntroLessonInputData({});
+        }
+
+        function createLessonActivitySnapshot(projectName, lessonName, lessonInputData = null) {
+            const now = Date.now();
+            return {
+                'tmk-template': FORM_NAME,
+                'lesson-name': String(lessonName || projectName || ''),
+                'created-at': now,
+                'modified-at': now,
+                'lesson-input-data': lessonInputData && typeof lessonInputData === 'object'
+                    ? normalizeIntroLessonInputData(lessonInputData)
+                    : normalizeIntroLessonInputData(captureCurrentFormData())
+            };
+        }
+
+        function getUniqueLessonActivityName(project, requestedName, excludeIndex = -1) {
+            const baseName = String(requestedName || '').trim();
+            const fallbackBase = baseName || 'Lesson Activity';
+            const usedNames = new Set(
+                getProjectLessonActivities(project)
+                    .map((activity, idx) => ({ name: String(activity['lesson-name'] || '').trim(), idx }))
+                    .filter(item => item.idx !== excludeIndex)
+                    .map(item => item.name)
+            );
+
+            if (!usedNames.has(fallbackBase)) {
+                return fallbackBase;
+            }
+
+            let suffix = 2;
+            let candidate = `${fallbackBase} ${suffix}`;
+            while (usedNames.has(candidate)) {
+                suffix += 1;
+                candidate = `${fallbackBase} ${suffix}`;
+            }
+            return candidate;
+        }
+
+        function getProjectLessonActivities(project) {
+            if (project && Array.isArray(project.lessonActivities) && project.lessonActivities.length > 0) {
+                return project.lessonActivities;
+            }
+
+            // Backward compatibility with older single-snapshot local projects.
+            if (project && project.data && typeof project.data === 'object') {
+                const createdAt = Number.isFinite(project.createdAtMs) ? project.createdAtMs : Date.now();
+                const modifiedAt = Number.isFinite(project.modifiedAtMs) ? project.modifiedAtMs : createdAt;
+                return [{
+                    'tmk-template': FORM_NAME,
+                    'lesson-name': String(project.name || ''),
+                    'created-at': createdAt,
+                    'modified-at': modifiedAt,
+                    'lesson-input-data': normalizeIntroLessonInputData(project.data)
+                }];
+            }
+
+            return [];
+        }
+
+        function getLatestLessonActivity(project) {
+            const activities = getProjectLessonActivities(project);
+            return activities.length > 0 ? activities[activities.length - 1] : null;
+        }
+
+        function applyFormData(data) {
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            inputs.forEach(input => {
+                const key = input.name || input.className;
+                if (key && Object.prototype.hasOwnProperty.call(data, key)) {
+                    input.value = data[key];
+                }
+            });
+            saveToStorage();
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function formatProjectDate(iso) {
+            try {
+                return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            } catch {
+                return iso;
+            }
+        }
+
+        function getDisplayProjects() {
+            const localProjects = getAllProjects()
+                .filter(p => p.formName === FORM_NAME)
+                .map(p => {
+                    const lessonActivities = getProjectLessonActivities(p);
+                    const latest = lessonActivities.length > 0 ? lessonActivities[lessonActivities.length - 1] : null;
+                    return {
+                        ...p,
+                        source: 'local',
+                        lessonActivities,
+                        data: latest && latest['lesson-input-data'] ? latest['lesson-input-data'] : {}
+                    };
+                });
+
+            const cloudOnlyProjects = cloudProjects.filter(cp => !localProjects.some(lp => {
+                const sameName = (lp.name || '').trim() === (cp.name || '').trim();
+                const sameActivities = JSON.stringify(lp.lessonActivities || []) === JSON.stringify(cp.lessonActivities || []);
+                return sameName && sameActivities;
+            }));
+
+            return [...localProjects, ...cloudOnlyProjects];
+        }
+
+        function createLocalProject(name) {
+            const now = Date.now();
+            const trimmedName = name.trim();
+            if (!trimmedName) {
+                return null;
+            }
+            const projects = getAllProjects();
+            const existing = projects.find(p => p.formName === FORM_NAME && (p.name || '').trim() === trimmedName);
+            if (existing) {
+                return existing;
+            }
+
+            const project = {
+                id: `proj_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                name: trimmedName,
+                formName: FORM_NAME,
+                createdAt: new Date(now).toISOString(),
+                createdAtMs: now,
+                modifiedAtMs: now,
+                syncedAt: null,
+                lessonActivities: []
+            };
+
+            projects.unshift(project);
+            saveAllProjects(projects);
+            return project;
+        }
+
+        function createNewBlankLessonActivity(projectId, requestedLessonName) {
+            const projects = getAllProjects();
+            const project = projects.find(p => p.id === projectId);
+            if (!project) {
+                return null;
+            }
+
+            const currentActivities = getProjectLessonActivities(project);
+            const uniqueLessonName = getUniqueLessonActivityName(project, requestedLessonName || project.name || 'Lesson Activity');
+            const snapshot = createLessonActivitySnapshot(project.name, uniqueLessonName, createEmptyIntroLessonInputData());
+
+            project.lessonActivities = [...currentActivities, snapshot];
+            project.modifiedAtMs = Date.now();
+            project.syncedAt = null;
+            saveAllProjects(projects);
+            return { project, activityIndex: project.lessonActivities.length - 1 };
+        }
+
+        function deleteLocalProject(id) {
+            saveAllProjects(getAllProjects().filter(p => p.id !== id));
+        }
+
+        function extractDiyProjectsFromResponse(payload) {
+            if (Array.isArray(payload)) {
+                return payload.flatMap(item => {
+                    if (item && Array.isArray(item['diy-projects'])) {
+                        return item['diy-projects'];
+                    }
+                    if (item && item['project-name']) {
+                        return [item];
+                    }
+                    return [];
+                });
+            }
+
+            if (payload && typeof payload === 'object' && Array.isArray(payload['diy-projects'])) {
+                return payload['diy-projects'];
+            }
+
+            return [];
+        }
+
+        function normalizeCloudProjects(payload) {
+            const diyProjects = extractDiyProjectsFromResponse(payload);
+            const normalized = [];
+
+            diyProjects.forEach((project, projectIndex) => {
+                const activities = Array.isArray(project['lesson-activities']) ? project['lesson-activities'] : [];
+                if (activities.length === 0) {
+                    return;
+                }
+
+                const createdAtRaw = project['created-at'] || activities[0]['created-at'] || Date.now();
+                const modifiedAtRaw = project['modified-at'] || activities[activities.length - 1]['modified-at'] || createdAtRaw;
+                const createdAtIso = Number.isFinite(Number(createdAtRaw))
+                    ? new Date(Number(createdAtRaw)).toISOString()
+                    : String(createdAtRaw);
+                const syncedAtIso = Number.isFinite(Number(modifiedAtRaw))
+                    ? new Date(Number(modifiedAtRaw)).toISOString()
+                    : String(modifiedAtRaw);
+
+                const lessonActivities = activities
+                    .filter(activity => activity && activity['lesson-input-data'] && typeof activity['lesson-input-data'] === 'object')
+                    .map(activity => ({
+                        'tmk-template': String(activity['tmk-template'] || ''),
+                        'lesson-name': String(activity['lesson-name'] || project['project-name'] || ''),
+                        'created-at': Number.isFinite(Number(activity['created-at'])) ? Number(activity['created-at']) : Date.now(),
+                        'modified-at': Number.isFinite(Number(activity['modified-at'])) ? Number(activity['modified-at']) : Date.now(),
+                        'lesson-input-data': activity['lesson-input-data']
+                    }));
+
+                if (lessonActivities.length === 0) {
+                    return;
+                }
+
+                const latest = lessonActivities[lessonActivities.length - 1];
+                normalized.push({
+                    id: `cloud_${projectIndex}_${String(project['project-name'] || 'project')}`,
+                    source: 'cloud',
+                    name: String(project['project-name'] || latest['lesson-name'] || 'Untitled Cloud Project'),
+                    createdAt: createdAtIso,
+                    createdAtMs: Number.isFinite(Number(createdAtRaw)) ? Number(createdAtRaw) : Date.now(),
+                    modifiedAtMs: Number.isFinite(Number(modifiedAtRaw)) ? Number(modifiedAtRaw) : Date.now(),
+                    syncedAt: syncedAtIso,
+                    lessonActivities,
+                    data: latest['lesson-input-data']
+                });
+            });
+
+            return normalized;
+        }
+
+        async function loadCloudProjects() {
+            if (!isUserAuthenticated()) {
+                cloudProjects = [];
+                isLoadingCloudProjects = false;
+                setCloudLoadStatus('');
+                updateRefreshCloudButtonState();
+                renderProjectList();
+                return;
+            }
+
+            isLoadingCloudProjects = true;
+            setCloudLoadStatus('');
+            updateRefreshCloudButtonState();
+            renderProjectList();
+
+            try {
+                const response = await fetch(`${OAUTH_CONFIG.API_ORIGIN}${DIY_PROJECTS_ENDPOINT}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    cloudProjects = [];
+                    setCloudLoadStatus('Cloud load failed. Please try Refresh Cloud.');
+                    return;
+                }
+
+                const payload = await response.json();
+                cloudProjects = normalizeCloudProjects(payload);
+            } catch (error) {
+                console.error('Failed to load cloud projects:', error);
+                cloudProjects = [];
+                setCloudLoadStatus('Cloud load failed. Please try Refresh Cloud.');
+            } finally {
+                isLoadingCloudProjects = false;
+                updateRefreshCloudButtonState();
+                renderProjectList();
+            }
+        }
+
+        function buildDiyProjectsPayload(project) {
+            const now = Date.now();
+            const createdAtMs = Number.isFinite(project.createdAtMs) ? project.createdAtMs : now;
+            const modifiedAtMs = Number.isFinite(project.modifiedAtMs) ? project.modifiedAtMs : now;
+            const userEmail = getUserEmail();
+            const sourceActivities = getProjectLessonActivities(project);
+            const normalizedActivities = sourceActivities.length > 0
+                ? sourceActivities
+                : [createLessonActivitySnapshot(project.name || '', project.name || '')];
+            const lessonActivities = normalizedActivities.map(activity => {
+                const template = String(activity['tmk-template'] || FORM_NAME);
+                const sourceData = activity['lesson-input-data'] && typeof activity['lesson-input-data'] === 'object'
+                    ? activity['lesson-input-data']
+                    : {};
+                return {
+                    'tmk-template': template,
+                    'lesson-name': String(activity['lesson-name'] || project.name || ''),
+                    'created-at': Number.isFinite(Number(activity['created-at'])) ? Number(activity['created-at']) : createdAtMs,
+                    'modified-at': Number.isFinite(Number(activity['modified-at'])) ? Number(activity['modified-at']) : modifiedAtMs,
+                    'lesson-input-data': template === 'intro'
+                        ? normalizeIntroLessonInputData(sourceData)
+                        : sourceData
+                };
+            });
+
+            return {
+                'user-email': userEmail,
+                'diy-projects': [
+                    {
+                        'project-name': String(project.name || ''),
+                        'created-at': createdAtMs,
+                        'modified-at': modifiedAtMs,
+                        'lesson-activities': lessonActivities
+                    }
+                ]
+            };
+        }
+
+        async function syncProjectToApi(project) {
+            if (!isUserAuthenticated()) return null;
+            try {
+                const payload = buildDiyProjectsPayload(project);
+                console.log('TMK DIY payload:', JSON.stringify(payload, null, 2));
+                const response = await fetch(`${OAUTH_CONFIG.API_ORIGIN}${DIY_PROJECTS_ENDPOINT}`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) return null;
+                const result = await response.json();
+                const projects = getAllProjects();
+                const idx = projects.findIndex(p => p.id === project.id);
+                if (idx !== -1) {
+                    projects[idx].syncedAt = new Date().toISOString();
+                    projects[idx].modifiedAtMs = Date.now();
+                    if (result && result.id) projects[idx].remoteId = result.id;
+                    saveAllProjects(projects);
+                }
+                return result;
+            } catch (err) {
+                console.error('Project sync failed:', err);
+                return null;
+            }
+        }
+
+        function formatActivityDate(ms) {
+            try {
+                if (Number.isFinite(Number(ms))) {
+                    return new Date(Number(ms)).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                }
+                return '';
+            } catch {
+                return '';
+            }
+        }
+
+        function renderLessonActivities(project) {
+            const activities = Array.isArray(project.lessonActivities) ? project.lessonActivities : [];
+            if (activities.length === 0) {
+                return '<div class="pm-activity-list"><div class="pm-activity-label">No lesson activities yet.</div></div>';
+            }
+
+            return `
+                <div class="pm-activity-list">
+                    ${activities.map((activity, idx) => `
+                        <div class="pm-activity-item">
+                            ${project.source === 'local'
+                                ? `<input class="pm-activity-name-input ${selectedLessonActivity && selectedLessonActivity.projectId === project.id && selectedLessonActivity.activityIndex === idx ? 'selected' : ''}" data-project-id="${project.id}" data-activity-index="${idx}" value="${escapeHtml(String(activity['lesson-name'] || project.name || 'Lesson'))}" maxlength="80">`
+                                : `<span class="pm-activity-label" title="${escapeHtml(String(activity['lesson-name'] || project.name || 'Lesson'))}">${escapeHtml(String(activity['lesson-name'] || project.name || 'Lesson'))}</span>`}
+                            <span class="pm-activity-label">${escapeHtml(String(activity['tmk-template'] || 'unknown'))}${formatActivityDate(activity['modified-at']) ? ` - ${formatActivityDate(activity['modified-at'])}` : ''}</span>
+                            <div class="pm-activity-actions">
+                                <button class="pm-btn pm-btn-load-activity" data-action="load-activity" data-project-id="${project.id}" data-activity-index="${idx}">Load</button>
+                                ${project.source === 'local'
+                                    ? `<button class="pm-btn pm-btn-update-activity" data-action="update-activity" data-project-id="${project.id}" data-activity-index="${idx}">Update</button>
+                                       <button class="pm-btn pm-btn-delete-activity" data-action="delete-activity" data-project-id="${project.id}" data-activity-index="${idx}">Del</button>`
+                                    : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderProjectList() {
+            const listEl = document.getElementById('pmProjectList');
+            if (!listEl) return;
+            const projects = getDisplayProjects();
+            if (projects.length === 0) {
+                listEl.innerHTML = '<div class="pm-empty">No saved projects yet.</div>';
+                updateProjectContextUI();
+                return;
+            }
+            listEl.innerHTML = projects.map(p => `
+                <div class="pm-project-item ${p.source === 'local' && p.id === selectedLocalProjectId ? 'selected' : ''}">
+                    <div class="pm-project-info">
+                        <div class="pm-project-title-row">
+                            <div class="pm-project-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div>
+                            <span class="pm-activity-count-badge" title="Lesson activities saved in this project">${Array.isArray(p.lessonActivities) ? p.lessonActivities.length : 0}</span>
+                        </div>
+                        <div class="pm-project-meta">
+                            ${formatProjectDate(p.createdAt)}
+                            ${p.source === 'cloud'
+                                ? '<span class="pm-project-synced">&#9729; Cloud</span>'
+                                : (p.syncedAt ? '<span class="pm-project-synced">&#10003; Synced</span>' : '<span class="pm-project-synced" style="color:#888">Local</span>')}
+                        </div>
+                        ${renderLessonActivities(p)}
+                    </div>
+                    ${p.source === 'local' ? `<button class="pm-btn pm-btn-load" data-action="select-project" data-id="${p.id}">Select</button>` : ''}
+                    ${p.source === 'local' ? `<button class="pm-btn pm-btn-new-activity" data-action="new-activity" data-id="${p.id}">New Activity</button>` : ''}
+                    <button class="pm-btn pm-btn-load" data-action="load" data-id="${p.id}">Load Latest</button>
+                    ${p.source === 'local' ? `<button class="pm-btn pm-btn-delete" data-action="delete" data-id="${p.id}">Del</button>` : ''}
+                </div>
+            `).join('');
+
+            if (isLoadingCloudProjects) {
+                listEl.innerHTML += '<div class="pm-empty" style="padding-top:10px">Loading cloud projects...</div>';
+            }
+
+            updateProjectContextUI();
+        }
+
+        function updatePmSyncBar() {
+            const bar = document.getElementById('pmSyncBar');
+            const status = document.getElementById('pmSyncStatus');
+            if (!bar) return;
+            if (isUserAuthenticated()) {
+                bar.style.display = 'flex';
+                const unsynced = getAllProjects().filter(p => p.formName === FORM_NAME && !p.syncedAt).length;
+                const emailLabel = getUserEmail();
+                const syncText = unsynced > 0
+                    ? `${unsynced} project(s) not yet synced`
+                    : '\u2713 All projects synced';
+                status.textContent = emailLabel ? `${syncText} \u2014 ${emailLabel}` : syncText;
+            } else {
+                bar.style.display = 'none';
+                setCloudLoadStatus('');
+            }
+            updateRefreshCloudButtonState();
+        }
+
+        function promptProjectManagerLogin() {
+            const shouldLogin = confirm('Project Manager requires Teachable login. Log in now?');
+            if (shouldLogin) {
+                initiateOAuthLogin();
+            }
+        }
+
+        function showProjectManager() {
+            if (!isUserAuthenticated()) {
+                promptProjectManagerLogin();
+                return;
+            }
+
+            document.getElementById('projectManager').classList.add('show');
+            document.getElementById('pmToggleBtn').classList.add('active');
+            renderProjectList();
+            updatePmSyncBar();
+            loadCloudProjects();
+        }
+
+        function hideProjectManager() {
+            document.getElementById('projectManager').classList.remove('show');
+            document.getElementById('pmToggleBtn').classList.remove('active');
+        }
+
+        document.getElementById('pmToggleBtn').addEventListener('click', function () {
+            if (!isUserAuthenticated()) {
+                promptProjectManagerLogin();
+                return;
+            }
+
+            if (document.getElementById('projectManager').classList.contains('show')) {
+                hideProjectManager();
+            } else {
+                showProjectManager();
+            }
+        });
+
+        document.getElementById('pmCloseBtn').addEventListener('click', hideProjectManager);
+
+        document.getElementById('pmProjectList').addEventListener('click', function (e) {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const id = btn.dataset.id;
+            const action = btn.dataset.action;
+            if (action === 'select-project') {
+                const project = getDisplayProjects().find(p => p.id === id && p.source === 'local');
+                if (!project) return;
+                setSelectedLocalProject(project.id);
+                renderProjectList();
+            } else if (action === 'new-activity') {
+                const localProject = getLocalProjectById(id);
+                if (!localProject) {
+                    return;
+                }
+
+                const requestedName = String(window.prompt('Lesson activity name:', '') || '').trim();
+                const created = createNewBlankLessonActivity(localProject.id, requestedName || localProject.name || 'Lesson Activity');
+                if (!created || !created.project) {
+                    return;
+                }
+                setSelectedLocalProject(created.project.id);
+                setSelectedLessonActivity(created.project.id, created.activityIndex);
+
+                // New lesson activity starts from a clean slate in form and autosave storage.
+                clearFormStorage();
+
+                renderProjectList();
+                updatePmSyncBar();
+            } else if (action === 'load') {
+                const project = getDisplayProjects().find(p => p.id === id);
+                const latest = project ? getLatestLessonActivity(project) : null;
+                if (project && latest && confirm(`Load latest lesson activity from "${project.name}"? Your current answers will be replaced.`)) {
+                    applyFormData(latest['lesson-input-data'] || {});
+                    if (project.source === 'local') {
+                        setSelectedLocalProject(project.id);
+                        const activities = getProjectLessonActivities(project);
+                        const latestIndex = Math.max(activities.length - 1, 0);
+                        setSelectedLessonActivity(project.id, latestIndex);
+                    }
+                    hideProjectManager();
+                }
+            } else if (action === 'load-activity') {
+                const projectId = btn.dataset.projectId;
+                const activityIndex = Number.parseInt(btn.dataset.activityIndex || '', 10);
+                const project = getDisplayProjects().find(p => p.id === projectId);
+                const activities = project ? getProjectLessonActivities(project) : [];
+                const activity = Number.isInteger(activityIndex) ? activities[activityIndex] : null;
+                if (project && activity && confirm(`Load lesson activity "${activity['lesson-name'] || project.name}" from "${project.name}"? Your current answers will be replaced.`)) {
+                    applyFormData(activity['lesson-input-data'] || {});
+                    if (project.source === 'local') {
+                        setSelectedLocalProject(project.id);
+                        setSelectedLessonActivity(project.id, activityIndex);
+                    }
+                    hideProjectManager();
+                }
+            } else if (action === 'update-activity') {
+                const projectId = btn.dataset.projectId;
+                const activityIndex = Number.parseInt(btn.dataset.activityIndex || '', 10);
+                if (!Number.isInteger(activityIndex)) return;
+
+                const nameInput = btn.closest('.pm-activity-item')?.querySelector('.pm-activity-name-input');
+                const requestedName = String(nameInput ? nameInput.value : '').trim();
+
+                const projects = getAllProjects();
+                const project = projects.find(p => p.id === projectId);
+                if (!project) return;
+                const activities = getProjectLessonActivities(project);
+                if (!activities[activityIndex]) return;
+
+                const uniqueName = getUniqueLessonActivityName(project, requestedName || project.name || 'Lesson Activity', activityIndex);
+                activities[activityIndex] = {
+                    ...activities[activityIndex],
+                    'lesson-name': uniqueName,
+                    'modified-at': Date.now(),
+                    'lesson-input-data': normalizeIntroLessonInputData(captureCurrentFormData())
+                };
+
+                project.lessonActivities = activities;
+                project.modifiedAtMs = Date.now();
+                project.syncedAt = null;
+                saveAllProjects(projects);
+                setSelectedLocalProject(project.id);
+                setSelectedLessonActivity(project.id, activityIndex);
+                renderProjectList();
+                updatePmSyncBar();
+            } else if (action === 'delete-activity') {
+                const projectId = btn.dataset.projectId;
+                const activityIndex = Number.parseInt(btn.dataset.activityIndex || '', 10);
+                if (!Number.isInteger(activityIndex)) return;
+
+                const projects = getAllProjects();
+                const projectIndex = projects.findIndex(p => p.id === projectId);
+                if (projectIndex === -1) return;
+
+                const project = projects[projectIndex];
+                const activities = getProjectLessonActivities(project);
+                const activity = activities[activityIndex];
+                if (!activity) return;
+
+                if (!confirm(`Delete lesson activity "${activity['lesson-name'] || 'Unnamed'}" from "${project.name}"?`)) {
+                    return;
+                }
+
+                const nextActivities = activities.filter((_, idx) => idx !== activityIndex);
+                if (nextActivities.length === 0) {
+                    projects.splice(projectIndex, 1);
+                    if (selectedLocalProjectId === projectId) {
+                        selectedLocalProjectId = null;
+                    }
+                    selectedLessonActivity = null;
+                } else {
+                    project.lessonActivities = nextActivities;
+                    project.modifiedAtMs = Date.now();
+                    project.syncedAt = null;
+                    setSelectedLocalProject(project.id);
+                    if (selectedLessonActivity && selectedLessonActivity.projectId === project.id) {
+                        if (selectedLessonActivity.activityIndex === activityIndex) {
+                            setSelectedLessonActivity(project.id, Math.max(activityIndex - 1, 0));
+                        } else if (selectedLessonActivity.activityIndex > activityIndex) {
+                            setSelectedLessonActivity(project.id, selectedLessonActivity.activityIndex - 1);
+                        }
+                    }
+                }
+
+                saveAllProjects(projects);
+                renderProjectList();
+                updatePmSyncBar();
+            } else if (action === 'delete') {
+                const project = getAllProjects().find(p => p.id === id);
+                if (project && confirm(`Delete "${project.name}"? This cannot be undone.`)) {
+                    deleteLocalProject(id);
+                    if (selectedLocalProjectId === id) {
+                        selectedLocalProjectId = null;
+                    }
+                    if (selectedLessonActivity && selectedLessonActivity.projectId === id) {
+                        selectedLessonActivity = null;
+                    }
+                    renderProjectList();
+                    updatePmSyncBar();
+                }
+            }
+        });
+
+        document.getElementById('pmCreateProjectBtn').addEventListener('click', function () {
+            const nameInput = document.getElementById('pmNameInput');
+            const projectName = String(nameInput ? nameInput.value : '').trim();
+            if (!projectName) {
+                if (nameInput) {
+                    nameInput.focus();
+                }
+                return;
+            }
+
+            const project = createLocalProject(projectName);
+            if (!project) {
+                return;
+            }
+
+            setSelectedLocalProject(project.id);
+            if (nameInput) {
+                nameInput.value = '';
+            }
+            renderProjectList();
+            updatePmSyncBar();
+        });
+
+        document.getElementById('pmSyncBtn').addEventListener('click', async function () {
+            const syncBtn = document.getElementById('pmSyncBtn');
+            const syncStatus = document.getElementById('pmSyncStatus');
+            if (!isUserAuthenticated()) return;
+            syncBtn.disabled = true;
+            syncStatus.textContent = 'Syncing\u2026';
+            const unsynced = getAllProjects().filter(p => p.formName === FORM_NAME && !p.syncedAt);
+            let count = 0;
+            for (const p of unsynced) {
+                const result = await syncProjectToApi(p);
+                if (result) count++;
+            }
+            syncStatus.textContent = count > 0
+                ? `\u2713 ${count} project(s) synced to cloud`
+                : (unsynced.length === 0 ? '\u2713 All projects already synced' : 'Sync failed \u2014 check connection');
+            await loadCloudProjects();
+            renderProjectList();
+            syncBtn.disabled = false;
+        });
+
+        document.getElementById('pmRefreshCloudBtn').addEventListener('click', async function () {
+            await loadCloudProjects();
+            if (!cloudLoadError) {
+                showCloudRefreshSuccess();
+            }
+        });
+
+        // Disable Project Manager access until authentication is verified.
+        updateProjectManagerAccess();
+        updateProjectContextUI();
+
+        // Login button handler
+        const loginBtn = document.getElementById('loginBtn');
+        loginBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+
+            if (isUserAuthenticated()) {
+                loginBtn.disabled = true;
+                await logoutFromTeachable();
+                renderAuthStatus();
+                loginBtn.disabled = false;
+            } else {
+                initiateOAuthLogin();
+            }
+        });
+    </script>
+</body>
+</html>

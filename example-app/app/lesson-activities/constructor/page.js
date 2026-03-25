@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Box,
   Card,
@@ -11,15 +11,63 @@ import {
   Paper,
   Button,
   Grid,
+  Stack,
+  Snackbar,
+  Alert,
 } from '@mui/material';
-import html2pdf from 'html2pdf.js';
+import ProjectManagerPanel from '../components/ProjectManagerPanel';
+import {
+  buildTeachableStartUrl,
+  clearFormSessionData,
+  fetchAuthenticatedUser,
+  OAUTH_ENDPOINTS,
+  readFormSessionData,
+  resolveTmkApiOrigin,
+  writeFormSessionData,
+} from '../components/lessonActivityHelpers';
+
+const FORM_NAME = 'constructor';
+
+function normalizeConstructorLessonInputData(rawData, expectedCount = 0) {
+  const source = rawData && typeof rawData === 'object' ? rawData : {};
+  const sourceConstructors = Array.isArray(source.constructors) ? source.constructors : [];
+  const sourceAnswers = Array.isArray(source.answers) ? source.answers : [];
+  const length = Math.max(expectedCount, sourceConstructors.length, sourceAnswers.length, 0);
+
+  return {
+    constructors: Array.from({ length }, (_, idx) => String(sourceConstructors[idx] || '')),
+    answers: Array.from({ length }, (_, idx) => String(sourceAnswers[idx] || '')),
+  };
+}
 
 export default function ConstructorPage() {
   const [lessonData, setLessonData] = useState(null);
   const [constructors, setConstructors] = useState([]);
   const [answers, setAnswers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [authUser, setAuthUser] = useState(null);
+  const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
   const contentRef = useRef(null);
+  const apiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
+
+  const showNotice = (severity, message) => {
+    setNotice({ open: true, severity, message });
+  };
+
+  const currentLessonInputData = useMemo(
+    () => normalizeConstructorLessonInputData({ constructors, answers }, constructors.length),
+    [constructors, answers]
+  );
+
+  const persistSession = (nextData) => {
+    writeFormSessionData(FORM_NAME, nextData);
+  };
+
+  const applyLessonInputData = (data) => {
+    const normalized = normalizeConstructorLessonInputData(data, constructors.length);
+    setConstructors(normalized.constructors);
+    setAnswers(normalized.answers);
+  };
 
   // Fetch JSON data on component mount
   useEffect(() => {
@@ -33,8 +81,15 @@ export default function ConstructorPage() {
         const lessonActivity = data.MorphemeLessons[0].LessonSections.LessonActivity;
         const wordConstructorCount = lessonActivity.WordConstructors?.length || 0;
 
-        setConstructors(Array(wordConstructorCount).fill(''));
-        setAnswers(Array(wordConstructorCount).fill(''));
+        const stored = readFormSessionData(FORM_NAME);
+        if (stored) {
+          const normalized = normalizeConstructorLessonInputData(stored, wordConstructorCount);
+          setConstructors(normalized.constructors);
+          setAnswers(normalized.answers);
+        } else {
+          setConstructors(Array(wordConstructorCount).fill(''));
+          setAnswers(Array(wordConstructorCount).fill(''));
+        }
         setLoading(false);
       } catch (error) {
         console.error('Error loading lesson data:', error);
@@ -44,6 +99,27 @@ export default function ConstructorPage() {
 
     fetchLessonData();
   }, []);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await fetchAuthenticatedUser(apiOrigin);
+      setAuthUser(user);
+    };
+
+    checkAuth();
+  }, [apiOrigin]);
+
+  useEffect(() => {
+    if (constructors.length === 0 && answers.length === 0) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      persistSession(normalizeConstructorLessonInputData({ constructors, answers }, constructors.length));
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [constructors, answers]);
 
 
   const handleInputChange = (index, value) => {
@@ -58,8 +134,10 @@ export default function ConstructorPage() {
     setConstructors(newConstructors);
   };
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
     if (!contentRef.current) return;
+
+    const { default: html2pdf } = await import('html2pdf.js');
 
     const element = contentRef.current;
     const opt = {
@@ -73,15 +151,44 @@ export default function ConstructorPage() {
     html2pdf().set(opt).from(element).save();
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     console.log('Constructor answers:', answers);
-    generatePDF();
+    await generatePDF();
   };
 
   const handleClear = () => {
     const wordConstructorCount =
       lessonData?.MorphemeLessons[0]?.LessonSections?.LessonActivity?.WordConstructors?.length || 0;
+    setConstructors(Array(wordConstructorCount).fill(''));
     setAnswers(Array(wordConstructorCount).fill(''));
+  };
+
+  const handleSaveSession = () => {
+    persistSession(currentLessonInputData);
+    showNotice('success', authUser ? 'Session saved locally. Teachable login is active.' : 'Session saved locally.');
+  };
+
+  const handleClearSession = () => {
+    if (!window.confirm('Clear all saved data for this exercise?')) {
+      return;
+    }
+
+    clearFormSessionData(FORM_NAME);
+    handleClear();
+    showNotice('info', 'Saved data cleared.');
+  };
+
+  const initiateOAuthLogin = () => {
+    window.location.href = buildTeachableStartUrl(apiOrigin, window.location.href);
+  };
+
+  const handleLoginLogout = () => {
+    if (authUser) {
+      window.location.href = `${apiOrigin}${OAUTH_ENDPOINTS.logout}`;
+      return;
+    }
+
+    initiateOAuthLogin();
   };
 
   if (loading) {
@@ -103,6 +210,36 @@ export default function ConstructorPage() {
   return (
     <Box component="main" sx={{ py: 4, bgcolor: '#f9f9f9', minHeight: '100vh' }}>
       <Container maxWidth="lg">
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ mb: 1.5 }}>
+          <Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
+            {authUser ? 'Logout from Teachable' : 'Login with Teachable'}
+          </Button>
+          <ProjectManagerPanel
+            formName={FORM_NAME}
+            apiOrigin={apiOrigin}
+            isAuthenticated={Boolean(authUser)}
+            userEmail={authUser?.email || ''}
+            currentLessonInputData={currentLessonInputData}
+            normalizeLessonInputData={(data) => normalizeConstructorLessonInputData(data, constructors.length)}
+            createEmptyLessonInputData={() => normalizeConstructorLessonInputData({}, constructors.length)}
+            applyLessonInputData={applyLessonInputData}
+            clearLessonInputs={handleClear}
+            onRequireLogin={() => {
+              const shouldLogin = window.confirm('Project Manager requires Teachable login. Log in now?');
+              if (shouldLogin) {
+                initiateOAuthLogin();
+              }
+            }}
+            onNotice={showNotice}
+          />
+          <Button variant="outlined" onClick={handleSaveSession} sx={{ textTransform: 'none' }}>
+            Save Session
+          </Button>
+          <Button variant="outlined" color="error" onClick={handleClearSession} sx={{ textTransform: 'none' }}>
+            Clear Saved Data
+          </Button>
+        </Stack>
+
         <Card sx={{ boxShadow: 3 }}>
           <CardContent sx={{ p: 4 }} ref={contentRef}>
             {/* Header */}
@@ -270,6 +407,20 @@ export default function ConstructorPage() {
           </CardContent>
         </Card>
       </Container>
+
+      <Snackbar
+        open={notice.open}
+        autoHideDuration={2600}
+        onClose={() => setNotice((prev) => ({ ...prev, open: false }))}
+      >
+        <Alert
+          severity={notice.severity}
+          variant="filled"
+          onClose={() => setNotice((prev) => ({ ...prev, open: false }))}
+        >
+          {notice.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
