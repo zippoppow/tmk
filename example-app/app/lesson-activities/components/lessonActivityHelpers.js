@@ -105,22 +105,22 @@ export async function fetchAuthenticatedUser(apiOrigin) {
 		});
 
 		if (!response.ok) {
-			if (process.env.NODE_ENV !== 'production') {
+		//	if (process.env.NODE_ENV !== 'production') {
 				console.warn('[TMK auth] /me returned', response.status, response.statusText);
-			}
+		//	}
 			return null;
 		}
 
 		const data = await response.json();
 		const user = extractAuthenticatedUser(data);
-		if (!user && process.env.NODE_ENV !== 'production') {
+		//if (!user && process.env.NODE_ENV !== 'production') {
 			console.warn('[TMK auth] /me returned 200 but could not extract user. Raw response:', data);
-		}
+		//}
 		return user;
 	} catch (err) {
-		if (process.env.NODE_ENV !== 'production') {
+		//if (process.env.NODE_ENV !== 'production') {
 			console.error('[TMK auth] /me fetch failed (possible CORS or network error):', err?.message || err);
-		}
+		//}
 		return null;
 	}
 }
