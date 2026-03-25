@@ -58,9 +58,10 @@ export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
 }
 
 export function buildTeachableStartUrl(apiOrigin, redirectTo) {
-	const authUrl = new URL(`${apiOrigin}${OAUTH_ENDPOINTS.start}`);
+	const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+	const authUrl = new URL(OAUTH_ENDPOINTS.start, `${origin}/`);
 	authUrl.searchParams.set('redirectTo', redirectTo || window.location.href);
-	console.log(`auth start, authUrl: {authUrl.toString()}`)
+	console.log('[TMK auth] start URL:', authUrl.toString());
 	return authUrl.toString();
 }
 
