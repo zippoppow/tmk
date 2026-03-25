@@ -1,6 +1,8 @@
 import { morphemesAPI } from '/lib/api-client.js';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_TMK_API_URL || 'http://localhost:3000';
+import { TMK_API_BASE_URL } from '@/lib/tmkApiOrigin.js';
+
+const API_BASE_URL = TMK_API_BASE_URL;
 
 /**
  * Bulk import utility for morphemes from CSV (client-side)

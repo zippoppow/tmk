@@ -31,7 +31,9 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { bulkImport } from './bulk-import.js';
 
 const theme = createTheme();
-const TMK_API_URL = process.env.NEXT_PUBLIC_TMK_API_URL || 'http://localhost:3000';
+import { TMK_API_BASE_URL } from '@/lib/tmkApiOrigin.js';
+
+const TMK_API_URL = TMK_API_BASE_URL;
 
 export default function ImportMorphemesPage() {
   const [morphemes, setMorphemes] = useState([]);

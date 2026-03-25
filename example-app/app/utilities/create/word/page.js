@@ -27,7 +27,9 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-const TMK_API_URL = process.env.NEXT_PUBLIC_TMK_API_URL || 'http://localhost:3000';
+import { TMK_API_BASE_URL } from '@/lib/tmkApiOrigin.js';
+
+const TMK_API_URL = TMK_API_BASE_URL;
 
 export default function CreateWordPage() {
   const [formData, setFormData] = useState({

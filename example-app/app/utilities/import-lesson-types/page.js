@@ -20,7 +20,9 @@ import {
   Chip,
 } from '@mui/material';
 
-const TMK_API_URL = process.env.NEXT_PUBLIC_TMK_API_URL || 'http://localhost:3000';
+import { TMK_API_BASE_URL } from '@/lib/tmkApiOrigin.js';
+
+const TMK_API_URL = TMK_API_BASE_URL;
 
 export default function ImportLessonTypesPage() {
   const [lessonTypes, setLessonTypes] = useState([]);

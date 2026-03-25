@@ -11,6 +11,9 @@
  */
 
 import { tmkAPI } from './api-client';
+import { TMK_API_BASE_URL } from './tmkApiOrigin.js';
+
+const API_BASE_URL = TMK_API_BASE_URL;
 
 /**
  * Test utilities for API integration
@@ -198,7 +201,7 @@ export const testAPI = {
   async testCustom(endpoint) {
     console.log(`Testing custom endpoint: ${endpoint}`);
     try {
-      const response = await fetch(`http://localhost:3000${endpoint}`);
+      const response = await fetch(`${API_BASE_URL}${endpoint}`);
       const data = await response.json();
       console.log('Response:', data);
       return { success: true, data };

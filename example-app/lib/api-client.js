@@ -1,7 +1,9 @@
+import { TMK_API_BASE_URL } from './tmkApiOrigin.js';
+
 /**
  * TMK API Client
  * 
- * Utility for interacting with the tmk-api backend running at http://localhost:3000
+ * Utility for interacting with the TMK API backend using environment-configured base URLs
  * Provides methods to fetch and manage:
  * - Morphemes
  * - Words
@@ -9,8 +11,7 @@
  * - Wordfamilies
  */
 
-//const API_BASE_URL = process.env.NEXT_PUBLIC_TMK_API_URL || 'http://localhost:3000';
-const API_BASE_URL = process.env.NEXT_PUBLIC_TMK_API_URL_PRODUCTION || 'https://web-production-ed842.up.railway.app';
+const API_BASE_URL = TMK_API_BASE_URL;
 
 
 /**
