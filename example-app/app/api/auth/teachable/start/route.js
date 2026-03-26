@@ -4,6 +4,7 @@ import {
   encodeSignedState,
   getTeachableOAuthConfig,
   sanitizeRedirectTarget,
+  setOAuthContextCookie,
 } from '../_lib.js';
 
 export const dynamic = 'force-dynamic';
@@ -30,7 +31,16 @@ export async function GET(request) {
     );
 
     const authorizationUrl = buildTeachableAuthorizeUrl(config, state);
-    return NextResponse.redirect(authorizationUrl);
+    const response = NextResponse.redirect(authorizationUrl);
+    setOAuthContextCookie(
+      response,
+      {
+        redirectTo,
+        ts: Date.now(),
+      },
+      config.stateMaxAgeSeconds
+    );
+    return response;
   } catch (error) {
     return NextResponse.json(
       { error: error?.message || 'Unable to start Teachable OAuth flow.' },

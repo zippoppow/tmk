@@ -110,6 +110,12 @@ export default function IntroPage() {
 				showNotice('success', 'Teachable login successful.');
 				url.searchParams.delete('auth');
 				window.history.replaceState({}, '', url.toString());
+			} else if (url.searchParams.get('auth') === 'error') {
+				const rawMessage = url.searchParams.get('message');
+				showNotice('error', rawMessage || 'Teachable login failed. Please try again.');
+				url.searchParams.delete('auth');
+				url.searchParams.delete('message');
+				window.history.replaceState({}, '', url.toString());
 			}
 		}
 

@@ -8,6 +8,7 @@ export const OAUTH_COOKIE_KEYS = {
   accessToken: 'tmk_teachable_access_token',
   refreshToken: 'tmk_teachable_refresh_token',
   expiresAt: 'tmk_teachable_expires_at',
+  oauthContext: 'tmk_teachable_oauth_ctx',
 };
 
 function normalizeScopes(value, fallback) {
@@ -60,6 +61,7 @@ export function getTeachableOAuthConfig(options = {}) {
   const authorizeUrl = firstNonEmptyEnv(['TEACHABLE_OAUTH_AUTHORIZE_URL']);
   const tokenUrl = firstNonEmptyEnv(['TEACHABLE_OAUTH_TOKEN_URL']);
   const stateSecret = firstNonEmptyEnv(['TEACHABLE_OAUTH_STATE_SECRET']);
+  const stateMaxAgeSeconds = Number(firstNonEmptyEnv(['TEACHABLE_OAUTH_STATE_MAX_AGE_SECONDS']) || 900);
 
   const schoolId = firstNonEmptyEnv([
     'TEACHABLE_SCHOOL_ID',
@@ -97,6 +99,7 @@ export function getTeachableOAuthConfig(options = {}) {
     authorizeUrl,
     tokenUrl,
     stateSecret,
+    stateMaxAgeSeconds,
     clientId,
     clientSecret,
     redirectUri,
@@ -229,6 +232,37 @@ export function clearTokenCookies(response) {
   response.cookies.set(OAUTH_COOKIE_KEYS.expiresAt, '', { ...cookieOptions, maxAge: 0 });
 }
 
+export function setOAuthContextCookie(response, context, maxAgeSeconds = 900) {
+  const cookieOptions = buildCookieOptions();
+  const payload = encodeState(context);
+  response.cookies.set(OAUTH_COOKIE_KEYS.oauthContext, payload, {
+    ...cookieOptions,
+    maxAge: Math.max(60, Number(maxAgeSeconds) || 900),
+  });
+}
+
+export function readOAuthContextCookie(request) {
+  const value = request.cookies.get(OAUTH_COOKIE_KEYS.oauthContext)?.value;
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(decodeBase64Url(value));
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearOAuthContextCookie(response) {
+  const cookieOptions = buildCookieOptions();
+  response.cookies.set(OAUTH_COOKIE_KEYS.oauthContext, '', {
+    ...cookieOptions,
+    maxAge: 0,
+  });
+}
+
 export function buildTeachableAuthorizeUrl(config, stateValue) {
   const url = config.authorizeUrl
     ? new URL(config.authorizeUrl)
@@ -328,8 +362,11 @@ export async function fetchCurrentUser(accessToken) {
   };
 }
 
-export function redirectWithAuthFlag(requestUrl, redirectPath, flagValue) {
+export function redirectWithAuthFlag(requestUrl, redirectPath, flagValue, message) {
   const redirectUrl = new URL(redirectPath, requestUrl.origin);
   redirectUrl.searchParams.set('auth', flagValue);
+  if (message) {
+    redirectUrl.searchParams.set('message', message);
+  }
   return NextResponse.redirect(redirectUrl);
 }
