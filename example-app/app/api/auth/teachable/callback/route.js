@@ -11,10 +11,10 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-const DEFAULT_LESSON_REDIRECT = '/lesson-activities/intro';
+const DEFAULT_FALLBACK_REDIRECT = '/';
 
 function loginPathWithNext(nextPath) {
-  const resolvedNext = nextPath && nextPath !== '/' ? nextPath : DEFAULT_LESSON_REDIRECT;
+  const resolvedNext = nextPath || DEFAULT_FALLBACK_REDIRECT;
   return `/login?next=${encodeURIComponent(resolvedNext)}`;
 }
 
@@ -43,7 +43,7 @@ function resolveCallbackRedirect(requestUrl, config, ...candidates) {
     }
 
     const sanitized = sanitizeRedirectTarget(candidate, requestUrl.origin, '');
-    if (sanitized && sanitized !== '/') {
+    if (sanitized) {
       return sanitized;
     }
   }
@@ -54,11 +54,11 @@ function resolveCallbackRedirect(requestUrl, config, ...candidates) {
     ''
   );
 
-  if (configuredFallback && configuredFallback !== '/') {
+  if (configuredFallback) {
     return configuredFallback;
   }
 
-  return DEFAULT_LESSON_REDIRECT;
+  return null;
 }
 
 export async function GET(request) {
@@ -71,23 +71,24 @@ export async function GET(request) {
     });
     const cookieContext = readOAuthContextCookie(request);
     const rawStateRedirect = extractRedirectFromRawState(requestUrl.searchParams.get('state'));
+    const queryRedirect = requestUrl.searchParams.get('redirectTo');
+    const recoveredRedirect = resolveCallbackRedirect(
+      requestUrl,
+      config,
+      cookieContext?.redirectTo,
+      rawStateRedirect,
+      queryRedirect
+    );
     console.log('[OAuth Callback] Received cookie context:', cookieContext);
     console.log('[OAuth Callback] Request cookies:', request.cookies.getSetCookie?.());
     console.log('[OAuth Callback] All cookies:', Object.fromEntries(request.cookies));
 
     const oauthError = requestUrl.searchParams.get('error_description') || requestUrl.searchParams.get('error');
     if (oauthError) {
-      const redirectPathFromCookie = resolveCallbackRedirect(
-        requestUrl,
-        config,
-        cookieContext?.redirectTo,
-        rawStateRedirect,
-        requestUrl.searchParams.get('redirectTo')
-      );
-      console.log('[OAuth Callback] oauthError redirect path:', redirectPathFromCookie);
+      console.log('[OAuth Callback] oauthError redirect path:', recoveredRedirect);
       const response = redirectWithAuthFlag(
         requestUrl,
-        loginPathWithNext(redirectPathFromCookie),
+        loginPathWithNext(recoveredRedirect),
         'error',
         oauthError
       );
@@ -99,6 +100,7 @@ export async function GET(request) {
       requestUrl.searchParams.get('state'),
       config.stateSecret
     );
+    const code = requestUrl.searchParams.get('code');
     console.log('[OAuth Callback] State param received:', requestUrl.searchParams.get('state'));
     console.log('[OAuth Callback] State decoded payload:', statePayload);
 
@@ -107,32 +109,30 @@ export async function GET(request) {
     console.log('[OAuth Callback] State age:', stateAgeMs, 'ms, max:', config.stateMaxAgeSeconds * 1000, 'ms, expired:', stateExpired);
       console.log('[OAuth Callback] State secret (first 20 chars):', config.stateSecret?.slice(0, 20));
       console.log('[OAuth Callback] Decoded redirectTo from state:', statePayload?.redirectTo);
+
+    const canRecoverWithoutValidState = Boolean(code && recoveredRedirect);
     if (!statePayload || stateExpired) {
-      const redirectPathFromCookie = resolveCallbackRedirect(
-        requestUrl,
-        config,
-        cookieContext?.redirectTo,
-        rawStateRedirect,
-        requestUrl.searchParams.get('redirectTo')
-      );
-      console.log('[OAuth Callback] State invalid/expired. Using cookie redirectTo:', cookieContext?.redirectTo, '-> resolved to:', redirectPathFromCookie);
-      const response = redirectWithAuthFlag(
-        requestUrl,
-        loginPathWithNext(redirectPathFromCookie),
-        'error',
-        stateExpired ? 'OAuth state is expired' : 'OAuth state is invalid'
-      );
-      clearOAuthContextCookie(response);
-      return response;
+      console.log('[OAuth Callback] State invalid/expired. recoveredRedirect:', recoveredRedirect, 'canRecoverWithoutValidState:', canRecoverWithoutValidState);
+      if (!canRecoverWithoutValidState) {
+        const response = redirectWithAuthFlag(
+          requestUrl,
+          loginPathWithNext(recoveredRedirect),
+          'error',
+          stateExpired ? 'OAuth state is expired' : 'OAuth state is invalid'
+        );
+        clearOAuthContextCookie(response);
+        return response;
+      }
     }
 
-    const redirectPath = sanitizeRedirectTarget(
+    const redirectPath = resolveCallbackRedirect(
+      requestUrl,
+      config,
       statePayload?.redirectTo,
-      requestUrl.origin,
-      config.postLogoutRedirect
-    );
+      recoveredRedirect,
+      DEFAULT_FALLBACK_REDIRECT
+    ) || DEFAULT_FALLBACK_REDIRECT;
 
-    const code = requestUrl.searchParams.get('code');
     if (!code) {
       const response = redirectWithAuthFlag(
         requestUrl,
@@ -154,7 +154,7 @@ export async function GET(request) {
     const rawStateRedirect = extractRedirectFromRawState(requestUrl.searchParams.get('state'));
     const fallbackRedirect = resolveCallbackRedirect(
       requestUrl,
-      { postLogoutRedirect: '/' },
+      { postLogoutRedirect: null },
       cookieContext?.redirectTo,
       rawStateRedirect,
       requestUrl.searchParams.get('redirectTo')
