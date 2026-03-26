@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { buildTeachableStartUrl, fetchAuthenticatedUser } from '../lesson-activities/components/lessonActivityHelpers';
 
@@ -35,7 +35,7 @@ function extractErrorMessageFromNext(nextPath) {
   }
 }
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isChecking, setIsChecking] = useState(true);
@@ -157,5 +157,21 @@ export default function LoginPage() {
         </button>
       </section>
     </main>
+  );
+}
+
+function LoginFallback() {
+  return (
+    <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', fontFamily: 'ui-sans-serif, system-ui' }}>
+      <p>Loading login...</p>
+    </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
