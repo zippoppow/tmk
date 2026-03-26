@@ -57,7 +57,7 @@ export default function IntroPage() {
 	const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
 	const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, targetType: '', index: -1 });
 
-	const apiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
+	const projectApiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
 
 	const persist = (nextState) => {
 		writeFormSessionData(FORM_NAME, nextState);
@@ -93,7 +93,7 @@ export default function IntroPage() {
 	const runAuthCheck = async () => {
 		setAuthLoading(true);
 		try {
-			const user = await fetchAuthenticatedUser(apiOrigin);
+			const user = await fetchAuthenticatedUser();
 			setAuthUser(user);
 		} catch {
 			setAuthUser(null);
@@ -115,7 +115,7 @@ export default function IntroPage() {
 
 		runAuthCheck();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [apiOrigin]);
+	}, []);
 
 	const handleWordChange = (index, value) => {
 		setWords((prev) => {
@@ -167,7 +167,7 @@ export default function IntroPage() {
 	};
 
 	const initiateOAuthLogin = () => {
-		window.location.href = buildTeachableStartUrl(apiOrigin, window.location.href);
+		window.location.href = buildTeachableStartUrl(null, window.location.href);
 	};
 
 	const handleLoginLogout = () => {
@@ -301,7 +301,7 @@ export default function IntroPage() {
 					</Button>
 					<ProjectManagerPanel
 						formName={FORM_NAME}
-						apiOrigin={apiOrigin}
+						apiOrigin={projectApiOrigin}
 						isAuthenticated={Boolean(authUser)}
 						userEmail={authUser?.email || ''}
 						currentLessonInputData={normalizedLessonInputData}
