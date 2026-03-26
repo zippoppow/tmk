@@ -46,6 +46,8 @@ export async function GET(request) {
     const stateAgeMs = Date.now() - Number(statePayload?.ts || 0);
     const stateExpired = !statePayload?.ts || stateAgeMs > config.stateMaxAgeSeconds * 1000;
     console.log('[OAuth Callback] State age:', stateAgeMs, 'ms, max:', config.stateMaxAgeSeconds * 1000, 'ms, expired:', stateExpired);
+      console.log('[OAuth Callback] State secret (first 20 chars):', config.stateSecret?.slice(0, 20));
+      console.log('[OAuth Callback] Decoded redirectTo from state:', statePayload?.redirectTo);
     if (!statePayload || stateExpired) {
       const redirectPathFromCookie = sanitizeRedirectTarget(
         cookieContext?.redirectTo,
