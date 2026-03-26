@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import {
   buildTeachableAuthorizeUrl,
-  encodeState,
+  encodeSignedState,
   getTeachableOAuthConfig,
   sanitizeRedirectTarget,
 } from '../_lib.js';
@@ -10,7 +10,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   try {
-    const config = getTeachableOAuthConfig();
+    const config = getTeachableOAuthConfig({
+      requestUrl: request.url,
+      requireRedirectUri: true,
+    });
     const requestUrl = new URL(request.url);
     const redirectTo = sanitizeRedirectTarget(
       requestUrl.searchParams.get('redirectTo'),
@@ -18,10 +21,13 @@ export async function GET(request) {
       '/'
     );
 
-    const state = encodeState({
+    const state = encodeSignedState(
+      {
       redirectTo,
       ts: Date.now(),
-    });
+      },
+      config.stateSecret
+    );
 
     const authorizationUrl = buildTeachableAuthorizeUrl(config, state);
     return NextResponse.redirect(authorizationUrl);

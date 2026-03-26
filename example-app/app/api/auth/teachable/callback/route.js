@@ -13,8 +13,14 @@ export async function GET(request) {
   const requestUrl = new URL(request.url);
 
   try {
-    const config = getTeachableOAuthConfig();
-    const statePayload = decodeState(requestUrl.searchParams.get('state'));
+    const config = getTeachableOAuthConfig({
+      requestUrl: request.url,
+      requireRedirectUri: true,
+    });
+    const statePayload = decodeState(
+      requestUrl.searchParams.get('state'),
+      config.stateSecret
+    );
     const redirectPath = sanitizeRedirectTarget(
       statePayload?.redirectTo,
       requestUrl.origin,

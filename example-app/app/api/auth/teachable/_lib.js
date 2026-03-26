@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
 const TEACHABLE_AUTHORIZE_BASE = 'https://sso.teachable.com';
 const TEACHABLE_API_BASE = 'https://developers.teachable.com/v1/current_user';
@@ -17,20 +18,75 @@ function normalizeScopes(value, fallback) {
   return source.split(/[\s,]+/).filter(Boolean).join(' ');
 }
 
-export function getTeachableOAuthConfig() {
-  const schoolId = process.env.TEACHABLE_SCHOOL_ID?.trim();
-  const clientId = process.env.TEACHABLE_CLIENT_ID?.trim();
-  const clientSecret = process.env.TEACHABLE_CLIENT_SECRET?.trim();
-  const redirectUri = process.env.TEACHABLE_REDIRECT_URI?.trim();
+function firstNonEmptyEnv(keys) {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+  return '';
+}
+
+function signStatePayload(payload, secret) {
+  return createHmac('sha256', secret).update(payload).digest('base64url');
+}
+
+function resolveRedirectUri(requestUrl) {
+  const explicit = firstNonEmptyEnv([
+    'TEACHABLE_OAUTH_CALLBACK_URL',
+    'TEACHABLE_REDIRECT_URI',
+    'NEXT_PUBLIC_TEACHABLE_REDIRECT_URI',
+  ]);
+  if (explicit) {
+    return explicit;
+  }
+
+  if (!requestUrl) {
+    return '';
+  }
+
+  try {
+    const url = new URL(requestUrl);
+    return `${url.origin}/api/auth/teachable/callback`;
+  } catch {
+    return '';
+  }
+}
+
+export function getTeachableOAuthConfig(options = {}) {
+  const { requestUrl, requireRedirectUri = false } = options;
+
+  const authorizeUrl = firstNonEmptyEnv(['TEACHABLE_OAUTH_AUTHORIZE_URL']);
+  const tokenUrl = firstNonEmptyEnv(['TEACHABLE_OAUTH_TOKEN_URL']);
+  const stateSecret = firstNonEmptyEnv(['TEACHABLE_OAUTH_STATE_SECRET']);
+
+  const schoolId = firstNonEmptyEnv([
+    'TEACHABLE_SCHOOL_ID',
+    'NEXT_PUBLIC_TEACHABLE_SCHOOL_ID',
+  ]);
+  const clientId = firstNonEmptyEnv([
+    'TEACHABLE_OAUTH_CLIENT_ID',
+    'TEACHABLE_CLIENT_ID',
+    'NEXT_PUBLIC_TEACHABLE_CLIENT_ID',
+  ]);
+  const clientSecret = firstNonEmptyEnv([
+    'TEACHABLE_OAUTH_CLIENT_SECRET',
+    'TEACHABLE_CLIENT_SECRET',
+    'TEACHABLE_OAUTH_CLIENT_SECRET',
+  ]);
+  const redirectUri = resolveRedirectUri(requestUrl);
 
   const missing = [
-    ['TEACHABLE_SCHOOL_ID', schoolId],
     ['TEACHABLE_CLIENT_ID', clientId],
     ['TEACHABLE_CLIENT_SECRET', clientSecret],
-    ['TEACHABLE_REDIRECT_URI', redirectUri],
   ]
     .filter((entry) => !entry[1])
     .map((entry) => entry[0]);
+
+  if (requireRedirectUri && !redirectUri) {
+    missing.push('TEACHABLE_REDIRECT_URI');
+  }
 
   if (missing.length > 0) {
     throw new Error(`Missing required Teachable OAuth env vars: ${missing.join(', ')}`);
@@ -38,12 +94,24 @@ export function getTeachableOAuthConfig() {
 
   return {
     schoolId,
+    authorizeUrl,
+    tokenUrl,
+    stateSecret,
     clientId,
     clientSecret,
     redirectUri,
-    requiredScopes: normalizeScopes(process.env.TEACHABLE_REQUIRED_SCOPES, 'name:read email:read'),
-    optionalScopes: normalizeScopes(process.env.TEACHABLE_OPTIONAL_SCOPES, ''),
-    postLogoutRedirect: process.env.TEACHABLE_POST_LOGOUT_REDIRECT?.trim() || '/',
+    requiredScopes: normalizeScopes(
+      firstNonEmptyEnv(['TEACHABLE_REQUIRED_SCOPES', 'NEXT_PUBLIC_TEACHABLE_REQUIRED_SCOPES']),
+      'name:read email:read'
+    ),
+    optionalScopes: normalizeScopes(
+      firstNonEmptyEnv(['TEACHABLE_OPTIONAL_SCOPES', 'NEXT_PUBLIC_TEACHABLE_OPTIONAL_SCOPES']),
+      ''
+    ),
+    postLogoutRedirect: firstNonEmptyEnv([
+      'TEACHABLE_POST_LOGOUT_REDIRECT',
+      'NEXT_PUBLIC_TEACHABLE_POST_LOGOUT_REDIRECT',
+    ]) || '/',
   };
 }
 
@@ -59,13 +127,42 @@ export function encodeState(payload) {
   return encodeBase64Url(JSON.stringify(payload));
 }
 
-export function decodeState(stateValue) {
+export function encodeSignedState(payload, secret) {
+  const encodedPayload = encodeState(payload);
+  if (!secret) {
+    return encodedPayload;
+  }
+
+  const signature = signStatePayload(encodedPayload, secret);
+  return `${encodedPayload}.${signature}`;
+}
+
+export function decodeState(stateValue, secret) {
   if (!stateValue || typeof stateValue !== 'string') {
     return null;
   }
 
+  const [encodedPayload, signature] = stateValue.split('.');
+  const payloadToken = encodedPayload || '';
+
+  if (secret) {
+    if (!signature) {
+      return null;
+    }
+
+    const expectedSignature = signStatePayload(payloadToken, secret);
+    const expectedBuffer = Buffer.from(expectedSignature);
+    const receivedBuffer = Buffer.from(signature);
+    if (expectedBuffer.length !== receivedBuffer.length) {
+      return null;
+    }
+    if (!timingSafeEqual(expectedBuffer, receivedBuffer)) {
+      return null;
+    }
+  }
+
   try {
-    const parsed = JSON.parse(decodeBase64Url(stateValue));
+    const parsed = JSON.parse(decodeBase64Url(payloadToken));
     if (!parsed || typeof parsed !== 'object') {
       return null;
     }
@@ -133,7 +230,14 @@ export function clearTokenCookies(response) {
 }
 
 export function buildTeachableAuthorizeUrl(config, stateValue) {
-  const url = new URL(`/secure/${config.schoolId}/identity/oauth_provider/authorize`, TEACHABLE_AUTHORIZE_BASE);
+  const url = config.authorizeUrl
+    ? new URL(config.authorizeUrl)
+    : new URL(`/secure/${config.schoolId}/identity/oauth_provider/authorize`, TEACHABLE_AUTHORIZE_BASE);
+
+  if (!config.authorizeUrl && !config.schoolId) {
+    throw new Error('Missing TEACHABLE_SCHOOL_ID or TEACHABLE_OAUTH_AUTHORIZE_URL');
+  }
+
   url.searchParams.set('client_id', config.clientId);
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('required_scopes', config.requiredScopes);
@@ -155,7 +259,9 @@ export async function exchangeCodeForTokens(config, code) {
     code,
   });
 
-  const response = await fetch(`${TEACHABLE_API_BASE}/oauth2/token`, {
+  const tokenEndpoint = config.tokenUrl || `${TEACHABLE_API_BASE}/oauth2/token`;
+
+  const response = await fetch(tokenEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -180,7 +286,9 @@ export async function refreshTokens(config, refreshToken) {
     refresh_token: refreshToken,
   });
 
-  const response = await fetch(`${TEACHABLE_API_BASE}/oauth2/token`, {
+  const tokenEndpoint = config.tokenUrl || `${TEACHABLE_API_BASE}/oauth2/token`;
+
+  const response = await fetch(tokenEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
