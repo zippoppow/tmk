@@ -11,6 +11,24 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+function extractRedirectFromRawState(stateValue) {
+  if (!stateValue || typeof stateValue !== 'string') {
+    return null;
+  }
+
+  const payloadToken = stateValue.split('.')[0];
+  if (!payloadToken) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(Buffer.from(payloadToken, 'base64url').toString('utf8'));
+    return typeof payload?.redirectTo === 'string' ? payload.redirectTo : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(request) {
   const requestUrl = new URL(request.url);
 
@@ -20,6 +38,7 @@ export async function GET(request) {
       requireRedirectUri: true,
     });
     const cookieContext = readOAuthContextCookie(request);
+    const rawStateRedirect = extractRedirectFromRawState(requestUrl.searchParams.get('state'));
     console.log('[OAuth Callback] Received cookie context:', cookieContext);
     console.log('[OAuth Callback] Request cookies:', request.cookies.getSetCookie?.());
     console.log('[OAuth Callback] All cookies:', Object.fromEntries(request.cookies));
@@ -27,7 +46,7 @@ export async function GET(request) {
     const oauthError = requestUrl.searchParams.get('error_description') || requestUrl.searchParams.get('error');
     if (oauthError) {
       const redirectPathFromCookie = sanitizeRedirectTarget(
-        cookieContext?.redirectTo,
+        cookieContext?.redirectTo || rawStateRedirect || requestUrl.searchParams.get('redirectTo'),
         requestUrl.origin,
         config.postLogoutRedirect
       );
@@ -50,7 +69,7 @@ export async function GET(request) {
       console.log('[OAuth Callback] Decoded redirectTo from state:', statePayload?.redirectTo);
     if (!statePayload || stateExpired) {
       const redirectPathFromCookie = sanitizeRedirectTarget(
-        cookieContext?.redirectTo,
+        cookieContext?.redirectTo || rawStateRedirect || requestUrl.searchParams.get('redirectTo'),
         requestUrl.origin,
         config.postLogoutRedirect
       );
@@ -85,8 +104,9 @@ export async function GET(request) {
     return response;
   } catch (error) {
     const cookieContext = readOAuthContextCookie(request);
+    const rawStateRedirect = extractRedirectFromRawState(requestUrl.searchParams.get('state'));
     const fallbackRedirect = sanitizeRedirectTarget(
-      cookieContext?.redirectTo || requestUrl.searchParams.get('redirectTo'),
+      cookieContext?.redirectTo || rawStateRedirect || requestUrl.searchParams.get('redirectTo'),
       requestUrl.origin,
       '/'
     );
