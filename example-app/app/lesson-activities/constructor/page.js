@@ -17,10 +17,10 @@ import {
 } from '@mui/material';
 import ProjectManagerPanel from '../components/ProjectManagerPanel';
 import {
+  buildTeachableLogoutUrl,
   buildTeachableStartUrl,
   clearFormSessionData,
   fetchAuthenticatedUser,
-  OAUTH_ENDPOINTS,
   readFormSessionData,
   resolveTmkApiOrigin,
   writeFormSessionData,
@@ -184,7 +184,7 @@ export default function ConstructorPage() {
 
   const handleLoginLogout = () => {
     if (authUser) {
-      window.location.href = `${apiOrigin}${OAUTH_ENDPOINTS.logout}`;
+      window.location.href = buildTeachableLogoutUrl(window.location.href);
       return;
     }
 

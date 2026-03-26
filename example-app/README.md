@@ -73,3 +73,26 @@ import { AppleMusicIcon } from '../../icons/filled/brands/index.jsx';
 - Browse `../tokens/` to customize design tokens for your brand
 - Check `../icons/` for the full icon set
 - Refer to [Pegasus Design System](https://pegasusdesignsystem.com) for component definitions and usage guidelines
+
+## Teachable OAuth Setup
+
+Lesson activity login now runs through local Next.js routes and calls Teachable OAuth/API directly.
+
+Set these server env vars in `example-app/.env.local`:
+
+```bash
+TEACHABLE_SCHOOL_ID=12345
+TEACHABLE_CLIENT_ID=your_client_id
+TEACHABLE_CLIENT_SECRET=your_client_secret
+TEACHABLE_REDIRECT_URI=http://localhost:3000/api/auth/teachable/callback
+```
+
+Optional vars:
+
+```bash
+TEACHABLE_REQUIRED_SCOPES="name:read email:read"
+TEACHABLE_OPTIONAL_SCOPES="courses:read"
+TEACHABLE_POST_LOGOUT_REDIRECT=/
+```
+
+The Redirect URL configured in Teachable must exactly match `TEACHABLE_REDIRECT_URI`.

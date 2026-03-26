@@ -58,11 +58,16 @@ export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
 }
 
 export function buildTeachableStartUrl(apiOrigin, redirectTo) {
-	const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
-	const authUrl = new URL(OAUTH_ENDPOINTS.start, `${origin}/`);
+	const authUrl = new URL(OAUTH_ENDPOINTS.start, window.location.origin);
 	authUrl.searchParams.set('redirectTo', redirectTo || window.location.href);
 	console.log('[TMK auth] start URL:', authUrl.toString());
 	return authUrl.toString();
+}
+
+export function buildTeachableLogoutUrl(redirectTo) {
+	const logoutUrl = new URL(OAUTH_ENDPOINTS.logout, window.location.origin);
+	logoutUrl.searchParams.set('redirectTo', redirectTo || window.location.href);
+	return logoutUrl.toString();
 }
 
 export function extractAuthenticatedUser(data) {
@@ -101,7 +106,7 @@ export function extractAuthenticatedUser(data) {
 
 export async function fetchAuthenticatedUser(apiOrigin) {
 	try {
-		const response = await fetch(`${apiOrigin}${OAUTH_ENDPOINTS.me}`, {
+		const response = await fetch(OAUTH_ENDPOINTS.me, {
 			method: 'GET',
 			credentials: 'include',
 		});
