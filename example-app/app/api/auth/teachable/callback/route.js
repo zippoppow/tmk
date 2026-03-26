@@ -13,6 +13,11 @@ export const dynamic = 'force-dynamic';
 
 const DEFAULT_LESSON_REDIRECT = '/lesson-activities/intro';
 
+function loginPathWithNext(nextPath) {
+  const resolvedNext = nextPath && nextPath !== '/' ? nextPath : DEFAULT_LESSON_REDIRECT;
+  return `/login?next=${encodeURIComponent(resolvedNext)}`;
+}
+
 function extractRedirectFromRawState(stateValue) {
   if (!stateValue || typeof stateValue !== 'string') {
     return null;
@@ -80,7 +85,12 @@ export async function GET(request) {
         requestUrl.searchParams.get('redirectTo')
       );
       console.log('[OAuth Callback] oauthError redirect path:', redirectPathFromCookie);
-      const response = redirectWithAuthFlag(requestUrl, redirectPathFromCookie, 'error', oauthError);
+      const response = redirectWithAuthFlag(
+        requestUrl,
+        loginPathWithNext(redirectPathFromCookie),
+        'error',
+        oauthError
+      );
       clearOAuthContextCookie(response);
       return response;
     }
@@ -108,7 +118,7 @@ export async function GET(request) {
       console.log('[OAuth Callback] State invalid/expired. Using cookie redirectTo:', cookieContext?.redirectTo, '-> resolved to:', redirectPathFromCookie);
       const response = redirectWithAuthFlag(
         requestUrl,
-        redirectPathFromCookie,
+        loginPathWithNext(redirectPathFromCookie),
         'error',
         stateExpired ? 'OAuth state is expired' : 'OAuth state is invalid'
       );
@@ -124,7 +134,12 @@ export async function GET(request) {
 
     const code = requestUrl.searchParams.get('code');
     if (!code) {
-      const response = redirectWithAuthFlag(requestUrl, redirectPath, 'error', 'Missing authorization code');
+      const response = redirectWithAuthFlag(
+        requestUrl,
+        loginPathWithNext(redirectPath),
+        'error',
+        'Missing authorization code'
+      );
       clearOAuthContextCookie(response);
       return response;
     }
@@ -147,7 +162,7 @@ export async function GET(request) {
     console.log('[OAuth Callback] Catch fallback redirect path:', fallbackRedirect);
     const response = redirectWithAuthFlag(
       requestUrl,
-      fallbackRedirect,
+      loginPathWithNext(fallbackRedirect),
       'error',
       error?.message || 'OAuth callback failed'
     );
