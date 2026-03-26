@@ -32,6 +32,7 @@ export async function GET(request) {
 
     const authorizationUrl = buildTeachableAuthorizeUrl(config, state);
     const response = NextResponse.redirect(authorizationUrl);
+    console.log('[OAuth Start] Setting context cookie with redirectTo:', redirectTo);
     setOAuthContextCookie(
       response,
       {
@@ -40,6 +41,8 @@ export async function GET(request) {
       },
       config.stateMaxAgeSeconds
     );
+    console.log('[OAuth Start] Redirecting to:', authorizationUrl);
+    console.log('[OAuth Start] Response cookies:', response.cookies.getSetCookieHeader?.());
     return response;
   } catch (error) {
     return NextResponse.json(

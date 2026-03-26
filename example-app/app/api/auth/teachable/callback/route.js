@@ -20,6 +20,9 @@ export async function GET(request) {
       requireRedirectUri: true,
     });
     const cookieContext = readOAuthContextCookie(request);
+    console.log('[OAuth Callback] Received cookie context:', cookieContext);
+    console.log('[OAuth Callback] Request cookies:', request.cookies.getSetCookie?.());
+    console.log('[OAuth Callback] All cookies:', Object.fromEntries(request.cookies));
 
     const oauthError = requestUrl.searchParams.get('error_description') || requestUrl.searchParams.get('error');
     if (oauthError) {
@@ -37,15 +40,19 @@ export async function GET(request) {
       requestUrl.searchParams.get('state'),
       config.stateSecret
     );
+    console.log('[OAuth Callback] State param received:', requestUrl.searchParams.get('state'));
+    console.log('[OAuth Callback] State decoded payload:', statePayload);
 
     const stateAgeMs = Date.now() - Number(statePayload?.ts || 0);
     const stateExpired = !statePayload?.ts || stateAgeMs > config.stateMaxAgeSeconds * 1000;
+    console.log('[OAuth Callback] State age:', stateAgeMs, 'ms, max:', config.stateMaxAgeSeconds * 1000, 'ms, expired:', stateExpired);
     if (!statePayload || stateExpired) {
       const redirectPathFromCookie = sanitizeRedirectTarget(
         cookieContext?.redirectTo,
         requestUrl.origin,
         config.postLogoutRedirect
       );
+      console.log('[OAuth Callback] State invalid/expired. Using cookie redirectTo:', cookieContext?.redirectTo, '-> resolved to:', redirectPathFromCookie);
       const response = redirectWithAuthFlag(
         requestUrl,
         redirectPathFromCookie,
