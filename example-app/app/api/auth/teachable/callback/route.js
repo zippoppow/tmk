@@ -38,16 +38,22 @@ function resolveCallbackRedirect(requestUrl, config, ...candidates) {
     }
 
     const sanitized = sanitizeRedirectTarget(candidate, requestUrl.origin, '');
-    if (sanitized) {
+    if (sanitized && sanitized !== '/') {
       return sanitized;
     }
   }
 
-  return sanitizeRedirectTarget(
-    config.postLogoutRedirect,
+  const configuredFallback = sanitizeRedirectTarget(
+    config?.postLogoutRedirect,
     requestUrl.origin,
-    DEFAULT_LESSON_REDIRECT
+    ''
   );
+
+  if (configuredFallback && configuredFallback !== '/') {
+    return configuredFallback;
+  }
+
+  return DEFAULT_LESSON_REDIRECT;
 }
 
 export async function GET(request) {
