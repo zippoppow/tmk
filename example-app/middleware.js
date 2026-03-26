@@ -22,5 +22,5 @@ export function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/lesson-activities/:path*'],
+  matcher: ['/lesson-activities/:path*', '/dashboard/:path*'],
 };

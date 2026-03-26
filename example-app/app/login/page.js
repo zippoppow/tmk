@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { buildTeachableStartUrl, fetchAuthenticatedUser } from '../lesson-activities/components/lessonActivityHelpers';
 
-const DEFAULT_NEXT_PATH = '/lesson-activities/intro';
+const DEFAULT_NEXT_PATH = '/';
 
 function sanitizeNextPath(candidate) {
   if (!candidate || typeof candidate !== 'string') {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { buildTeachableLogoutUrl } from '../lesson-activities/components/lessonActivityHelpers';
 import {
     Container,
     Box,
@@ -22,16 +23,23 @@ export default function DashboardPage() {
         // Check authentication status
         const checkAuth = async () => {
             try {
-                const response = await fetch('/api/auth/me');
+                const response = await fetch('/api/auth/teachable/me', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
                 if (!response.ok) {
-                    router.push('/login');
+                    router.push('/login?next=/dashboard');
                     return;
                 }
                 const userData = await response.json();
-                setUser(userData);
+                if (!userData?.authenticated) {
+                    router.push('/login?next=/dashboard');
+                    return;
+                }
+                setUser(userData.user || null);
             } catch (error) {
                 console.error('Auth check failed:', error);
-                router.push('/login');
+                router.push('/login?next=/dashboard');
             } finally {
                 setLoading(false);
             }
@@ -40,13 +48,8 @@ export default function DashboardPage() {
         checkAuth();
     }, [router]);
 
-    const handleLogout = async () => {
-        try {
-            await fetch('/api/auth/logout', { method: 'POST' });
-            router.push('/login');
-        } catch (error) {
-            console.error('Logout failed:', error);
-        }
+    const handleLogout = () => {
+        window.location.href = buildTeachableLogoutUrl('/login?next=/dashboard');
     };
 
     if (loading) {
