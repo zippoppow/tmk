@@ -274,6 +274,9 @@ export function buildTeachableAuthorizeUrl(config, stateValue) {
 
   url.searchParams.set('client_id', config.clientId);
   url.searchParams.set('response_type', 'code');
+  if (config.redirectUri) {
+    url.searchParams.set('redirect_uri', config.redirectUri);
+  }
   url.searchParams.set('required_scopes', config.requiredScopes);
   if (config.optionalScopes) {
     url.searchParams.set('optional_scopes', config.optionalScopes);
