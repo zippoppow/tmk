@@ -134,9 +134,12 @@ export default function DashboardPage() {
                 <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
                     Projects
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
-                    Project management coming soon...
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                    Create and manage project records outside individual lesson pages.
                 </Typography>
+                <Button variant="contained" onClick={() => router.push('/lesson-projects')}>
+                    Open Create Project
+                </Button>
             </Box>
         </Container>
     );
