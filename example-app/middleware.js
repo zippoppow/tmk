@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+const AUTH_BYPASS_ENABLED = true;
 const ACCESS_TOKEN_COOKIE = 'tmk_teachable_access_token';
 const REFRESH_TOKEN_COOKIE = 'tmk_teachable_refresh_token';
 
@@ -11,6 +12,10 @@ function buildLoginRedirect(request) {
 }
 
 export function middleware(request) {
+  if (AUTH_BYPASS_ENABLED) {
+    return NextResponse.next();
+  }
+
   const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
 

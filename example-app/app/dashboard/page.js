@@ -14,12 +14,24 @@ import {
     CircularProgress,
 } from '@mui/material';
 
+const AUTH_BYPASS_ENABLED = true;
+const AUTH_BYPASS_USER = {
+    name: 'Development User',
+    email: 'dev@example.com',
+};
+
 export default function DashboardPage() {
     const router = useRouter();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (AUTH_BYPASS_ENABLED) {
+            setUser(AUTH_BYPASS_USER);
+            setLoading(false);
+            return;
+        }
+
         // Check authentication status
         const checkAuth = async () => {
             try {
@@ -49,6 +61,11 @@ export default function DashboardPage() {
     }, [router]);
 
     const handleLogout = () => {
+        if (AUTH_BYPASS_ENABLED) {
+            router.push('/');
+            return;
+        }
+
         window.location.href = buildTeachableLogoutUrl('/login?next=/dashboard');
     };
 

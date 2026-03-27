@@ -29,6 +29,12 @@ export const OAUTH_ENDPOINTS = {
 export const DIY_PROJECTS_ENDPOINT = '/api/diy-projects';
 export const DEFAULT_SESSION_STORAGE_KEY = 'tmk-diy-sessions';
 export const PROJECTS_STORAGE_KEY = 'tmk-diy-projects';
+export const AUTH_BYPASS_ENABLED = true;
+const AUTH_BYPASS_USER = {
+	id: 'dev-user',
+	name: 'Development User',
+	email: 'dev@example.com',
+};
 
 export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
 	const resolvedOrigins = getConfiguredApiOrigins(origins);
@@ -105,6 +111,10 @@ export function extractAuthenticatedUser(data) {
 }
 
 export async function fetchAuthenticatedUser(apiOrigin) {
+	if (AUTH_BYPASS_ENABLED) {
+		return AUTH_BYPASS_USER;
+	}
+
 	try {
 		const response = await fetch(OAUTH_ENDPOINTS.me, {
 			method: 'GET',
