@@ -19,7 +19,6 @@ import ProjectManagerPanel from '../components/ProjectManagerPanel';
 import {
 	buildTeachableLogoutUrl,
 	buildTeachableStartUrl,
-	clearFormSessionData,
 	fetchAuthenticatedUser,
 	readFormSessionData,
 	resolveTmkApiOrigin,
@@ -131,28 +130,6 @@ export default function IntroPage() {
 		});
 	};
 
-	const handleSaveSession = () => {
-		persist(normalizedLessonInputData);
-		if (authUser) {
-			showNotice('success', 'Session saved locally. Teachable login is active.');
-			return;
-		}
-		showNotice('success', 'Session saved locally.');
-	};
-
-	const handleClearSession = () => {
-		const shouldClear = window.confirm('Clear all saved data for this exercise?');
-		if (!shouldClear) {
-			return;
-		}
-
-		clearFormSessionData(FORM_NAME);
-		setMorpheme('');
-		setWords(emptyWordList());
-		setQuestionMorpheme('');
-		showNotice('info', 'Saved data cleared.');
-	};
-
 	const handleClearForm = () => {
 		setMorpheme('');
 		setWords(emptyWordList());
@@ -166,10 +143,6 @@ export default function IntroPage() {
 
 	const handleDownloadPdf = () => {
 		window.print();
-	};
-
-	const handleOpenPopup = () => {
-		window.open(window.location.href, 'tmk-intro-popup', 'width=1280,height=900,noopener,noreferrer');
 	};
 
 	const initiateOAuthLogin = () => {
@@ -326,16 +299,7 @@ export default function IntroPage() {
 					<Button variant="contained" color="success" onClick={handleDownloadPdf} sx={{ textTransform: 'none' }}>
 						Download as PDF
 					</Button>
-					<Button variant="contained" color="info" onClick={handleOpenPopup} sx={{ textTransform: 'none' }}>
-						Open in Pop-up Screen
-					</Button>
-					<Button variant="outlined" onClick={handleSaveSession} sx={{ textTransform: 'none', bgcolor: 'white' }}>
-						Save Session
-					</Button>
-					<Button variant="outlined" color="error" onClick={handleClearSession} sx={{ textTransform: 'none', bgcolor: 'white' }}>
-						Clear Saved Data
-					</Button>
-				</Stack>
+</Stack>
 
 				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
 					<Box
