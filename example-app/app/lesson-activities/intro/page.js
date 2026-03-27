@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
 	Alert,
 	Box,
@@ -55,7 +55,6 @@ function normalizeIntroLessonInputData(rawData) {
 
 export default function IntroPage() {
 	const router = useRouter();
-	const searchParams = useSearchParams();
 	const [morpheme, setMorpheme] = useState('');
 	const [words, setWords] = useState(emptyWordList);
 	const [questionMorpheme, setQuestionMorpheme] = useState('');
@@ -81,8 +80,13 @@ export default function IntroPage() {
 	};
 
 	useEffect(() => {
-		const paramProjectId = searchParams.get('projectId') || '';
-		const paramActivityIndex = searchParams.get('activityIndex');
+		if (typeof window === 'undefined') {
+			return;
+		}
+
+		const url = new URL(window.location.href);
+		const paramProjectId = url.searchParams.get('projectId') || '';
+		const paramActivityIndex = url.searchParams.get('activityIndex');
 
 		if (paramProjectId && paramActivityIndex !== null) {
 			const parsedIndex = Number.parseInt(paramActivityIndex, 10);
@@ -124,7 +128,7 @@ export default function IntroPage() {
 			setQuestionMorpheme(normalized.questionMorpheme);
 			setWords(normalized.words);
 		}
-	}, [searchParams]);
+	}, []);
 
 	useEffect(() => {
 		const timeout = setTimeout(() => {

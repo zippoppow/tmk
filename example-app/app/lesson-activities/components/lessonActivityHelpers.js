@@ -10,6 +10,17 @@ function trimOrigin(value) {
 	return value.trim().replace(/\/$/, '');
 }
 
+function isLocalOrigin(origin) {
+	if (!origin) {
+		return false;
+	}
+	return (
+		origin.includes('localhost') ||
+		origin.includes('127.0.0.1') ||
+		origin.startsWith('file:')
+	);
+}
+
 function getConfiguredApiOrigins(defaultOrigins) {
 	const configuredDefault = trimOrigin(process.env.NEXT_PUBLIC_TMK_API_URL);
 	const configuredProduction = trimOrigin(process.env.NEXT_PUBLIC_TMK_API_URL_PRODUCTION);
@@ -44,16 +55,22 @@ export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
 	}
 
 	const { protocol, hostname } = window.location;
-	if (
+	const isLocalHost =
 		protocol === 'file:' ||
 		!hostname ||
 		hostname === 'localhost' ||
 		hostname === '127.0.0.1' ||
 		hostname.endsWith('.local') ||
 		hostname.includes('railway.app') ||
-		hostname.includes('staging')
-	) {
+		hostname.includes('staging');
+
+	if (isLocalHost) {
 		return resolvedOrigins.staging;
+	}
+
+	// Safety: never use localhost API origins on production hosts.
+	if (isLocalOrigin(resolvedOrigins.production)) {
+		return origins.production;
 	}
 
 	if (hostname === 'tmk.themorphologykit.com' || hostname.endsWith('.themorphologykit.com')) {

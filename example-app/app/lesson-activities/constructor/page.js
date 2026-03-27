@@ -15,7 +15,6 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import ProjectManagerPanel from '../components/ProjectManagerPanel';
 import {
   buildTeachableLogoutUrl,
   buildTeachableStartUrl,
@@ -214,24 +213,6 @@ export default function ConstructorPage() {
           <Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
             {authUser ? 'Logout from Teachable' : 'Login with Teachable'}
           </Button>
-          <ProjectManagerPanel
-            formName={FORM_NAME}
-            apiOrigin={apiOrigin}
-            isAuthenticated={Boolean(authUser)}
-            userEmail={authUser?.email || ''}
-            currentLessonInputData={currentLessonInputData}
-            normalizeLessonInputData={(data) => normalizeConstructorLessonInputData(data, constructors.length)}
-            createEmptyLessonInputData={() => normalizeConstructorLessonInputData({}, constructors.length)}
-            applyLessonInputData={applyLessonInputData}
-            clearLessonInputs={handleClear}
-            onRequireLogin={() => {
-              const shouldLogin = window.confirm('Project Manager requires Teachable login. Log in now?');
-              if (shouldLogin) {
-                initiateOAuthLogin();
-              }
-            }}
-            onNotice={showNotice}
-          />
           <Button variant="outlined" onClick={handleSaveSession} sx={{ textTransform: 'none' }}>
             Save Session
           </Button>
