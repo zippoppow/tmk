@@ -36,13 +36,21 @@ import {
 	normalizeCloudProjects,
 } from '../lesson-activities/components/projectManagerModel';
 
-const DEFAULT_FORM_NAME = 'intro';
+const PROJECT_FORM_NAME = 'lesson-activities-project';
+const LESSON_ACTIVITY_TYPES = [
+	{ value: 'intro', label: 'Intro', path: '/lesson-activities/intro' },
+];
 
 function normalizeLessonInputData(rawData) {
 	if (!rawData || typeof rawData !== 'object' || Array.isArray(rawData)) {
 		return {};
 	}
 	return rawData;
+}
+
+function getLessonActivityRoute(activityType) {
+	const found = LESSON_ACTIVITY_TYPES.find((type) => type.value === activityType);
+	return found?.path || null;
 }
 
 export default function LessonProjectsPage() {
@@ -54,12 +62,10 @@ export default function LessonProjectsPage() {
 	const [isLoadingCloudProjects, setIsLoadingCloudProjects] = useState(false);
 	const [cloudMessage, setCloudMessage] = useState('');
 	const [cloudMessageSeverity, setCloudMessageSeverity] = useState('error');
-	const [selectedFormName, setSelectedFormName] = useState(DEFAULT_FORM_NAME);
 	const [projectNameInput, setProjectNameInput] = useState('');
 	const [selectedLocalProjectId, setSelectedLocalProjectId] = useState(null);
-	const [selectedLessonActivity, setSelectedLessonActivity] = useState(null);
 	const [activityNameDrafts, setActivityNameDrafts] = useState({});
-	const [currentLessonInputJson, setCurrentLessonInputJson] = useState('{}');
+	const [newActivityTypeByProjectId, setNewActivityTypeByProjectId] = useState({});
 	const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
 
 	const apiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
@@ -78,11 +84,11 @@ export default function LessonProjectsPage() {
 		if (typeof window === 'undefined') {
 			return;
 		}
-		setLocalProjects(getAllStoredProjects().filter((project) => project.formName === selectedFormName));
+		setLocalProjects(getAllStoredProjects().filter((project) => project.formName === PROJECT_FORM_NAME));
 	};
 
 	const getLocalProjectById = (projectId) => {
-		return getAllStoredProjects().find((project) => project.id === projectId && project.formName === selectedFormName) || null;
+		return getAllStoredProjects().find((project) => project.id === projectId && project.formName === PROJECT_FORM_NAME) || null;
 	};
 
 	const loadCloudProjects = async () => {
@@ -108,16 +114,7 @@ export default function LessonProjectsPage() {
 			}
 
 			const payload = await response.json();
-			const normalized = normalizeCloudProjects(payload, selectedFormName, normalizeLessonInputData).map((project) => {
-				const activities = getProjectLessonActivities(project, selectedFormName, normalizeLessonInputData).filter((activity) => {
-					return String(activity['tmk-template'] || '') === selectedFormName;
-				});
-				return {
-					...project,
-					lessonActivities: activities,
-				};
-			}).filter((project) => project.lessonActivities.length > 0);
-			setCloudProjects(normalized);
+			setCloudProjects(normalizeCloudProjects(payload, PROJECT_FORM_NAME, normalizeLessonInputData));
 		} catch (error) {
 			console.error('Failed to load cloud projects:', error);
 			setCloudProjects([]);
@@ -135,7 +132,7 @@ export default function LessonProjectsPage() {
 		try {
 			const payload = buildDiyProjectsPayload({
 				project,
-				formName: selectedFormName,
+				formName: PROJECT_FORM_NAME,
 				userEmail: authUser?.email,
 				normalizeLessonInputData,
 			});
@@ -171,18 +168,8 @@ export default function LessonProjectsPage() {
 	};
 
 	const displayProjects = useMemo(() => {
-		return mergeDisplayProjects(localProjects, cloudProjects, selectedFormName, normalizeLessonInputData);
-	}, [localProjects, cloudProjects, selectedFormName]);
-
-	const availableForms = useMemo(() => {
-		const known = new Set([DEFAULT_FORM_NAME]);
-		getAllStoredProjects().forEach((project) => {
-			if (project?.formName) {
-				known.add(String(project.formName));
-			}
-		});
-		return Array.from(known).sort((a, b) => a.localeCompare(b));
-	}, [localProjects]);
+		return mergeDisplayProjects(localProjects, cloudProjects, PROJECT_FORM_NAME, normalizeLessonInputData);
+	}, [localProjects, cloudProjects]);
 
 	const unsyncedCount = useMemo(() => {
 		return localProjects.filter((project) => !project.syncedAt).length;
@@ -190,11 +177,11 @@ export default function LessonProjectsPage() {
 
 	const selectedProjectText = useMemo(() => {
 		if (!selectedLocalProjectId) {
-			return 'No project selected. Create and select a project to manage lesson activities.';
+			return 'No project selected. Create and select a Lesson Activities Project first.';
 		}
 		const project = getLocalProjectById(selectedLocalProjectId);
 		return project ? `Selected project: ${project.name}` : 'No project selected.';
-	}, [selectedLocalProjectId, localProjects, selectedFormName]);
+	}, [selectedLocalProjectId, localProjects]);
 
 	const runAuthCheck = async () => {
 		setAuthLoading(true);
@@ -216,7 +203,7 @@ export default function LessonProjectsPage() {
 
 		const projects = getAllStoredProjects();
 		const existing = projects.find(
-			(project) => project.formName === selectedFormName && (project.name || '').trim() === trimmedName
+			(project) => project.formName === PROJECT_FORM_NAME && (project.name || '').trim() === trimmedName
 		);
 		if (existing) {
 			setSelectedLocalProjectId(existing.id);
@@ -226,18 +213,17 @@ export default function LessonProjectsPage() {
 			return;
 		}
 
-		projects.unshift(createLocalProjectRecord(trimmedName, selectedFormName));
+		const created = createLocalProjectRecord(trimmedName, PROJECT_FORM_NAME);
+		projects.unshift(created);
 		saveStoredProjects(projects);
 		setProjectNameInput('');
-		setSelectedLocalProjectId(projects[0].id);
-		setSelectedLessonActivity(null);
+		setSelectedLocalProjectId(created.id);
+		setNewActivityTypeByProjectId((prev) => ({ ...prev, [created.id]: LESSON_ACTIVITY_TYPES[0].value }));
 		loadLocalProjects();
 	};
 
 	const handleSelectProject = (projectId) => {
 		setSelectedLocalProjectId(projectId);
-		setSelectedLessonActivity(null);
-		setCurrentLessonInputJson('{}');
 	};
 
 	const handleDeleteProject = (projectId) => {
@@ -255,10 +241,11 @@ export default function LessonProjectsPage() {
 		if (selectedLocalProjectId === projectId) {
 			setSelectedLocalProjectId(null);
 		}
-		if (selectedLessonActivity?.projectId === projectId) {
-			setSelectedLessonActivity(null);
-		}
-		setCurrentLessonInputJson('{}');
+		setNewActivityTypeByProjectId((prev) => {
+			const next = { ...prev };
+			delete next[projectId];
+			return next;
+		});
 		loadLocalProjects();
 	};
 
@@ -269,22 +256,23 @@ export default function LessonProjectsPage() {
 			return;
 		}
 
+		const requestedType = newActivityTypeByProjectId[projectId] || LESSON_ACTIVITY_TYPES[0].value;
 		const requestedName = String(window.prompt('Lesson activity name:', '') || '').trim();
 		const uniqueName = getUniqueLessonActivityName({
 			project,
-			requestedName: requestedName || project.name || 'Lesson Activity',
-			formName: selectedFormName,
+			requestedName: requestedName || `${project.name} ${requestedType}`,
+			formName: PROJECT_FORM_NAME,
 			normalizeLessonInputData,
 		});
 		const snapshot = createLessonActivitySnapshot({
-			formName: selectedFormName,
+			formName: requestedType,
 			projectName: project.name,
 			lessonName: uniqueName,
 			lessonInputData: {},
 			normalizeLessonInputData,
 			currentLessonInputData: {},
 		});
-		const activities = getProjectLessonActivities(project, selectedFormName, normalizeLessonInputData);
+		const activities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
 
 		project.lessonActivities = [...activities, snapshot];
 		project.modifiedAtMs = Date.now();
@@ -293,56 +281,34 @@ export default function LessonProjectsPage() {
 		saveStoredProjects(projects);
 		loadLocalProjects();
 		setSelectedLocalProjectId(project.id);
-		setSelectedLessonActivity({ projectId: project.id, activityIndex: project.lessonActivities.length - 1 });
-		setCurrentLessonInputJson(JSON.stringify(snapshot['lesson-input-data'] || {}, null, 2));
+		showNotice('success', `${requestedType} lesson activity added.`);
 	};
 
-	const handleLoadLatest = (project) => {
-		const activities = getProjectLessonActivities(project, selectedFormName, normalizeLessonInputData);
-		const latest = activities.length ? activities[activities.length - 1] : null;
-		if (!latest) {
+	const handleOpenActivity = (project, activity, activityIndex) => {
+		const activityType = String(activity['tmk-template'] || '');
+		const route = getLessonActivityRoute(activityType);
+		if (!route) {
+			showNotice('error', `No page is implemented yet for activity type "${activityType || 'unknown'}".`);
 			return;
 		}
 
-		setCurrentLessonInputJson(JSON.stringify(latest['lesson-input-data'] || {}, null, 2));
-		if (project.source === 'local') {
-			setSelectedLocalProjectId(project.id);
-			setSelectedLessonActivity({ projectId: project.id, activityIndex: Math.max(activities.length - 1, 0) });
-		}
-		showNotice('success', 'Loaded latest lesson activity data into editor.');
+		const params = new URLSearchParams({
+			projectId: String(project.id || ''),
+			activityIndex: String(activityIndex),
+			activityType,
+		});
+		router.push(`${route}?${params.toString()}`);
 	};
 
-	const handleLoadActivity = (project, activityIndex) => {
-		const activities = getProjectLessonActivities(project, selectedFormName, normalizeLessonInputData);
-		const activity = activities[activityIndex];
-		if (!activity) {
-			return;
-		}
-
-		setCurrentLessonInputJson(JSON.stringify(activity['lesson-input-data'] || {}, null, 2));
-		if (project.source === 'local') {
-			setSelectedLocalProjectId(project.id);
-			setSelectedLessonActivity({ projectId: project.id, activityIndex });
-		}
-	};
-
-	const handleUpdateActivity = (projectId, activityIndex) => {
+	const handleUpdateActivityName = (projectId, activityIndex) => {
 		const projects = getAllStoredProjects();
 		const project = projects.find((item) => item.id === projectId);
 		if (!project) {
 			return;
 		}
 
-		const activities = getProjectLessonActivities(project, selectedFormName, normalizeLessonInputData);
+		const activities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
 		if (!activities[activityIndex]) {
-			return;
-		}
-
-		let parsedInputData;
-		try {
-			parsedInputData = JSON.parse(currentLessonInputJson || '{}');
-		} catch {
-			showNotice('error', 'Lesson input JSON is invalid. Fix JSON before updating.');
 			return;
 		}
 
@@ -351,7 +317,7 @@ export default function LessonProjectsPage() {
 		const uniqueName = getUniqueLessonActivityName({
 			project,
 			requestedName: requestedName || project.name || 'Lesson Activity',
-			formName: selectedFormName,
+			formName: PROJECT_FORM_NAME,
 			normalizeLessonInputData,
 			excludeIndex: activityIndex,
 		});
@@ -360,7 +326,6 @@ export default function LessonProjectsPage() {
 			...activities[activityIndex],
 			'lesson-name': uniqueName,
 			'modified-at': Date.now(),
-			'lesson-input-data': normalizeLessonInputData(parsedInputData),
 		};
 		project.lessonActivities = activities;
 		project.modifiedAtMs = Date.now();
@@ -368,9 +333,7 @@ export default function LessonProjectsPage() {
 
 		saveStoredProjects(projects);
 		loadLocalProjects();
-		setSelectedLocalProjectId(project.id);
-		setSelectedLessonActivity({ projectId: project.id, activityIndex });
-		showNotice('success', 'Lesson activity updated.');
+		showNotice('success', 'Lesson activity name updated.');
 	};
 
 	const handleDeleteActivity = (projectId, activityIndex) => {
@@ -381,7 +344,7 @@ export default function LessonProjectsPage() {
 		}
 
 		const project = projects[projectIndex];
-		const activities = getProjectLessonActivities(project, selectedFormName, normalizeLessonInputData);
+		const activities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
 		const activity = activities[activityIndex];
 		if (!activity) {
 			return;
@@ -396,27 +359,12 @@ export default function LessonProjectsPage() {
 
 		const nextActivities = activities.filter((_, idx) => idx !== activityIndex);
 		if (nextActivities.length === 0) {
-			projects.splice(projectIndex, 1);
-			if (selectedLocalProjectId === projectId) {
-				setSelectedLocalProjectId(null);
-			}
-			setSelectedLessonActivity(null);
-			setCurrentLessonInputJson('{}');
+			project.lessonActivities = [];
 		} else {
 			project.lessonActivities = nextActivities;
-			project.modifiedAtMs = Date.now();
-			project.syncedAt = null;
-			if (selectedLessonActivity?.projectId === projectId) {
-				if (selectedLessonActivity.activityIndex === activityIndex) {
-					setSelectedLessonActivity({ projectId, activityIndex: Math.max(activityIndex - 1, 0) });
-				} else if (selectedLessonActivity.activityIndex > activityIndex) {
-					setSelectedLessonActivity({
-						projectId,
-						activityIndex: selectedLessonActivity.activityIndex - 1,
-					});
-				}
-			}
 		}
+		project.modifiedAtMs = Date.now();
+		project.syncedAt = null;
 
 		saveStoredProjects(projects);
 		loadLocalProjects();
@@ -428,7 +376,7 @@ export default function LessonProjectsPage() {
 		}
 
 		const unsyncedProjects = getAllStoredProjects().filter(
-			(project) => project.formName === selectedFormName && !project.syncedAt
+			(project) => project.formName === PROJECT_FORM_NAME && !project.syncedAt
 		);
 
 		let count = 0;
@@ -451,16 +399,9 @@ export default function LessonProjectsPage() {
 	};
 
 	useEffect(() => {
+		loadLocalProjects();
 		runAuthCheck();
 	}, []);
-
-	useEffect(() => {
-		loadLocalProjects();
-		setSelectedLocalProjectId(null);
-		setSelectedLessonActivity(null);
-		setActivityNameDrafts({});
-		setCurrentLessonInputJson('{}');
-	}, [selectedFormName]);
 
 	useEffect(() => {
 		if (isAuthenticated) {
@@ -469,50 +410,7 @@ export default function LessonProjectsPage() {
 			setCloudProjects([]);
 			setCloudStatus('');
 		}
-	}, [selectedFormName, isAuthenticated]);
-
-	useEffect(() => {
-		if (!selectedLessonActivity || !selectedLessonActivity.projectId || !Number.isInteger(selectedLessonActivity.activityIndex)) {
-			return;
-		}
-
-		const timer = window.setTimeout(() => {
-			let parsed;
-			try {
-				parsed = JSON.parse(currentLessonInputJson || '{}');
-			} catch {
-				return;
-			}
-
-			const projects = getAllStoredProjects();
-			const project = projects.find(
-				(item) => item.id === selectedLessonActivity.projectId && item.formName === selectedFormName
-			);
-			if (!project) {
-				return;
-			}
-
-			const activities = getProjectLessonActivities(project, selectedFormName, normalizeLessonInputData);
-			const targetIndex = selectedLessonActivity.activityIndex;
-			if (!activities[targetIndex]) {
-				return;
-			}
-
-			activities[targetIndex] = {
-				...activities[targetIndex],
-				'modified-at': Date.now(),
-				'lesson-input-data': normalizeLessonInputData(parsed),
-			};
-			project.lessonActivities = activities;
-			project.modifiedAtMs = Date.now();
-			project.syncedAt = null;
-
-			saveStoredProjects(projects);
-			loadLocalProjects();
-		}, 300);
-
-		return () => window.clearTimeout(timer);
-	}, [currentLessonInputJson, selectedLessonActivity, selectedFormName]);
+	}, [isAuthenticated]);
 
 	if (authLoading) {
 		return (
@@ -550,33 +448,25 @@ export default function LessonProjectsPage() {
 					>
 						{isAuthenticated ? 'Logout from Teachable' : 'Login with Teachable'}
 					</Button>
-					<TextField
-						select
-						size="small"
-						label="Lesson Activity Type"
-						value={selectedFormName}
-						onChange={(event) => setSelectedFormName(event.target.value)}
-						sx={{ minWidth: 220, bgcolor: 'white' }}
-					>
-						{availableForms.map((formName) => (
-							<MenuItem key={formName} value={formName}>
-								{formName}
-							</MenuItem>
-						))}
-					</TextField>
+					<Chip
+						label="Project-first workflow"
+						color="primary"
+						variant="outlined"
+						sx={{ alignSelf: { xs: 'flex-start', md: 'center' } }}
+					/>
 				</Stack>
 
 				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
-					<Typography sx={{ fontSize: '1.3rem', fontWeight: 800, mb: 0.5 }}>Create Project</Typography>
+					<Typography sx={{ fontSize: '1.3rem', fontWeight: 800, mb: 0.5 }}>Lesson Activities Projects</Typography>
 					<Typography sx={{ color: '#5a6472', fontSize: '0.95rem', mb: 2 }}>
-						Manage projects and lesson activities outside a specific lesson page. In-lesson project workflows remain available via ProjectManagerPanel.
+						Create a project first. Then choose a Lesson Activity type and add activities under that project. For now, Intro is the implemented example type.
 					</Typography>
 
 					<Stack direction="row" spacing={1} sx={{ mb: 1.2 }}>
 						<TextField
 							size="small"
 							fullWidth
-							placeholder="Project name..."
+							placeholder="Lesson Activities Project name..."
 							value={projectNameInput}
 							onChange={(event) => setProjectNameInput(event.target.value)}
 							onKeyDown={(event) => {
@@ -587,25 +477,23 @@ export default function LessonProjectsPage() {
 							}}
 						/>
 						<Button variant="contained" color="success" onClick={handleCreateProject} sx={{ textTransform: 'none' }}>
-							Create
+							Create Project
 						</Button>
 					</Stack>
 					<Typography sx={{ color: '#666', fontSize: '0.82rem', mb: 1 }}>{selectedProjectText}</Typography>
 
 					<Divider sx={{ mb: 1.5 }} />
 
-					<Stack direction={{ xs: 'column', lg: 'row' }} spacing={2}>
-						<Box sx={{ flex: 1 }}>
-							<Typography sx={{ fontSize: '0.78rem', textTransform: 'uppercase', color: '#777', fontWeight: 700, mb: 1 }}>
-								Saved Projects
-							</Typography>
-							{displayProjects.length === 0 && (
-								<Typography sx={{ color: '#bbb', fontSize: '0.9rem', textAlign: 'center', py: 2 }}>
-									No saved projects yet.
-								</Typography>
-							)}
+					<Typography sx={{ fontSize: '0.78rem', textTransform: 'uppercase', color: '#777', fontWeight: 700, mb: 1 }}>
+						Saved Projects
+					</Typography>
+					{displayProjects.length === 0 && (
+						<Typography sx={{ color: '#bbb', fontSize: '0.9rem', textAlign: 'center', py: 2 }}>
+							No saved projects yet.
+						</Typography>
+					)}
 
-							<Stack spacing={1}>
+					<Stack spacing={1}>
 								{displayProjects.map((project) => {
 									const lessonActivities = Array.isArray(project.lessonActivities) ? project.lessonActivities : [];
 									const isSelected = project.source === 'local' && project.id === selectedLocalProjectId;
@@ -643,23 +531,39 @@ export default function LessonProjectsPage() {
 												{project.source === 'cloud' ? 'Cloud' : project.syncedAt ? 'Synced' : 'Local'}
 											</Typography>
 
-											<Stack direction="row" spacing={0.6} sx={{ mt: 1, mb: lessonActivities.length ? 0.8 : 0 }}>
-												{project.source === 'local' && (
-													<Button size="small" variant="outlined" onClick={() => handleSelectProject(project.id)} sx={{ textTransform: 'none' }}>
-														Select
-													</Button>
-												)}
-												{project.source === 'local' && (
-													<Button size="small" variant="contained" color="success" onClick={() => handleNewActivity(project.id)} sx={{ textTransform: 'none' }}>
-														New Activity
-													</Button>
-												)}
-												<Button size="small" variant="contained" onClick={() => handleLoadLatest(project)} sx={{ textTransform: 'none' }}>
-													Load Latest
+<Stack direction={{ xs: 'column', md: 'row' }} spacing={0.6} sx={{ mt: 1, mb: lessonActivities.length ? 0.8 : 0 }}>
+											{project.source === 'local' && (
+												<Button size="small" variant="outlined" onClick={() => handleSelectProject(project.id)} sx={{ textTransform: 'none' }}>
+													Select
 												</Button>
-												{project.source === 'local' && (
-													<Button size="small" variant="contained" color="error" onClick={() => handleDeleteProject(project.id)} sx={{ textTransform: 'none' }}>
-														Del
+											)}
+											{project.source === 'local' && (
+												<TextField
+													select
+													size="small"
+													label="Type"
+													value={newActivityTypeByProjectId[project.id] || LESSON_ACTIVITY_TYPES[0].value}
+													onChange={(event) => {
+														const nextType = event.target.value;
+														setNewActivityTypeByProjectId((prev) => ({ ...prev, [project.id]: nextType }));
+													}}
+													sx={{ minWidth: 130 }}
+												>
+													{LESSON_ACTIVITY_TYPES.map((option) => (
+														<MenuItem key={option.value} value={option.value}>
+															{option.label}
+														</MenuItem>
+													))}
+												</TextField>
+											)}
+											{project.source === 'local' && (
+												<Button size="small" variant="contained" color="success" onClick={() => handleNewActivity(project.id)} sx={{ textTransform: 'none' }}>
+													Add Activity
+												</Button>
+											)}
+											{project.source === 'local' && (
+												<Button size="small" variant="contained" color="error" onClick={() => handleDeleteProject(project.id)} sx={{ textTransform: 'none' }}>
+													Delete Project
 													</Button>
 												)}
 											</Stack>
@@ -667,9 +571,8 @@ export default function LessonProjectsPage() {
 											<Stack spacing={0.6}>
 												{lessonActivities.map((activity, activityIndex) => {
 													const draftKey = `${project.id}:${activityIndex}`;
-													const selected =
-														selectedLessonActivity?.projectId === project.id &&
-														selectedLessonActivity?.activityIndex === activityIndex;
+													const activityType = String(activity['tmk-template'] || 'unknown');
+													const canOpenType = Boolean(getLessonActivityRoute(activityType));
 
 													return (
 														<Stack key={draftKey} direction="row" spacing={0.6} alignItems="center">
@@ -681,24 +584,25 @@ export default function LessonProjectsPage() {
 																		const value = event.target.value;
 																		setActivityNameDrafts((prev) => ({ ...prev, [draftKey]: value }));
 																	}}
-																	sx={{
-																		flex: 1,
-																		'& .MuiOutlinedInput-root': selected
-																			? { backgroundColor: '#eef2ff', '& fieldset': { borderColor: '#667eea' } }
-																			: undefined,
-																	}}
+																	sx={{ flex: 1 }}
 																/>
 															) : (
 																<Typography sx={{ flex: 1, fontSize: '0.78rem', color: '#555' }} noWrap>
 																	{activity['lesson-name'] || project.name}
 																</Typography>
 															)}
-															<Typography sx={{ fontSize: '0.72rem', color: '#888', minWidth: 62 }}>
-																{String(activity['tmk-template'] || selectedFormName)}
+															<Typography sx={{ fontSize: '0.72rem', color: '#888', minWidth: 98 }}>
+																{activityType}
 																{formatActivityDate(activity['modified-at']) ? ` · ${formatActivityDate(activity['modified-at'])}` : ''}
 															</Typography>
-															<Button size="small" variant="contained" onClick={() => handleLoadActivity(project, activityIndex)} sx={{ textTransform: 'none', minWidth: 52 }}>
-																Load
+															<Button
+																size="small"
+																variant="contained"
+																disabled={!canOpenType}
+																onClick={() => handleOpenActivity(project, activity, activityIndex)}
+																sx={{ textTransform: 'none', minWidth: 60 }}
+															>
+																Open
 															</Button>
 															{project.source === 'local' && (
 																<>
@@ -706,17 +610,17 @@ export default function LessonProjectsPage() {
 																		size="small"
 																		variant="contained"
 																		color="warning"
-																		onClick={() => handleUpdateActivity(project.id, activityIndex)}
-																		sx={{ textTransform: 'none', minWidth: 60 }}
+																		onClick={() => handleUpdateActivityName(project.id, activityIndex)}
+																		sx={{ textTransform: 'none', minWidth: 70 }}
 																	>
-																		Update
+																		Rename
 																	</Button>
 																	<Button
 																		size="small"
 																		variant="contained"
 																		color="error"
 																		onClick={() => handleDeleteActivity(project.id, activityIndex)}
-																		sx={{ textTransform: 'none', minWidth: 44 }}
+																		sx={{ textTransform: 'none', minWidth: 52 }}
 																	>
 																		Del
 																	</Button>
@@ -730,27 +634,6 @@ export default function LessonProjectsPage() {
 									);
 								})}
 							</Stack>
-						</Box>
-
-						<Box sx={{ width: { xs: '100%', lg: 380 } }}>
-							<Typography sx={{ fontSize: '0.78rem', textTransform: 'uppercase', color: '#777', fontWeight: 700, mb: 1 }}>
-								Lesson Input Data (JSON)
-							</Typography>
-							<TextField
-								multiline
-								minRows={20}
-								maxRows={30}
-								fullWidth
-								placeholder="Select or load a lesson activity to edit JSON data"
-								value={currentLessonInputJson}
-								onChange={(event) => setCurrentLessonInputJson(event.target.value)}
-								sx={{ '& .MuiInputBase-root': { fontFamily: 'Menlo, Monaco, Consolas, monospace', fontSize: '0.82rem' } }}
-							/>
-							<Typography sx={{ color: '#7b8190', fontSize: '0.78rem', mt: 0.8 }}>
-								For local projects, changes are auto-saved to the selected lesson activity after a short debounce.
-							</Typography>
-						</Box>
-					</Stack>
 
 					{isLoadingCloudProjects && (
 						<Typography sx={{ color: '#999', fontSize: '0.83rem', mt: 1 }}>Loading cloud projects...</Typography>

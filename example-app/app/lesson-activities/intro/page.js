@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
 	Alert,
 	Box,
@@ -15,7 +16,6 @@ import {
 	TextField,
 	Typography,
 } from '@mui/material';
-import ProjectManagerPanel from '../components/ProjectManagerPanel';
 import {
 	buildTeachableLogoutUrl,
 	buildTeachableStartUrl,
@@ -23,7 +23,14 @@ import {
 	readFormSessionData,
 	resolveTmkApiOrigin,
 	writeFormSessionData,
+	DIY_PROJECTS_ENDPOINT,
+	getAllStoredProjects,
+	saveStoredProjects,
 } from '../components/lessonActivityHelpers';
+import {
+	buildDiyProjectsPayload,
+	getProjectLessonActivities,
+} from '../components/projectManagerModel';
 
 const FORM_NAME = 'intro';
 
@@ -47,6 +54,8 @@ function normalizeIntroLessonInputData(rawData) {
 }
 
 export default function IntroPage() {
+	const router = useRouter();
+	const searchParams = useSearchParams();
 	const [morpheme, setMorpheme] = useState('');
 	const [words, setWords] = useState(emptyWordList);
 	const [questionMorpheme, setQuestionMorpheme] = useState('');
@@ -55,6 +64,11 @@ export default function IntroPage() {
 	const [authFromSuccessRedirect, setAuthFromSuccessRedirect] = useState(false);
 	const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
 	const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, targetType: '', index: -1 });
+	const [projectId, setProjectId] = useState('');
+	const [activityIndex, setActivityIndex] = useState(null);
+	const [projectName, setProjectName] = useState('');
+	const [activityName, setActivityName] = useState('');
+	const [isSaving, setIsSaving] = useState(false);
 
 	const projectApiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
 
@@ -62,16 +76,47 @@ export default function IntroPage() {
 		writeFormSessionData(FORM_NAME, nextState);
 	};
 
-	const normalizedLessonInputData = useMemo(
-		() => normalizeIntroLessonInputData({ morpheme, words, questionMorpheme }),
-		[morpheme, words, questionMorpheme]
-	);
-
 	const showNotice = (severity, message) => {
 		setNotice({ open: true, severity, message });
 	};
 
 	useEffect(() => {
+		const paramProjectId = searchParams.get('projectId') || '';
+		const paramActivityIndex = searchParams.get('activityIndex');
+
+		if (paramProjectId && paramActivityIndex !== null) {
+			const parsedIndex = Number.parseInt(paramActivityIndex, 10);
+			if (!Number.isInteger(parsedIndex)) {
+				showNotice('error', 'Invalid activity context.');
+				return;
+			}
+
+			setProjectId(paramProjectId);
+			setActivityIndex(parsedIndex);
+
+			const projects = getAllStoredProjects();
+			const project = projects.find((item) => item.id === paramProjectId);
+			if (!project) {
+				showNotice('error', 'Project not found.');
+				return;
+			}
+
+			setProjectName(project.name || 'Untitled Project');
+			const activities = getProjectLessonActivities(project, 'lesson-activities-project', (data) => data || {});
+			const activity = activities[parsedIndex];
+			if (!activity) {
+				showNotice('error', 'Lesson activity not found.');
+				return;
+			}
+
+			setActivityName(String(activity['lesson-name'] || 'Intro Activity'));
+			const normalized = normalizeIntroLessonInputData(activity['lesson-input-data'] || {});
+			setMorpheme(normalized.morpheme);
+			setQuestionMorpheme(normalized.questionMorpheme);
+			setWords(normalized.words);
+			return;
+		}
+
 		const stored = readFormSessionData(FORM_NAME);
 		if (stored) {
 			const normalized = normalizeIntroLessonInputData(stored);
@@ -79,15 +124,40 @@ export default function IntroPage() {
 			setQuestionMorpheme(normalized.questionMorpheme);
 			setWords(normalized.words);
 		}
-	}, []);
+	}, [searchParams]);
 
 	useEffect(() => {
 		const timeout = setTimeout(() => {
-			persist({ morpheme, words, questionMorpheme });
+			const normalizedInput = normalizeIntroLessonInputData({ morpheme, words, questionMorpheme });
+			persist(normalizedInput);
+
+			if (projectId && Number.isInteger(activityIndex)) {
+				const projects = getAllStoredProjects();
+				const project = projects.find((item) => item.id === projectId);
+				if (!project) {
+					return;
+				}
+
+				const activities = getProjectLessonActivities(project, 'lesson-activities-project', (data) => data || {});
+				if (!activities[activityIndex]) {
+					return;
+				}
+
+				activities[activityIndex] = {
+					...activities[activityIndex],
+					'lesson-name': activityName || activities[activityIndex]['lesson-name'] || 'Intro Activity',
+					'lesson-input-data': normalizedInput,
+					'modified-at': Date.now(),
+				};
+				project.lessonActivities = activities;
+				project.modifiedAtMs = Date.now();
+				project.syncedAt = null;
+				saveStoredProjects(projects);
+			}
 		}, 300);
 
 		return () => clearTimeout(timeout);
-	}, [morpheme, words, questionMorpheme]);
+	}, [morpheme, words, questionMorpheme, projectId, activityIndex, activityName]);
 
 	const runAuthCheck = async () => {
 		setAuthLoading(true);
@@ -158,11 +228,84 @@ export default function IntroPage() {
 		initiateOAuthLogin();
 	};
 
-	const applyLessonInputData = (data) => {
-		const normalized = normalizeIntroLessonInputData(data);
-		setMorpheme(normalized.morpheme);
-		setWords(normalized.words);
-		setQuestionMorpheme(normalized.questionMorpheme);
+	const handleSaveAndReturn = async () => {
+		if (!projectId || !Number.isInteger(activityIndex)) {
+			showNotice('error', 'No project context available.');
+			return;
+		}
+
+		setIsSaving(true);
+		try {
+			const projects = getAllStoredProjects();
+			const project = projects.find((item) => item.id === projectId);
+			if (!project) {
+				showNotice('error', 'Project not found.');
+				setIsSaving(false);
+				return;
+			}
+
+			const activities = getProjectLessonActivities(project, 'lesson-activities-project', (data) => data || {});
+			if (!activities[activityIndex]) {
+				showNotice('error', 'Lesson activity not found.');
+				setIsSaving(false);
+				return;
+			}
+
+			const normalizedInput = normalizeIntroLessonInputData({ morpheme, words, questionMorpheme });
+			activities[activityIndex] = {
+				...activities[activityIndex],
+				'lesson-name': activityName || activities[activityIndex]['lesson-name'] || 'Intro Activity',
+				'lesson-input-data': normalizedInput,
+				'modified-at': Date.now(),
+			};
+			project.lessonActivities = activities;
+			project.modifiedAtMs = Date.now();
+
+			if (authUser?.email) {
+				project.syncedAt = null;
+				saveStoredProjects(projects);
+
+				const payload = buildDiyProjectsPayload({
+					project,
+					formName: 'lesson-activities-project',
+					userEmail: authUser.email,
+					normalizeLessonInputData: (data) => data || {},
+				});
+
+				const response = await fetch(`${projectApiOrigin}${DIY_PROJECTS_ENDPOINT}`, {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload),
+				});
+
+				if (response.ok) {
+					const result = await response.json();
+					const updated = getAllStoredProjects();
+					const updatedProject = updated.find((item) => item.id === projectId);
+					if (updatedProject) {
+						updatedProject.syncedAt = new Date().toISOString();
+						if (result?.id) {
+							updatedProject.remoteId = result.id;
+						}
+						saveStoredProjects(updated);
+					}
+					showNotice('success', 'Lesson activity saved.');
+				} else {
+					saveStoredProjects(projects);
+					showNotice('warning', 'Saved locally. Cloud sync failed.');
+				}
+			} else {
+				saveStoredProjects(projects);
+				showNotice('success', 'Saved locally.');
+			}
+
+			router.push('/lesson-projects');
+		} catch (error) {
+			console.error('Save and return failed:', error);
+			showNotice('error', 'Could not save lesson activity.');
+			setIsSaving(false);
+		}
 	};
 
 	const openContextMenu = (event, targetType, index = -1) => {
@@ -278,29 +421,41 @@ export default function IntroPage() {
 					<Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
 						{authUser ? 'Logout from Teachable' : 'Login with Teachable'}
 					</Button>
-					<ProjectManagerPanel
-						formName={FORM_NAME}
-						apiOrigin={projectApiOrigin}
-						isAuthenticated={Boolean(authUser)}
-						userEmail={authUser?.email || ''}
-						currentLessonInputData={normalizedLessonInputData}
-						normalizeLessonInputData={normalizeIntroLessonInputData}
-						createEmptyLessonInputData={() => normalizeIntroLessonInputData({})}
-						applyLessonInputData={applyLessonInputData}
-						clearLessonInputs={handleClearForm}
-						onRequireLogin={() => {
-							const shouldLogin = window.confirm('Project Manager requires Teachable login. Log in now?');
-							if (shouldLogin) {
-								initiateOAuthLogin();
-							}
-						}}
-						onNotice={showNotice}
-					/>
+					{projectId && (
+						<>
+							<Button variant="outlined" onClick={() => router.push('/lesson-projects')} sx={{ textTransform: 'none' }}>
+								Back to Lesson Projects
+							</Button>
+							<Button
+								variant="contained"
+								color="primary"
+								disabled={isSaving}
+								onClick={handleSaveAndReturn}
+								sx={{ textTransform: 'none' }}
+							>
+								{isSaving ? 'Saving...' : 'Save & Return'}
+							</Button>
+						</>
+					)}
 					<Button variant="contained" color="success" onClick={handleDownloadPdf} sx={{ textTransform: 'none' }}>
 						Download as PDF
 					</Button>
-</Stack>
-
+				</Stack>
+				{projectId && (
+					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
+						<Typography sx={{ fontSize: '0.8rem', color: '#4a5568', textTransform: 'uppercase', fontWeight: 700 }}>
+							Project
+						</Typography>
+						<Typography sx={{ mb: 1.2, fontWeight: 700 }}>{projectName}</Typography>
+						<TextField
+							size="small"
+							label="Intro Activity Name"
+							value={activityName}
+							onChange={(event) => setActivityName(event.target.value)}
+							fullWidth
+						/>
+					</Box>
+				)}
 				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
 					<Box
 						sx={{
