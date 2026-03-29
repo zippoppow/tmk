@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { buildTeachableLogoutUrl } from '../lesson-activities/components/lessonActivityHelpers';
+import { buildTeachableLogoutUrl } from '../components/lessonActivityHelpers';
 import {
     Container,
     Box,

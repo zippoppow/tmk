@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { buildTeachableStartUrl, fetchAuthenticatedUser } from '../lesson-activities/components/lessonActivityHelpers';
+import { buildTeachableStartUrl, fetchAuthenticatedUser } from '../components/lessonActivityHelpers';
 
 const DEFAULT_NEXT_PATH = '/';
 

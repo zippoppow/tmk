@@ -25,7 +25,7 @@ import {
 	getAllStoredProjects,
 	resolveTmkApiOrigin,
 	saveStoredProjects,
-} from '../lesson-activities/components/lessonActivityHelpers';
+} from '../components/lessonActivityHelpers';
 import {
 	buildDiyProjectsPayload,
 	createLessonActivitySnapshot,
@@ -34,7 +34,7 @@ import {
 	getUniqueLessonActivityName,
 	mergeDisplayProjects,
 	normalizeCloudProjects,
-} from '../lesson-activities/components/projectManagerModel';
+} from '../components/projectManagerModel';
 
 const PROJECT_FORM_NAME = 'lesson-activities-project';
 const LESSON_ACTIVITY_TYPES = [

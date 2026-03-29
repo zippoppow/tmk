@@ -26,11 +26,11 @@ import {
 	DIY_PROJECTS_ENDPOINT,
 	getAllStoredProjects,
 	saveStoredProjects,
-} from '../components/lessonActivityHelpers';
+} from '../../components/lessonActivityHelpers';
 import {
 	buildDiyProjectsPayload,
 	getProjectLessonActivities,
-} from '../components/projectManagerModel';
+} from '../../components/projectManagerModel';
 
 const FORM_NAME = 'intro';
 

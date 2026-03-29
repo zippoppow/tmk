@@ -23,7 +23,7 @@ import {
   readFormSessionData,
   resolveTmkApiOrigin,
   writeFormSessionData,
-} from '../components/lessonActivityHelpers';
+} from '../../components/lessonActivityHelpers';
 
 const FORM_NAME = 'constructor';
 
