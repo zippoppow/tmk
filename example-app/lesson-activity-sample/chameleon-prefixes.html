@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chameleon Prefixes</title>
+    <style>
+        .container {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .container > div:not(.header-controls):not(#printWrapper) {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        #printWrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header-controls {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            margin-bottom: 5px;
+            min-width: 900px;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: left;
+            border: none;
+            border-bottom: 3px solid #4020A7;
+            padding-bottom: 8px;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 10px;
+        }
+
+        .header-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-column img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .title {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 2px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #000;
+            margin-bottom: 0;
+            margin-top: 0;
+            font-style: italic;
+        }
+
+        .header-morpheme-input {
+             border: 1px solid #4020A7;
+             padding: 8px 0;
+              font-size: 1.2em;
+              color: #4020A7;
+             transition: border-color 0.6s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+             max-width: 150px;
+        }
+
+        .header-morpheme-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .instructions {
+            font-size: 1em;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .item-number {
+            min-width: 30px;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1em;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .item-inputs-container {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .item-input {
+            border: none;
+            border-bottom: 2px solid #ddd;
+            padding: 8px 0;
+            font-size: 1em;
+            color: #333;
+            transition: border-color 0.3s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+        }
+
+        .item-input:first-of-type {
+            width: 33%;
+        }
+
+        .item-input:last-of-type {
+            width: 66%;
+        }
+
+        .item-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .item-input::placeholder {
+            color: #ccc;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-width: 150px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #4020A7;
+            min-width: 150px;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .btn-clear:active {
+            background: #d0d0d0;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stats {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .title {
+                font-size: 1.4em;
+            }
+
+            .content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+
+        .btn-download {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-download:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+        .chameleonGrid {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chameleonGrid .row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .chameleonPrefixCell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chameleonPrefixCell input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #4020A7;
+            border-radius: 4px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .chameleonPrefixCell input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+
+        .chameleonPrefixCell input::placeholder {
+            color: #ccc;
+        }
+
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            min-width: 200px;
+            display: none;
+        }
+
+        .context-menu.show {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #333;
+            transition: background-color 0.2s ease;
+        }
+
+        .context-menu-item:hover {
+            background-color: #667eea;
+            color: white;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+                max-width: 100%;
+            }
+
+            .header-controls {
+                display: none;
+            }
+
+            .controls,
+            .feedback,
+            .stats {
+                display: none !important;
+            }
+
+            .item-input,
+            .grid-input {
+                border-bottom: 1px solid #000;
+            }
+
+            .title {
+                page-break-after: avoid;
+            }
+
+            .content {
+                page-break-inside: avoid;
+            }
+
+            .chameleonGrid .row {
+                page-break-inside: avoid;
+            }
+
+            input {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-controls">
+            <button type="button" id="downloadPdfBtn" class="btn-download">Download as PDF</button>
+            <button type="button" id="openChildBtn" class="btn-download" style="background:#007bff;margin-left:8px;">Open in Pop-up Screen</button>
+            <button type="button" id="saveSessionBtn" class="btn-download" style="background:#6c757d;margin-left:8px;">Save Session</button>
+            <button type="button" id="clearSessionBtn" class="btn-download" style="background:#dc3545;margin-left:8px;">Clear Saved Data</button>
+        </div>
+        <div id="printWrapper">
+            <div class="header">
+                <div class="header-column">
+                        <h1 class="title">Chameleon Prefixes</h1>
+                        <p class="subtitle">Morpheme(s): <input type="text" placeholder="" class="header-morpheme-input"></p>
+                        <p class="instructions">Fill-in the correct form of the morpheme and read the following words.</p>
+                </div>
+                <div class="header-column">
+                    <p><img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit®"></p>
+                </div>
+            
+            </div>
+            <div class="chameleonGrid">
+                <div class="row">
+                    <div class="chameleonPrefixCell"><input type="text" placeholder="" class="grid-input"></div>
+                    <div class="chameleonPrefixCell"><input type="text" placeholder="" class="grid-input"></div>
+                    <div class="chameleonPrefixCell"><input type="text" placeholder="" class="grid-input"></div>
+                    <div class="chameleonPrefixCell"><input type="text" placeholder="" class="grid-input"></div>
+                    <div class="chameleonPrefixCell"><input type="text" placeholder="" class="grid-input"></div>
+                    <div class="chameleonPrefixCell"><input type="text" placeholder="" class="grid-input"></div>
+                </div>
+                <div class="row">
+                    <div class="chameleonPrefixCell"><input type="text" placeholder="" class="grid-input"></div>
+                    <div class="chameleonPrefixCell"><input type="text" placeholder="" class="grid-input"></div>
+                    <div class="chameleonPrefixCell"><input type="text" placeholder="" class="grid-input"></div>
+                    <div class="chameleonPrefixCell"><input type="text" placeholder="" class="grid-input"></div>
+                    <div class="chameleonPrefixCell"><input type="text" placeholder="" class="grid-input"></div>
+                    <div class="chameleonPrefixCell"><input type="text" placeholder="" class="grid-input"></div>
+                </div>
+            </div>
+
+            <form id="prefixForm">
+                <div class="content">
+                    <div class="column">
+                        <div class="item">
+                            <span class="item-number">1.</span>
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="item1a" placeholder="">
+                                <input type="text" class="item-input" name="item1b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <span class="item-number">2.</span>
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="item2a" placeholder="">
+                                <input type="text" class="item-input" name="item2b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <span class="item-number">3.</span>
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="item3a" placeholder="">
+                                <input type="text" class="item-input" name="item3b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <span class="item-number">4.</span>
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="item4a" placeholder="">
+                                <input type="text" class="item-input" name="item4b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <span class="item-number">5.</span>
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="item5a" placeholder="">
+                                <input type="text" class="item-input" name="item5b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <span class="item-number">6.</span>
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="item6a" placeholder="">
+                                <input type="text" class="item-input" name="item6b" placeholder="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="column">
+                        <div class="item">
+                            <span class="item-number">7.</span>
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="item7a" placeholder="">
+                                <input type="text" class="item-input" name="item7b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <span class="item-number">8.</span>
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="item8a" placeholder="">
+                                <input type="text" class="item-input" name="item8b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <span class="item-number">9.</span>
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="item9a" placeholder="">
+                                <input type="text" class="item-input" name="item9b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <span class="item-number">10.</span>
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="item10a" placeholder="">
+                                <input type="text" class="item-input" name="item10b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <span class="item-number">11.</span>
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="item11a" placeholder="">
+                                <input type="text" class="item-input" name="item11b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <span class="item-number">12.</span>
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="item12a" placeholder="">
+                                <input type="text" class="item-input" name="item12b" placeholder="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button type="reset" class="btn-clear">Clear All</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="contextMenu" class="context-menu"></div>
+
+    <script>
+        // ===== STORAGE UTILITIES =====
+        const FORM_NAME = 'chameleon-prefixes';
+        const STORAGE_KEY = 'tmk-diy-sessions';
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func(...args), delay);
+            };
+        }
+
+        function saveToStorage() {
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const data = { timestamp: Date.now() };
+            inputs.forEach((input, index) => {
+                const key = (input.name || input.className || 'field') + '__' + index;
+                data[key] = input.value;
+            });
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            allSessions[FORM_NAME] = data;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+        }
+
+        function restoreFromStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const data = allSessions[FORM_NAME];
+            if (data) {
+                const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+                inputs.forEach((input, index) => {
+                    const key = (input.name || input.className || 'field') + '__' + index;
+                    const legacyKey = input.name || input.className;
+                    if (Object.prototype.hasOwnProperty.call(data, key)) {
+                        input.value = data[key];
+                    } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                        input.value = data[legacyKey];
+                    }
+                });
+            }
+        }
+
+        function clearFormStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            delete allSessions[FORM_NAME];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            inputs.forEach(input => input.value = '');
+        }
+
+        const debouncedSave = debounce(saveToStorage, 300);
+
+        // ===== FORM CONTROLS =====
+        const form = document.getElementById('prefixForm');
+
+        // Auto-save on input event (debounced)
+        const allInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+        allInputs.forEach(input => {
+            input.addEventListener('input', debouncedSave);
+        });
+
+        // Set focus and restore saved data on load
+        window.addEventListener('load', function() {
+            restoreFromStorage();
+            const firstInput = document.querySelector('#printWrapper input');
+            if (firstInput) firstInput.focus();
+        });
+
+        // Sync with child window: listen for storage changes from child window
+        window.addEventListener('storage', function(e) {
+            if (e.key === STORAGE_KEY) {
+                restoreFromStorage();
+            }
+        });
+
+        // ===== STORAGE BUTTON HANDLERS =====
+        window.addEventListener('load', function() {
+            const saveSessionBtn = document.getElementById('saveSessionBtn');
+            const clearSessionBtn = document.getElementById('clearSessionBtn');
+
+            if (saveSessionBtn) {
+                saveSessionBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    saveToStorage();
+                    alert('Session saved successfully!');
+                });
+            }
+
+            if (clearSessionBtn) {
+                clearSessionBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (confirm('Clear all saved data for this exercise?')) {
+                        clearFormStorage();
+                        alert('Saved data cleared!');
+                    }
+                });
+            }
+        });
+
+        // Context menu for grid inputs
+        const contextMenu = document.getElementById('contextMenu');
+        const gridInputs = document.querySelectorAll('.grid-input');
+
+        gridInputs.forEach((gridInput) => {
+            gridInput.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+
+                // Get all prefix inputs from the form
+                const prefixInputs = form.querySelectorAll('input[name$="a"]');
+                
+                // Clear existing menu items
+                contextMenu.innerHTML = '';
+
+                // Create menu items for each prefix
+                prefixInputs.forEach((prefixInput, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'context-menu-item';
+                    const itemNum = index + 1;
+                    item.textContent = `Item ${itemNum}`;
+                    
+                    item.addEventListener('click', function() {
+                        const prefixValue = prefixInput.value;
+                        const gridValue = gridInput.value;
+                        
+                        // If grid cell has a value, use it; otherwise use the existing prefix value
+                        const valueToUse = gridValue || prefixValue;
+                        
+                        if (valueToUse) {
+                            // Update grid cell with the value
+                            gridInput.value = valueToUse;
+                            // Update the prefix input in the form with the grid value (if grid has content)
+                            if (gridValue) {
+                                prefixInput.value = gridValue;
+                            }
+                        }
+                        // Scroll to and focus the corresponding form item
+                        prefixInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        prefixInput.focus();
+                        contextMenu.classList.remove('show');
+                    });
+
+                    contextMenu.appendChild(item);
+                });
+
+                // Position the menu at cursor
+                contextMenu.style.left = e.pageX + 'px';
+                contextMenu.style.top = e.pageY + 'px';
+                contextMenu.classList.add('show');
+            });
+        });
+
+        // Close context menu on click elsewhere
+        document.addEventListener('click', function() {
+            contextMenu.classList.remove('show');
+        });
+
+        // Download as PDF functionality
+        const downloadBtn = document.getElementById('downloadPdfBtn');
+        downloadBtn.addEventListener('click', function() {
+            const printWrapper = document.getElementById('printWrapper');
+            const printContent = printWrapper.cloneNode(true);
+            
+            // Create a new window
+            const printWindow = window.open('', '', 'width=800,height=600');
+            
+            // Write the minimal HTML with styling
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Chameleon Prefixes</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        
+                        body {
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            padding: 20px;
+                            line-height: 1.6;
+                        }
+                        .header {
+                            text-align: left;
+                            border-bottom: 3px solid #4020A7;
+                            padding-bottom: 5px;
+                            display: grid;
+                            grid-template-columns: 3fr 1fr;
+                            gap: 10px;
+                        }
+                        .header-column {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 4px;
+                        }
+                        .header-column img {
+                            max-width: 200px;
+                            height: auto;
+                        }
+                        .title {
+                            font-size: 1.6em;
+                            font-weight: bold;
+                            margin-bottom: 0;
+                            color: #000;
+                            letter-spacing: 1px;
+                        }
+                        .subtitle {
+                            font-size: 1.2em;
+                            color: #000;
+                            margin-bottom: 0;
+                            margin-top: 0;
+                            font-style: italic;
+                        }
+
+                        .header-morpheme-input {
+                            border: 1px solid #4020A7;
+                            padding: 8px 0;
+                            font-size: 1.2em;
+                            color: #4020A7;
+                            transition: border-color 0.6s ease;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            max-width: 150px;
+                        }
+
+                        .header-morpheme-input:focus {
+                            outline: none;
+                            border-bottom-color: #667eea;
+                            background-color: rgba(102, 126, 234, 0.05);
+                            padding: 8px 8px;
+                        }
+                        .instructions {
+                            font-size: 1em;
+                            margin-top: 5px;
+                            color: #555;
+                            line-height: 1.6;
+                        }
+                        
+                        .chameleonGrid {
+                            margin: 30px 0;
+                        }
+                        
+                        .chameleonGrid .row {
+                            display: grid;
+                            grid-template-columns: repeat(6, 1fr);
+                            gap: 15px;
+                            margin-bottom: 15px;
+                        }
+                        
+                        .chameleonPrefixCell {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        }
+                        
+                        .chameleonPrefixCell input {
+                            width: 100%;
+                            padding: 8px;
+                            border: 1px solid #333;
+                            border-radius: 2px;
+                            font-size: 0.9em;
+                            text-align: center;
+                            font-family: 'Courier New', monospace;
+                        }
+                        
+                        .content {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 40px;
+                            margin-top: 30px;
+                        }
+                        
+                        .column {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 20px;
+                        }
+                        
+                        .item {
+                            display: flex;
+                            align-items: flex-start;
+                            gap: 15px;
+                        }
+                        
+                        .item-number {
+                            min-width: 30px;
+                            font-weight: bold;
+                            font-size: 1.1em;
+                        }
+                        
+                        .item-inputs-container {
+                            display: flex;
+                            gap: 10px;
+                            flex: 1;
+                        }
+                        
+                        .item-input {
+                            border: none;
+                            border-bottom: 1px solid #333;
+                            padding: 8px 0;
+                            font-size: 1em;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                        }
+                        
+                        .item-input:first-of-type {
+                            width: 33%;
+                        }
+                        
+                        .item-input:last-of-type {
+                            width: 66%;
+                        }
+                        
+                        #feedback,
+                        #stats,
+                        .controls {
+                            display: none !important;
+                        }
+                        
+                        @media print {
+                            body {
+                                padding: 20px;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+            `);
+            
+            // Append the cloned content
+            printWindow.document.write(printContent.innerHTML);
+            
+            // Close the HTML
+            printWindow.document.write(`
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            
+            // Trigger print dialog after content loads
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            };
+        });
+
+        // Open `printWrapper` in a persistent Pop-up Screen (browser-view)
+        const openChildBtn = document.getElementById('openChildBtn');
+        if (openChildBtn) {
+            openChildBtn.addEventListener('click', function() {
+                const printWrapper = document.getElementById('printWrapper');
+                const printContent = printWrapper.cloneNode(true);
+                const styleEl = document.querySelector('head style');
+                const styleHTML = styleEl ? styleEl.innerHTML : '';
+                const child = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+                child.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${document.title} — Browser View</title><style>${styleHTML}\n.btn-child-download{padding:10px 20px;background-color:#667eea;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1em;margin-bottom:15px;}\n.btn-child-download:hover{background-color:#764ba2;}\n@media print{body{margin:0;padding:10px;}.btn-child-download{display:none !important;}.container{page-break-inside:avoid;orphans:3;widows:3;margin:0;padding:10px;}.header{page-break-inside:avoid;}.content{page-break-inside:avoid;}form{page-break-inside:avoid;}}</style></head><body>`);
+                child.document.write('<div class="container" style="min-height:100vh;padding:20px;">');
+                child.document.write('<button id="childDownloadPdfBtn" class="btn-child-download" type="button">Download as PDF</button>');
+                child.document.write('<button id="childCloseBtn" class="btn-child-download" style="background:#dc3545;margin-left:8px;" type="button">Close Window & Sync</button>');
+                child.document.write(printContent.outerHTML);
+                child.document.write('</div>');
+                child.document.write(`<script>(function(){
+    const FORM_NAME = 'chameleon-prefixes';
+    const STORAGE_KEY = 'tmk-diy-sessions';
+    function debounce(func, delay) {
+        let timeoutId;
+        return function(...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func(...args), delay);
+        };
+    }
+    function saveToStorage() {
+        const inputs = document.querySelectorAll('input, textarea');
+        const data = { timestamp: Date.now() };
+        inputs.forEach((input, index) => {
+            const key = (input.name || input.className || 'field') + '__' + index;
+            data[key] = input.value;
+        });
+        const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        allSessions[FORM_NAME] = data;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+    }
+    function restoreFromStorage() {
+        const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        const data = allSessions[FORM_NAME];
+        if (data) {
+            const inputs = document.querySelectorAll('input, textarea');
+            inputs.forEach((input, index) => {
+                const key = (input.name || input.className || 'field') + '__' + index;
+                const legacyKey = input.name || input.className;
+                if (Object.prototype.hasOwnProperty.call(data, key)) {
+                    input.value = data[key];
+                } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                    input.value = data[legacyKey];
+                }
+            });
+        }
+    }
+    const debouncedSave = debounce(saveToStorage, 300);
+    const allInputs = document.querySelectorAll('input, textarea');
+    allInputs.forEach(input => {
+        input.addEventListener('input', debouncedSave);
+    });
+    window.addEventListener('storage', function(e) {
+        if (e.key === STORAGE_KEY) {
+            restoreFromStorage();
+        }
+    });
+function qs(s){return document.querySelector(s);}function qsa(s){return Array.from(document.querySelectorAll(s));}function createContextMenu(){if(document.getElementById('contextMenu'))return;var cm=document.createElement('div');cm.id='contextMenu';cm.className='context-menu';document.body.appendChild(cm);}function attachRemoveHandlers(){var sels=['.remove-word','.wb-item-remove','.item-remove','.wb-item-remove','.remove-btn','.wb-remove'];sels.forEach(function(sel){qsa(sel).forEach(function(btn){if(btn._listenerAttached)return;btn._listenerAttached=true;btn.addEventListener('click',function(){var li=btn.closest('li')||btn.parentElement; if(li) li.remove();debouncedSave();});});});}function attachClearHandlers(){qsa('[class*="btn-clear"]').forEach(function(btn){if(btn._clearAttached)return;btn._clearAttached=true;btn.addEventListener('click',function(){var root=btn.closest('form')||document.getElementById('printWrapper')||document.body;var inputs=root.querySelectorAll('input, textarea');inputs.forEach(function(i){i.value='';});debouncedSave();});});}function attachSortContext(){qsa('.sort-words-input').forEach(function(input){input.addEventListener('contextmenu',function(e){e.preventDefault();var cm=document.getElementById('contextMenu');cm.innerHTML='';var lists=document.querySelectorAll('.sort-box-list');lists.forEach(function(list,idx){var item=document.createElement('div');item.className='context-menu-item';item.textContent='Add to Column '+(idx+1);item.addEventListener('click',function(){if(input.value){var li=document.createElement('li');li.textContent=input.value;var b=document.createElement('button');b.type='button';b.className='remove-word';b.textContent='×';b.addEventListener('click',function(){li.remove();debouncedSave();});li.appendChild(b);list.appendChild(li);input.value='';cm.classList.remove('show');debouncedSave();}});cm.appendChild(item);});cm.style.left=e.pageX+'px';cm.style.top=e.pageY+'px';cm.classList.add('show');});});}function attachGridContext(){qsa('.grid-input').forEach(function(input){input.addEventListener('contextmenu',function(e){e.preventDefault();var cm=document.getElementById('contextMenu');cm.innerHTML='';var form=input.closest('form')||document;var prefixes=form.querySelectorAll('input[name$="a"]');prefixes.forEach(function(pref,idx){var item=document.createElement('div');item.className='context-menu-item';item.textContent='Item '+(idx+1);item.addEventListener('click',function(){var valueToUse=input.value||pref.value; if(valueToUse){input.value=valueToUse; if(input.value) pref.value=input.value;}pref.scrollIntoView({behavior:'smooth',block:'center'});pref.focus();cm.classList.remove('show');debouncedSave();});cm.appendChild(item);});cm.style.left=e.pageX+'px';cm.style.top=e.pageY+'px';cm.classList.add('show');});});}function attachFocusToRelatedContext(){qsa('.focus-word-input').forEach(function(focusInput){focusInput.addEventListener('contextmenu',function(e){e.preventDefault();var cm=document.getElementById('contextMenu');cm.innerHTML='';var related=document.querySelectorAll('.related-word-input');related.forEach(function(r,idx){var item=document.createElement('div');item.className='context-menu-item';item.textContent='Set color for Related Word '+(idx+1);item.addEventListener('click',function(){var bg=getComputedStyle(focusInput).backgroundColor;r.style.backgroundColor=bg;cm.classList.remove('show');debouncedSave();});cm.appendChild(item);});cm.style.left=e.pageX+'px';cm.style.top=e.pageY+'px';cm.classList.add('show');});});}document.addEventListener('click',function(e){var cm=document.getElementById('contextMenu');if(cm&&!cm.contains(e.target))cm.classList.remove('show');});createContextMenu();attachRemoveHandlers();attachClearHandlers();attachSortContext();attachGridContext();attachFocusToRelatedContext();attachRemoveHandlers();var pdfBtn=document.getElementById('childDownloadPdfBtn');if(pdfBtn){pdfBtn.addEventListener('click',function(){window.print();});}var closeBtn=document.getElementById('childCloseBtn');if(closeBtn){closeBtn.addEventListener('click',function(){saveToStorage();if(window.opener&&window.opener.refreshMainPageInputs){window.opener.refreshMainPageInputs();}window.close();});}window.addEventListener('beforeunload',function(){saveToStorage();});restoreFromStorage();var first=document.querySelector('.item-input, .grid-input, input');if(first)first.focus();})();<\/script>`);
+                child.document.write('</body></html>');
+                child.document.close();
+            });
+        }
+    </script>
+</body>
+</html>

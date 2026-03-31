@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MORPH MATCH -- Related Words</title>
+    <style>
+        .container {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            position: relative;
+        }
+
+        .container > div:not(.header-controls):not(#printWrapper) {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        #printWrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .header-controls {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            margin-bottom: 5px;
+            min-width: 900px;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: left;
+            border: none;
+            border-bottom: 3px solid #4020A7;
+            padding-bottom: 8px;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 10px;
+        }
+
+        .header-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-column img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 2px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #000;
+            margin-bottom: 0;
+            margin-top: 0;
+            font-style: italic;
+        }
+
+        .header-morpheme-input {
+             border: 1px solid #4020A7;
+             padding: 8px 0;
+              font-size: 1.2em;
+              color: #4020A7;
+             transition: border-color 0.6s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+             max-width: 150px;
+        }
+
+        .header-morpheme-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .instructions {
+            font-size: 1em;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .focus-word-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .focus-word-input {
+            border: none;
+            border-bottom: 2px solid #ddd;
+            padding: 8px 0;
+            font-size: 1em;
+            color: #333;
+            transition: border-color 0.3s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+            width: 90%;
+        }
+
+        /* Unique background colors for each input */
+        .focus-word-item:nth-of-type(2) .focus-word-input { background: #ffe4e1; }
+        .focus-word-item:nth-of-type(3) .focus-word-input { background: #e1f7ff; }
+        .focus-word-item:nth-of-type(4) .focus-word-input { background: #e1ffe4; }
+        .focus-word-item:nth-of-type(5) .focus-word-input { background: #fffbe1; }
+        .focus-word-item:nth-of-type(6) .focus-word-input { background: #e1e1ff; }
+        .focus-word-item:nth-of-type(7) .focus-word-input { background: #ffe1fa; }
+        .focus-word-item:nth-of-type(8) .focus-word-input { background: #e1ffd6; }
+        .focus-word-item:nth-of-type(9) .focus-word-input { background: #f1e1ff; }
+
+
+        .focus-word-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .focus-word-input::placeholder {
+            color: #ccc;
+        }
+
+        .related-word-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .related-word-input {
+            border: none;
+            border-bottom: 2px solid #ddd;
+            padding: 8px 0;
+            font-size: 1em;
+            color: #333;
+            transition: border-color 0.3s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+            min-width: 90%;
+        }
+
+        .related-word-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .related-word-input::placeholder {
+            color: #ccc;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-width: 150px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #4020A7;
+            min-width: 150px;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .btn-clear:active {
+            background: #d0d0d0;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .feedback.show {
+            display: block;
+        }
+
+        .feedback.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .feedback.partial {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .feedback.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stats {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .title {
+                font-size: 1.8em;
+            }
+
+            .content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+
+        .btn-download {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-download:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            min-width: 200px;
+            display: none;
+        }
+
+        .context-menu.show {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #333;
+            transition: background-color 0.2s ease;
+        }
+
+        .context-menu-item:hover {
+            background-color: #667eea;
+            color: white;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+                max-width: 100%;
+            }
+
+            .header-controls {
+                display: none;
+            }
+
+            .controls,
+            .feedback,
+            .stats {
+                display: none !important;
+            }
+
+            .item-input,
+            .grid-input {
+                border-bottom: 1px solid #000;
+            }
+
+            .title {
+                page-break-after: avoid;
+            }
+
+            .content {
+                page-break-inside: avoid;
+            }
+
+            input {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-controls">
+            <button type="button" id="downloadPdfBtn" class="btn-download">Download as PDF</button>
+            <button type="button" id="openChildBtn" class="btn-download" style="background:#007bff;margin-left:8px;">Open in Pop-up Screen</button>
+            <button type="button" id="saveSessionBtn" class="btn-download" style="background:#6c757d;margin-left:8px;">Save Session</button>
+            <button type="button" id="clearSessionBtn" class="btn-download" style="background:#dc3545;margin-left:8px;">Clear Saved Data</button>
+        </div>
+        <div id="printWrapper">
+            <div class="header">
+                <div class="header-column">
+
+                        <h1 class="title">MORPH MATCH -- Related Words</h1>
+                        <p class="subtitle">Morpheme(s): <input type="text" placeholder="" class="header-morpheme-input"></p>
+                        <p class="instructions">Fill-in the correct form of the morpheme and read the following words.</p>
+                </div>
+                <div class="header-column">
+                    <p><img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit®"></p>
+                </div>
+            </div>
+
+            <form id="morphMatchRelatedWordsForm">
+                <div class="content">
+                    <div class="column">
+                        <div class="focus-word-item">
+                            <p class="subtitle">Focus Word</p>
+                        </div>
+                        <div class="focus-word-item">
+                            <input type="text" class="focus-word-input" name="focus-word-item1" placeholder="">
+                        </div>
+                        <div class="focus-word-item">
+                            <input type="text" class="focus-word-input" name="focus-word-item2" placeholder="">
+                        </div>
+                        <div class="focus-word-item">
+                            <input type="text" class="focus-word-input" name="focus-word-item3" placeholder="">
+                        </div>
+                        <div class="focus-word-item">
+                            <input type="text" class="focus-word-input" name="focus-word-item4" placeholder="">
+                        </div>
+                        <div class="focus-word-item">
+                            <input type="text" class="focus-word-input" name="focus-word-item5" placeholder="">
+                        </div>
+                        <div class="focus-word-item">
+                            <input type="text" class="focus-word-input" name="focus-word-item6" placeholder="">
+                        </div>
+                        <div class="focus-word-item">
+                            <input type="text" class="focus-word-input" name="focus-word-item7" placeholder="">
+                        </div>
+                        <div class="focus-word-item">
+                            <input type="text" class="focus-word-input" name="focus-word-item8" placeholder="">
+                        </div> 
+                        <div class="focus-word-item">
+                            <button type="button" class="btn-clear-focus-words">Clear Focus Words</button>
+                        </div> 
+                    </div>
+                    <div class="column">
+                        <div class="related-word-item">
+                            <p class="subtitle">Related Word</p>
+                        </div>
+                        <div class="related-word-item">
+                            <input type="text" class="related-word-input" name="related-word-item1" placeholder="">
+                        </div>
+                        <div class="related-word-item">
+                            <input type="text" class="related-word-input" name="related-word-item2" placeholder="">
+                        </div>
+                        <div class="related-word-item">
+                            <input type="text" class="related-word-input" name="related-word-item3" placeholder="">
+                        </div>
+                        <div class="related-word-item">
+                            <input type="text" class="related-word-input" name="related-word-item4" placeholder="">
+                        </div>
+                        <div class="related-word-item">
+                            <input type="text" class="related-word-input" name="related-word-item5" placeholder="">
+                         </div>
+                        <div class="related-word-item">
+                            <input type="text" class="related-word-input" name="related-word-item6" placeholder="">
+                        </div>
+                        <div class="related-word-item">
+                            <input type="text" class="related-word-input" name="related-word-item7" placeholder="">
+                        </div>
+                        <div class="related-word-item">
+                            <input type="text" class="related-word-input" name="related-word-item8" placeholder="">
+                        </div>
+                        <div class="related-word-item">
+                            <button type="button" class="btn-clear-related-words">Clear Related Words</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="contextMenu" class="context-menu"></div>
+
+    <script>
+        // ===== STORAGE UTILITIES =====
+        const FORM_NAME = 'morph-match-related-words';
+        const STORAGE_KEY = 'tmk-diy-sessions';
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func(...args), delay);
+            };
+        }
+
+        function saveToStorage() {
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const data = { timestamp: Date.now() };
+            inputs.forEach((input, index) => {
+                const key = (input.name || input.className || 'field') + '__' + index;
+                data[key] = input.value;
+            });
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            allSessions[FORM_NAME] = data;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+        }
+
+        function restoreFromStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const data = allSessions[FORM_NAME];
+            if (data) {
+                const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+                inputs.forEach((input, index) => {
+                    const key = (input.name || input.className || 'field') + '__' + index;
+                    const legacyKey = input.name || input.className;
+                    if (Object.prototype.hasOwnProperty.call(data, key)) {
+                        input.value = data[key];
+                    } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                        input.value = data[legacyKey];
+                    }
+                });
+            }
+        }
+
+        function clearFormStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            delete allSessions[FORM_NAME];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            inputs.forEach(input => input.value = '');
+        }
+
+        const debouncedSave = debounce(saveToStorage, 300);
+
+        // ===== FORM CONTROLS =====
+        const form = document.getElementById('morphMatchRelatedWordsForm');
+        const contextMenu = document.getElementById('contextMenu');
+        // --- Focus-Word to Related-Word Color Transfer ---
+        const focusInputs = form.querySelectorAll('.focus-word-input');
+        const relatedInputs = form.querySelectorAll('.related-word-input');
+        let colorSourceInput = null;
+
+        focusInputs.forEach((focusInput, focusIdx) => {
+            focusInput.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                colorSourceInput = focusInput;
+                // Clear menu
+                contextMenu.innerHTML = '';
+                // Add menu items for each related-word-input
+                relatedInputs.forEach((relatedInput, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'context-menu-item';
+                    item.textContent = `Set color for Related Word ${idx+1}`;
+                    item.addEventListener('click', function() {
+                        // Get computed background color of the focus input
+                        const focusBg = window.getComputedStyle(focusInput).backgroundColor;
+                        relatedInput.style.backgroundColor = focusBg;
+                        contextMenu.classList.remove('show');
+                    });
+                    contextMenu.appendChild(item);
+                });
+                // Position menu
+                contextMenu.style.left = e.pageX + 'px';
+                contextMenu.style.top = e.pageY + 'px';
+                contextMenu.classList.add('show');
+            });
+        });
+
+        // Hide context menu on click elsewhere
+        document.addEventListener('click', function(e) {
+            if (!contextMenu.contains(e.target)) {
+                contextMenu.classList.remove('show');
+            }
+        });
+
+        relatedInputs.forEach((relatedInput) => {
+            relatedInput.addEventListener('dblclick', function() {
+                relatedInput.style.backgroundColor = '';
+            });
+        });
+
+        const btnClearFocusWords = document.querySelector('.btn-clear-focus-words');
+        const btnClearRelatedWords = document.querySelector('.btn-clear-related-words');
+        
+        btnClearFocusWords.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Clear the text areas
+            const textDefinitions = document.querySelectorAll('.focus-word-input');
+            textDefinitions.forEach((item) => {
+                item.value = '';
+            });
+            debouncedSave();
+        });
+
+        btnClearRelatedWords.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Clear the text areas
+            const textDefinitions = document.querySelectorAll('.related-word-input');
+            textDefinitions.forEach((item) => {
+                item.value = '';
+            });
+            debouncedSave();
+        });
+
+        // Auto-save on input event (debounced)
+        const allInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+        allInputs.forEach(input => {
+            input.addEventListener('input', debouncedSave);
+        });
+
+        // ===== STORAGE BUTTON HANDLERS =====
+        const saveSessionBtn = document.getElementById('saveSessionBtn');
+        const clearSessionBtn = document.getElementById('clearSessionBtn');
+
+        if (saveSessionBtn) {
+            saveSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                saveToStorage();
+                alert('Session saved successfully!');
+            });
+        }
+
+        if (clearSessionBtn) {
+            clearSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Clear all saved data for this exercise?')) {
+                    clearFormStorage();
+                    alert('Saved data cleared!');
+                }
+            });
+        }
+
+        // Load saved data on page load
+        window.addEventListener('load', function() {
+            restoreFromStorage();
+        });
+
+        // Sync with child window: listen for storage changes from child window
+        window.addEventListener('storage', function(e) {
+            if (e.key === STORAGE_KEY) {
+                restoreFromStorage();
+            }
+        });
+
+        // ===== PDF DOWNLOAD =====
+        // Download as PDF functionality
+        const downloadBtn = document.getElementById('downloadPdfBtn');
+        downloadBtn.addEventListener('click', function() {
+            const printWrapper = document.getElementById('printWrapper');
+            const printContent = printWrapper.cloneNode(true);
+            
+            // Create a new window
+            const printWindow = window.open('', '', 'width=800,height=600');
+            
+            // Write the minimal HTML with styling
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>MORPH MATCH -- Related Words</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        body {
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            padding: 20px;
+                            line-height: 1.6;
+                        }
+                        .header {
+                            text-align: left;
+                            border-bottom: 3px solid #4020A7;
+                            padding-bottom: 5px;
+                            display: grid;
+                            grid-template-columns: 3fr 1fr;
+                            gap: 10px;
+                        }
+                        .header-column {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 4px;
+                        }
+                        .header-column img {
+                            max-width: 200px;
+                            height: auto;
+                        }
+                        .title {
+                            font-size: 1.6em;
+                            font-weight: bold;
+                            margin-bottom: 0;
+                            color: #000;
+                            letter-spacing: 1px;
+                        }
+                        .subtitle {
+                            font-size: 1.2em;
+                            color: #000;
+                            margin-bottom: 0;
+                            margin-top: 0;
+                            font-style: italic;
+                        }
+
+                        .header-morpheme-input {
+                            border: 1px solid #4020A7;
+                            padding: 8px 0;
+                            font-size: 1.2em;
+                            color: #4020A7;
+                            transition: border-color 0.6s ease;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            max-width: 150px;
+                        }
+
+                        .header-morpheme-input:focus {
+                            outline: none;
+                            border-bottom-color: #667eea;
+                            background-color: rgba(102, 126, 234, 0.05);
+                            padding: 8px 8px;
+                        }
+                        .instructions {
+                            font-size: 1em;
+                            margin-top: 5px;
+                            color: #555;
+                            line-height: 1.6;
+                        }
+                        
+                        .content {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 40px;
+                            margin-top: 30px;
+                        }
+                        
+                        .column {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 20px;
+                        }
+                        
+                        .focus-word-item {
+                            display: flex;
+                            align-items: flex-start;
+                            gap: 15px;
+                        }
+                        
+                        /* Unique background colors for each focus word input */
+                        .focus-word-item:nth-of-type(2) .focus-word-input { background: #ffe4e1; }
+                        .focus-word-item:nth-of-type(3) .focus-word-input { background: #e1f7ff; }
+                        .focus-word-item:nth-of-type(4) .focus-word-input { background: #e1ffe4; }
+                        .focus-word-item:nth-of-type(5) .focus-word-input { background: #fffbe1; }
+                        .focus-word-item:nth-of-type(6) .focus-word-input { background: #e1e1ff; }
+                        .focus-word-item:nth-of-type(7) .focus-word-input { background: #ffe1fa; }
+                        .focus-word-item:nth-of-type(8) .focus-word-input { background: #e1ffd6; }
+                        .focus-word-item:nth-of-type(9) .focus-word-input { background: #f1e1ff; }
+
+                        .focus-word-input {
+                            border: 2px solid #4020A7;
+                            padding: 8px 0;
+                            font-size: 1em;
+                            color: #333;
+                            transition: border-color 0.3s ease;
+                            font-family: 'Courier New', monospace;
+                            min-width: 90%;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+
+                        .related-word-item {
+                            display: flex;
+                            align-items: flex-start;
+                            gap: 15px;
+                        }
+
+                        .related-word-input {
+                            border: 2px solid #4020A7;
+                            padding: 8px 0;
+                            font-size: 1em;
+                            color: #333;
+                            transition: border-color 0.3s ease;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            min-width: 90%;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        
+                        .btn-clear-focus-words,
+                        .btn-clear-related-words {
+                            display: none !important;
+                        }
+                        
+                        @media print {
+                            body {
+                                padding: 20px;
+                            }
+                            input {
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+            `);
+            
+            // Copy input values from original to cloned content
+            const sourceInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const clonedInputs = printContent.querySelectorAll('input, textarea');
+            sourceInputs.forEach((input, index) => {
+                if (clonedInputs[index]) {
+                    // Set both the value property and attribute
+                    clonedInputs[index].value = input.value;
+                    clonedInputs[index].setAttribute('value', input.value);
+                }
+            });
+            
+            // Append the cloned content
+            printWindow.document.write(printContent.outerHTML);
+            
+            // Close the HTML
+            printWindow.document.write(`
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            
+            // Trigger print dialog after content loads
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            };
+        });
+
+        // Open `printWrapper` in a persistent Pop-up Screen (browser-view)
+        const openChildBtn = document.getElementById('openChildBtn');
+        if (openChildBtn) {
+            openChildBtn.addEventListener('click', function() {
+                const printWrapper = document.getElementById('printWrapper');
+                const printContent = printWrapper.cloneNode(true);
+                const styleEl = document.querySelector('head style');
+                const styleHTML = styleEl ? styleEl.innerHTML : '';
+                const child = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+                child.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${document.title} — Browser View</title><style>${styleHTML}\n.btn-child-download{padding:10px 20px;background-color:#667eea;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1em;margin-bottom:15px;}\n.btn-child-download:hover{background-color:#764ba2;}\n@media print{body{margin:0;padding:10px;}.btn-child-download{display:none !important;}.btn-clear-focus-words{display:none !important;}.btn-clear-related-words{display:none !important;}.container{page-break-inside:avoid;orphans:3;widows:3;margin:0;padding:10px;}.form-group{page-break-inside:avoid;}form{page-break-inside:avoid;}}</style></head><body>`);
+                child.document.write('<div class="container" style="min-height:100vh;padding:20px;">');
+                child.document.write('<button id="childDownloadPdfBtn" class="btn-child-download" type="button">Download as PDF</button>');
+                child.document.write('<button id="childCloseBtn" class="btn-child-download" style="background:#dc3545;margin-left:8px;" type="button">Close Window & Sync</button>');
+                child.document.write(printContent.outerHTML);
+                child.document.write('</div>');
+                child.document.write(`<script>(function(){
+                    const FORM_NAME = 'morph-match-related-words';
+                    const STORAGE_KEY = 'tmk-diy-sessions';
+                    function debounce(func, delay) {
+                        let timeoutId;
+                        return function(...args) {
+                            clearTimeout(timeoutId);
+                            timeoutId = setTimeout(() => func(...args), delay);
+                        };
+                    }
+                    function saveToStorage() {
+                        const inputs = document.querySelectorAll('input, textarea');
+                        const data = { timestamp: Date.now() };
+                        inputs.forEach((input, index) => {
+                            const key = (input.name || input.className || 'field') + '__' + index;
+                            data[key] = input.value;
+                        });
+                        const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                        allSessions[FORM_NAME] = data;
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+                    }
+                    function restoreFromStorage() {
+                        const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                        const data = allSessions[FORM_NAME];
+                        if (data) {
+                            const inputs = document.querySelectorAll('input, textarea');
+                            inputs.forEach((input, index) => {
+                                const key = (input.name || input.className || 'field') + '__' + index;
+                                const legacyKey = input.name || input.className;
+                                if (Object.prototype.hasOwnProperty.call(data, key)) {
+                                    input.value = data[key];
+                                } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                                    input.value = data[legacyKey];
+                                }
+                            });
+                        }
+                    }
+                    const debouncedSave = debounce(saveToStorage, 300);
+                    const childInputs = document.querySelectorAll('input, textarea');
+                    childInputs.forEach(input => {
+                        input.addEventListener('input', debouncedSave);
+                    });
+                    window.addEventListener('storage', function(e) {
+                        if (e.key === STORAGE_KEY) {
+                            restoreFromStorage();
+                        }
+                    });
+                    
+                    function qs(s){return document.querySelector(s);} 
+                    function qsa(s){return Array.from(document.querySelectorAll(s));}
+
+                    // Recreate context menu container
+                    var contextMenu = document.createElement('div');
+                    contextMenu.id = 'contextMenu';
+                    contextMenu.className = 'context-menu';
+                    document.body.appendChild(contextMenu);
+
+                    // Attach clear handlers
+                    var btnClearFocusWords = qs('.btn-clear-focus-words');
+                    if (btnClearFocusWords) {
+                        btnClearFocusWords.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            qsa('.focus-word-input').forEach(function(i){ i.value = ''; });
+                            debouncedSave();
+                        });
+                    }
+
+                    var btnClearRelatedWords = qs('.btn-clear-related-words');
+                    if (btnClearRelatedWords) {
+                        btnClearRelatedWords.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            qsa('.related-word-input').forEach(function(i){ i.value = ''; });
+                            debouncedSave();
+                        });
+                    }
+
+
+                    // Context-menu: transfer background color from focus inputs to related inputs
+                    (function(){
+                        var form = qs('form');
+                        var focusInputs = form ? form.querySelectorAll('.focus-word-input') : [];
+                        var relatedInputs = form ? form.querySelectorAll('.related-word-input') : [];
+
+                        focusInputs.forEach(function(focusInput){
+                            focusInput.addEventListener('contextmenu', function(e){
+                                e.preventDefault();
+                                contextMenu.innerHTML = '';
+                                relatedInputs.forEach(function(relatedInput, idx){
+                                    var item = document.createElement('div');
+                                    item.className = 'context-menu-item';
+                                    item.textContent = 'Set color for Related Word ' + (idx+1);
+                                    item.addEventListener('click', function(){
+                                        var focusBg = window.getComputedStyle(focusInput).backgroundColor;
+                                        relatedInput.style.backgroundColor = focusBg;
+                                        contextMenu.classList.remove('show');
+                                        debouncedSave();
+                                    });
+                                    contextMenu.appendChild(item);
+                                });
+                                contextMenu.style.left = e.pageX + 'px';
+                                contextMenu.style.top = e.pageY + 'px';
+                                contextMenu.classList.add('show');
+                            });
+                            focusInput.addEventListener('input', debouncedSave);
+                        });
+
+                        // Hide menu on click elsewhere
+                        document.addEventListener('click', function(e){ if(!contextMenu.contains(e.target)){ contextMenu.classList.remove('show'); }});
+
+                        // dblclick to clear related input background
+                        relatedInputs.forEach(function(relatedInput){ 
+                            relatedInput.addEventListener('dblclick', function(){ relatedInput.style.backgroundColor = ''; debouncedSave(); }); 
+                            relatedInput.addEventListener('input', debouncedSave);
+                        });
+                    })();
+
+                    // PDF button event listener - ensure it's properly attached
+                    function setupPdfButton() {
+                        var pdfBtn = document.getElementById('childDownloadPdfBtn');
+                        if(pdfBtn) {
+                            pdfBtn.onclick = function() {
+                                // Capture all input values
+                                var inputs = document.querySelectorAll('input, textarea');
+                                inputs.forEach(function(input) {
+                                    if (input.tagName === 'TEXTAREA') {
+                                        input.textContent = input.value;
+                                    } else {
+                                        input.setAttribute('value', input.value);
+                                    }
+                                });
+                                // Wait for DOM to update, then print
+                                setTimeout(function() {
+                                    window.print();
+                                }, 100);
+                                return false;
+                            };
+                        }
+                    }
+                    
+                    // Try to set up button immediately and also after a delay
+                    setupPdfButton();
+                    setTimeout(setupPdfButton, 100);
+
+                    var closeBtn = document.getElementById('childCloseBtn');
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', function() {
+                            saveToStorage();
+                            if (window.opener && window.opener.refreshMainPageInputs) {
+                                window.opener.refreshMainPageInputs();
+                            }
+                            window.close();
+                        });
+                    }
+
+                    // Flush pending saves before window unload
+                    window.addEventListener('beforeunload', function() {
+                        saveToStorage();
+                    });
+
+                    restoreFromStorage();
+                    
+                    // Focus first input
+                    var firstInput = qs('.focus-word-input, .related-word-input, input');
+                    if(firstInput) firstInput.focus();
+                })();<\/script>`);
+                child.document.write('</body></html>');
+                child.document.close();
+            });
+        }
+    </script>
+</body>
+</html>

@@ -4,30 +4,32 @@ import { Box, Button, Grid, Stack, TextField, Typography } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
 
-const FORM_NAME = 'common-base-word';
-const DEFAULT_ACTIVITY_NAME = 'Common Base Word Activity';
+const FORM_NAME = 'part-of-speech';
+const DEFAULT_ACTIVITY_NAME = 'Part Of Speech Activity';
 
 function emptyData() {
 	return {
 		morpheme: '',
 		grid: Array.from({ length: 9 }, () => ''),
-		groups: Array.from({ length: 3 }, () => ''),
+		nounWords: '',
+		verbWords: '',
+		adjectiveWords: '',
 	};
 }
 
 function normalizeInputData(rawData) {
 	const source = rawData && typeof rawData === 'object' ? rawData : {};
-	const gridSource = Array.isArray(source.grid) ? source.grid : [];
-	const groupsSource = Array.isArray(source.groups) ? source.groups : [];
-
+	const grid = Array.isArray(source.grid) ? source.grid : [];
 	return {
 		morpheme: String(source.morpheme || ''),
-		grid: Array.from({ length: 9 }, (_, index) => String(gridSource[index] || '')),
-		groups: Array.from({ length: 3 }, (_, index) => String(groupsSource[index] || '')),
+		grid: Array.from({ length: 9 }, (_, index) => String(grid[index] || '')),
+		nounWords: String(source.nounWords || ''),
+		verbWords: String(source.verbWords || ''),
+		adjectiveWords: String(source.adjectiveWords || ''),
 	};
 }
 
-export default function CommonBaseWordPage() {
+export default function PartOfSpeechPage() {
 	const {
 		data,
 		setData,
@@ -62,20 +64,12 @@ export default function CommonBaseWordPage() {
 		});
 	};
 
-	const setGroupValue = (index, value) => {
-		setData((prev) => {
-			const next = [...prev.groups];
-			next[index] = value;
-			return { ...prev, groups: next };
-		});
-	};
-
 	return (
 		<ActivityShell
-			title="COMMON BASE WORD"
+			title="PART OF SPEECH SORT"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Use the morpheme to build and sort related common base words."
+			instructions="Sort the words by part of speech after exploring the morph set."
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}
@@ -95,7 +89,7 @@ export default function CommonBaseWordPage() {
 		>
 			<Box sx={{ my: 3 }}>
 				{Array.from({ length: 3 }, (_, rowIndex) => (
-					<Box key={rowIndex} sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5, mb: 1.5 }}>
+					<Box key={rowIndex} sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.25, mb: 1.25 }}>
 						{Array.from({ length: 3 }, (_, colIndex) => {
 							const index = rowIndex * 3 + colIndex;
 							return (
@@ -103,53 +97,36 @@ export default function CommonBaseWordPage() {
 									key={index}
 									value={data.grid[index] || ''}
 									onChange={(event) => setGridValue(index, event.target.value)}
-									size="small"
 									inputProps={{ style: { textAlign: 'center', fontFamily: 'Courier New, monospace' } }}
-									sx={{
-										'& .MuiOutlinedInput-root': {
-											'& fieldset': { borderColor: '#4020A7', borderWidth: '2px', borderRadius: '4px' },
-											'&:hover fieldset': { borderColor: '#667eea' },
-											'&.Mui-focused fieldset': { borderColor: '#667eea' },
-										},
-									}}
+									sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#4020A7', borderWidth: '2px' } }}
 								/>
 							);
 						})}
 					</Box>
 				))}
 			</Box>
-
-			<Box sx={{ textAlign: 'center', fontSize: '1.05rem', color: '#555', mb: 3 }}>
-				Sort the words into 3 different columns based on a shared base word.
-			</Box>
-
-			<Typography sx={{ fontWeight: 700, mb: 1.5 }}>Common Base Word Groups</Typography>
 			<Grid container spacing={2}>
-				{data.groups.map((group, index) => (
-					<Grid item xs={12} md={4} key={`group-${index}`}>
-						<Stack spacing={1}>
-							<Box sx={{ border: '2px solid #4a4a4a', borderRadius: 1, minHeight: 200, p: 1.25, backgroundColor: '#fafafa' }}>
-								<TextField
-									multiline
-									minRows={8}
-									fullWidth
-									value={group}
-									onChange={(event) => setGroupValue(index, event.target.value)}
-									placeholder="List related words..."
-									variant="standard"
-									InputProps={{ disableUnderline: true }}
-									inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
-								/>
-							</Box>
-						</Stack>
-					</Grid>
-				))}
+				<Grid item xs={12} md={4}>
+					<Typography sx={{ fontWeight: 700, mb: 1 }}>Nouns</Typography>
+					<Box sx={{ border: '2px solid #4020A7', borderRadius: 1, minHeight: 260, maxHeight: 420, p: 1.25 }}>
+						<TextField multiline minRows={8} fullWidth variant="standard" InputProps={{ disableUnderline: true }} value={data.nounWords} onChange={(event) => setData((prev) => ({ ...prev, nounWords: event.target.value }))} inputProps={{ style: { fontFamily: 'Courier New, monospace' } }} />
+					</Box>
+				</Grid>
+				<Grid item xs={12} md={4}>
+					<Typography sx={{ fontWeight: 700, mb: 1 }}>Verbs</Typography>
+					<Box sx={{ border: '2px solid #4020A7', borderRadius: 1, minHeight: 260, maxHeight: 420, p: 1.25 }}>
+						<TextField multiline minRows={8} fullWidth variant="standard" InputProps={{ disableUnderline: true }} value={data.verbWords} onChange={(event) => setData((prev) => ({ ...prev, verbWords: event.target.value }))} inputProps={{ style: { fontFamily: 'Courier New, monospace' } }} />
+					</Box>
+				</Grid>
+				<Grid item xs={12} md={4}>
+					<Typography sx={{ fontWeight: 700, mb: 1 }}>Adjectives / Adverbs</Typography>
+					<Box sx={{ border: '2px solid #4020A7', borderRadius: 1, minHeight: 260, maxHeight: 420, p: 1.25 }}>
+						<TextField multiline minRows={8} fullWidth variant="standard" InputProps={{ disableUnderline: true }} value={data.adjectiveWords} onChange={(event) => setData((prev) => ({ ...prev, adjectiveWords: event.target.value }))} inputProps={{ style: { fontFamily: 'Courier New, monospace' } }} />
+					</Box>
+				</Grid>
 			</Grid>
-
 			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }}>
-				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>
-					Clear All
-				</Button>
+				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>Clear All</Button>
 			</Box>
 		</ActivityShell>
 	);

@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WORD BUILDER</title>
+    <style>
+       .container {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .container > div:not(.header-controls):not(#printWrapper) {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        #printWrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header-controls {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            margin-bottom: 5px;
+            min-width: 900px;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: left;
+            border: none;
+            border-bottom: 3px solid #4020A7;
+            padding-bottom: 8px;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 10px;
+        }
+
+        .header-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-column img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 2px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #000;
+            margin-bottom: 0;
+            margin-top: 0;
+            font-style: italic;
+        }
+
+        .header-morpheme-input {
+             border: 1px solid #4020A7;
+             padding: 8px 0;
+              font-size: 1.2em;
+              color: #4020A7;
+             transition: border-color 0.6s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+             max-width: 150px;
+        }
+
+        .header-morpheme-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .instructions {
+            font-size: 1em;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+
+         .morphemeSection {
+            display: grid;
+            grid-template-columns: 4fr 4fr 4fr;
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .morpheme-title {
+            margin: 0 0 8px 0; 
+            font-size: 1.2em; 
+            color: #333;
+            text-align: center;
+        }
+
+        .prefixesColumn, .suffixesColumn, .baseElementsColumn {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            align-items: stretch;
+        }
+
+        /* Each item becomes a bordered block with its own shading */
+        .prefixes-item, .suffixes-item, .base-elements-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 0px 4px;
+            border-radius: 6px;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        /* Prefixes: blue shading */
+        .prefixes-item {
+            background: linear-gradient(180deg, rgba(102,126,234,0.12) 0%, rgba(102,126,234,0.06) 100%);
+            border-color: rgba(66,90,255,0.25);
+        }
+
+        /* Base elements: warm yellow/orange */
+        .base-elements-item {
+            background: linear-gradient(180deg, rgba(255,243,205,0.95) 0%, rgba(255,238,179,0.95) 100%);
+            border-color: rgba(255,193,7,0.25);
+        }
+
+        /* Suffixes: green shading */
+        .suffixes-item {
+            background: linear-gradient(180deg, rgba(200,230,201,0.95) 0%, rgba(197,225,193,0.95) 100%);
+            border-color: rgba(46,125,50,0.25);
+        }
+
+        /* Inputs inside items: minimal chrome — outer block provides border */
+        .prefixes-item-input, .suffixes-item-input, .base-elements-item-input {
+            border: none;
+            padding: 2px 4px;
+            font-size: 0.9em;
+            color: #111;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+        }
+
+        .prefixes-item-input:focus, .suffixes-item-input:focus, .base-elements-item-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.06);
+            background-color: rgba(255,255,255,0.0);
+        }
+
+        .prefixes-item-input::placeholder, .suffixes-item-input::placeholder, .base-elements-item-input::placeholder {
+            color: #666;
+        }
+
+        .word-bin-inputs-container {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .word-bin-input {
+            border: none;
+            border-bottom: 2px solid #ddd;
+            padding: 8px 0;
+            font-size: 1em;
+            color: #333;
+            transition: border-color 0.3s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+            width: 33%;
+        }
+
+
+        .word-bin-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .word-bin-input::placeholder {
+            color: #ccc;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-width: 150px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #4020A7;
+            min-width: 150px;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .btn-clear:active {
+            background: #d0d0d0;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stats {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .title {
+                font-size: 1.8em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+
+        .btn-download {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-download:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+        .wordsBinGrid {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .wordsBinGrid .row {
+            display: grid;
+            grid-template-columns: repeat(3, 3fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .wordsBinCell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wordsBinCell input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #4020A7;
+            border-radius: 4px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .wordsBinCell input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+
+        .wordsBinCell input::placeholder {
+            color: #ccc;
+        }
+
+        .sortingBoxes {
+            margin-top: 30px;
+        }
+        .sortingBoxes .row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .sortBoxCell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sortBoxCell input {
+            width: 100%;
+            min-height: 200px;
+            padding: 12px;
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .morphemeQuestion {
+            margin-top: 30px;
+            font-size: 1.1em;
+            color: #333;
+            text-align: center;
+        }
+
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            min-width: 200px;
+            display: none;
+        }
+
+        .context-menu.show {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #333;
+            transition: background-color 0.2s ease;
+        }
+
+        .context-menu-item:hover {
+            background-color: #667eea;
+            color: white;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+                max-width: 100%;
+            }
+
+            .header-controls {
+                display: none;
+            }
+
+            .controls,
+            .feedback,
+            .stats {
+                display: none !important;
+            }
+
+            .word-bin-input,
+            .word-bin-input {
+                border-bottom: 1px solid #000;
+            }
+
+            .title {
+                page-break-after: avoid;
+            }
+
+            .wordsBinGrid .row {
+                page-break-inside: avoid;
+            }
+
+            input {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-controls">
+            <button type="button" id="downloadPdfBtn" class="btn-download">Download as PDF</button>
+            <button type="button" id="openChildBtn" class="btn-download" style="background:#007bff;margin-left:8px;">Open in Pop-up Screen</button>
+            <button type="button" id="saveSessionBtn" class="btn-download" style="background:#6c757d;margin-left:8px;">Save Session</button>
+            <button type="button" id="clearSessionBtn" class="btn-download" style="background:#dc3545;margin-left:8px;">Clear Saved Data</button>
+        </div>
+        <div id="printWrapper">
+            <div class="header">
+                <div class="header-column">
+                     <h1 class="title">WORD BUILDER</h1>
+                     <p class="subtitle">Morpheme(s): <input type="text" placeholder="" class="header-morpheme-input"></p>
+                </div>
+                <div class="header-column">
+                    <p><img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit®"></p>
+                </div>
+            </div>
+            <form id="wordBuilderForm">
+                <div class="morphemeSection">
+                    <div class="prefixesColumn">
+                        <h3 class="morpheme-title">Prefixes</h3>
+                        <div class="prefixes-item"><input type="text" class="prefixes-item-input" name="item1a" placeholder=""></div>
+                        <div class="prefixes-item"><input type="text" class="prefixes-item-input" name="item1b" placeholder=""></div>
+                        <div class="prefixes-item"><input type="text" class="prefixes-item-input" name="item1c" placeholder=""></div>
+                        <div class="prefixes-item"><input type="text" class="prefixes-item-input" name="item2a" placeholder=""></div>
+                        <div class="prefixes-item"><input type="text" class="prefixes-item-input" name="item2b" placeholder=""></div>
+                    </div>
+                    <div class="baseElementsColumn">
+                        <h3 class="morpheme-title">Base Elements</h3>
+                        <div class="base-elements-item"><input type="text" class="base-elements-item-input" name="item1a" placeholder=""></div>
+                        <div class="base-elements-item"><input type="text" class="base-elements-item-input" name="item1b" placeholder=""></div>
+                    </div>
+                    <div class="suffixesColumn">
+                        <h3 class="morpheme-title">Suffixes</h3>
+                        <div class="suffixes-item"><input type="text" class="suffixes-item-input" name="item1a" placeholder=""></div>
+                        <div class="suffixes-item"><input type="text" class="suffixes-item-input" name="item1b" placeholder=""></div>
+                        <div class="suffixes-item"><input type="text" class="suffixes-item-input" name="item1c" placeholder=""></div>
+                        <div class="suffixes-item"><input type="text" class="suffixes-item-input" name="item2a" placeholder=""></div>
+                        <div class="suffixes-item"><input type="text" class="suffixes-item-input" name="item2b" placeholder=""></div>
+                    </div>
+                </div>
+                <div class="wordsBinGrid">
+                    <div class="row">
+                        <div class="wordsBinCell"><input type="text" name="word-item1" placeholder="" class="word-bin-input"></div>
+                        <div class="wordsBinCell"><input type="text" name="word-item2" placeholder="" class="word-bin-input"></div>
+                        <div class="wordsBinCell"><input type="text" name="word-item3" placeholder="" class="word-bin-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="wordsBinCell"><input type="text" name="word-item4" placeholder="" class="word-bin-input"></div>
+                        <div class="wordsBinCell"><input type="text" name="word-item5" placeholder="" class="word-bin-input"></div>
+                        <div class="wordsBinCell"><input type="text" name="word-item6" placeholder="" class="word-bin-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="wordsBinCell"><input type="text" name="word-item7" placeholder="" class="word-bin-input"></div>
+                        <div class="wordsBinCell"><input type="text" name="word-item8" placeholder="" class="word-bin-input"></div>
+                        <div class="wordsBinCell"><input type="text" name="word-item9" placeholder="" class="word-bin-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="wordsBinCell"><input type="text" name="word-item10" placeholder="" class="word-bin-input"></div>
+                        <div class="wordsBinCell"><input type="text" name="word-item11" placeholder="" class="word-bin-input"></div>
+                        <div class="wordsBinCell"><input type="text" name="word-item12" placeholder="" class="word-bin-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="wordsBinCell"><input type="text" name="word-item13" placeholder="" class="word-bin-input"></div>
+                        <div class="wordsBinCell"><input type="text" name="word-item14" placeholder="" class="word-bin-input"></div>
+                        <div class="wordsBinCell"><input type="text" name="word-item15" placeholder="" class="word-bin-input"></div>
+                    </div>
+                </div>
+            
+            <div class="controls">
+
+                <button type="reset" class="btn-clear-words">Clear Words</button>   
+            </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="contextMenu" class="context-menu"></div>
+
+    <script>
+        // ===== STORAGE UTILITIES =====
+        const FORM_NAME = 'word-builder';
+        const STORAGE_KEY = 'tmk-diy-sessions';
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func(...args), delay);
+            };
+        }
+
+        function saveToStorage() {
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const data = { timestamp: Date.now() };
+            inputs.forEach((input, index) => {
+                const key = (input.name || input.className || 'field') + '__' + index;
+                data[key] = input.value;
+            });
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            allSessions[FORM_NAME] = data;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+        }
+
+        function restoreFromStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const data = allSessions[FORM_NAME];
+            if (data) {
+                const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+                inputs.forEach((input, index) => {
+                    const key = (input.name || input.className || 'field') + '__' + index;
+                    const legacyKey = input.name || input.className;
+                    if (Object.prototype.hasOwnProperty.call(data, key)) {
+                        input.value = data[key];
+                    } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                        input.value = data[legacyKey];
+                    }
+                });
+            }
+        }
+
+        function clearFormStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            delete allSessions[FORM_NAME];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            inputs.forEach(input => input.value = '');
+        }
+
+        const debouncedSave = debounce(saveToStorage, 300);
+
+        // ===== FORM CONTROLS =====
+        const form = document.getElementById('wordBuilderForm');
+        const btnClearWords = document.querySelector('.btn-clear-words');
+
+
+        btnClearWords.addEventListener('click', function(e) {
+            e.preventDefault();
+            const posGridInputs = document.querySelectorAll('input[name^="word-item"]');
+            posGridInputs.forEach((input) => {
+                input.value = '';
+            });
+            debouncedSave();
+        });
+
+        // Auto-save on input event (debounced)
+        const allInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+        allInputs.forEach(input => {
+            input.addEventListener('input', debouncedSave);
+        });
+
+        // Add keyboard navigation
+        const inputs = form.querySelectorAll('.word-bin-input');
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    } else {
+                        form.dispatchEvent(new Event('submit'));
+                    }
+                }
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                }
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                }
+            });
+        });
+
+        // Set focus and restore saved data on load
+        window.addEventListener('load', function() {
+            restoreFromStorage();
+            const firstInput = document.querySelector('#printWrapper input');
+            if (firstInput) firstInput.focus();
+        });
+
+        // Sync with child window: listen for storage changes from child window
+        window.addEventListener('storage', function(e) {
+            if (e.key === STORAGE_KEY) {
+                restoreFromStorage();
+            }
+        });
+
+        // Function for child window to call when closing
+        window.refreshMainPageInputs = function() {
+            restoreFromStorage();
+        };
+
+        /* Add / Remove support for prefix/base/suffix items */
+        (function() {
+            const cols = {
+                prefixes: document.querySelector('.prefixesColumn'),
+                base: document.querySelector('.baseElementsColumn'),
+                suffixes: document.querySelector('.suffixesColumn')
+            };
+
+            function makeRemoveButton() {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'wb-item-remove';
+                btn.setAttribute('aria-label', 'Remove item');
+                btn.textContent = '\u00D7';
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const item = btn.closest('.prefixes-item, .base-elements-item, .suffixes-item');
+                    if (!item) return;
+                    const parent = item.parentElement;
+                    parent.removeChild(item);
+                });
+                return btn;
+            }
+
+            function createWBItem(type, value) {
+                const wrapper = document.createElement('div');
+                if (type === 'prefixes') wrapper.className = 'prefixes-item';
+                else if (type === 'base') wrapper.className = 'base-elements-item';
+                else wrapper.className = 'suffixes-item';
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = type === 'base' ? 'base-elements-item-input' : (type === 'prefixes' ? 'prefixes-item-input' : 'suffixes-item-input');
+                input.placeholder = '';
+                input.value = value || '';
+                // give a lightweight generated name so forms don't conflict
+                input.name = 'wb-' + type + '-' + Date.now() + '-' + Math.floor(Math.random()*1000);
+                wrapper.appendChild(input);
+
+                const rem = makeRemoveButton();
+                wrapper.appendChild(rem);
+
+                return wrapper;
+            }
+
+            function wireExistingItems() {
+                const existing = document.querySelectorAll('.prefixes-item, .base-elements-item, .suffixes-item');
+                existing.forEach(item => {
+                    if (!item.querySelector('.wb-item-remove')) {
+                        const btn = makeRemoveButton();
+                        item.appendChild(btn);
+                    }
+                });
+            }
+
+            function addAddButtons() {
+                Object.keys(cols).forEach(key => {
+                    const col = cols[key];
+                    if (!col) return;
+                    // don't add duplicate add buttons
+                    if (col.querySelector('.wb-add-btn')) return;
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'wb-add-btn';
+                    btn.textContent = '+ Add';
+                    btn.addEventListener('click', function() {
+                        const node = createWBItem(key, '');
+                        col.appendChild(node);
+                        // focus new input
+                        const inp = node.querySelector('input');
+                        if (inp) inp.focus();
+                    });
+                    // place the button after the title
+                    const title = col.querySelector('h3');
+                    if (title && title.nextElementSibling) {
+                        col.insertBefore(btn, title.nextElementSibling);
+                    } else if (title) {
+                        title.after(btn);
+                    } else {
+                        col.insertBefore(btn, col.firstChild);
+                    }
+                });
+            }
+
+            // minimal styles injected so the buttons look consistent
+            const style = document.createElement('style');
+            style.textContent = `
+                .wb-add-btn { margin-bottom:8px; padding:6px 10px; border-radius:4px; border:1px solid #4020A7; background:#fff; cursor:pointer; font-weight:bold; }
+                .wb-item-remove { margin-left:8px; border:none; color:#c0392b; font-weight:bold; cursor:pointer; }
+                .prefixes-item .wb-item-remove { background: rgba(102,126,234,0.12); }
+                .base-elements-item .wb-item-remove { background: rgba(255,243,205,0.95); }
+                .suffixes-item .wb-item-remove { background: rgba(200,230,201,0.95); }
+            `;
+            document.head.appendChild(style);
+
+            wireExistingItems();
+            addAddButtons();
+        })();
+
+        // ===== STORAGE BUTTON HANDLERS =====
+        const saveSessionBtn = document.getElementById('saveSessionBtn');
+        const clearSessionBtn = document.getElementById('clearSessionBtn');
+
+        if (saveSessionBtn) {
+            saveSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                saveToStorage();
+                alert('Session saved successfully!');
+            });
+        }
+
+        if (clearSessionBtn) {
+            clearSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Clear all saved data for this exercise?')) {
+                    clearFormStorage();
+                    alert('Saved data cleared!');
+                }
+            });
+        }
+
+        // ===== PDF DOWNLOAD =====
+        const downloadBtn = document.getElementById('downloadPdfBtn');
+        downloadBtn.addEventListener('click', function() {
+            const printWrapper = document.getElementById('printWrapper');
+            const printContent = printWrapper.cloneNode(true);
+            
+            // Create a new window
+            const printWindow = window.open('', '', 'width=800,height=600');
+            
+            // Write the minimal HTML with styling
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Chameleon Prefixes</title>
+                    <style>
+                        /* Reset */
+                        * { margin:0; padding:0; box-sizing:border-box; }
+                        body {
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            background: white;
+                            padding: 30px;
+                            color: #111;
+                            line-height: 1.5;
+                        }
+                        .container { max-width: 900px; margin: 0 auto; padding: 0; }
+                        .header { display: grid; grid-template-columns: 3fr 1fr; gap: 10px; border-bottom: 3px solid #4020A7; padding-bottom: 8px; }
+                        .header-column img { max-width: 200px; height: auto; }
+                        .title { font-size: 1.8em; font-weight: bold; margin-bottom: 4px; }
+                        .subtitle { font-size: 1.1em; font-style: italic; margin: 0; }
+                        .header-morpheme-input {
+                            border: 1px solid #4020A7;
+                            padding: 8px 0;
+                            font-size: 1.2em;
+                            color: #4020A7;
+                            transition: border-color 0.6s ease;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            max-width: 150px;
+                        }
+                        .instructions { color: #444; margin-top: 6px; }
+                        /* Morpheme section: mirror live two-column with adjective box on right */
+                        .morphemeSection { display:grid; grid-template-columns: 4fr 4fr 4fr; gap:20px; margin-top:10px; }
+                        .morpheme-title { margin: 0 0 8px 0;font-size: 1.2em;color: #333;text-align: center;}
+                        .prefixesColumn, .baseElementsColumn, .suffixesColumn { display:flex; flex-direction:column; gap:9px; align-items:stretch; }
+
+                        /* Item blocks with shading and borders */
+                        .prefixes-item { background: linear-gradient(180deg, rgba(102,126,234,0.12) 0%, rgba(102,126,234,0.06) 100%); border:1px solid rgba(66,90,255,0.25); padding:6px 8px; border-radius:6px; display:flex; align-items:center; gap:9px; }
+                        .base-elements-item { background: linear-gradient(180deg, rgba(255,243,205,0.95) 0%, rgba(255,238,179,0.95) 100%); border:1px solid rgba(255,193,7,0.25); padding:6px 8px; border-radius:6px; display:flex; align-items:center; gap:9px; }
+                        .suffixes-item { background: linear-gradient(180deg, rgba(200,230,201,0.95) 0%, rgba(197,225,193,0.95) 100%); border:1px solid rgba(46,125,50,0.25); padding:6px 8px; border-radius:6px; display:flex; align-items:center; gap:9px; }
+
+                        .prefixes-item-input, .base-elements-item-input, .suffixes-item-input { border:none; background:transparent; font-family:'Courier New', monospace; font-size:0.9em; padding:4px 6px; width:100%; }
+
+                        /* Words bin grid */
+                        .wordsBinGrid { margin:18px 0; }
+                        .wordsBinGrid .row { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:12px; }
+                        .wordsBinCell { display:flex; align-items:center; justify-content:center; }
+                        .wordsBinCell input, .word-bin-input { width:100%; padding:8px; border:2px solid #4020A7; border-radius:4px; font-family:'Courier New', monospace; text-align:center; font-size:0.95em; }
+
+                        /* Hide interactive UI in print */
+                        .controls, .header-controls, #contextMenu, .wb-add-btn, .wb-item-remove, button.btn-download, .btn-clear, .btn-submit { display:none !important; }
+
+                        /* Ensure print color fidelity */
+                        input, .prefixes-item, .base-elements-item, .suffixes-item { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+                        @media print {
+                            body { padding:12mm; }
+                            .morphemeSection { gap:14px; }
+                        }
+                    </style>
+                </head>
+                <body>
+            `);
+            
+            // Copy input values from original to cloned content
+            const sourceInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const clonedInputs = printContent.querySelectorAll('input, textarea');
+            sourceInputs.forEach((input, index) => {
+                if (clonedInputs[index]) {
+                    clonedInputs[index].value = input.value;
+                    clonedInputs[index].setAttribute('value', input.value);
+                    if (clonedInputs[index].tagName === 'TEXTAREA') {
+                        clonedInputs[index].textContent = input.value;
+                    }
+                }
+            });
+            
+            // Append the cloned content with values
+            printWindow.document.write(printContent.outerHTML);
+            
+            // Close the HTML
+            printWindow.document.write(`
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            
+            // Trigger print dialog after content loads
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            };
+        });
+
+        // Open `printWrapper` in a persistent Pop-up Screen (browser-view)
+        const openChildBtn = document.getElementById('openChildBtn');
+        if (openChildBtn) {
+            openChildBtn.addEventListener('click', function() {
+                const printWrapper = document.getElementById('printWrapper');
+                const printContent = printWrapper.cloneNode(true);
+                const styleEl = document.querySelector('head style');
+                const styleHTML = styleEl ? styleEl.innerHTML : '';
+                const child = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+                child.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${document.title} — Browser View</title><style>${styleHTML}\n.btn-child-download{padding:10px 20px;background-color:#667eea;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1em;margin-bottom:15px;}\n.btn-child-download:hover{background-color:#764ba2;}\n@media print{body{margin:0;padding:10px;}.btn-child-download{display:none !important;}.btn-clear-words{display:none !important;}.container{page-break-inside:avoid;orphans:3;widows:3;margin:0;padding:10px;}.prefixesColumn{page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.baseElementsColumn{page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.suffixesColumn{page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.word-bin{page-break-inside:avoid;}.prefixes-item{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.base-elements-item{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.suffixes-item{-webkit-print-color-adjust:exact;print-color-adjust:exact;}input{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body>`);
+                child.document.write('<div class="container" style="min-height:100vh;padding:20px;">');
+                child.document.write('<button id="childDownloadPdfBtn" class="btn-child-download" type="button">Download as PDF</button>');
+                child.document.write('<button id="childCloseBtn" class="btn-child-download" style="background:#dc3545;margin-left:8px;" type="button">Close Window & Sync</button>');
+                
+                // Convert printContent to string and add buttons to each column
+                let contentHTML = printContent.outerHTML;
+                // Remove any existing dynamically-created buttons
+                contentHTML = contentHTML.replace(/<button[^>]*class="wb-add-btn"[^>]*>.*?<\/button>/g, '');
+                // Now add buttons via string replacement - place after the morpheme-title h3 tags
+                contentHTML = contentHTML.replace(
+                    /<div class="prefixesColumn">[\s\S]*?<h3 class="morpheme-title">Prefixes<\/h3>/,
+                    (match) => match + '<button type="button" class="wb-add-btn" data-col="prefixes" style="margin-bottom:8px;padding:6px 10px;border-radius:4px;border:1px solid #4020A7;background:#fff;cursor:pointer;font-weight:bold;">+ Add</button>'
+                );
+                contentHTML = contentHTML.replace(
+                    /<div class="baseElementsColumn">[\s\S]*?<h3 class="morpheme-title">Base Elements<\/h3>/,
+                    (match) => match + '<button type="button" class="wb-add-btn" data-col="base" style="margin-bottom:8px;padding:6px 10px;border-radius:4px;border:1px solid #4020A7;background:#fff;cursor:pointer;font-weight:bold;">+ Add</button>'
+                );
+                contentHTML = contentHTML.replace(
+                    /<div class="suffixesColumn">[\s\S]*?<h3 class="morpheme-title">Suffixes<\/h3>/,
+                    (match) => match + '<button type="button" class="wb-add-btn" data-col="suffixes" style="margin-bottom:8px;padding:6px 10px;border-radius:4px;border:1px solid #4020A7;background:#fff;cursor:pointer;font-weight:bold;">+ Add</button>'
+                );
+                
+                child.document.write(contentHTML);
+                child.document.write('</div>');
+                child.document.write(`<script>
+                const FORM_NAME = 'word-builder';
+                const STORAGE_KEY = 'tmk-diy-sessions';
+                
+                function debounce(func, delay) {
+                    let timeoutId;
+                    return function(...args) {
+                        clearTimeout(timeoutId);
+                        timeoutId = setTimeout(() => func(...args), delay);
+                    };
+                }
+                
+                function saveToStorage() {
+                    var inputs = document.querySelectorAll('input, textarea');
+                    var data = { timestamp: Date.now() };
+                    inputs.forEach(function(input, index) {
+                        var key = (input.name || input.className || 'field') + '__' + index;
+                        data[key] = input.value;
+                    });
+                    var allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                    allSessions[FORM_NAME] = data;
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+                }
+                
+                function restoreFromStorage() {
+                    var allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                    var data = allSessions[FORM_NAME];
+                    if (data) {
+                        var inputs = document.querySelectorAll('input, textarea');
+                        inputs.forEach(function(input, index) {
+                            var key = (input.name || input.className || 'field') + '__' + index;
+                            var legacyKey = input.name || input.className;
+                            if (Object.prototype.hasOwnProperty.call(data, key)) {
+                                input.value = data[key];
+                            } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                                input.value = data[legacyKey];
+                            }
+                        });
+                    }
+                }
+                
+                const debouncedSave = debounce(saveToStorage, 300);
+                
+                var prefixesCol=document.querySelector('.prefixesColumn');
+                var baseCol=document.querySelector('.baseElementsColumn');
+                var suffixesCol=document.querySelector('.suffixesColumn');
+                
+                var style=document.createElement('style');
+                style.textContent='.wb-item-remove{margin-left:8px;border:none;color:#c0392b;font-weight:bold;cursor:pointer;}.prefixes-item .wb-item-remove{background:rgba(102,126,234,0.12);}.base-elements-item .wb-item-remove{background:rgba(255,243,205,0.95);}.suffixes-item .wb-item-remove{background:rgba(200,230,201,0.95);}';
+                document.head.appendChild(style);
+                
+                function makeRemoveButton(){
+                    var b=document.createElement('button');
+                    b.type='button';
+                    b.className='wb-item-remove';
+                    b.setAttribute('aria-label','Remove item');
+                    b.textContent='\\u00D7';
+                    b.style.marginLeft='8px';
+                    b.style.border='none';
+                    b.style.color='#c0392b';
+                    b.style.fontWeight='bold';
+                    b.style.cursor='pointer';
+                    return b;
+                }
+                
+                function createWBItem(type,value){
+                    var wrapper=document.createElement('div');
+                    if(type==='prefixes')wrapper.className='prefixes-item';
+                    else if(type==='base')wrapper.className='base-elements-item';
+                    else wrapper.className='suffixes-item';
+                    var input=document.createElement('input');
+                    input.type='text';
+                    input.className=type==='base'?'base-elements-item-input':(type==='prefixes'?'prefixes-item-input':'suffixes-item-input');
+                    input.placeholder='';
+                    input.value=value||'';
+                    input.name='wb-'+type+'-'+Date.now()+'-'+Math.floor(Math.random()*1000);
+                    input.addEventListener('input', debouncedSave);
+                    wrapper.appendChild(input);
+                    var rem=makeRemoveButton();
+                    wrapper.appendChild(rem);
+                    return wrapper;
+                }
+                
+                var addBtns=document.querySelectorAll('.wb-add-btn');
+                addBtns.forEach(function(btn){
+                    btn.addEventListener('click',function(e){
+                        e.preventDefault();
+                        var colType=btn.getAttribute('data-col');
+                        var col=colType==='prefixes'?prefixesCol:(colType==='base'?baseCol:suffixesCol);
+                        if(col){
+                            var node=createWBItem(colType,'');
+                            col.appendChild(node);
+                            var inp=node.querySelector('input');
+                            if(inp)inp.focus();
+                            debouncedSave();
+                        }
+                    });
+                });
+                
+                document.addEventListener('click',function(e){
+                    if(e.target.classList.contains('wb-item-remove')){
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var item=e.target.closest('.prefixes-item, .base-elements-item, .suffixes-item');
+                        if(item&&item.parentElement)item.parentElement.removeChild(item);
+                        debouncedSave();
+                    }
+                });
+                
+                // Auto-save on input event
+                var allInputs = document.querySelectorAll('input, textarea');
+                allInputs.forEach(function(input) {
+                    input.addEventListener('input', debouncedSave);
+                });
+                
+                // Restore data on load
+                restoreFromStorage();
+                
+                var pdfBtn=document.getElementById('childDownloadPdfBtn');
+                if(pdfBtn){
+                    pdfBtn.addEventListener('click',function(){
+                        window.print();
+                    });
+                }
+                
+                // Close button - sync before closing
+                var closeBtn=document.querySelector('#childCloseBtn');
+                if(closeBtn){closeBtn.addEventListener('click',function(){
+                    saveToStorage();
+                    if(window.opener && window.opener.refreshMainPageInputs){
+                        window.opener.refreshMainPageInputs();
+                    }
+                    window.close();
+                });}
+                
+                // Flush pending saves before window unload
+                window.addEventListener('beforeunload', function() {
+                    saveToStorage();
+                });
+                
+                var first=document.querySelector('.prefixes-item-input, .base-elements-item-input, .suffixes-item-input, .word-bin-input, input');
+                if(first)first.focus();
+                <\/script>`);
+                child.document.write('</body></html>');
+                child.document.close();
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MORPH, MORPH? Match</title>
+    <style>
+        .container {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            position: relative;
+        }
+
+        .container > div:not(.header-controls):not(#printWrapper) {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        #printWrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .header-controls {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            margin-bottom: 5px;
+            min-width: 900px;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: left;
+            border: none;
+            border-bottom: 3px solid #4020A7;
+            padding-bottom: 8px;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 10px;
+        }
+
+        .header-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-column img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 2px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #000;
+            margin-bottom: 0;
+            margin-top: 0;
+            font-style: italic;
+        }
+
+        .header-morpheme-input {
+             border: 1px solid #4020A7;
+             padding: 8px 0;
+              font-size: 1.2em;
+              color: #4020A7;
+             transition: border-color 0.6s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+             max-width: 150px;
+        }
+
+        .header-morpheme-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .instructions {
+            font-size: 1em;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .item-header-title-container {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .item-header-title {
+            border: none;
+            border-bottom: 2px solid #ddd;
+            padding: 8px 0;
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #333;
+            transition: border-color 0.3s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+            text-align: center;
+        }
+
+        .item-header-inputs-container {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .item-header-input {
+            border: none;
+            border-bottom: 2px solid #ddd;
+            padding: 8px 0;
+            font-size: 1em;
+            font-weight: 700;
+            color: #333;
+            transition: border-color 0.3s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+            width: 50%;
+            text-align: center;
+        }
+
+        .item-inputs-container {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .item-input {
+            border: 2px solid #4020A7;
+            padding: 8px 0;
+            font-size: 1em;
+            color: #333;
+            transition: border-color 0.3s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+            width: 50%;
+        }
+
+        .item-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .item-input::placeholder {
+            color: #ccc;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        .item-inputs-containerr {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-clear-grid, .btn-clear-lower-lists, .btn-clear-lower-lists-headers {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-clear-grid:hover, .btn-clear-lower-lists:hover, .btn-clear-lower-lists-headers:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-clear-grid:active, .btn-clear-lower-lists:active, .btn-clear-lower-lists-headers:active {
+            transform: translateY(0);
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #4020A7;
+            min-width: 150px;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .btn-clear:active {
+            background: #d0d0d0;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stats {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .title {
+                font-size: 1.8em;
+            }
+
+            .content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .item-inputs-containerr {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+
+        .btn-download {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-download:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+        .morphWordsGrid {
+            margin-top: 30px;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #4020A7;
+        }
+
+        .morphWordsGrid .row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .morphWordCell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .morphWordCell input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #4020A7;
+            border-radius: 4px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .morphWordCell input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+
+        .morphWordCell input::placeholder {
+            color: #ccc;
+        }
+
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            min-width: 200px;
+            display: none;
+        }
+
+        .context-menu.show {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #333;
+            transition: background-color 0.2s ease;
+        }
+
+        .context-menu-item:hover {
+            background-color: #667eea;
+            color: white;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+                max-width: 100%;
+            }
+
+            .header-controls {
+                display: none;
+            }
+
+            .controls,
+            .feedback,
+            .stats {
+                display: none !important;
+            }
+
+            .item-input,
+            .grid-input {
+                border-bottom: 1px solid #000;
+            }
+
+            .title {
+                page-break-after: avoid;
+            }
+
+            .content {
+                page-break-inside: avoid;
+            }
+
+            .morphWordsGrid .row {
+                page-break-inside: avoid;
+            }
+
+            input {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-controls">
+            <button type="button" id="downloadPdfBtn" class="btn-download">Download as PDF</button>
+            <button type="button" id="openChildBtn" class="btn-download" style="background:#007bff;margin-left:8px;">Open in Pop-up Screen</button>
+            <button type="button" id="saveSessionBtn" class="btn-download" style="background:#6c757d;margin-left:8px;">Save Session</button>
+            <button type="button" id="clearSessionBtn" class="btn-download" style="background:#dc3545;margin-left:8px;">Clear Saved Data</button>
+        </div>
+        <div id="printWrapper">
+            <div class="header">
+                <div class="header-column">
+                    <h1 class="title">MORPH, MORPH? Match</h1>
+                        <p class="subtitle">Morpheme(s): <input type="text" placeholder="" class="header-morpheme-input"></p>
+                        <p class="instructions">Fill-in the correct form of the morpheme and read the following words.</p>
+                </div>
+                <div class="header-column">
+                    <p><img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit®"></p>
+                </div>
+            
+            </div>
+            <div class="morphWordsGrid">
+                <div class="row">
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input1"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input2"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input3"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input4"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input5"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input6"></div>
+                </div>
+                <div class="row">
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input7"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input8"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input9"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input10"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input11"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input12"></div>
+                </div>
+                <div class="row">
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input13"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input14"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input15"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input16"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input17"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input18"></div>
+                </div>
+                <div class="row">
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input19"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input20"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input21"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input22"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input23"></div>
+                    <div class="morphWordCell"><input type="text" placeholder="" class="grid-input" name="grid-input24"></div>
+                </div>
+                <div class="row"><button type="button" class="btn-clear-grid">Clear Top Section</button></div>
+            </div>
+
+            <form id="morphMorphForm">
+                <div class="content">
+                    <div class="column">
+                        <div class="item">
+                            <div class="item-header-title-container">
+                                <input type="text" class="item-header-title" name="left-item-header-title" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-header-inputs-container">
+                                <input type="text" class="item-header-input" name="left-item-header-1" placeholder="">
+                                <input type="text" class="item-header-input" name="left-item-header-2" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="left-items1a" placeholder="">
+                                <input type="text" class="item-input" name="left-items1b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="left-items2a" placeholder="">
+                                <input type="text" class="item-input" name="left-items2b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="left-items3a" placeholder="">
+                                <input type="text" class="item-input" name="left-items3b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="left-items4a" placeholder="">
+                                <input type="text" class="item-input" name="left-items4b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="left-items5a" placeholder="">
+                                <input type="text" class="item-input" name="left-items5b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="left-items6a" placeholder="">
+                                <input type="text" class="item-input" name="left-items6b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="left-items7a" placeholder="">
+                                <input type="text" class="item-input" name="left-items7b" placeholder="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="column">
+                        <div class="item">
+                            <div class="item-header-title-container">
+                                <input type="text" class="item-header-title" name="right-items-header-title" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-header-inputs-container">
+                                <input type="text" class="item-header-input" name="right-items-header-1" placeholder="">
+                                <input type="text" class="item-header-input" name="right-items-header-2" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="right-items1a" placeholder="">
+                                <input type="text" class="item-input" name="right-items1b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="right-items2a" placeholder="">
+                                <input type="text" class="item-input" name="right-items2b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="right-items3a" placeholder="">
+                                <input type="text" class="item-input" name="right-items3b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="right-items4a" placeholder="">
+                                <input type="text" class="item-input" name="right-items4b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="right-items5a" placeholder="">
+                                <input type="text" class="item-input" name="right-items5b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="item1a" placeholder="">
+                                <input type="text" class="item-input" name="item1b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <input type="text" class="item-input" name="item1a" placeholder="">
+                                <input type="text" class="item-input" name="item1b" placeholder="">
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="item-inputs-container">
+                                <button type="button" class="btn-clear-lower-lists-headers">Clear Section Headers</button>
+                                <button type="button" class="btn-clear-lower-lists">Clear Lower Section</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="contextMenu" class="context-menu"></div>
+
+    <script>
+        // ===== STORAGE UTILITIES =====
+        const FORM_NAME = 'morph-morph-match';
+        const STORAGE_KEY = 'tmk-diy-sessions';
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func(...args), delay);
+            };
+        }
+
+        function saveToStorage() {
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const data = { timestamp: Date.now() };
+            inputs.forEach((input, index) => {
+                const key = (input.name || input.className || 'field') + '__' + index;
+                data[key] = input.value;
+            });
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            allSessions[FORM_NAME] = data;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+        }
+
+        function restoreFromStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const data = allSessions[FORM_NAME];
+            if (data) {
+                const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+                inputs.forEach((input, index) => {
+                    const key = (input.name || input.className || 'field') + '__' + index;
+                    const legacyKey = input.name || input.className;
+                    if (Object.prototype.hasOwnProperty.call(data, key)) {
+                        input.value = data[key];
+                    } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                        input.value = data[legacyKey];
+                    }
+                });
+            }
+        }
+
+        function clearFormStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            delete allSessions[FORM_NAME];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            inputs.forEach(input => input.value = '');
+        }
+
+        const debouncedSave = debounce(saveToStorage, 300);
+
+        // ===== FORM CONTROLS =====
+        const form = document.getElementById('morphMorphForm');
+
+        const btnClearGrid= document.querySelector('.btn-clear-grid');
+        const btnClearLowerLists = document.querySelector('.btn-clear-lower-lists');
+        const btnClearLowerListsHeaders = document.querySelector('.btn-clear-lower-lists-headers');     
+
+        btnClearGrid.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Clear the text areas
+            const textDefinitions = document.querySelectorAll('.grid-input');
+            textDefinitions.forEach((item) => {
+                item.value = '';
+            });
+            debouncedSave();
+        });
+
+        btnClearLowerLists.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Clear the text areas
+            const textDefinitions = document.querySelectorAll('.item-input');
+            textDefinitions.forEach((item) => {
+                item.value = '';
+            });
+            debouncedSave();
+        });
+
+        btnClearLowerListsHeaders.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Clear the text areas
+            const textDefinitions = document.querySelectorAll('.item-header-title, .item-header-input');
+            textDefinitions.forEach((item) => {
+                item.value = '';
+            });
+            debouncedSave();
+        });
+
+        // Add keyboard navigation
+        const inputs = form.querySelectorAll('.item-input');
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    } else {
+                        form.dispatchEvent(new Event('submit'));
+                    }
+                }
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                }
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                }
+            });
+        });
+
+        // Set focus and restore saved data on load
+        window.addEventListener('load', function() {
+            restoreFromStorage();
+            inputs[0].focus();
+        });
+
+        // Sync with child window: listen for storage changes from child window
+        window.addEventListener('storage', function(e) {
+            if (e.key === STORAGE_KEY) {
+                restoreFromStorage();
+            }
+        });
+
+        // Context menu for grid inputs
+        const contextMenu = document.getElementById('contextMenu');
+        const gridInputs = document.querySelectorAll('.grid-input');
+
+        gridInputs.forEach((gridInput) => {
+            gridInput.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+
+                // Get all prefix inputs from the form
+                const prefixInputs = form.querySelectorAll('input[name$="a"]');
+                
+                // Clear existing menu items
+                contextMenu.innerHTML = '';
+
+                // Create menu items for each prefix
+                prefixInputs.forEach((prefixInput, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'context-menu-item';
+                    const itemNum = index + 1;
+                    item.textContent = `Item ${itemNum}`;
+                    
+                    item.addEventListener('click', function() {
+                        const prefixValue = prefixInput.value;
+                        const gridValue = gridInput.value;
+                        
+                        // If grid cell has a value, use it; otherwise use the existing prefix value
+                        const valueToUse = gridValue || prefixValue;
+                        
+                        if (valueToUse) {
+                            // Update grid cell with the value
+                            gridInput.value = valueToUse;
+                            // Update the prefix input in the form with the grid value (if grid has content)
+                            if (gridValue) {
+                                prefixInput.value = gridValue;
+                            }
+                        }
+                        // Scroll to and focus the corresponding form item
+                        prefixInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        prefixInput.focus();
+                        contextMenu.classList.remove('show');
+                    });
+
+                    contextMenu.appendChild(item);
+                });
+
+                // Position the menu at cursor
+                contextMenu.style.left = e.pageX + 'px';
+                contextMenu.style.top = e.pageY + 'px';
+                contextMenu.classList.add('show');
+            });
+        });
+
+        // Close context menu on click elsewhere
+        document.addEventListener('click', function() {
+            contextMenu.classList.remove('show');
+        });
+
+        // Auto-save on input event (debounced)
+        const allInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+        allInputs.forEach(input => {
+            input.addEventListener('input', debouncedSave);
+        });
+
+        // ===== STORAGE BUTTON HANDLERS =====
+        const saveSessionBtn = document.getElementById('saveSessionBtn');
+        const clearSessionBtn = document.getElementById('clearSessionBtn');
+
+        if (saveSessionBtn) {
+            saveSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                saveToStorage();
+                alert('Session saved successfully!');
+            });
+        }
+
+        if (clearSessionBtn) {
+            clearSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Clear all saved data for this exercise?')) {
+                    clearFormStorage();
+                    alert('Saved data cleared!');
+                }
+            });
+        }
+
+        // ===== PDF DOWNLOAD =====
+        // Open in Child Window functionality
+        const openChildBtn = document.getElementById('openChildBtn');
+        openChildBtn.addEventListener('click', function() {
+            const printWrapper = document.getElementById('printWrapper');
+            const printContent = printWrapper.cloneNode(true);
+            const styleEl = document.querySelector('head style');
+            const styleHTML = styleEl ? styleEl.innerHTML : '';
+            
+            const childWindow = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+            childWindow.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${document.title}</title><style>${styleHTML}\n.btn-child-download{padding:10px 20px;background-color:#667eea;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1em;margin-bottom:15px;}\n.btn-child-download:hover{background-color:#764ba2;}\n@media print{body{margin:0;padding:0.2in;line-height:1.1;}.btn-child-download{display:none !important;}.btn-clear-grid{display:none !important;}.btn-clear-lower-lists{display:none !important;}.btn-clear-lower-lists-headers{display:none !important;}.container{page-break-inside:avoid;orphans:3;widows:3;margin:0;padding:10px;}.row{page-break-inside:avoid;}.morphWordsGrid{margin-top:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:2px solid #4020A7;page-break-inside:avoid;}.morphWordsGrid .row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:6px;page-break-inside:avoid;}.morphWordCell input{width:100%;padding:6px 3px;border:1px solid #4020A7;border-radius:2px;font-size:0.7em;font-family:'Courier New',monospace;text-align:center;background:transparent;-webkit-print-color-adjust:exact;print-color-adjust:exact;}input{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body>`);
+            childWindow.document.write('<div class="container" style="min-height:100vh;padding:20px;">');
+            childWindow.document.write('<button id="childDownloadPdfBtn" class="btn-child-download" type="button">Download as PDF</button>');
+            childWindow.document.write('<button id="childCloseBtn" class="btn-child-download" style="background:#dc3545;margin-left:8px;" type="button">Close Window & Sync</button>');
+            childWindow.document.write(printContent.outerHTML);
+            childWindow.document.write('</div>');
+            childWindow.document.write(`<script>(function(){
+                const FORM_NAME = 'morph-morph-match';
+                const STORAGE_KEY = 'tmk-diy-sessions';
+                function debounce(func, delay) {
+                    let timeoutId;
+                    return function(...args) {
+                        clearTimeout(timeoutId);
+                        timeoutId = setTimeout(() => func(...args), delay);
+                    };
+                }
+                function saveToStorage() {
+                    const inputs = document.querySelectorAll('input, textarea');
+                    const data = { timestamp: Date.now() };
+                    inputs.forEach((input, index) => {
+                        const key = (input.name || input.className || 'field') + '__' + index;
+                        data[key] = input.value;
+                    });
+                    const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                    allSessions[FORM_NAME] = data;
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+                }
+                function restoreFromStorage() {
+                    const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                    const data = allSessions[FORM_NAME];
+                    if (data) {
+                        const inputs = document.querySelectorAll('input, textarea');
+                        inputs.forEach((input, index) => {
+                            const key = (input.name || input.className || 'field') + '__' + index;
+                            const legacyKey = input.name || input.className;
+                            if (Object.prototype.hasOwnProperty.call(data, key)) {
+                                input.value = data[key];
+                            } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                                input.value = data[legacyKey];
+                            }
+                        });
+                    }
+                }
+                const debouncedSave = debounce(saveToStorage, 300);
+                window.addEventListener('storage', function(e) {
+                    if (e.key === STORAGE_KEY) {
+                        restoreFromStorage();
+                    }
+                });
+                
+                function qsa(s){return Array.from(document.querySelectorAll(s));}
+                
+                var btnClearGrid=document.querySelector('.btn-clear-grid');
+                var btnClearLists=document.querySelector('.btn-clear-lower-lists');
+                var btnClearHeaders=document.querySelector('.btn-clear-lower-lists-headers');
+                
+                if(btnClearGrid){
+                    btnClearGrid.addEventListener('click',function(e){
+                        e.preventDefault();
+                        qsa('.grid-input').forEach(function(i){i.value='';});
+                        debouncedSave();
+                    });
+                }
+                if(btnClearLists){
+                    btnClearLists.addEventListener('click',function(e){
+                        e.preventDefault();
+                        qsa('.item-input').forEach(function(i){i.value='';});
+                        debouncedSave();
+                    });
+                }
+                if(btnClearHeaders){
+                    btnClearHeaders.addEventListener('click',function(e){
+                        e.preventDefault();
+                        qsa('.item-header-title, .item-header-input').forEach(function(i){i.value='';});
+                        debouncedSave();
+                    });
+                }
+                
+                const allInputs = document.querySelectorAll('input, textarea');
+                allInputs.forEach(input => {
+                    input.addEventListener('input', debouncedSave);
+                });
+                
+                function setupPdfBtn(){
+                    var pdfBtn=document.getElementById('childDownloadPdfBtn');
+                    if(pdfBtn){
+                        pdfBtn.onclick=function(){
+                            var inputs=document.querySelectorAll('input, textarea');
+                            inputs.forEach(function(input){
+                                if(input.tagName==='TEXTAREA'){
+                                    input.textContent=input.value;
+                                }else{
+                                    input.setAttribute('value',input.value);
+                                }
+                            });
+                            setTimeout(function(){
+                                window.print();
+                            },100);
+                            return false;
+                        }
+                    }
+                }
+                var closeBtn=document.getElementById('childCloseBtn');
+                if(closeBtn){closeBtn.addEventListener('click',function(){
+                    saveToStorage();
+                    if(window.opener&&window.opener.refreshMainPageInputs){
+                        window.opener.refreshMainPageInputs();
+                    }
+                    window.close();
+                });}
+                
+                // Flush pending saves before window unload
+                window.addEventListener('beforeunload', function() {
+                    saveToStorage();
+                });
+                
+                restoreFromStorage();
+                setupPdfBtn();
+                setTimeout(setupPdfBtn,100);
+            })()<\/script>`);
+            childWindow.document.write('</body></html>');
+            childWindow.document.close();
+        });
+
+        // Download as PDF functionality
+        const downloadBtn = document.getElementById('downloadPdfBtn');
+        downloadBtn.addEventListener('click', function() {
+            const printWrapper = document.getElementById('printWrapper');
+            const printContent = printWrapper.cloneNode(true);
+            
+            // Create a new window
+            const printWindow = window.open('', '', 'width=800,height=600');
+            
+            // Write the minimal HTML with styling
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>MORPH, MORPH? Match</title>
+                    <style>
+                        body {
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            padding: 0.25in;
+                            line-height: 1.2;
+                            margin: 0;
+                        }
+                        .header {
+                            text-align: left;
+                            border-bottom: 2px solid #4020A7;
+                            padding-bottom: 4px;
+                            display: grid;
+                            grid-template-columns: 3fr 1fr;
+                            gap: 10px;
+                            margin-bottom: 12px;
+                        }
+                        .header-column {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 2px;
+                        }
+                        .header-column img {
+                            max-width: 120px;
+                            height: auto;
+                        }
+                        .title {
+                            font-size: 1.2em;
+                            font-weight: bold;
+                            margin-bottom: 0;
+                            margin-top: 0;
+                            color: #000;
+                            letter-spacing: 0.5px;
+                        }
+                        .subtitle {
+                            font-size: 1em;
+                            color: #000;
+                            margin-bottom: 0;
+                            margin-top: 0;
+                            font-style: italic;
+                        }
+
+                        .header-morpheme-input {
+                            border: 1px solid #4020A7;
+                            padding: 4px 0;
+                            font-size: 1em;
+                            color: #4020A7;
+                            transition: border-color 0.6s ease;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            max-width: 120px;
+                        }
+
+                        .header-morpheme-input:focus {
+                            outline: none;
+                            border-bottom-color: #667eea;
+                            background-color: rgba(102, 126, 234, 0.05);
+                            padding: 8px 8px;
+                        }
+                        .instructions {
+                            font-size: 0.85em;
+                            margin-top: 2px;
+                            margin-bottom: 0;
+                            color: #555;
+                            line-height: 1.2;
+                        }
+                        .content {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 12px;
+                            margin-top: 8px;
+                            page-break-inside: avoid;
+                        }
+                        .column {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 10px;
+                        }
+                        .item {
+                            display: flex;
+                            align-items: flex-start;
+                            gap: 6px;
+                        }
+                        .item-header-title-container {
+                            display: flex;
+                            gap: 6px;
+                            flex: 1;
+                        }
+                        .item-header-title {
+                            border: none;
+                            border-bottom: 1px solid #ddd;
+                            padding: 2px 0;
+                            font-size: 1.4em;
+                            font-weight: bold;
+                            color: #333;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            width: 100%;
+                            text-align: center;
+                        }
+                        .item-header-inputs-container {
+                            display: flex;
+                            gap: 6px;
+                            flex: 1;
+                        }
+                        .item-header-input {
+                            border: none;
+                            border-bottom: 1px solid #ddd;
+                            padding: 2px 0;
+                            font-size: 1em;
+                            font-weight: 700;
+                            color: #333;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            width: 50%;
+                            text-align: center;
+                        }
+                        .item-inputs-container {
+                            display: flex;
+                            gap: 6px;
+                            flex: 1;
+                        }
+                        .item-input {
+                            border: 1px solid #4020A7;
+                            padding: 6px 0;
+                            font-size: 0.85em;
+                            color: #333;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            width: 50%;
+                        }
+                        .item-input:focus {
+                            outline: none;
+                            border-bottom-color: #667eea;
+                            background-color: rgba(102, 126, 234, 0.05);
+                            padding: 8px 10px;
+                        }
+                        .item-input::placeholder {
+                            color: #ccc;
+                        }
+                        .morphWordsGrid {
+                            margin-top: 8px;
+                            margin-bottom: 8px;
+                            padding-bottom: 8px;
+                            border-bottom: 2px solid #4020A7;
+                            page-break-inside: avoid;
+                        }
+                        .morphWordsGrid .row {
+                            display: grid;
+                            grid-template-columns: repeat(6, 1fr);
+                            gap: 6px;
+                            margin-bottom: 6px;
+                            page-break-inside: avoid;
+                        }
+                        .morphWordCell {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        }
+                        .morphWordCell input {
+                            width: 100%;
+                            padding: 6px 3px;
+                            border: 1px solid #4020A7;
+                            border-radius: 2px;
+                            font-size: 0.7em;
+                            font-family: 'Courier New', monospace;
+                            text-align: center;
+                            background: transparent;
+                        }
+                        .morphWordCell input:focus {
+                            outline: none;
+                            border-color: #667eea;
+                            background-color: rgba(102, 126, 234, 0.05);
+                        }
+                        .morphWordCell input::placeholder {
+                            color: #ccc;
+                        }
+                        .controls, .header-controls, #contextMenu, button {
+                            display: none !important;
+                        }
+                        @media print {
+                            body {
+                                padding: 0.2in;
+                                margin: 0;
+                                line-height: 1.1;
+                                size: letter;
+                            }
+                            * {
+                                page-break-inside: avoid;
+                            }
+                            input {
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                            .morphWordsGrid .row {
+                                grid-template-columns: repeat(6, 1fr);
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+            `);
+            
+            // Copy input values from original to cloned content
+            const sourceInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const clonedInputs = printContent.querySelectorAll('input, textarea');
+            sourceInputs.forEach((input, index) => {
+                if (clonedInputs[index]) {
+                    // Set both the value property and attribute
+                    clonedInputs[index].value = input.value;
+                    clonedInputs[index].setAttribute('value', input.value);
+                    // For textareas, also set the text content
+                    if (clonedInputs[index].tagName === 'TEXTAREA') {
+                        clonedInputs[index].textContent = input.value;
+                    }
+                }
+            });
+            
+            // Append the cloned content
+            printWindow.document.write(printContent.outerHTML);
+            
+            // Close the HTML
+            printWindow.document.write(`
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            
+            // Trigger print dialog after content loads
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            };
+        });
+    </script>
+</body>
+</html>

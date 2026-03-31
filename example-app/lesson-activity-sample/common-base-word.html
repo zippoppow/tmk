@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COMMON BASE WORD</title>
+    <style>
+        .container {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            position: relative;
+        }
+
+        .container > div:not(.header-controls):not(#printWrapper) {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        #printWrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .header-controls {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            margin-bottom: 5px;
+            min-width: 900px;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: left;
+            border: none;
+            border-bottom: 3px solid #4020A7;
+            padding-bottom: 8px;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 10px;
+        }
+
+        .header-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-column img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .title {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 2px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #000;
+            margin-bottom: 0;
+            margin-top: 0;
+            font-style: italic;
+        }
+
+        .header-morpheme-input {
+             border: 1px solid #4020A7;
+             padding: 8px 0;
+              font-size: 1.2em;
+              color: #4020A7;
+             transition: border-color 0.6s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+             max-width: 150px;
+        }
+
+        .header-morpheme-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .instructions {
+            font-size: 1em;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+
+        .common-base-word-inputs-container {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .common-base-word-input {
+            border: none;
+            border-bottom: 2px solid #ddd;
+            padding: 8px 0;
+            font-size: 1em;
+            color: #333;
+            transition: border-color 0.3s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+            width: 33%;
+        }
+
+
+        .common-base-word-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .common-base-word-input::placeholder {
+            color: #ccc;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-width: 150px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #4020A7;
+            min-width: 150px;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .btn-clear:active {
+            background: #d0d0d0;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .title {
+                font-size: 1.4em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+
+        .btn-download {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-download:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+        .commonBaseWordGrid {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .commonBaseWordGrid .row {
+            display: grid;
+            grid-template-columns: repeat(3, 3fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .commonBaseWordCell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .commonBaseWordCell input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #4020A7;
+            border-radius: 4px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .commonBaseWordCell input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+
+        .commonBaseWordCell input::placeholder {
+            color: #ccc;
+        }
+
+        .sortingBoxes {
+            margin-top: 30px;
+        }
+        .sortingBoxes .row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .sortBoxCell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            padding: 12px;
+            min-height: 200px;
+            overflow-y: auto;
+        }
+        .sortBoxList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sortBoxList li {
+            background: #f0f0f0;
+            border-radius: 3px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95em;
+            font-family: 'Courier New', monospace;
+        }
+        .remove-word {
+            background: #dc3545;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .remove-word:hover {
+            background: #b52a37;
+        }
+
+        .morphemeQuestion {
+            margin-top: 30px;
+            font-size: 1.1em;
+            color: #333;
+            text-align: center;
+        }
+
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            min-width: 200px;
+            display: none;
+        }
+
+        .context-menu.show {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #333;
+            transition: background-color 0.2s ease;
+        }
+
+        .context-menu-item:hover {
+            background-color: #667eea;
+            color: white;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+                max-width: 100%;
+            }
+
+            .header-controls {
+                display: none;
+            }
+
+            .controls,
+            .header {
+                text-align: left;
+                border-bottom: 3px solid #4020A7;
+                padding-bottom: 8px;
+                display: grid;
+                grid-template-columns: 3fr 1fr;
+                gap: 10px;
+            }
+            .title {
+                font-size: 1.6em;
+                font-weight: bold;
+                color: #333;
+                margin-bottom: 2px;
+                letter-spacing: 1px;
+            }
+            .subtitle {
+                    font-size: 1.2em;
+                    color: #000;
+                    margin-bottom: 0;
+                    margin-top: 0;
+                    font-style: italic;
+                }
+
+                .header-morpheme-input {
+                    border: 1px solid #4020A7;
+                    padding: 8px 0;
+                    font-size: 1.2em;
+                    color: #4020A7;
+                    transition: border-color 0.6s ease;
+                    background: transparent;
+                    font-family: 'Courier New', monospace;
+                    max-width: 150px;
+                }
+
+                .header-morpheme-input:focus {
+                    outline: none;
+                    border-bottom-color: #667eea;
+                    background-color: rgba(102, 126, 234, 0.05);
+                    padding: 8px 8px;
+                }
+
+            input {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="contextMenu" class="context-menu"></div>
+        <div class="header-controls">
+            <button type="button" id="downloadPdfBtn" class="btn-download">Download as PDF</button>
+            <button type="button" id="openChildBtn" class="btn-download" style="background:#007bff;margin-left:8px;">Open in Pop-up Screen</button>
+            <button type="button" id="saveSessionBtn" class="btn-download" style="background:#6c757d;margin-left:8px;">Save Session</button>
+            <button type="button" id="clearSessionBtn" class="btn-download" style="background:#dc3545;margin-left:8px;">Clear Saved Data</button>
+        </div>
+        <div id="printWrapper">
+            <div class="header">
+                <div class="header-column">
+                    <h1 class="title">COMMON BASE WORD</h1>
+                    <p class="subtitle">Morpheme(s): <input type="text" placeholder="" class="common-base-word-input"></p>
+                    <p class="instructions"></p>
+                </div>
+                <div class="header-column">
+                    <p><img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit®"></p>
+                </div>           
+            </div>
+            <form id="commonBaseWordForm">
+                <div class="commonBaseWordGrid">
+                    <div class="row">
+                        <div class="commonBaseWordCell"><input type="text" name="common-base-word-item1" placeholder="" class="common-base-word-input"></div>
+                        <div class="commonBaseWordCell"><input type="text" name="common-base-word-item2" placeholder="" class="common-base-word-input"></div>
+                        <div class="commonBaseWordCell"><input type="text" name="common-base-word-item3" placeholder="" class="common-base-word-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="commonBaseWordCell"><input type="text" name="common-base-word-item4" placeholder="" class="common-base-word-input"></div>
+                        <div class="commonBaseWordCell"><input type="text" name="common-base-word-item5" placeholder="" class="common-base-word-input"></div>
+                        <div class="commonBaseWordCell"><input type="text" name="common-base-word-item6" placeholder="" class="common-base-word-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="commonBaseWordCell"><input type="text" name="common-base-word-item7" placeholder="" class="common-base-word-input"></div>
+                        <div class="commonBaseWordCell"><input type="text" name="common-base-word-item8" placeholder="" class="common-base-word-input"></div>
+                        <div class="commonBaseWordCell"><input type="text" name="common-base-word-item9" placeholder="" class="common-base-word-input"></div>
+                    </div>
+                </div>
+                
+                <div id="morphemeQuestion" class="morphemeQuestion">
+                    Sort the words into 3 different columns based on a shared base word.
+                </div>
+                
+                <div class="sortingBoxes">
+                    <div class="row">
+                        <div class="sortBoxCell"><ul class="sortBoxList" data-box="1"></ul></div>
+                        <div class="sortBoxCell"><ul class="sortBoxList" data-box="2"></ul></div>
+                        <div class="sortBoxCell"><ul class="sortBoxList" data-box="3"></ul></div>
+                    </div>
+                </div>
+            
+                <div class="controls">
+                    <button type="button" class="btn-clear-word-grid">Clear the Word Grid</button>
+                    <button type="button" class="btn-clear-sorting-boxes">Clear the Sorting Boxes</button>   
+                </div>
+             </form>
+        </div>
+    </div>
+
+    <div id="contextMenu" class="context-menu"></div>
+
+    <script>
+        // ===== STORAGE UTILITIES =====
+        const FORM_NAME = 'common-base-word';
+        const STORAGE_KEY = 'tmk-diy-sessions';
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func(...args), delay);
+            };
+        }
+
+        function saveToStorage() {
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const data = { timestamp: Date.now() };
+            inputs.forEach((input, index) => {
+                const key = (input.name || input.className || 'field') + '__' + index;
+                data[key] = input.value;
+            });
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            allSessions[FORM_NAME] = data;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+        }
+
+        function restoreFromStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const data = allSessions[FORM_NAME];
+            if (data) {
+                const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+                inputs.forEach((input, index) => {
+                    const key = (input.name || input.className || 'field') + '__' + index;
+                    const legacyKey = input.name || input.className;
+                    if (Object.prototype.hasOwnProperty.call(data, key)) {
+                        input.value = data[key];
+                    } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                        input.value = data[legacyKey];
+                    }
+                });
+            }
+        }
+
+        function clearFormStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            delete allSessions[FORM_NAME];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            inputs.forEach(input => input.value = '');
+        }
+
+        const debouncedSave = debounce(saveToStorage, 300);
+
+        // ===== FORM CONTROLS =====
+        const form = document.getElementById('commonBaseWordForm');
+        const btnClearWordGrid = document.querySelector('.btn-clear-word-grid');
+        const btnClearSortingBoxes = document.querySelector('.btn-clear-sorting-boxes');
+
+        btnClearWordGrid.addEventListener('click', function(e) {
+            e.preventDefault();
+            const wordGridInputs = document.querySelectorAll('input[name^="common-base-word-item"]');
+            wordGridInputs.forEach((input) => {
+                input.value = '';
+            });
+            debouncedSave();
+        });
+        
+        btnClearSortingBoxes.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sortBoxLists = document.querySelectorAll('.sortBoxList');
+            sortBoxLists.forEach((list) => {
+                list.innerHTML = '';
+            });
+            debouncedSave();
+        });
+
+        // Auto-save on input event (debounced)
+        const allInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+        allInputs.forEach(input => {
+            input.addEventListener('input', debouncedSave);
+        });
+
+
+        // Add keyboard navigation
+        const inputs = form.querySelectorAll('.common-base-word-input');
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    } else {
+                        form.dispatchEvent(new Event('submit'));
+                    }
+                }
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                }
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                }
+            });
+        });
+
+        // Context menu for common-base-word-item inputs
+        // Use existing contextMenu reference if already declared
+        var contextMenu = document.getElementById('contextMenu');
+        const baseWordInputs = document.querySelectorAll('input[name^="common-base-word-item"]');
+        const sortBoxInputs = document.querySelectorAll('input[name^="sortBox"]');
+
+        baseWordInputs.forEach((input) => {
+            input.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                // Clear existing menu items
+                contextMenu.innerHTML = '';
+                // Create menu items for each sortBox
+                const sortBoxLists = document.querySelectorAll('.sortBoxList');
+                sortBoxLists.forEach((list, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'context-menu-item';
+                    item.textContent = `Add to Column ${idx + 1}`;
+                    item.addEventListener('click', function() {
+                        // Add the grid input value to the sortBox list
+                        if (input.value) {
+                            addWordToList(list, input.value);
+                        }
+                        contextMenu.classList.remove('show');
+                    });
+                    contextMenu.appendChild(item);
+                });
+                // Position the menu at cursor
+                contextMenu.style.left = e.pageX + 'px';
+                contextMenu.style.top = e.pageY + 'px';
+                contextMenu.classList.add('show');
+            });
+        });
+
+        // Function to add a word to a sortBox list
+        function addWordToList(list, word) {
+            const li = document.createElement('li');
+            li.textContent = word;
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-word';
+            removeBtn.type = 'button';
+            removeBtn.textContent = '×';
+            removeBtn.addEventListener('click', () => li.remove());
+            li.appendChild(removeBtn);
+            list.appendChild(li);
+        }
+
+        // Close context menu on click elsewhere
+        document.addEventListener('click', function() {
+            contextMenu.classList.remove('show');
+        });
+
+        // Set focus to first input on load
+        // Set focus and restore saved data on load
+        window.addEventListener('load', function() {
+            restoreFromStorage();
+            const firstInput = document.querySelector('#printWrapper input');
+            if (firstInput) firstInput.focus();
+        });
+
+        // Sync with child window: listen for storage changes from child window
+        window.addEventListener('storage', function(e) {
+            if (e.key === STORAGE_KEY) {
+                restoreFromStorage();
+            }
+        });
+
+        // ===== STORAGE BUTTON HANDLERS =====
+        const saveSessionBtn = document.getElementById('saveSessionBtn');
+        const clearSessionBtn = document.getElementById('clearSessionBtn');
+
+        if (saveSessionBtn) {
+            saveSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                saveToStorage();
+                alert('Session saved successfully!');
+            });
+        }
+
+        if (clearSessionBtn) {
+            clearSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Clear all saved data for this exercise?')) {
+                    clearFormStorage();
+                    alert('Saved data cleared!');
+                }
+            });
+        }
+
+        // ===== PDF DOWNLOAD =====
+        const downloadBtn = document.getElementById('downloadPdfBtn');
+        downloadBtn.addEventListener('click', function() {
+            const printWrapper = document.getElementById('printWrapper');
+            const printContent = printWrapper.cloneNode(true);
+            
+            // Create a new window
+            const printWindow = window.open('', '', 'width=800,height=600');
+            
+            // Write the minimal HTML with styling
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Common Base Word</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        
+                         body {
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            padding: 40px;
+                            line-height: 1.6;
+                        }
+                        
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 2px solid #333;
+                            padding-bottom: 20px;
+                        }
+
+                        .header-column img {
+                            max-width: 200px;
+                            height: auto;
+                        }
+                        
+                        .title {
+                            font-size: 1.6em;
+                            font-weight: bold;
+                            margin-bottom: 10px;
+                        }
+                        
+                        .subtitle {
+                            font-size: 1.2em;
+                            color: #000;
+                            margin-bottom: 0;
+                            margin-top: 0;
+                            font-style: italic;
+                        }
+
+                        .header-morpheme-input {
+                            border: 1px solid #4020A7;
+                            padding: 8px 0;
+                            font-size: 1.2em;
+                            color: #4020A7;
+                            transition: border-color 0.6s ease;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            max-width: 150px;
+                        }
+
+                        .header-morpheme-input:focus {
+                            outline: none;
+                            border-bottom-color: #667eea;
+                            background-color: rgba(102, 126, 234, 0.05);
+                            padding: 8px 8px;
+                        }
+                        
+                        .instructions {
+                            font-size: 1em;
+                            margin-top: 10px;
+                        }
+                        
+                        .grid-intro-input {
+                            border: none;
+                            border-bottom: 1px solid #333;
+                            padding: 4px 0;
+                            font-size: 0.9em;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            width: 100%;
+                        }
+                        
+                        .instructions {
+                            font-size: 1em;
+                            margin-top: 8px;
+                        }
+                        
+                        .commonBaseWordGrid {
+                            margin: 20px 0;
+                        }
+                        
+                        .commonBaseWordGrid .row {
+                            display: grid;
+                            grid-template-columns: repeat(3, 1fr);
+                            gap: 8px;
+                            margin-bottom: 8px;
+                        }
+                        
+                        .commonBaseWordCell {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        }
+                        
+                        .commonBaseWordCell input {
+                            width: 100%;
+                            padding: 6px;
+                            border: 1px solid #333;
+                            border-radius: 2px;
+                            font-size: 0.85em;
+                            text-align: center;
+                            font-family: 'Courier New', monospace;
+                        }
+                        
+                        .morphemeQuestion {
+                            margin: 15px 0;
+                            font-size: 1em;
+                            color: #333;
+                            text-align: center;
+                            font-weight: normal;
+                        }
+                        
+                        .sortingBoxes {
+                            margin: 20px 0;
+                        }
+                        
+                        .sortingBoxes .row {
+                            display: grid;
+                            grid-template-columns: repeat(3, 1fr);
+                            gap: 15px;
+                        }
+                        
+                        .sortBoxCell {
+                            border: 2px solid #333;
+                            border-radius: 4px;
+                            padding: 8px;
+                            min-height: 100px;
+                            overflow-y: auto;
+                        }
+                        
+                        .sortBoxList {
+                            list-style: none;
+                            padding: 0;
+                            margin: 0;
+                        }
+                        
+                        .sortBoxList li {
+                            background: #f0f0f0;
+                            border-radius: 2px;
+                            padding: 4px 6px;
+                            margin-bottom: 4px;
+                            font-size: 0.85em;
+                            font-family: 'Courier New', monospace;
+                        }
+                        
+                        .remove-word {
+                            display: none;
+                        }
+                        
+                        .controls {
+                            display: none !important;
+                        }
+                        
+                        @media print {
+                            body {
+                                padding: 20px;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+            `);
+            
+            // Append the cloned content
+            printWindow.document.write(printContent.innerHTML);
+            
+            // Close the HTML
+            printWindow.document.write(`
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            
+            // Trigger print dialog after content loads
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            };
+        });
+        // Open `printWrapper` in a persistent Pop-up Screen (browser-view)
+        const openChildBtn = document.getElementById('openChildBtn');
+        if (openChildBtn) {
+            openChildBtn.addEventListener('click', function() {
+                const printWrapper = document.getElementById('printWrapper');
+                const printContent = printWrapper.cloneNode(true);
+                const styleEl = document.querySelector('head style');
+                const styleHTML = styleEl ? styleEl.innerHTML : '';
+                const child = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+                child.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${document.title} — Browser View</title><style>${styleHTML}\n.btn-child-download{padding:10px 20px;background-color:#667eea;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1em;margin-bottom:15px;}\n.btn-child-download:hover{background-color:#764ba2;}\n@media print{body{margin:0;padding:10px;}.btn-child-download{display:none !important;}.btn-clear-word-grid{display:none !important;}.btn-clear-sorting-boxes{display:none !important;}.container{page-break-inside:avoid;orphans:3;widows:3;margin:0;padding:10px;}.header{page-break-inside:avoid;}.commonBaseWordGrid{page-break-inside:avoid;}.sortingBoxes{page-break-inside:avoid;}form{page-break-inside:avoid;}}</style></head><body>`);
+                child.document.write('<div class="container" style="min-height:100vh;padding:20px;">');
+                child.document.write('<button id="childDownloadPdfBtn" class="btn-child-download" type="button">Download as PDF</button>');
+                child.document.write('<button id="childCloseBtn" class="btn-child-download" style="background:#dc3545;margin-left:8px;" type="button">Close Window & Sync</button>');
+                child.document.write(printContent.outerHTML);
+                child.document.write('</div>');
+                child.document.write(`<script>(function(){
+    const FORM_NAME = 'common-base-word';
+    const STORAGE_KEY = 'tmk-diy-sessions';
+    function debounce(func, delay) {
+        let timeoutId;
+        return function(...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func(...args), delay);
+        };
+    }
+    function saveToStorage() {
+        const inputs = document.querySelectorAll('input, textarea');
+        const data = { timestamp: Date.now() };
+        inputs.forEach((input, index) => {
+            const key = (input.name || input.className || 'field') + '__' + index;
+            data[key] = input.value;
+        });
+        const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        allSessions[FORM_NAME] = data;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+    }
+    function restoreFromStorage() {
+        const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        const data = allSessions[FORM_NAME];
+        if (data) {
+            const inputs = document.querySelectorAll('input, textarea');
+            inputs.forEach((input, index) => {
+                const key = (input.name || input.className || 'field') + '__' + index;
+                const legacyKey = input.name || input.className;
+                if (Object.prototype.hasOwnProperty.call(data, key)) {
+                    input.value = data[key];
+                } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                    input.value = data[legacyKey];
+                }
+            });
+        }
+    }
+    const debouncedSave = debounce(saveToStorage, 300);
+    const childInputs = document.querySelectorAll('input, textarea');
+    childInputs.forEach(input => {
+        input.addEventListener('input', debouncedSave);
+    });
+    window.addEventListener('storage', function(e) {
+        if (e.key === STORAGE_KEY) {
+            restoreFromStorage();
+        }
+    });
+function qs(s){return document.querySelector(s);}function qsa(s){return Array.from(document.querySelectorAll(s));}function createContextMenu(){if(document.getElementById('contextMenu'))return;var cm=document.createElement('div');cm.id='contextMenu';cm.className='context-menu';document.body.appendChild(cm);}function attachRemoveHandlers(){var sels=['.remove-word','.wb-item-remove','.item-remove','.wb-item-remove','.remove-btn','.wb-remove'];sels.forEach(function(sel){qsa(sel).forEach(function(btn){if(btn._listenerAttached)return;btn._listenerAttached=true;btn.addEventListener('click',function(){var li=btn.closest('li')||btn.parentElement; if(li) li.remove();debouncedSave();});});});}function attachClearHandlers(){var clearWordGridBtns=qsa('.btn-clear-word-grid');var clearSortingBoxesBtns=qsa('.btn-clear-sorting-boxes');clearWordGridBtns.forEach(function(btn){if(btn._clearAttached)return;btn._clearAttached=true;btn.addEventListener('click',function(e){e.preventDefault();var inputs=qsa('input[name^="common-base-word-item"]');inputs.forEach(function(i){i.value='';});debouncedSave();});});clearSortingBoxesBtns.forEach(function(btn){if(btn._clearAttached)return;btn._clearAttached=true;btn.addEventListener('click',function(e){e.preventDefault();var lists=qsa('.sortBoxList');lists.forEach(function(list){list.innerHTML='';});debouncedSave();});});}function addWordToList(list,word){var li=document.createElement('li');li.textContent=word;var removeBtn=document.createElement('button');removeBtn.className='remove-word';removeBtn.type='button';removeBtn.textContent='×';removeBtn.addEventListener('click',function(){li.remove();debouncedSave();});li.appendChild(removeBtn);list.appendChild(li);}function attachCommonBaseWordContext(){var baseWordInputs=qsa('input[name^="common-base-word-item"]');var cm=document.getElementById('contextMenu');baseWordInputs.forEach(function(input){input.addEventListener('contextmenu',function(e){e.preventDefault();cm.innerHTML='';var sortBoxLists=qsa('.sortBoxList');sortBoxLists.forEach(function(list,idx){var item=document.createElement('div');item.className='context-menu-item';item.textContent='Add to Column '+(idx+1);item.addEventListener('click',function(){if(input.value){addWordToList(list,input.value);}cm.classList.remove('show');debouncedSave();});cm.appendChild(item);});cm.style.left=e.pageX+'px';cm.style.top=e.pageY+'px';cm.classList.add('show');});});}function attachSortContext(){qsa('.sort-words-input').forEach(function(input){input.addEventListener('contextmenu',function(e){e.preventDefault();var cm=document.getElementById('contextMenu');cm.innerHTML='';var lists=document.querySelectorAll('.sort-box-list');lists.forEach(function(list,idx){var item=document.createElement('div');item.className='context-menu-item';item.textContent='Add to Column '+(idx+1);item.addEventListener('click',function(){if(input.value){var li=document.createElement('li');li.textContent=input.value;var b=document.createElement('button');b.type='button';b.className='remove-word';b.textContent='×';b.addEventListener('click',function(){li.remove();debouncedSave();});li.appendChild(b);list.appendChild(li);input.value='';cm.classList.remove('show');debouncedSave();}});cm.appendChild(item);});cm.style.left=e.pageX+'px';cm.style.top=e.pageY+'px';cm.classList.add('show');});});}function attachGridContext(){qsa('.grid-input').forEach(function(input){input.addEventListener('contextmenu',function(e){e.preventDefault();var cm=document.getElementById('contextMenu');cm.innerHTML='';var form=input.closest('form')||document;var prefixes=form.querySelectorAll('input[name$="a"]');prefixes.forEach(function(pref,idx){var item=document.createElement('div');item.className='context-menu-item';item.textContent='Item '+(idx+1);item.addEventListener('click',function(){var valueToUse=input.value||pref.value; if(valueToUse){input.value=valueToUse; if(input.value) pref.value=input.value;}pref.scrollIntoView({behavior:'smooth',block:'center'});pref.focus();cm.classList.remove('show');debouncedSave();});cm.appendChild(item);});cm.style.left=e.pageX+'px';cm.style.top=e.pageY+'px';cm.classList.add('show');});});}function attachFocusToRelatedContext(){qsa('.focus-word-input').forEach(function(focusInput){focusInput.addEventListener('contextmenu',function(e){e.preventDefault();var cm=document.getElementById('contextMenu');cm.innerHTML='';var related=document.querySelectorAll('.related-word-input');related.forEach(function(r,idx){var item=document.createElement('div');item.className='context-menu-item';item.textContent='Set color for Related Word '+(idx+1);item.addEventListener('click',function(){var bg=getComputedStyle(focusInput).backgroundColor;r.style.backgroundColor=bg;cm.classList.remove('show');debouncedSave();});cm.appendChild(item);});cm.style.left=e.pageX+'px';cm.style.top=e.pageY+'px';cm.classList.add('show');});});}document.addEventListener('click',function(e){var cm=document.getElementById('contextMenu');if(cm&&!cm.contains(e.target))cm.classList.remove('show');});createContextMenu();attachRemoveHandlers();attachClearHandlers();attachCommonBaseWordContext();attachSortContext();attachGridContext();attachFocusToRelatedContext();attachRemoveHandlers();var pdfBtn=document.getElementById('childDownloadPdfBtn');if(pdfBtn){pdfBtn.addEventListener('click',function(){window.print();});}var closeBtn=document.getElementById('childCloseBtn');if(closeBtn){closeBtn.addEventListener('click',function(){saveToStorage();if(window.opener&&window.opener.refreshMainPageInputs){window.opener.refreshMainPageInputs();}window.close();});}window.addEventListener('beforeunload',function(){saveToStorage();});restoreFromStorage();var first=document.querySelector('.common-base-word-input, input');if(first)first.focus();})();<\/script>`);
+                child.document.write('</body></html>');
+                child.document.close();
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PART of SPEECH SORT</title>
+    <style>
+        .container {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .container > div:not(.header-controls):not(#printWrapper) {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        #printWrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header-controls {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            margin-bottom: 5px;
+            min-width: 900px;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: left;
+            border: none;
+            border-bottom: 3px solid #4020A7;
+            padding-bottom: 8px;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 10px;
+        }
+
+        .header-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-column img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 2px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #000;
+            margin-bottom: 0;
+            margin-top: 0;
+            font-style: italic;
+        }
+
+        .header-morpheme-input {
+             border: 1px solid #4020A7;
+             padding: 8px 0;
+              font-size: 1.2em;
+              color: #4020A7;
+             transition: border-color 0.6s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+             max-width: 150px;
+        }
+
+        .header-morpheme-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .instructions {
+            font-size: 1em;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-width: 150px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #4020A7;
+            min-width: 150px;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .btn-clear:active {
+            background: #d0d0d0;
+        }
+
+    
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stats {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .title {
+                font-size: 1.8em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+
+        .btn-download {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-download:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+
+        .posTopGrid {
+            display: grid;
+            grid-template-columns: 3fr 1.5fr;
+            gap: 40px;
+            margin-top: 10px;
+        }
+
+        .posTopGrid .column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .posTopGrid .item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .posGrid {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .posGrid .row {
+            display: grid;
+            grid-template-columns: repeat(3, 3fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .posCell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .posCell input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #4020A7;
+            border-radius: 4px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .posCell input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+
+        .posCell input::placeholder {
+            color: #ccc;
+        }
+
+        .grid-pos-inputs-container {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .grid-pos-input {
+            border: none;
+            border-bottom: 2px solid #ddd;
+            padding: 8px 0;
+            font-size: 1em;
+            color: #333;
+            transition: border-color 0.3s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+            width: 33%;
+        }
+
+
+        .grid-pos-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .grid-pos-input::placeholder {
+            color: #ccc;
+        }
+
+        .sortingBoxes {
+            margin-top: 30px;
+        }
+        .sortingBoxes .row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .sortBoxCell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sortBoxCell {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            margin-right: 18px;
+        }
+        /* Remove right margin from last cell in a row */
+        .sortBoxCell:last-child {
+            margin-right: 0;
+        }
+        /* If parent uses flex or grid, add gap there as well */
+        .sortBoxRow, .sortBoxCells, .sortBoxContainer {
+            display: flex;
+            gap: 18px;
+        }
+        .sortBoxCell .sortBoxTitle {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        /* Sort box now uses a container for stacked items */
+        .sort-box {
+            width: 100%;
+            /* increased to comfortably hold ~5 items */
+            min-height: 260px;
+            max-height: 420px;
+            padding: 8px;
+            border: 2px solid #4020A7;
+            border-radius: 6px;
+            background: #fff;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sort-box.empty::after {
+            
+            color: #999;
+            font-style: italic;
+            padding: 8px;
+        }
+
+        .sort-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fafafa;
+            font-family: 'Courier New', monospace;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .sort-item.dragging {
+            opacity: 0.6;
+            transform: scale(0.995);
+        }
+
+        .sort-item .sort-item-text {
+            flex: 1 1 auto;
+            padding-right: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sort-item .sort-item-remove {
+            background: transparent;
+            border: none;
+            color: #666;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0 6px;
+            font-size: 16px;
+            line-height: 1;
+            border-radius: 4px;
+        }
+
+        .sort-item .sort-item-remove:hover {
+            background: #f5f5f5;
+            color: #c0392b;
+        }
+
+        .hintText {
+            margin-top: 30px;
+            font-size: 1.1em;
+            color: #333;
+            text-align: center;
+        }
+
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            min-width: 200px;
+            display: none;
+        }
+
+        .context-menu.show {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #333;
+            transition: background-color 0.2s ease;
+        }
+
+        .context-menu-item:hover {
+            background-color: #667eea;
+            color: white;
+        }
+
+        /* Drag visuals */
+        .grid-pos-input.dragging {
+            opacity: 0.6;
+            transform: scale(0.99);
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            cursor: pointer;
+        }
+
+        .sort-box-input.dragging {
+            opacity: 0.75;
+            cursor: pointer;
+        }
+
+        input.drag-over {
+            outline: 2px dashed #667eea;
+            box-shadow: 0 0 8px rgba(102,126,234,0.12);
+            cursor: pointer;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+                max-width: 100%;
+            }
+
+            .header-controls {
+                display: none;
+            }
+
+            .controls,
+            .feedback,
+            .stats {
+                display: none !important;
+            }
+
+            .grid-pos-input,
+            .grid-pos-input {
+                border-bottom: 1px solid #000;
+            }
+
+            .title {
+                page-break-after: avoid;
+            }
+
+            .posGrid .row {
+                page-break-inside: avoid;
+            }
+
+            input {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-controls">
+            <button type="button" id="downloadPdfBtn" class="btn-download">Download as PDF</button>
+            <button type="button" id="openChildBtn" class="btn-download" style="background:#007bff;margin-left:8px;">Open in Pop-up Screen</button>
+            <button type="button" id="saveSessionBtn" class="btn-download" style="background:#6c757d;margin-left:8px;">Save Session</button>
+            <button type="button" id="clearSessionBtn" class="btn-download" style="background:#dc3545;margin-left:8px;">Clear Saved Data</button>
+        </div>
+        <div id="printWrapper">
+            <div class="header">
+                <div class="header-column">
+                        <h1 class="title">PART of SPEECH SORT</h1>
+                        <p class="subtitle">Morpheme(s): <input type="text" placeholder="" class="header-morpheme-input"></p>
+                </div>
+                <div class="header-column">
+                    <p><img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit®"></p>
+                </div>
+            
+            </div>
+            <div class="posTopGrid">
+                <div class="column">
+
+                    <form id="posForm">
+                    <div class="posGrid">
+                        <div class="row">
+                            <div class="posCell"><input type="text" name="item1" placeholder="" class="grid-pos-input"></div>
+                            <div class="posCell"><input type="text" name="item2" placeholder="" class="grid-pos-input"></div>
+                            <div class="posCell"><input type="text" name="item3" placeholder="" class="grid-pos-input"></div>
+                        </div>
+                        <div class="row">
+                            <div class="posCell"><input type="text" name="item4" placeholder="" class="grid-pos-input"></div>
+                            <div class="posCell"><input type="text" name="item5" placeholder="" class="grid-pos-input"></div>
+                            <div class="posCell"><input type="text" name="item6" placeholder="" class="grid-pos-input"></div>
+                        </div>
+                        <div class="row">
+                            <div class="posCell"><input type="text" name="item7" placeholder="" class="grid-pos-input"></div>
+                            <div class="posCell"><input type="text" name="item8" placeholder="" class="grid-pos-input"></div>
+                            <div class="posCell"><input type="text" name="item9" placeholder="" class="grid-pos-input"></div>
+                        </div>
+                        <div class="row">
+                            <div class="posCell"><input type="text" name="item10" placeholder="" class="grid-pos-input"></div>
+                            <div class="posCell"><input type="text" name="item11" placeholder="" class="grid-pos-input"></div>
+                            <div class="posCell"><input type="text" name="item12" placeholder="" class="grid-pos-input"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="hintText">
+                        (hint: some could be more than one part of speech depending on the sentence).
+                    </div>
+                    </form>
+                </div>
+                <div class="column">
+                    <div class="sortBoxCell"><p id="adjectiveTitle" class="sortBoxTitle">Adjective</p><div class="sort-box" data-name="sortBox-adjective"></div></div>
+                </div>
+            </div>
+            
+            <div class="sortingBoxes">
+                <div class="row">
+                    <div class="sortBoxCell"><p id="nounTitle" class="sortBoxTitle">Noun</p><div class="sort-box" data-name="sortBox-noun"></div></div>
+                    <div class="sortBoxCell"><p id="verbTitle" class="sortBoxTitle">Verb</p><div class="sort-box" data-name="sortBox-verb"></div></div>
+                    <div class="sortBoxCell"><p id="adverbTitle" class="sortBoxTitle">Adverb</p><div class="sort-box" data-name="sortBox-adverb"></div></div>
+                </div>
+            </div>
+            <div class="controls">
+                <button type="button" class="btn-clear-pos-grid">Clear Word Grid</button>   
+            </div>
+        </div>
+    </div>
+
+    <div id="contextMenu" class="context-menu"></div>
+
+    <script>
+        // ===== STORAGE UTILITIES =====
+        const FORM_NAME = 'part-of-speech';
+        const STORAGE_KEY = 'tmk-diy-sessions';
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func(...args), delay);
+            };
+        }
+
+        function saveToStorage() {
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const data = { timestamp: Date.now() };
+            inputs.forEach((input, index) => {
+                const key = (input.name || input.className || 'field') + '__' + index;
+                data[key] = input.value;
+            });
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            allSessions[FORM_NAME] = data;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+        }
+
+        function restoreFromStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const data = allSessions[FORM_NAME];
+            if (data) {
+                const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+                inputs.forEach((input, index) => {
+                    const key = (input.name || input.className || 'field') + '__' + index;
+                    const legacyKey = input.name || input.className;
+                    if (Object.prototype.hasOwnProperty.call(data, key)) {
+                        input.value = data[key];
+                    } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                        input.value = data[legacyKey];
+                    }
+                });
+            }
+        }
+
+        function clearFormStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            delete allSessions[FORM_NAME];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            inputs.forEach(input => input.value = '');
+        }
+
+        const debouncedSave = debounce(saveToStorage, 300);
+
+        // ===== FORM CONTROLS =====
+        const form = document.getElementById('posForm');
+        const btnClearPosGrid = document.querySelector('.btn-clear-pos-grid');
+
+
+        btnClearPosGrid.addEventListener('click', function(e) {
+            e.preventDefault();
+            // clear the POS grid inputs
+            const posGridInputs = document.querySelectorAll('input[name^="item"]');
+            posGridInputs.forEach((input) => {
+                input.value = '';
+                input.style.cursor = 'text';
+            });
+            debouncedSave();
+        });
+
+        // Add keyboard navigation
+        const inputs = form.querySelectorAll('.grid-pos-input');
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    } else {
+                        form.dispatchEvent(new Event('submit'));
+                    }
+                }
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                }
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                }
+            });
+        });
+
+        // Set focus and restore saved data on load
+        window.addEventListener('load', function() {
+            restoreFromStorage();
+            inputs[0].focus();
+        });
+
+        // Sync with child window: listen for storage changes from child window
+        window.addEventListener('storage', function(e) {
+            if (e.key === STORAGE_KEY) {
+                restoreFromStorage();
+            }
+        });
+
+        // Function for child window to call when closing
+        window.refreshMainPageInputs = function() {
+            restoreFromStorage();
+        };
+
+        // Update cursor based on input content
+        function updateCursor(input) {
+            input.style.cursor = input.value.trim() ? 'grab' : 'text';
+        }
+
+        // Set initial cursor for all inputs
+        inputs.forEach(input => {
+            updateCursor(input);
+            // Update cursor on input change
+            input.addEventListener('input', function() {
+                updateCursor(this);
+            });
+            // Update cursor when text is cleared
+            input.addEventListener('change', function() {
+                updateCursor(this);
+            });
+        });
+
+        // Auto-save on input event (debounced)
+        const allInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+        allInputs.forEach(input => {
+            input.addEventListener('input', debouncedSave);
+        });
+
+        // Context menu for grid inputs
+        const contextMenu = document.getElementById('contextMenu');
+
+        // Close context menu on click elsewhere
+        document.addEventListener('click', function() {
+            contextMenu.classList.remove('show');
+        });
+
+        // Add: double-click a grid-pos-input to choose a sort box to add the value to
+        (function() {
+            const gridInputs = Array.from(document.querySelectorAll('.grid-pos-input'));
+            const categories = ['adjective','noun','verb','adverb'];
+
+            // helper to create a sort-item node with remove and drag handlers
+            function createSortItem(val, parentName) {
+                const id = 'sitem-' + Date.now() + Math.floor(Math.random()*1000);
+                const node = document.createElement('div');
+                node.className = 'sort-item';
+
+                const textSpan = document.createElement('span');
+                textSpan.className = 'sort-item-text';
+                textSpan.textContent = val;
+                node.appendChild(textSpan);
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'sort-item-remove';
+                btn.setAttribute('aria-label', 'Remove item');
+                btn.textContent = '\u00D7';
+                btn.addEventListener('click', function(ev) {
+                    ev.stopPropagation();
+                    const parent = node.parentElement;
+                    if (parent) parent.removeChild(node);
+                    // mark parent empty if needed
+                    const box = document.querySelector(`.sort-box[data-name="${parentName}"]`);
+                    if (box && !box.children.length) box.classList.add('empty');
+                });
+                node.appendChild(btn);
+
+                node.setAttribute('data-id', id);
+                node.setAttribute('data-parent', parentName || '');
+                node.setAttribute('draggable', 'true');
+
+                node.addEventListener('dragstart', function(ev) {
+                    ev.dataTransfer.setData('text/plain', val);
+                    ev.dataTransfer.setData('text/source-type', 'sort-item');
+                    ev.dataTransfer.setData('text/source-id', id);
+                    ev.dataTransfer.setData('text/source-parent', parentName || '');
+                    node.classList.add('dragging');
+                });
+                node.addEventListener('dragend', function() { node.classList.remove('dragging'); });
+
+                return node;
+            }
+
+            gridInputs.forEach(input => {
+                // enable native drag behavior
+                input.setAttribute('draggable', 'true');
+
+                input.addEventListener('dragstart', function (e) {
+                    const val = input.value.trim();
+                    if (!val) {
+                        e.preventDefault();
+                        return;
+                    }
+                    e.dataTransfer.setData('text/plain', val);
+                    e.dataTransfer.setData('text/source-name', input.name || '');
+                    e.dataTransfer.setData('text/source-type', 'grid-input');
+                    input.classList.add('dragging');
+                });
+
+                input.addEventListener('dragend', function () {
+                    input.classList.remove('dragging');
+                });
+
+                input.addEventListener('dblclick', function(e) {
+                    e.stopPropagation();
+                    const val = input.value.trim();
+                    if (!val) return;
+
+                    // build menu
+                    contextMenu.innerHTML = '';
+                    categories.forEach(cat => {
+                        const item = document.createElement('div');
+                        item.className = 'context-menu-item';
+                        item.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+                        item.addEventListener('click', function(ev) {
+                            ev.stopPropagation();
+                            const target = document.querySelector(`.sort-box[data-name="sortBox-${cat}"]`);
+                            if (target) {
+                                const id = 'sitem-' + Date.now() + Math.floor(Math.random()*1000);
+                                        const node = createSortItem(val, `sortBox-${cat}`);
+                                        target.classList.remove('empty');
+                                        target.appendChild(node);
+                            }
+                            input.value = '';
+                            input.style.cursor = 'text';
+                            contextMenu.classList.remove('show');
+                        });
+                        contextMenu.appendChild(item);
+                    });
+
+                    // position and show
+                    contextMenu.style.left = (e.pageX + 4) + 'px';
+                    contextMenu.style.top = (e.pageY + 4) + 'px';
+                    contextMenu.classList.add('show');
+                });
+
+                // Also allow keyboard move: Shift+ArrowRight/Left to move into next sort box (optional)
+                input.addEventListener('keydown', function(e) {
+                    if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && e.shiftKey) {
+                        const val = input.value.trim();
+                        if (!val) return;
+                        // right -> adjective->noun->verb->adverb sequence
+                        const seq = ['adjective','noun','verb','adverb'];
+                        // default to first category when ArrowRight, last when ArrowLeft
+                        const cat = e.key === 'ArrowRight' ? seq[0] : seq[seq.length-1];
+                        const target = document.querySelector(`.sort-box[data-name="sortBox-${cat}"]`);
+                        if (target) {
+                            const id = 'sitem-' + Date.now() + Math.floor(Math.random()*1000);
+                            const node = document.createElement('div');
+                            node.className = 'sort-item';
+                            node.textContent = val;
+                            node.setAttribute('data-id', id);
+                            node.setAttribute('data-parent', `sortBox-${cat}`);
+                            node.setAttribute('draggable', 'true');
+                            node.addEventListener('dragstart', function(ev) {
+                                ev.dataTransfer.setData('text/plain', val);
+                                ev.dataTransfer.setData('text/source-type', 'sort-item');
+                                ev.dataTransfer.setData('text/source-id', id);
+                                ev.dataTransfer.setData('text/source-parent', `sortBox-${cat}`);
+                                node.classList.add('dragging');
+                            });
+                            node.addEventListener('dragend', function() { node.classList.remove('dragging'); });
+                            target.classList.remove('empty');
+                            target.appendChild(node);
+                            input.value = '';
+                            input.style.cursor = 'text';
+                        }
+                    }
+                });
+            });
+
+            // Setup drop targets on sort box containers
+            const sortBoxes = Array.from(document.querySelectorAll('.sort-box'));
+            sortBoxes.forEach(target => {
+                // mark empty state
+                if (!target.children.length) target.classList.add('empty');
+
+                target.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    target.classList.add('drag-over');
+                });
+                target.addEventListener('dragleave', function() {
+                    target.classList.remove('drag-over');
+                });
+                target.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    target.classList.remove('drag-over');
+                    const val = e.dataTransfer.getData('text/plain') || '';
+                    const sourceType = e.dataTransfer.getData('text/source-type') || '';
+                    const sourceId = e.dataTransfer.getData('text/source-id') || '';
+                    const sourceName = e.dataTransfer.getData('text/source-name') || '';
+                    if (!val) return;
+
+                    // create a new sort-item node
+                    const id = 'sitem-' + Date.now() + Math.floor(Math.random()*1000);
+                    const node = createSortItem(val, target.getAttribute('data-name') || '');
+                    target.classList.remove('empty');
+                    target.appendChild(node);
+
+                    // clear source if coming from a grid input
+                    if (sourceType === 'grid-input' && sourceName) {
+                        const src = document.querySelector(`[name="${sourceName}"]`);
+                        if (src && src.classList.contains('grid-pos-input')) {
+                            src.value = '';
+                            src.style.cursor = 'text';
+                        }
+                    }
+
+                    // if source was a sort-item, remove the original element
+                    if (sourceType === 'sort-item' && sourceId) {
+                        const orig = document.querySelector(`[data-id="${sourceId}"]`);
+                        if (orig && orig.parentElement) orig.parentElement.removeChild(orig);
+                    }
+                });
+            });
+
+            // Allow dropping from sort items (and grid inputs) back into empty grid slots
+            gridInputs.forEach(input => {
+                input.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    input.classList.add('drag-over');
+                });
+                input.addEventListener('dragleave', function() {
+                    input.classList.remove('drag-over');
+                    input.style.cursor = input.value.trim() ? 'grab' : 'text';
+                });
+                input.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    input.classList.remove('drag-over');
+                    const val = e.dataTransfer.getData('text/plain') || '';
+                    const sourceType = e.dataTransfer.getData('text/source-type') || '';
+                    const sourceId = e.dataTransfer.getData('text/source-id') || '';
+                    const sourceName = e.dataTransfer.getData('text/source-name') || '';
+                    if (!val) return;
+                    // Only place into empty grid slots to avoid overwriting
+                    if (input.value.trim()) return;
+                    input.value = val;
+                    input.style.cursor = 'grab';
+
+                    // remove source if it was a sort-item
+                    if (sourceType === 'sort-item' && sourceId) {
+                        const orig = document.querySelector(`[data-id="${sourceId}"]`);
+                        if (orig && orig.parentElement) orig.parentElement.removeChild(orig);
+                    }
+
+                    // clear source grid input if moving between grid inputs
+                    // if (sourceType === 'grid-input' && sourceName) {
+                    //     const src = document.querySelector(`[name="${sourceName}"]`);
+                    //     if (src && src.classList.contains('grid-pos-input')) {
+                    //         src.value = '';
+                    //         src.style.cursor = 'text';
+                    //     }
+                    // }
+                });
+            });
+        })();
+
+        // ===== STORAGE BUTTON HANDLERS =====
+        const saveSessionBtn = document.getElementById('saveSessionBtn');
+        const clearSessionBtn = document.getElementById('clearSessionBtn');
+
+        if (saveSessionBtn) {
+            saveSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                saveToStorage();
+                alert('Session saved successfully!');
+            });
+        }
+
+        if (clearSessionBtn) {
+            clearSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Clear all saved data for this exercise?')) {
+                    clearFormStorage();
+                    alert('Saved data cleared!');
+                }
+            });
+        }
+
+        // ===== PDF DOWNLOAD =====
+        // Download as PDF functionality
+        const downloadBtn = document.getElementById('downloadPdfBtn');
+        downloadBtn.addEventListener('click', function() {
+            const printWrapper = document.getElementById('printWrapper');
+            const printContent = printWrapper.cloneNode(true);
+            
+            // Create a new window
+            const printWindow = window.open('', '', 'width=800,height=600');
+            
+            // Write the minimal HTML with styling
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>PART of SPEECH SORT — Print</title>
+                    <style>
+                        /* Reset and base */
+                        /* Purpose-built print styles matching browser layout */
+                        * { box-sizing: border-box; margin: 0; padding: 0; }
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        
+                        body {
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            padding: 20px;
+                            line-height: 1.6;
+                        }
+                        .header {
+                            text-align: left;
+                            border-bottom: 3px solid #4020A7;
+                            padding-bottom: 5px;
+                            display: grid;
+                            grid-template-columns: 3fr 1fr;
+                            gap: 10px;
+                            margin-bottom: 20px;
+                        }
+                        .header-column {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 4px;
+                        }
+                        .header-column img {
+                            max-width: 200px;
+                            height: auto;
+                        }
+                        .title {
+                            font-size: 1.6em;
+                            font-weight: bold;
+                            margin-bottom: 0;
+                            color: #000;
+                            letter-spacing: 1px;
+                        }
+                        .subtitle {
+                            font-size: 1.2em;
+                            color: #000;
+                            margin-bottom: 0;
+                            margin-top: 0;
+                            font-style: italic;
+                        }
+
+                        .header-morpheme-input {
+                            border: 1px solid #4020A7;
+                            padding: 8px 0;
+                            font-size: 1.2em;
+                            color: #4020A7;
+                            transition: border-color 0.6s ease;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            max-width: 150px;
+                        }
+
+                        .header-morpheme-input:focus {
+                            outline: none;
+                            border-bottom-color: #667eea;
+                            background-color: rgba(102, 126, 234, 0.05);
+                            padding: 8px 8px;
+                        }
+                        .instructions {
+                            font-size: 1em;
+                            margin-top: 5px;
+                            color: #555;
+                            line-height: 1.6;
+                        }
+
+                        /* Grid of inputs (match live layout) */
+                        .posTopGrid { display: grid; grid-template-columns: 3fr 1.5fr; gap: 18px; align-items: start; margin-bottom: 10px; }
+                        .posGrid { margin: 0; }
+                        .posGrid .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+                        .posCell { display:flex; align-items:center; justify-content:center; }
+                        .posCell input { width:100%; padding:10px; border:2px solid #4020A7; border-radius:4px; font-family: 'Courier New', monospace; text-align:center; font-size:0.95em; }
+                        /* Keep morpheme input smaller in header */
+                        .subtitle {
+                            font-size: 1.2em;
+                            color: #000;
+                            margin-bottom: 0;
+                            margin-top: 0;
+                            font-style: italic;
+                        }
+
+                        .header-morpheme-input {
+                            border: 1px solid #4020A7;
+                            padding: 8px 0;
+                            font-size: 1.2em;
+                            color: #4020A7;
+                            transition: border-color 0.6s ease;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            max-width: 150px;
+                        }
+
+                        .header-morpheme-input:focus {
+                            outline: none;
+                            border-bottom-color: #667eea;
+                            background-color: rgba(102, 126, 234, 0.05);
+                            padding: 8px 8px;
+                        }
+                        /* Sort boxes (stacked items) */
+                        .sort-box { width:100%; max-width:none; min-height: 260px; max-height: 480px; padding: 10px; border:2px solid #4020A7; border-radius:6px; background:#fff; display:flex; flex-direction:column; gap:8px; overflow:auto; margin: 0; }
+                        /* When inside the top grid keep the adjective box in the right column */
+                        .posTopGrid .column .sort-box { width:100%; max-width:none; }
+
+                        /* Bottom sort boxes in a single row of three */
+                        .sortingBoxes .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 12px; }
+                        .sortingBoxes .row .sort-box { width:100%; }
+                        .sort-box.empty::after {  color:#777; font-style:italic; padding:8px; }
+                        .sort-item { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border:1px solid #ccc; border-radius:4px; background:#fafafa; font-family:'Courier New', monospace; }
+                        .sort-item .sort-item-text { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                        .sort-item-remove { background:transparent; border:none; color:#666; font-weight:bold; cursor:pointer; }
+
+                        /* Hide interactive-only elements */
+                        .controls, .header-controls, #contextMenu, button.btn-download, button { display:none !important; }
+
+                        /* Ensure printable colors */
+                        input, .sort-item { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+                        @media print {
+                            body { padding: 12mm; }
+                            .posGrid .row { gap: 8px; margin-bottom: 10px; }
+                        }
+                    </style>
+                </head>
+                <body>
+            `);
+            
+            // Copy input values from original to cloned content
+            const sourceInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const clonedInputs = printContent.querySelectorAll('input, textarea');
+            sourceInputs.forEach((input, index) => {
+                if (clonedInputs[index]) {
+                    clonedInputs[index].value = input.value;
+                    clonedInputs[index].setAttribute('value', input.value);
+                    if (clonedInputs[index].tagName === 'TEXTAREA') {
+                        clonedInputs[index].textContent = input.value;
+                    }
+                }
+            });
+            
+            // Append the cloned content with values
+            printWindow.document.write(printContent.outerHTML);
+            
+            // Close the HTML
+            printWindow.document.write(`
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            
+            // Trigger print dialog after content loads
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            };
+        });
+
+        // Open `printWrapper` in a persistent Pop-up Screen (browser-view)
+        const openChildBtn = document.getElementById('openChildBtn');
+        if (openChildBtn) {
+            openChildBtn.addEventListener('click', function() {
+                const printWrapper = document.getElementById('printWrapper');
+                const printContent = printWrapper.cloneNode(true);
+                // Remove any sort-items from sort-boxes so child window starts clean
+                const sortItems = printContent.querySelectorAll('.sort-item');
+                sortItems.forEach(item => item.remove());
+                const styleEl = document.querySelector('head style');
+                const styleHTML = styleEl ? styleEl.innerHTML : '';
+                const child = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+                child.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${document.title}</title><style>${styleHTML}\n.btn-child-download{padding:10px 20px;background-color:#667eea;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1em;margin-bottom:15px;}\n.btn-child-download:hover{background-color:#764ba2;}\n@media print{body{margin:0;padding:10px;}.btn-child-download{display:none !important;}.btn-clear-pos-grid{display:none !important;}.container{page-break-inside:avoid;orphans:3;widows:3;margin:0;padding:10px;}.grid{page-break-inside:avoid;}form{page-break-inside:avoid;}}</style></head><body>`);
+                child.document.write('<div class="container" style="min-height:100vh;padding:20px;">');
+                child.document.write('<button id="childDownloadPdfBtn" class="btn-child-download" type="button">Download as PDF</button>');
+                child.document.write('<button id="childCloseBtn" class="btn-child-download" style="background:#dc3545;margin-left:8px;" type="button">Close Window & Sync</button>');
+                child.document.write(printContent.outerHTML);
+                child.document.write('</div>');
+                child.document.write(`<script>(function(){
+    const FORM_NAME = 'part-of-speech';
+    const STORAGE_KEY = 'tmk-diy-sessions';
+    function debounce(func, delay) {
+        let timeoutId;
+        return function(...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func(...args), delay);
+        };
+    }
+    function saveToStorage() {
+        const inputs = document.querySelectorAll('input, textarea');
+        const data = { timestamp: Date.now() };
+        inputs.forEach((input, index) => {
+            const key = (input.name || input.className || 'field') + '__' + index;
+            data[key] = input.value;
+        });
+        const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        allSessions[FORM_NAME] = data;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+    }
+    function restoreFromStorage() {
+        const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        const data = allSessions[FORM_NAME];
+        if (data) {
+            const inputs = document.querySelectorAll('input, textarea');
+            inputs.forEach((input, index) => {
+                const key = (input.name || input.className || 'field') + '__' + index;
+                const legacyKey = input.name || input.className;
+                if (Object.prototype.hasOwnProperty.call(data, key)) {
+                    input.value = data[key];
+                } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                    input.value = data[legacyKey];
+                }
+            });
+        }
+    }
+    const debouncedSave = debounce(saveToStorage, 300);
+function attachStorageAutosave(){
+    var allInputs = qsa('input, textarea');
+    allInputs.forEach(function(input){
+        input.addEventListener('input', debouncedSave);
+    });
+}
+attachStorageAutosave();
+window.addEventListener('storage', function(e) {
+    if (e.key === STORAGE_KEY) {
+        restoreFromStorage();
+    }
+});
+function qs(s){return document.querySelector(s);}function qsa(s){return Array.from(document.querySelectorAll(s));}function updateCursor(input){input.style.cursor=input.value.trim()?'grab':'text';}var form=qs('#posForm');var inputs=form?form.querySelectorAll('.grid-pos-input'):qsa('.grid-pos-input');var gridInputs=Array.from(qsa('.grid-pos-input'));var contextMenu=qs('#contextMenu');if(!contextMenu){contextMenu=document.createElement('div');contextMenu.id='contextMenu';contextMenu.className='context-menu';document.body.appendChild(contextMenu);}inputs.forEach(function(input){updateCursor(input);input.addEventListener('input',function(){updateCursor(input);debouncedSave();});input.addEventListener('change',function(){updateCursor(input);});});var btnClarPosGrid=qs('.btn-clear-pos-grid');if(btnClarPosGrid){btnClarPosGrid.addEventListener('click',function(e){e.preventDefault();var posGridInputs=qsa('input[name^="item"]');posGridInputs.forEach(function(input){input.value='';input.style.cursor='text';});debouncedSave();});}var categories=['adjective','noun','verb','adverb'];function createSortItem(val,parentName){var id='sitem-'+Date.now()+Math.floor(Math.random()*1000);var node=document.createElement('div');node.className='sort-item';var textSpan=document.createElement('span');textSpan.className='sort-item-text';textSpan.textContent=val;node.appendChild(textSpan);var btn=document.createElement('button');btn.type='button';btn.className='sort-item-remove';btn.setAttribute('aria-label','Remove item');btn.textContent='\\u00D7';btn.addEventListener('click',function(ev){ev.stopPropagation();var parent=node.parentElement;if(parent)parent.removeChild(node);var box=qs('.sort-box[data-name="'+parentName+'"]');if(box&&!box.children.length)box.classList.add('empty');debouncedSave();});node.appendChild(btn);node.setAttribute('data-id',id);node.setAttribute('data-parent',parentName||'');node.setAttribute('draggable','true');node.addEventListener('dragstart',function(ev){ev.dataTransfer.setData('text/plain',val);ev.dataTransfer.setData('text/source-type','sort-item');ev.dataTransfer.setData('text/source-id',id);ev.dataTransfer.setData('text/source-parent',parentName||'');node.classList.add('dragging');});node.addEventListener('dragend',function(){node.classList.remove('dragging');});return node;}gridInputs.forEach(function(input){input.setAttribute('draggable','true');input.addEventListener('dragstart',function(e){var val=input.value.trim();if(!val){e.preventDefault();return;}e.dataTransfer.setData('text/plain',val);e.dataTransfer.setData('text/source-name',input.name||'');e.dataTransfer.setData('text/source-type','grid-input');input.classList.add('dragging');});input.addEventListener('dragend',function(){input.classList.remove('dragging');});input.addEventListener('dblclick',function(e){e.stopPropagation();var val=input.value.trim();if(!val)return;contextMenu.innerHTML='';categories.forEach(function(cat){var item=document.createElement('div');item.className='context-menu-item';item.textContent=cat.charAt(0).toUpperCase()+cat.slice(1);item.addEventListener('click',function(ev){ev.stopPropagation();var target=qs('.sort-box[data-name="sortBox-'+cat+'"]');if(target){var node=createSortItem(val,'sortBox-'+cat);target.classList.remove('empty');target.appendChild(node);}input.value='';input.style.cursor='text';contextMenu.classListdebouncedSave();.remove('show');});contextMenu.appendChild(item);});contextMenu.style.left=(e.pageX+4)+'px';contextMenu.style.top=(e.pageY+4)+'px';contextMenu.classList.add('show');});input.addEventListener('keydown',function(e){if((e.key==='ArrowRight'||e.key==='ArrowLeft')&&e.shiftKey){var val=input.value.trim();if(!val)return;var seq=['adjective','noun','verb','adverb'];var cat=e.key==='ArrowRight'?seq[0]:seq[seq.length-1];var target=qs('.sort-box[data-name="sortBox-'+cat+'"]');if(target){var node=createSortItem(val,'sortBox-'+cat);target.classList.remove('empty');target.appendChild(node);input.value='';input.style.cursor='text';debouncedSave();}}}});});var sortBoxes=qsa('.sort-box');sortBoxes.forEach(function(target){if(!target.children.length)target.classList.add('empty');target.addEventListener('dragover',function(e){e.preventDefault();target.classList.add('drag-over');});target.addEventListener('dragleave',function(){target.classList.remove('drag-over');});target.addEventListener('drop',function(e){e.preventDefault();target.classList.remove('drag-over');var val=e.dataTransfer.getData('text/plain')||'';var sourceType=e.dataTransfer.getData('text/source-type')||'';var sourceId=e.dataTransfer.getData('text/source-id')||'';var sourceName=e.dataTransfer.getData('text/source-name')||'';if(!val)return;var node=createSortItem(val,target.getAttribute('data-name')||'');target.classList.remove('empty');target.appendChild(node);if(sourceType==='grid-input'&&sourceName){var src=qs('[name="'+sourceName+'"]');if(src&&src.classList.contains('grid-pos-input')){src.value='';src.style.cursor='text';}}if(sourceType==='sort-item'&&sourceId){var orig=qs('[data-id="'+sourceId+'"]');if(orig&&orig.parentElement)orig.parentElement.removeChild(orig);}debouncedSave();});});gridInputs.forEach(function(input){input.addEventListener('dragover',function(e){e.preventDefault();input.classList.add('drag-over');});input.addEventListener('dragleave',function(){input.classList.remove('drag-over');input.style.cursor=input.value.trim()?'grab':'text';});input.addEventListener('drop',function(e){e.preventDefault();input.classList.remove('drag-over');var val=e.dataTransfer.getData('text/plain')||'';var sourceType=e.dataTransfer.getData('text/source-type')||'';var sourceId=e.dataTransfer.getData('text/source-id')||'';var sourceName=e.dataTransfer.getData('text/source-name')||'';if(!val)return;if(input.value.trim())return;input.value=val;input.style.cursor='grab';if(sourceType==='sort-item'&&sourceId){var orig=qs('[data-id="'+sourceId+'"]');if(orig&&orig.parentElement)orig.parentElement.removeChild(orig);}debouncedSave();});});document.addEventListener('click',function(e){if(contextMenu&&!contextMenu.contains(e.target))contextMenu.classList.remove('show');});var pdfBtn=qs('#childDownloadPdfBtn');if(pdfBtn){pdfBtn.addEventListener('click',function(){window.print();});}var closeBtn=qs('#childCloseBtn');if(closeBtn){closeBtn.addEventListener('click',function(){saveToStorage();if(window.opener && window.opener.refreshMainPageInputs){window.opener.refreshMainPageInputs();}window.close();});}window.addEventListener('beforeunload',function(){saveToStorage();});restoreFromStorage();var first=qs('.grid-pos-input:not(:disabled)');if(first)first.focus();})();<\/script>`);
+                child.document.write('</body></html>');
+                child.document.close();
+            });
+        }
+    </script>
+</body>
+</html>

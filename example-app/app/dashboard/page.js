@@ -83,6 +83,22 @@ export default function DashboardPage() {
 
     const lessonActivities = [
         { name: 'Intro', path: '/lesson-activities/intro', description: 'Create and manage intro lesson activities' },
+        {
+            name: 'Chameleon Prefixes',
+            path: '/lesson-activities/chameleon-prefixes',
+            description: 'Practice prefix transformations and word building',
+        },
+        { name: 'Common Base Word', path: '/lesson-activities/common-base-word', description: 'Identify and group common base words' },
+        { name: 'Constructor / Deconstructor', path: '/lesson-activities/constructor-deconstructor', description: 'Build and break apart words using morph parts' },
+        { name: 'Fill In The Morph - Paragraphs', path: '/lesson-activities/fill-in-the-morph-paragraphs', description: 'Complete morph pairs and paragraph contexts' },
+        { name: 'Morph Match - Definitions', path: '/lesson-activities/morph-match-definitions', description: 'Match morph words to numbered definitions' },
+        { name: 'Morph Match - Related Words', path: '/lesson-activities/morph-match-related-words', description: 'Pair focus words with related words' },
+        { name: 'Morph Morph Match', path: '/lesson-activities/morph-morph-match', description: 'Compare morph patterns and complete pair matches' },
+        { name: 'Morph Sort', path: '/lesson-activities/morph-sort', description: 'Sort words into morph-based categories' },
+        { name: 'Morph Which', path: '/lesson-activities/morph-which', description: 'Select and compare best morph options per prompt' },
+        { name: 'Part Of Speech', path: '/lesson-activities/part-of-speech', description: 'Sort morph words by part of speech' },
+        { name: 'Word Builder', path: '/lesson-activities/word-builder', description: 'Combine prefixes, bases, and suffixes to build words' },
+        { name: 'Word Meaning', path: '/lesson-activities/word-meaning', description: 'Infer and record meanings from morph clues' },
     ];
 
     return (
@@ -99,6 +115,18 @@ export default function DashboardPage() {
                         Logout
                     </Button>
                 </Box>
+            </Box>
+
+            <Box sx={{ mb: 4 }}>
+                <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                    Projects
+                </Typography>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                    Create and manage project records outside individual lesson pages.
+                </Typography>
+                <Button variant="contained" onClick={() => router.push('/lesson-projects')}>
+                    Open Create Project
+                </Button>
             </Box>
 
             <Box sx={{ mb: 4 }}>
@@ -130,17 +158,6 @@ export default function DashboardPage() {
                 </Grid>
             </Box>
 
-            <Box>
-                <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-                    Projects
-                </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                    Create and manage project records outside individual lesson pages.
-                </Typography>
-                <Button variant="contained" onClick={() => router.push('/lesson-projects')}>
-                    Open Create Project
-                </Button>
-            </Box>
         </Container>
     );
 }

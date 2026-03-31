@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CONSTRUCTOR/DECONSTRUCTOR</title>
+    <style>
+        .container {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            position: relative;
+        }
+
+        .container > div:not(.header-controls):not(#printWrapper) {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        #printWrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .header-controls {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            margin-bottom: 5px;
+            min-width: 900px;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: left;
+            border: none;
+            border-bottom: 3px solid #4020A7;
+            padding-bottom: 8px;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 10px;
+        }
+
+        .header-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-column img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .title {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 2px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #000;
+            margin-bottom: 0;
+            margin-top: 0;
+            font-style: italic;
+        }
+
+        .header-morpheme-input {
+             border: 1px solid #4020A7;
+             padding: 8px 0;
+              font-size: 1.2em;
+              color: #4020A7;
+             transition: border-color 0.6s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+             max-width: 150px;
+        }
+
+        .header-morpheme-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .instructions {
+            font-size: 1em;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .title {
+                font-size: 1.4em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+
+        .btn-download {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-download:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+        .conGrid {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .conGrid .row {
+            display: grid;
+            grid-template-columns: 4fr 1fr 6fr;
+            gap: 15px;
+            margin-bottom:  5px;
+        }
+
+        .constructorCell {
+            display: flex;
+            align-items: flex-start;
+            justify-content: left;
+            min-width: 150px;
+        }
+
+        .constructor-input, .con-word-sums-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #4020A7;
+            border-radius: 4px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .constructor-input:focus, .con-word-sums-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+
+        .constructor-input::placeholder, .con-word-sums-input::placeholder {
+            color: #ccc;
+        }
+
+        .deconstructorGrid {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .deconstructorGrid .row {
+            display: grid;
+            grid-template-columns: 6fr 1fr 4fr;
+            gap: 15px;
+            margin-bottom: 5px;
+        }
+
+        .deconstructorCell {
+            display: flex;
+            align-items: flex-start;
+            justify-content: left;
+            min-width: 150px;
+        }
+
+        .deconstructor-input, .decon-word-sums-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #4020A7;
+            border-radius: 4px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .deconstructor-input:focus, .decon-word-sums-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+
+        .deconstructor-input::placeholder, .decon-word-sums-input::placeholder {
+            color: #ccc;
+        }
+
+        .constructorTitle {
+            margin-top: 10px;
+            font-size: 1.2em;
+            color: #333;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-clear-constructors, .btn-clear-deconstructors {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #4020A7;
+            min-width: 150px;
+        }
+
+        .btn-clear-constructors:hover, .btn-clear-deconstructors:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .btn-clear-constructors:active, .btn-clear-deconstructors:active {
+            background: #d0d0d0;
+        }
+
+
+
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            min-width: 200px;
+            display: none;
+        }
+
+        .context-menu.show {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #333;
+            transition: background-color 0.2s ease;
+        }
+
+        .context-menu-item:hover {
+            background-color: #667eea;
+            color: white;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+                max-width: 100%;
+            }
+
+            .header-controls {
+                display: none;
+            }
+
+            .controls,
+            .feedback,
+            .stats {
+                display: none !important;
+            }
+
+            .constructor-input,
+            .deconstructor-input {
+                border-bottom: 1px solid #000;
+            }
+
+            .title {
+                page-break-after: avoid;
+            }
+
+            .conGrid .row {
+                page-break-inside: avoid;
+            }
+
+            input {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-controls">
+            <button type="button" id="downloadPdfBtn" class="btn-download">Download as PDF</button>
+            <button type="button" id="openChildBtn" class="btn-download" style="background:#007bff;margin-left:8px;">Open in Pop-up Screen</button>
+            <button type="button" id="saveSessionBtn" class="btn-download" style="background:#6c757d;margin-left:8px;">Save Session</button>
+            <button type="button" id="clearSessionBtn" class="btn-download" style="background:#dc3545;margin-left:8px;">Clear Saved Data</button>
+        </div>
+        <div id="printWrapper">
+            <div class="header">
+                <div class="header-column">
+                    <h1 class="title">CONSTRUCTOR/DECONSTRUCTOR</h1>
+                    <p class="subtitle">Morpheme(s): <input type="text" placeholder="" class="header-morpheme-input"></p>
+                </div>
+                <div class="header-column">
+                    <p><img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit®"></p>
+                </div>
+            </div>
+            <form id="conDeconForm">
+                <div class="conGrid">
+                    <div class="row">
+                        <div class="constructorTitle">
+                            CONSTRUCTOR
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="constructorCell"><input type="text" name="constructor-item1" placeholder="" class="con-word-sums-input"></div>
+                        <div class="constructorCell"><img src="test-arrows.png" alt="Description" /></div>
+                        <div class="constructorCell"><input type="text" name="constructor-item2" placeholder="" class="constructor-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="constructorCell"><input type="text" name="constructor-item3" placeholder="" class="con-word-sums-input"></div>
+                        <div class="constructorCell"><img src="test-arrows.png" alt="Description" /></div>
+                        <div class="constructorCell"><input type="text" name="constructor-item4" placeholder="" class="constructor-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="constructorCell"><input type="text" name="constructor-item5" placeholder="" class="con-word-sums-input"></div>
+                        <div class="constructorCell"><img src="test-arrows.png" alt="Description" /></div>
+                        <div class="constructorCell"><input type="text" name="constructor-item6" placeholder="" class="constructor-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="constructorCell"><input type="text" name="constructor-item7" placeholder="" class="con-word-sums-input"></div>
+                        <div class="constructorCell"><img src="test-arrows.png" alt="Description" /></div>
+                        <div class="constructorCell"><input type="text" name="constructor-item8" placeholder="" class="constructor-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="constructorCell"><button type="button" class="btn-clear-con-word-sums">Clear Word Sums</button></div>
+                        <div class="constructorCell">&nbsp;</div>
+                        <div class="constructorCell"><button type="button" class="btn-clear-constructors">Clear Results</button></div>
+                    </div>
+                </div>
+                <div class="deconstructorGrid">
+                    <div class="row">
+                        <div class="constructorTitle">
+                            DECONSTRUCTOR
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="deconstructorCell"><input type="text" name="deconstructor-item1" placeholder="" class="decon-word-sums-input"></div>
+                        <div class="deconstructorCell"><img src="test-arrows.png" alt="Description" /></div>
+                        <div class="deconstructorCell"><input type="text" name="deconstructor-item2" placeholder="" class="deconstructor-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="deconstructorCell"><input type="text" name="deconstructor-item3" placeholder="" class="decon-word-sums-input"></div>
+                        <div class="deconstructorCell"><img src="test-arrows.png" alt="Description" /></div>
+                        <div class="deconstructorCell"><input type="text" name="deconstructor-item4" placeholder="" class="deconstructor-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="deconstructorCell"><input type="text" name="deconstructor-item5" placeholder="" class="decon-word-sums-input"></div>
+                        <div class="deconstructorCell"><img src="test-arrows.png" alt="Description" /></div>
+                        <div class="deconstructorCell"><input type="text" name="deconstructor-item6" placeholder="" class="deconstructor-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="deconstructorCell"><input type="text" name="deconstructor-item7" placeholder="" class="decon-word-sums-input"></div>
+                        <div class="deconstructorCell"><img src="test-arrows.png" alt="Description" /></div>
+                        <div class="deconstructorCell"><input type="text" name="deconstructor-item8" placeholder="" class="deconstructor-input"></div>
+                    </div>
+                    <div class="row">
+                        <div class="constructorCell"><button type="button" class="btn-clear-decon-word-sums">Clear Word Sums</button></div>
+                        <div class="constructorCell">&nbsp;</div>
+                        <div class="constructorCell"><button type="button" class="btn-clear-deconstructors">Clear Results</button></div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ===== STORAGE UTILITIES =====
+        const FORM_NAME = 'constructor-deconstructor';
+        const STORAGE_KEY = 'tmk-diy-sessions';
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func(...args), delay);
+            };
+        }
+
+        function saveToStorage() {
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const data = { timestamp: Date.now() };
+            inputs.forEach((input, index) => {
+                const key = (input.name || input.className || 'field') + '__' + index;
+                data[key] = input.value;
+            });
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            allSessions[FORM_NAME] = data;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+        }
+
+        function restoreFromStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const data = allSessions[FORM_NAME];
+            if (data) {
+                const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+                inputs.forEach((input, index) => {
+                    const key = (input.name || input.className || 'field') + '__' + index;
+                    const legacyKey = input.name || input.className;
+                    if (Object.prototype.hasOwnProperty.call(data, key)) {
+                        input.value = data[key];
+                    } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                        input.value = data[legacyKey];
+                    }
+                });
+            }
+        }
+
+        function clearFormStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            delete allSessions[FORM_NAME];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            inputs.forEach(input => input.value = '');
+        }
+
+        const debouncedSave = debounce(saveToStorage, 300);
+
+        // ===== FORM CONTROLS =====
+        const form = document.getElementById('conDeconForm');
+
+        // Auto-save on input event (debounced)
+        const allInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+        allInputs.forEach(input => {
+            input.addEventListener('input', debouncedSave);
+        });
+
+        // Add keyboard navigation
+        const inputs = form.querySelectorAll('.constructor-input, .deconstructor-input');
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    } else {
+                        form.dispatchEvent(new Event('submit'));
+                    }
+                }
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                }
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                }
+            });
+        });
+
+        // Set focus to first input on load
+        // Set focus and restore saved data on load
+        window.addEventListener('load', function() {
+            restoreFromStorage();
+            const firstInput = document.querySelector('#printWrapper input');
+            if (firstInput) firstInput.focus();
+        });
+
+        // Sync with child window: listen for storage changes from child window
+        window.addEventListener('storage', function(e) {
+            if (e.key === STORAGE_KEY) {
+                restoreFromStorage();
+            }
+        });
+
+        // ===== STORAGE BUTTON HANDLERS =====
+        const saveSessionBtn = document.getElementById('saveSessionBtn');
+        const clearSessionBtn = document.getElementById('clearSessionBtn');
+
+        if (saveSessionBtn) {
+            saveSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                saveToStorage();
+                alert('Session saved successfully!');
+            });
+        }
+
+        if (clearSessionBtn) {
+            clearSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Clear all saved data for this exercise?')) {
+                    clearFormStorage();
+                    alert('Saved data cleared!');
+                }
+            });
+        }
+
+        // ===== FORM CONTROLS (Clear Buttons) =====
+        const btnClearConWordSums = document.querySelector('.btn-clear-con-word-sums');
+        const btnClearDeconWordSums = document.querySelector('.btn-clear-decon-word-sums');     
+        const btnClearConstructors = document.querySelector('.btn-clear-constructors');
+        const btnClearDeconstructors = document.querySelector('.btn-clear-deconstructors');
+
+        btnClearConstructors.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Clear the text areas
+            const textDefinitions = document.querySelectorAll('.constructor-input');
+            textDefinitions.forEach((item) => {
+                item.value = '';
+            });
+        });
+
+        btnClearConWordSums.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Clear the text areas
+            const textDefinitions = document.querySelectorAll('.con-word-sums-input');
+            textDefinitions.forEach((item) => {
+                item.value = '';
+            });
+        });
+        
+        btnClearDeconWordSums.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Clear the text areas
+            const textDefinitions = document.querySelectorAll('.decon-word-sums-input');
+            textDefinitions.forEach((item) => {
+                item.value = '';
+            });
+        });
+
+        btnClearDeconstructors.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Clear the text areas
+            const textDefinitions = document.querySelectorAll('.deconstructor-input');
+            textDefinitions.forEach((item) => {
+                item.value = '';
+            });
+        });
+
+        // Download as PDF functionality
+        const downloadBtn = document.getElementById('downloadPdfBtn');
+        downloadBtn.addEventListener('click', function() {
+            const printWrapper = document.getElementById('printWrapper');
+            const printContent = printWrapper.cloneNode(true);
+
+            // Create a new window
+            const printWindow = window.open('', '', 'width=900,height=1200');
+
+            // Write the minimal, purpose-built print styles
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>CONSTRUCTOR/DECONSTRUCTOR</title>
+                    <style>
+                        body {
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            padding: 40px;
+                            background: white;
+                            line-height: 1.6;
+                        }
+                        .header {
+                            text-align: left;
+                            border-bottom: 3px solid #4020A7;
+                            padding-bottom: 8px;
+                            display: grid;
+                            grid-template-columns: 3fr 1fr;
+                            gap: 10px;
+                        }
+                        .header-column {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 4px;
+                        }
+                        .header-column img {
+                            max-width: 200px;
+                            height: auto;
+                        }
+                        .title {
+                            font-size: 1.6em;
+                            font-weight: bold;
+                            color: #000;
+                            margin-bottom: 2px;
+                            letter-spacing: 1px;
+                        }
+                        .subtitle {
+                            font-size: 1.2em;
+                            color: #000;
+                            margin-bottom: 0;
+                            margin-top: 0;
+                            font-style: italic;
+                        }
+
+                        .header-morpheme-input {
+                            border: 1px solid #4020A7;
+                            padding: 8px 0;
+                            font-size: 1.2em;
+                            color: #4020A7;
+                            transition: border-color 0.6s ease;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            max-width: 150px;
+                        }
+
+                        .header-morpheme-input:focus {
+                            outline: none;
+                            border-bottom-color: #667eea;
+                            background-color: rgba(102, 126, 234, 0.05);
+                            padding: 8px 8px;
+                        }
+                        .instructions {
+                            font-size: 1em;
+                            color: #555;
+                            line-height: 1.6;
+                            margin-top: 8px;
+                        }
+                        .conGrid, .deconstructorGrid {
+                            margin: 30px 0;
+                        }
+                        .conGrid .row, .deconstructorGrid .row {
+                            display: grid;
+                            grid-template-columns: 4fr 1fr 6fr;
+                            gap: 15px;
+                            margin-bottom: 5px;
+                        }
+                        .constructorCell, .deconstructorCell {
+                            display: flex;
+                            align-items: flex-start;
+                            justify-content: left;
+                            min-width: 150px;
+                        }
+                        .constructor-input, .con-word-sums-input, .deconstructor-input, .decon-word-sums-input {
+                            width: 100%;
+                            padding: 12px;
+                            border: 1px solid #333;
+                            border-radius: 4px;
+                            font-size: 1em;
+                            font-family: 'Courier New', monospace;
+                            text-align: left;
+                            background: transparent;
+                        }
+                        .constructorTitle {
+                            margin-top: 10px;
+                            font-size: 1.2em;
+                            color: #333;
+                            text-align: left;
+                            font-weight: bold;
+                        }
+                        .controls, .header-controls, #contextMenu, button {
+                            display: none !important;
+                        }
+                        @media print {
+                            body {
+                                padding: 20px;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+            `);
+
+            // Append the cloned content
+            printWindow.document.write(printContent.outerHTML);
+
+            // Close the HTML
+            printWindow.document.write(`
+                </body>
+                </html>
+            `);
+
+            printWindow.document.close();
+
+            // Trigger print dialog after content loads
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            };
+        });
+
+        // Open `printWrapper` in a persistent Pop-up Screen (keeps inputs/interactivity)
+        const openChildBtn = document.getElementById('openChildBtn');
+        openChildBtn.addEventListener('click', function() {
+            const printWrapper = document.getElementById('printWrapper');
+            const printContent = printWrapper.cloneNode(true);
+
+            // grab the main stylesheet from this document to preserve look
+            const styleEl = document.querySelector('head style');
+            const styleHTML = styleEl ? styleEl.innerHTML : '';
+
+            const child = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+
+            child.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Constructor/Deconstructor — Browser View</title><style>${styleHTML}\n.btn-child-download{padding:10px 20px;background-color:#667eea;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1em;margin-bottom:15px;}\n.btn-child-download:hover{background-color:#764ba2;}\n@media print{body{margin:0;padding:10px;}.btn-child-download{display:none !important;}.btn-clear-constructors{display:none !important;}.btn-clear-deconstructors{display:none !important;}.btn-clear-con-word-sums{display:none !important;}.btn-clear-decon-word-sums{display:none !important;}.container{page-break-inside:avoid;orphans:3;widows:3;margin:0;padding:10px;}.header{page-break-inside:avoid;}.conGrid{page-break-inside:avoid;}.deconstructorGrid{page-break-inside:avoid;}form{page-break-inside:avoid;}}</style></head><body>`);
+
+            // Wrap the cloned printWrapper in a .container so the Pop-up Screen
+            // visually matches the main page browser view (background, padding)
+            child.document.write('<div class="container" style="min-height:100vh;padding:20px;">');
+            child.document.write('<button id="childDownloadPdfBtn" class="btn-child-download" type="button">Download as PDF</button>');
+            child.document.write('<button id="childCloseBtn" class="btn-child-download" style="background:#dc3545;margin-left:8px;" type="button">Close Window & Sync</button>');
+            child.document.write(printContent.outerHTML);
+            child.document.write('</div>');
+
+            // small script to reattach the clear buttons inside the Pop-up Screen
+            child.document.write(`<script>
+                (function(){
+                    const FORM_NAME = 'constructor-deconstructor';
+                    const STORAGE_KEY = 'tmk-diy-sessions';
+                    function debounce(func, delay) {
+                        let timeoutId;
+                        return function(...args) {
+                            clearTimeout(timeoutId);
+                            timeoutId = setTimeout(() => func(...args), delay);
+                        };
+                    }
+                    function saveToStorage() {
+                        const inputs = document.querySelectorAll('input, textarea');
+                        const data = { timestamp: Date.now() };
+                        inputs.forEach((input, index) => {
+                            const key = (input.name || input.className || 'field') + '__' + index;
+                            data[key] = input.value;
+                        });
+                        const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                        allSessions[FORM_NAME] = data;
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+                    }
+                    function restoreFromStorage() {
+                        const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                        const data = allSessions[FORM_NAME];
+                        if (data) {
+                            const inputs = document.querySelectorAll('input, textarea');
+                            inputs.forEach((input, index) => {
+                                const key = (input.name || input.className || 'field') + '__' + index;
+                                const legacyKey = input.name || input.className;
+                                if (Object.prototype.hasOwnProperty.call(data, key)) {
+                                    input.value = data[key];
+                                } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                                    input.value = data[legacyKey];
+                                }
+                            });
+                        }
+                    }
+                    const debouncedSave = debounce(saveToStorage, 300);
+                    const childInputs = document.querySelectorAll('input, textarea');
+                    childInputs.forEach(input => {
+                        input.addEventListener('input', debouncedSave);
+                    });
+                    window.addEventListener('storage', function(e) {
+                        if (e.key === STORAGE_KEY) {
+                            restoreFromStorage();
+                        }
+                    });
+                    
+                    function qs(sel){ return document.querySelector(sel); }
+                    function qsa(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+                    const btnClearConstructors = qs('.btn-clear-constructors');
+                    const btnClearDeconstructors = qs('.btn-clear-deconstructors');
+                    const btnClearConWordSums = qs('.btn-clear-con-word-sums');
+                    const btnClearDeconWordSums = qs('.btn-clear-decon-word-sums');
+
+                    if(btnClearConstructors) btnClearConstructors.addEventListener('click', function(){ qsa('.constructor-input').forEach(i=>{i.value=''; debouncedSave();}); });
+                    if(btnClearDeconstructors) btnClearDeconstructors.addEventListener('click', function(){ qsa('.deconstructor-input').forEach(i=>{i.value=''; debouncedSave();}); });
+                    if(btnClearConWordSums) btnClearConWordSums.addEventListener('click', function(){ qsa('.con-word-sums-input').forEach(i=>{i.value=''; debouncedSave();}); });
+                    if(btnClearDeconWordSums) btnClearDeconWordSums.addEventListener('click', function(){ qsa('.decon-word-sums-input').forEach(i=>{i.value=''; debouncedSave();}); });
+
+                    var pdfBtn=document.getElementById('childDownloadPdfBtn');
+                    if(pdfBtn){pdfBtn.addEventListener('click',function(){window.print();});}
+
+                    var closeBtn=document.getElementById('childCloseBtn');
+                    if(closeBtn){closeBtn.addEventListener('click',function(){
+                        saveToStorage();
+                        if(window.opener&&window.opener.refreshMainPageInputs){
+                            window.opener.refreshMainPageInputs();
+                        }
+                        window.close();
+                    });}
+
+                    // Flush pending saves before window unload
+                    window.addEventListener('beforeunload', function() {
+                        saveToStorage();
+                    });
+
+                    restoreFromStorage();
+                    
+                    // focus first input for convenience
+                    const firstInput = document.querySelector('.constructor-input, .deconstructor-input, .con-word-sums-input, .decon-word-sums-input');
+                    if(firstInput) firstInput.focus();
+                })();
+            <\/script>`);
+
+            child.document.write('</body></html>');
+            child.document.close();
+        });
+    </script>
+</body>
+</html>

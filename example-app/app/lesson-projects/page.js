@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -39,6 +39,18 @@ import {
 const PROJECT_FORM_NAME = 'lesson-activities-project';
 const LESSON_ACTIVITY_TYPES = [
 	{ value: 'intro', label: 'Intro', path: '/lesson-activities/intro' },
+	{ value: 'chameleon-prefixes', label: 'Chameleon Prefixes', path: '/lesson-activities/chameleon-prefixes' },
+	{ value: 'common-base-word', label: 'Common Base Word', path: '/lesson-activities/common-base-word' },
+	{ value: 'constructor-deconstructor', label: 'Constructor / Deconstructor', path: '/lesson-activities/constructor-deconstructor' },
+	{ value: 'fill-in-the-morph-paragraphs', label: 'Fill In The Morph - Paragraphs', path: '/lesson-activities/fill-in-the-morph-paragraphs' },
+	{ value: 'morph-match-definitions', label: 'Morph Match - Definitions', path: '/lesson-activities/morph-match-definitions' },
+	{ value: 'morph-match-related-words', label: 'Morph Match - Related Words', path: '/lesson-activities/morph-match-related-words' },
+	{ value: 'morph-morph-match', label: 'Morph Morph Match', path: '/lesson-activities/morph-morph-match' },
+	{ value: 'morph-sort', label: 'Morph Sort', path: '/lesson-activities/morph-sort' },
+	{ value: 'morph-which', label: 'Morph Which', path: '/lesson-activities/morph-which' },
+	{ value: 'part-of-speech', label: 'Part Of Speech', path: '/lesson-activities/part-of-speech' },
+	{ value: 'word-builder', label: 'Word Builder', path: '/lesson-activities/word-builder' },
+	{ value: 'word-meaning', label: 'Word Meaning', path: '/lesson-activities/word-meaning' },
 ];
 
 function normalizeLessonInputData(rawData) {
@@ -51,6 +63,10 @@ function normalizeLessonInputData(rawData) {
 function getLessonActivityRoute(activityType) {
 	const found = LESSON_ACTIVITY_TYPES.find((type) => type.value === activityType);
 	return found?.path || null;
+}
+
+function isValidLessonActivityType(activityType) {
+	return LESSON_ACTIVITY_TYPES.some((type) => type.value === activityType);
 }
 
 export default function LessonProjectsPage() {
@@ -66,7 +82,9 @@ export default function LessonProjectsPage() {
 	const [selectedLocalProjectId, setSelectedLocalProjectId] = useState(null);
 	const [activityNameDrafts, setActivityNameDrafts] = useState({});
 	const [newActivityTypeByProjectId, setNewActivityTypeByProjectId] = useState({});
+	const [defaultActivityType, setDefaultActivityType] = useState(LESSON_ACTIVITY_TYPES[0].value);
 	const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
+	const hasAppliedRequestedActivityType = useRef(false);
 
 	const apiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
 	const isAuthenticated = Boolean(authUser);
@@ -195,6 +213,32 @@ export default function LessonProjectsPage() {
 		}
 	};
 
+	useEffect(() => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+		if (hasAppliedRequestedActivityType.current) {
+			return;
+		}
+
+		const url = new URL(window.location.href);
+		const requestedType = (url.searchParams.get('activityType') || '').trim();
+		if (!isValidLessonActivityType(requestedType)) {
+			hasAppliedRequestedActivityType.current = true;
+			return;
+		}
+
+		hasAppliedRequestedActivityType.current = true;
+		setDefaultActivityType(requestedType);
+		setNewActivityTypeByProjectId((prev) => {
+			const next = { ...prev };
+			localProjects.forEach((project) => {
+				next[project.id] = requestedType;
+			});
+			return next;
+		});
+	}, [localProjects]);
+
 	const handleCreateProject = () => {
 		const trimmedName = projectNameInput.trim();
 		if (!trimmedName) {
@@ -218,7 +262,7 @@ export default function LessonProjectsPage() {
 		saveStoredProjects(projects);
 		setProjectNameInput('');
 		setSelectedLocalProjectId(created.id);
-		setNewActivityTypeByProjectId((prev) => ({ ...prev, [created.id]: LESSON_ACTIVITY_TYPES[0].value }));
+		setNewActivityTypeByProjectId((prev) => ({ ...prev, [created.id]: defaultActivityType }));
 		loadLocalProjects();
 	};
 
@@ -256,7 +300,7 @@ export default function LessonProjectsPage() {
 			return;
 		}
 
-		const requestedType = newActivityTypeByProjectId[projectId] || LESSON_ACTIVITY_TYPES[0].value;
+		const requestedType = newActivityTypeByProjectId[projectId] || defaultActivityType;
 		const requestedName = String(window.prompt('Lesson activity name:', '') || '').trim();
 		const uniqueName = getUniqueLessonActivityName({
 			project,
@@ -542,7 +586,7 @@ export default function LessonProjectsPage() {
 													select
 													size="small"
 													label="Type"
-													value={newActivityTypeByProjectId[project.id] || LESSON_ACTIVITY_TYPES[0].value}
+													value={newActivityTypeByProjectId[project.id] || defaultActivityType}
 													onChange={(event) => {
 														const nextType = event.target.value;
 														setNewActivityTypeByProjectId((prev) => ({ ...prev, [project.id]: nextType }));

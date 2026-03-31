@@ -1,80 +1,155 @@
 'use client';
 
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Typography,
-  Container,
-  Paper,
-  ThemeProvider,
-  createTheme,
-  CssBaseline,
-  Button,
-} from '@mui/material';
+import { Box, Button, Stack, TextField, Typography } from '@mui/material';
+import ActivityShell from '../components/ActivityShell';
+import { useLessonActivityProject } from '../components/useLessonActivityProject';
 
-const theme = createTheme();
+const FORM_NAME = 'morph-which';
+const DEFAULT_ACTIVITY_NAME = 'Morph Which Activity';
+const OPTION_STYLES = [
+	{ bg: 'linear-gradient(180deg, #fff8c6, #fff3a0)', shadow: '#c89f00' },
+	{ bg: 'linear-gradient(180deg, #dff7e1, #c8efcb)', shadow: '#2e7d32' },
+	{ bg: 'linear-gradient(180deg, #efe1ff, #e1d0ff)', shadow: '#6a1b9a' },
+	{ bg: 'linear-gradient(180deg, #ffe9d6, #ffd7b1)', shadow: '#c96b00' },
+];
+
+function emptyChoiceSet() {
+	return { a: '', b: '', c: '', d: '' };
+}
+
+function emptyData() {
+	return {
+		morpheme: '',
+		questions: Array.from({ length: 8 }, () => ''),
+		choices: Array.from({ length: 8 }, () => emptyChoiceSet()),
+	};
+}
+
+function normalizeInputData(rawData) {
+	const source = rawData && typeof rawData === 'object' ? rawData : {};
+	const questions = Array.isArray(source.questions) ? source.questions : [];
+	const choices = Array.isArray(source.choices) ? source.choices : [];
+	return {
+		morpheme: String(source.morpheme || ''),
+		questions: Array.from({ length: 8 }, (_, index) => String(questions[index] || '')),
+		choices: Array.from({ length: 8 }, (_, index) => {
+			const choice = choices[index] || {};
+			return {
+				a: String(choice.a || ''),
+				b: String(choice.b || ''),
+				c: String(choice.c || ''),
+				d: String(choice.d || ''),
+			};
+		}),
+	};
+}
 
 export default function MorphWhichPage() {
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box component="main" sx={{ py: 4, bgcolor: '#f9f9f9', minHeight: '100vh' }}>
-        <Container maxWidth="md">
-          <Card sx={{ boxShadow: 3 }}>
-            <CardContent sx={{ p: 4 }}>
-              <Typography
-                variant="h3"
-                component="h1"
-                sx={{
-                  textAlign: 'center',
-                  color: '#004a99',
-                  fontWeight: 'bold',
-                  mb: 3,
-                  textTransform: 'uppercase',
-                }}
-              >
-                LATIN PROGRESSION
-              </Typography>
+	const {
+		data,
+		setData,
+		authUser,
+		authLoading,
+		authFromSuccessRedirect,
+		notice,
+		setNotice,
+		projectId,
+		projectName,
+		activityName,
+		setActivityName,
+		isSaving,
+		runAuthCheck,
+		handleLoginLogout,
+		handleSaveAndReturn,
+		handleGoToLessonProjects,
+		handleAddToProject,
+		handleDownloadPdf,
+	} = useLessonActivityProject({
+		formName: FORM_NAME,
+		defaultActivityName: DEFAULT_ACTIVITY_NAME,
+		initialData: emptyData(),
+		normalizeInputData,
+	});
 
-              <Paper
-                sx={{
-                  p: 2,
-                  mb: 3,
-                  bgcolor: '#f0f8ff',
-                  border: '1px solid #ccc',
-                }}
-              >
-                <Typography variant="body1">
-                  <strong>Instructions:</strong> Complete this educational exercise.
-                </Typography>
-              </Paper>
+	const setQuestion = (index, value) => {
+		setData((prev) => {
+			const next = [...prev.questions];
+			next[index] = value;
+			return { ...prev, questions: next };
+		});
+	};
 
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body1">
-                  This educational exercise has been converted to use Pegasus components.
-                </Typography>
-                <Button variant="contained" sx={{ mt: 2 }}>
-                  Submit Exercise
-                </Button>
-              </Box>
+	const setChoice = (index, key, value) => {
+		setData((prev) => {
+			const next = [...prev.choices];
+			next[index] = { ...next[index], [key]: value };
+			return { ...prev, choices: next };
+		});
+	};
 
-              <Paper
-                sx={{
-                  p: 2,
-                  bgcolor: '#e8f4f8',
-                  border: '1px solid #ccc',
-                }}
-              >
-                <Typography variant="body2">
-                  <strong>Note:</strong> Please review your answers before submitting.
-                </Typography>
-              </Paper>
-            </CardContent>
-          </Card>
-        </Container>
-      </Box>
-    </ThemeProvider>
-  );
+	return (
+		<ActivityShell
+			title="MORPH, WHICH?"
+			morpheme={data.morpheme}
+			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
+			instructions="Write the focus prompt, then fill four option paths for each numbered item."
+			authUser={authUser}
+			authLoading={authLoading}
+			authFromSuccessRedirect={authFromSuccessRedirect}
+			runAuthCheck={runAuthCheck}
+			handleLoginLogout={handleLoginLogout}
+			handleGoToLessonProjects={handleGoToLessonProjects}
+			handleAddToProject={handleAddToProject}
+			handleSaveAndReturn={handleSaveAndReturn}
+			handleDownloadPdf={handleDownloadPdf}
+			projectId={projectId}
+			projectName={projectName}
+			activityName={activityName}
+			setActivityName={setActivityName}
+			isSaving={isSaving}
+			notice={notice}
+			setNotice={setNotice}
+		>
+			<Stack spacing={2} sx={{ mt: 3 }}>
+				{data.questions.map((question, index) => (
+					<Box key={index} sx={{ display: 'grid', gridTemplateColumns: '1fr 24fr', gap: 1.5, alignItems: 'start' }}>
+						<Typography sx={{ fontWeight: 700, pt: 1 }}>{index + 1}.</Typography>
+						<Stack spacing={1}>
+							<TextField
+								variant="standard"
+								value={question}
+								onChange={(event) => setQuestion(index, event.target.value)}
+								placeholder="Question / root word"
+								inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+							/>
+							<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 1 }}>
+								{['a', 'b', 'c', 'd'].map((key, keyIndex) => (
+									<TextField
+										key={key}
+										variant="standard"
+										value={data.choices[index]?.[key] || ''}
+										onChange={(event) => setChoice(index, key, event.target.value)}
+										placeholder={`Option ${String.fromCharCode(65 + keyIndex)}`}
+										inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+										sx={{
+											background: OPTION_STYLES[keyIndex].bg,
+											px: 0.75,
+											borderRadius: 0.5,
+											boxShadow: `inset 0 0 0 1px ${OPTION_STYLES[keyIndex].shadow}`,
+											'& .MuiInputBase-root::before': { borderBottom: '2px solid transparent' },
+											'& .MuiInputBase-root.Mui-focused': { boxShadow: `inset 0 0 0 2px ${OPTION_STYLES[keyIndex].shadow}` },
+										}}
+									/>
+								))}
+							</Box>
+						</Stack>
+					</Box>
+				))}
+			</Stack>
+			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }}>
+				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>Clear All</Button>
+			</Box>
+		</ActivityShell>
+	);
 }

@@ -1,247 +1,142 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Typography,
-  Container,
-  Paper,
-  Button,
-  Stack,
-  Snackbar,
-  Alert,
-} from '@mui/material';
-import {
-  buildTeachableLogoutUrl,
-  buildTeachableStartUrl,
-  clearFormSessionData,
-  fetchAuthenticatedUser,
-  readFormSessionData,
-  resolveTmkApiOrigin,
-  writeFormSessionData,
-} from '../../components/lessonActivityHelpers';
+import { Box, Button, Grid, Stack, TextField, Typography } from '@mui/material';
+import ActivityShell from '../components/ActivityShell';
+import { useLessonActivityProject } from '../components/useLessonActivityProject';
 
 const FORM_NAME = 'morph-sort';
+const DEFAULT_ACTIVITY_NAME = 'Morph Sort Activity';
 
-function normalizeMorphSortLessonInputData(rawData) {
-  const source = rawData && typeof rawData === 'object' ? rawData : {};
-  return {
-    morpheme: String(source.morpheme || ''),
-    categoryA: String(source.categoryA || ''),
-    categoryB: String(source.categoryB || ''),
-    categoryC: String(source.categoryC || ''),
-    notes: String(source.notes || ''),
-  };
+function emptyData() {
+	return {
+		morpheme: '',
+		words: Array.from({ length: 11 }, () => ''),
+		leftSort: '',
+		rightSort: '',
+	};
+}
+
+function normalizeInputData(rawData) {
+	const source = rawData && typeof rawData === 'object' ? rawData : {};
+	const words = Array.isArray(source.words) ? source.words : [];
+	return {
+		morpheme: String(source.morpheme || ''),
+		words: Array.from({ length: 11 }, (_, index) => String(words[index] || '')),
+		leftSort: String(source.leftSort || ''),
+		rightSort: String(source.rightSort || ''),
+	};
 }
 
 export default function MorphSortPage() {
-  const [morpheme, setMorpheme] = useState('');
-  const [categoryA, setCategoryA] = useState('');
-  const [categoryB, setCategoryB] = useState('');
-  const [categoryC, setCategoryC] = useState('');
-  const [notes, setNotes] = useState('');
-  const [authUser, setAuthUser] = useState(null);
-  const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
+	const {
+		data,
+		setData,
+		authUser,
+		authLoading,
+		authFromSuccessRedirect,
+		notice,
+		setNotice,
+		projectId,
+		projectName,
+		activityName,
+		setActivityName,
+		isSaving,
+		runAuthCheck,
+		handleLoginLogout,
+		handleSaveAndReturn,
+		handleGoToLessonProjects,
+		handleAddToProject,
+		handleDownloadPdf,
+	} = useLessonActivityProject({
+		formName: FORM_NAME,
+		defaultActivityName: DEFAULT_ACTIVITY_NAME,
+		initialData: emptyData(),
+		normalizeInputData,
+	});
 
-  const apiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
+	const setWord = (index, value) => {
+		setData((prev) => {
+			const next = [...prev.words];
+			next[index] = value;
+			return { ...prev, words: next };
+		});
+	};
 
-  const currentLessonInputData = useMemo(
-    () => normalizeMorphSortLessonInputData({ morpheme, categoryA, categoryB, categoryC, notes }),
-    [morpheme, categoryA, categoryB, categoryC, notes]
-  );
+	return (
+		<ActivityShell
+			title="MORPH SORT"
+			morpheme={data.morpheme}
+			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
+			instructions="Sort the center words into left and right groups based on morph features."
+			authUser={authUser}
+			authLoading={authLoading}
+			authFromSuccessRedirect={authFromSuccessRedirect}
+			runAuthCheck={runAuthCheck}
+			handleLoginLogout={handleLoginLogout}
+			handleGoToLessonProjects={handleGoToLessonProjects}
+			handleAddToProject={handleAddToProject}
+			handleSaveAndReturn={handleSaveAndReturn}
+			handleDownloadPdf={handleDownloadPdf}
+			projectId={projectId}
+			projectName={projectName}
+			activityName={activityName}
+			setActivityName={setActivityName}
+			isSaving={isSaving}
+			notice={notice}
+			setNotice={setNotice}
+		>
+			<Grid container spacing={2} sx={{ mt: 2 }}>
+				<Grid item xs={12} md={4}>
+					<Typography sx={{ fontWeight: 700, mb: 1 }}>Sort Box A</Typography>
+					<Box sx={{ border: '2px solid #4a4a4a', borderRadius: 1, minHeight: '68vh', maxHeight: '68vh', p: 1.5, overflow: 'auto' }}>
+						<TextField
+							multiline
+							minRows={18}
+							fullWidth
+							value={data.leftSort}
+							onChange={(event) => setData((prev) => ({ ...prev, leftSort: event.target.value }))}
+							variant="standard"
+							InputProps={{ disableUnderline: true }}
+							inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+						/>
+					</Box>
+				</Grid>
+				<Grid item xs={12} md={4}>
+					<Stack spacing={1}>
+						{data.words.map((word, index) => (
+							<TextField
+								key={index}
+								variant="standard"
+								value={word}
+								onChange={(event) => setWord(index, event.target.value)}
+								inputProps={{ style: { fontFamily: 'Courier New, monospace', fontSize: '1.2em', color: '#4020A7' } }}
+								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+							/>
+						))}
+					</Stack>
+				</Grid>
+				<Grid item xs={12} md={4}>
+					<Typography sx={{ fontWeight: 700, mb: 1 }}>Sort Box B</Typography>
+					<Box sx={{ border: '2px solid #4a4a4a', borderRadius: 1, minHeight: '68vh', maxHeight: '68vh', p: 1.5, overflow: 'auto' }}>
+						<TextField
+							multiline
+							minRows={18}
+							fullWidth
+							value={data.rightSort}
+							onChange={(event) => setData((prev) => ({ ...prev, rightSort: event.target.value }))}
+							variant="standard"
+							InputProps={{ disableUnderline: true }}
+							inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+						/>
+					</Box>
+				</Grid>
+			</Grid>
 
-  const showNotice = (severity, message) => {
-    setNotice({ open: true, severity, message });
-  };
-
-  const persistSession = (nextData) => {
-    writeFormSessionData(FORM_NAME, nextData);
-  };
-
-  const applyLessonInputData = (data) => {
-    const normalized = normalizeMorphSortLessonInputData(data);
-    setMorpheme(normalized.morpheme);
-    setCategoryA(normalized.categoryA);
-    setCategoryB(normalized.categoryB);
-    setCategoryC(normalized.categoryC);
-    setNotes(normalized.notes);
-  };
-
-  const clearLessonInputs = () => {
-    setMorpheme('');
-    setCategoryA('');
-    setCategoryB('');
-    setCategoryC('');
-    setNotes('');
-  };
-
-  useEffect(() => {
-    const stored = readFormSessionData(FORM_NAME);
-    if (stored) {
-      applyLessonInputData(stored);
-    }
-  }, []);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      persistSession(currentLessonInputData);
-    }, 300);
-
-    return () => window.clearTimeout(timer);
-  }, [currentLessonInputData]);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await fetchAuthenticatedUser(apiOrigin);
-      setAuthUser(user);
-    };
-
-    checkAuth();
-  }, [apiOrigin]);
-
-  const handleSaveSession = () => {
-    persistSession(currentLessonInputData);
-    showNotice('success', authUser ? 'Session saved locally. Teachable login is active.' : 'Session saved locally.');
-  };
-
-  const handleClearSession = () => {
-    if (!window.confirm('Clear all saved data for this exercise?')) {
-      return;
-    }
-
-    clearFormSessionData(FORM_NAME);
-    clearLessonInputs();
-    showNotice('info', 'Saved data cleared.');
-  };
-
-  const initiateOAuthLogin = () => {
-    window.location.href = buildTeachableStartUrl(apiOrigin, window.location.href);
-  };
-
-  const handleLoginLogout = () => {
-    if (authUser) {
-      window.location.href = buildTeachableLogoutUrl(window.location.href);
-      return;
-    }
-
-    initiateOAuthLogin();
-  };
-
-  return (
-    <Box component="main" sx={{ py: 4, bgcolor: '#f9f9f9', minHeight: '100vh' }}>
-      <Container maxWidth="lg">
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ mb: 1.5 }}>
-          <Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
-            {authUser ? 'Logout from Teachable' : 'Login with Teachable'}
-          </Button>
-          <Button variant="outlined" onClick={handleSaveSession} sx={{ textTransform: 'none' }}>
-            Save Session
-          </Button>
-          <Button variant="outlined" color="error" onClick={handleClearSession} sx={{ textTransform: 'none' }}>
-            Clear Saved Data
-          </Button>
-        </Stack>
-
-        <Card sx={{ boxShadow: 3 }}>
-          <CardContent sx={{ p: 4 }}>
-            <Typography
-              variant="h4"
-              component="h1"
-              sx={{
-                textAlign: 'center',
-                fontWeight: 'bold',
-                mb: 3,
-                textTransform: 'uppercase',
-              }}
-            >
-              LATIN PROGRESSION MORPH SORT
-            </Typography>
-
-            <Paper
-              sx={{
-                p: 2,
-                mb: 3,
-                bgcolor: '#f0f8ff',
-                border: '1px solid #ccc',
-              }}
-            >
-              <Typography variant="body1">
-                <strong>Instructions:</strong> Sort words into categories based on how the morpheme changes meaning.
-              </Typography>
-            </Paper>
-
-            <Stack spacing={2.2} sx={{ mb: 3 }}>
-              <TextField
-                label="Morpheme(s)"
-                value={morpheme}
-                onChange={(e) => setMorpheme(e.target.value)}
-                fullWidth
-              />
-              <TextField
-                label="Category A"
-                value={categoryA}
-                onChange={(e) => setCategoryA(e.target.value)}
-                fullWidth
-                multiline
-                minRows={2}
-                placeholder="Example words..."
-              />
-              <TextField
-                label="Category B"
-                value={categoryB}
-                onChange={(e) => setCategoryB(e.target.value)}
-                fullWidth
-                multiline
-                minRows={2}
-                placeholder="Example words..."
-              />
-              <TextField
-                label="Category C"
-                value={categoryC}
-                onChange={(e) => setCategoryC(e.target.value)}
-                fullWidth
-                multiline
-                minRows={2}
-                placeholder="Example words..."
-              />
-              <TextField
-                label="Notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                fullWidth
-                multiline
-                minRows={2}
-              />
-            </Stack>
-
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.2, flexWrap: 'wrap' }}>
-              <Button variant="contained" onClick={handleSaveSession}>
-                Submit Exercise
-              </Button>
-              <Button variant="outlined" onClick={clearLessonInputs}>
-                Clear Fields
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
-      </Container>
-
-      <Snackbar
-        open={notice.open}
-        autoHideDuration={2600}
-        onClose={() => setNotice((prev) => ({ ...prev, open: false }))}
-      >
-        <Alert
-          severity={notice.severity}
-          variant="filled"
-          onClose={() => setNotice((prev) => ({ ...prev, open: false }))}
-        >
-          {notice.message}
-        </Alert>
-      </Snackbar>
-    </Box>
-  );
+			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }}>
+				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>
+					Clear All
+				</Button>
+			</Box>
+		</ActivityShell>
+	);
 }

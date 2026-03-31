@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WORD MEANING</title>
+    <style>
+        .container {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .container > div:not(.header-controls):not(#printWrapper) {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        #printWrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header-controls {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            margin-bottom: 5px;
+            min-width: 900px;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: left;
+            border: none;
+            border-bottom: 3px solid #4020A7;
+            padding-bottom: 8px;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 10px;
+        }
+
+        .header-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-column img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 2px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #000;
+            margin-bottom: 0;
+            margin-top: 0;
+            font-style: italic;
+        }
+
+        .header-morpheme-input {
+             border: 1px solid #4020A7;
+             padding: 8px 0;
+              font-size: 1.2em;
+              color: #4020A7;
+             transition: border-color 0.6s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+             max-width: 150px;
+        }
+
+        .header-morpheme-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .instructions {
+            font-size: 1em;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 30px;
+            align-items: start;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .algo-phrase-input {
+            border: none;
+            border-bottom: 2px solid #4020A7;
+            padding: 8px 0;
+            font-size: 1.2em;
+            color: #4020A7;
+            transition: border-color 0.3s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+        }
+
+        .algo-phrase-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .algo-phrase-input::placeholder {
+            color: #ccc;
+        }
+
+        .algo-phrase-item {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 56px;
+            padding: 10px 12px;
+            border: none;
+            border-bottom: 2px solid #4020A7;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+            background: transparent;
+        }
+        
+        /* Each item becomes a bordered block with uniform sizing and alignment */
+        .prompt-word-item,
+        .answer-word-item {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 56px;
+            padding: 10px 12px;
+            border: 2px solid #4020A7;
+            border-radius: 6px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+            background: transparent;
+        }
+
+        /* Inputs inside items: fill their container and align nicely */
+        .prompt-word-input,
+        .answer-word-input,
+        .algo-phrase-input {
+            border: none;
+            padding: 6px 8px;
+            font-size: 1em;
+            color: #111;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+            text-align: left;
+        }
+
+        .prompt-word-input:focus, .answer-word-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.06);
+            background-color: rgba(255,255,255,0.0);
+        }
+
+        .prompt-word-input::placeholder, .answer-word-input::placeholder {
+            color: #666;
+        }
+
+        .prompt-word-controls, .algo-phrase-controls, .answer-word-controls{
+            display: flex;
+            justify-content: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #4020A7;
+            min-width: 150px;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .btn-clear:active {
+            background: #d0d0d0;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stats {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .title {
+                font-size: 1.8em;
+            }
+
+            .content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+
+        .btn-download {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-download:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-controls">
+            <button type="button" id="downloadPdfBtn" class="btn-download">Download as PDF</button>
+            <button type="button" id="openChildBtn" class="btn-download" style="background:#007bff;margin-left:8px;">Open in Pop-up Screen</button>
+            <button type="button" id="saveSessionBtn" class="btn-download" style="background:#6c757d;margin-left:8px;">Save Session</button>
+            <button type="button" id="clearSessionBtn" class="btn-download" style="background:#dc3545;margin-left:8px;">Clear Saved Data</button>
+        </div>
+        <div id="printWrapper">
+            <div class="header">
+                <div class="header-column">
+                        <h1 class="title">WORD MEANING</h1>
+                        <p class="subtitle">Morpheme(s): <input type="text" placeholder="" class="header-morpheme-input"></p>
+                </div>
+                <div class="header-column">
+                    <p><img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit®"></p>
+                </div>
+            </div>
+
+            <form id="wordMeaningForm">
+               <div class="content">
+                    <div class="column">
+                        <div class="prompt-word-controls"><button type="button" class="btn-clear-prompt-words">Clear</button></div>
+                        <div class="prompt-word-item"><input type="text" class="prompt-word-input" name="prompt-word-1" placeholder=""></div> 
+                        <div class="prompt-word-item"><input type="text" class="prompt-word-input" name="prompt-word-2" placeholder=""></div> 
+                        <div class="prompt-word-item"><input type="text" class="prompt-word-input" name="prompt-word-3" placeholder=""></div> 
+                        <div class="prompt-word-item"><input type="text" class="prompt-word-input" name="prompt-word-4" placeholder=""></div> 
+                        <div class="prompt-word-item"><input type="text" class="prompt-word-input" name="prompt-word-5" placeholder=""></div> 
+                        <div class="prompt-word-item"><input type="text" class="prompt-word-input" name="prompt-word-6" placeholder=""></div> 
+                        <div class="prompt-word-item"><input type="text" class="prompt-word-input" name="prompt-word-7" placeholder=""></div> 
+                        <div class="prompt-word-item"><input type="text" class="prompt-word-input" name="prompt-word-8" placeholder=""></div> 
+                        <div class="prompt-word-item"><input type="text" class="prompt-word-input" name="prompt-word-9" placeholder=""></div> 
+                        <div class="prompt-word-item"><input type="text" class="prompt-word-input" name="prompt-word-10" placeholder=""></div> 
+                        <div class="prompt-word-item"><input type="text" class="prompt-word-input" name="prompt-word-11" placeholder=""></div> 
+                        <div class="prompt-word-item"><input type="text" class="prompt-word-input" name="prompt-word-12" placeholder=""></div>   
+                    </div>
+                    <div class="column">
+                        <div class="algo-phrase-controls"><button type="button" class="btn-clear-algo-words">Clear</button></div>
+                        <div class="algo-phrase-item"><input type="text" class="algo-phrase-input" name="algo-phrase-1" placeholder=""></div>
+                        <div class="algo-phrase-item"><input type="text" class="algo-phrase-input" name="algo-phrase-2" placeholder=""></div>
+                        <div class="algo-phrase-item"><input type="text" class="algo-phrase-input" name="algo-phrase-3" placeholder=""></div>
+                        <div class="algo-phrase-item"><input type="text" class="algo-phrase-input" name="algo-phrase-4" placeholder=""></div>
+                        <div class="algo-phrase-item"><input type="text" class="algo-phrase-input" name="algo-phrase-5" placeholder=""></div>
+                        <div class="algo-phrase-item"><input type="text" class="algo-phrase-input" name="algo-phrase-6" placeholder=""></div>
+                        <div class="algo-phrase-item"><input type="text" class="algo-phrase-input" name="algo-phrase-7" placeholder=""></div>
+                        <div class="algo-phrase-item"><input type="text" class="algo-phrase-input" name="algo-phrase-8" placeholder=""></div>
+                        <div class="algo-phrase-item"><input type="text" class="algo-phrase-input" name="algo-phrase-9" placeholder=""></div>
+                        <div class="algo-phrase-item"><input type="text" class="algo-phrase-input" name="algo-phrase-10" placeholder=""></div>
+                        <div class="algo-phrase-item"><input type="text" class="algo-phrase-input" name="algo-phrase-11" placeholder=""></div>
+                        <div class="algo-phrase-item"><input type="text" class="algo-phrase-input" name="algo-phrase-12" placeholder=""></div>
+                         </div>
+                    <div class="column">
+                        <div class="answer-word-controls"><button type="button" class="btn-clear-answer-words">Clear</button></div>
+                        <div class="answer-word-item"><input type="text" class="answer-word-input" name="answer-word-1" placeholder=""></div>
+                        <div class="answer-word-item"><input type="text" class="answer-word-input" name="answer-word-2" placeholder=""></div> 
+                        <div class="answer-word-item"><input type="text" class="answer-word-input" name="answer-word-3" placeholder=""></div> 
+                        <div class="answer-word-item"><input type="text" class="answer-word-input" name="answer-word-4" placeholder=""></div> 
+                        <div class="answer-word-item"><input type="text" class="answer-word-input" name="answer-word-5" placeholder=""></div>
+                        <div class="answer-word-item"><input type="text" class="answer-word-input" name="answer-word-6" placeholder=""></div> 
+                        <div class="answer-word-item"><input type="text" class="answer-word-input" name="answer-word-7" placeholder=""></div> 
+                        <div class="answer-word-item"><input type="text" class="answer-word-input" name="answer-word-8" placeholder=""></div> 
+                        <div class="answer-word-item"><input type="text" class="answer-word-input" name="answer-word-9" placeholder=""></div>
+                        <div class="answer-word-item"><input type="text" class="answer-word-input" name="answer-word-10" placeholder=""></div> 
+                        <div class="answer-word-item"><input type="text" class="answer-word-input" name="answer-word-11" placeholder=""></div> 
+                        <div class="answer-word-item"><input type="text" class="answer-word-input" name="answer-word-12" placeholder=""></div>  
+                        
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="contextMenu" class="context-menu"></div>
+
+    <script>
+        // ===== STORAGE UTILITIES =====
+        const FORM_NAME = 'word-meaning';
+        const STORAGE_KEY = 'tmk-diy-sessions';
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func(...args), delay);
+            };
+        }
+
+        function saveToStorage() {
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const data = { timestamp: Date.now() };
+            inputs.forEach((input, index) => {
+                const key = (input.name || input.className || 'field') + '__' + index;
+                data[key] = input.value;
+            });
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            allSessions[FORM_NAME] = data;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+        }
+
+        function restoreFromStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const data = allSessions[FORM_NAME];
+            if (data) {
+                const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+                inputs.forEach((input, index) => {
+                    const key = (input.name || input.className || 'field') + '__' + index;
+                    const legacyKey = input.name || input.className;
+                    if (Object.prototype.hasOwnProperty.call(data, key)) {
+                        input.value = data[key];
+                    } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                        input.value = data[legacyKey];
+                    }
+                });
+            }
+        }
+
+        function clearFormStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            delete allSessions[FORM_NAME];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            inputs.forEach(input => input.value = '');
+        }
+
+        const debouncedSave = debounce(saveToStorage, 300);
+
+        // ===== FORM CONTROLS =====
+        const form = document.getElementById('wordMeaningForm');
+        const btnClearPromptWords = document.querySelector('.btn-clear-prompt-words');
+        const btnClearAlgoWords = document.querySelector('.btn-clear-algo-words');
+        const btnClearAnswerWords = document.querySelector('.btn-clear-answer-words');
+
+        btnClearPromptWords.addEventListener('click', function(e) {
+            e.preventDefault();
+            const posGridInputs = document.querySelectorAll('input[name^="prompt-word"]');
+            posGridInputs.forEach((input) => {
+                input.value = '';
+            });
+            debouncedSave();
+        });
+
+        btnClearAlgoWords.addEventListener('click', function(e) {
+            e.preventDefault();
+            const algoGridInputs = document.querySelectorAll('input[name^="algo-phrase"]');
+            algoGridInputs.forEach((input) => {
+                input.value = '';
+            });
+            debouncedSave();
+        });
+
+        btnClearAnswerWords.addEventListener('click', function(e) {
+            e.preventDefault();
+            const answerGridInputs = document.querySelectorAll('input[name^="answer-word"]');
+            answerGridInputs.forEach((input) => {
+                input.value = '';
+            });
+            debouncedSave();
+        });
+
+        // Auto-save on input event (debounced)
+        const allInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+        allInputs.forEach(input => {
+            input.addEventListener('input', debouncedSave);
+        });
+
+        // Add keyboard navigation
+        const inputs = form.querySelectorAll('.item-input');
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    } else {
+                        form.dispatchEvent(new Event('submit'));
+                    }
+                }
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                }
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                }
+            });
+        });
+
+        // Set focus and restore saved data on load
+        window.addEventListener('load', function() {
+            restoreFromStorage();
+            const firstInput = document.querySelector('#printWrapper input');
+            if (firstInput) firstInput.focus();
+        });
+
+        // Sync with child window: listen for storage changes from child window
+        window.addEventListener('storage', function(e) {
+            if (e.key === STORAGE_KEY) {
+                restoreFromStorage();
+            }
+        });
+
+        // Function for child window to call when closing
+        window.refreshMainPageInputs = function() {
+            restoreFromStorage();
+        };
+
+        // ===== STORAGE BUTTON HANDLERS =====
+        const saveSessionBtn = document.getElementById('saveSessionBtn');
+        const clearSessionBtn = document.getElementById('clearSessionBtn');
+
+        if (saveSessionBtn) {
+            saveSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                saveToStorage();
+                alert('Session saved successfully!');
+            });
+        }
+
+        if (clearSessionBtn) {
+            clearSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Clear all saved data for this exercise?')) {
+                    clearFormStorage();
+                    alert('Saved data cleared!');
+                }
+            });
+        }
+
+        // ===== PDF DOWNLOAD =====
+        const downloadBtn = document.getElementById('downloadPdfBtn');
+        downloadBtn.addEventListener('click', function() {
+            const printWrapper = document.getElementById('printWrapper');
+            const printContent = printWrapper.cloneNode(true);
+            
+            // Create a new window
+            const printWindow = window.open('', '', 'width=800,height=600');
+            
+            // Inject screen styles into the print window and add print-only overrides
+            const screenStyles = Array.from(document.querySelectorAll('style')).map(s => s.innerHTML).join('\n');
+
+            const printOverrides = `
+                /* Print-specific overrides — kept separate from screen styles */
+                * { box-sizing: border-box; }
+                body { background: #fff; color: #111; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; line-height: 1.4; }
+                .container { background: none; min-height: auto; padding: 0; display: block; }
+                #printWrapper { box-shadow: none; border-radius: 4px; max-width: 900px; width: 100%; padding: 24px; margin: 0 auto; }
+                .header-controls, #downloadPdfBtn { display: none !important; }
+                .header { text-align: left; border-bottom: 3px solid #4020A7; padding-bottom: 8px; display: grid; grid-template-columns: 3fr 1fr; gap: 10px; }
+                .subtitle {
+                    font-size: 1.2em;
+                    color: #000;
+                    margin-bottom: 0;
+                    margin-top: 0;
+                    font-style: italic;
+                }
+
+                .header-morpheme-input {
+                    border: 1px solid #4020A7;
+                    padding: 8px 0;
+                    font-size: 1.2em;
+                    color: #4020A7;
+                    transition: border-color 0.6s ease;
+                    background: transparent;
+                    font-family: 'Courier New', monospace;
+                    max-width: 150px;
+                }
+
+                .header-morpheme-input:focus {
+                    outline: none;
+                    border-bottom-color: #667eea;
+                    background-color: rgba(102, 126, 234, 0.05);
+                    padding: 8px 8px;
+                }
+                .content { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 18px; }
+                .column { gap: 12px; }
+                .prompt-word-item, .answer-word-item { border: 2px solid #4020A7; border-radius: 6px; background: transparent; min-height: 48px; padding: 8px; }
+                .algo-phrase-item { border: none; border-bottom: 2px solid #4020A7; border-radius: 0; background: transparent; min-height: 48px; padding: 8px 4px; }
+                input { background: transparent; color: inherit; border: none; width: 100%; }
+                .btn-download, .btn-clear-prompt-words, .btn-clear-algo-words, .btn-clear-answer-words { display: none !important; }
+                @media print { body { padding: 20px; } }
+            `;
+
+            const headHtml = `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>WORD MEANING</title>
+                    <style>${screenStyles}</style>
+                    <style id="print-overrides">${printOverrides}</style>
+                </head>
+                <body>
+            `;
+
+            // Write head and body start
+            printWindow.document.write(headHtml);
+
+            // Copy input values from original to cloned content
+            const sourceInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const clonedInputs = printContent.querySelectorAll('input, textarea');
+            sourceInputs.forEach((input, index) => {
+                if (clonedInputs[index]) {
+                    clonedInputs[index].value = input.value;
+                    clonedInputs[index].setAttribute('value', input.value);
+                    if (clonedInputs[index].tagName === 'TEXTAREA') {
+                        clonedInputs[index].textContent = input.value;
+                    }
+                }
+            });
+
+            // Append the cloned content with values
+            printWindow.document.write(printContent.outerHTML);
+
+            // Close the HTML
+            printWindow.document.write(`
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            
+            // Trigger print dialog after content loads
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            };
+        });
+
+        // Open `printWrapper` in a persistent Pop-up Screen (browser-view)
+        const openChildBtn = document.getElementById('openChildBtn');
+        if (openChildBtn) {
+            openChildBtn.addEventListener('click', function() {
+                const printWrapper = document.getElementById('printWrapper');
+                const printContent = printWrapper.cloneNode(true);
+                const styleEl = document.querySelector('head style');
+                const styleHTML = styleEl ? styleEl.innerHTML : '';
+                const child = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+                child.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${document.title} — Browser View</title><style>${styleHTML}\n.btn-child-download{padding:10px 20px;background-color:#667eea;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1em;margin-bottom:15px;}\n.btn-child-download:hover{background-color:#764ba2;}\n@media print{size:letter;body{margin:0;padding:0.15in;line-height:1.1;}.btn-child-download{display:none !important;}.btn-clear-prompt-words{display:none !important;}.btn-clear-algo-words{display:none !important;}.btn-clear-answer-words{display:none !important;}.container{page-break-inside:avoid;orphans:3;widows:3;margin:0;padding:0.15in;}.header{margin-bottom:8px;}#printWrapper{padding:0.15in;}.content{gap:8px;margin-top:8px;}.column{gap:6px;}.prompt-word-item,.answer-word-item,.algo-phrase-item{padding:6px;min-height:40px;font-size:0.9em;}.prompt-word-input,.answer-word-input,.algo-phrase-input{font-size:0.85em;}.title{font-size:1.4em;margin-bottom:4px;}.subtitle{font-size:1em;}.header-morpheme-input{font-size:1em;}.btn-clear-prompt-words,.btn-clear-algo-words,.btn-clear-answer-words{display:none !important;}form{page-break-inside:avoid;}}</style></head><body>`);
+                child.document.write('<div class="container" style="min-height:100vh;padding:20px;">');
+                child.document.write('<button id="childDownloadPdfBtn" class="btn-child-download" type="button">Download as PDF</button>');
+                child.document.write('<button id="childCloseBtn" class="btn-child-download" style="background:#dc3545;margin-left:8px;" type="button">Close Window & Sync</button>');
+                child.document.write(printContent.outerHTML);
+                child.document.write('</div>');
+                child.document.write(`<script>(function(){
+                    const FORM_NAME = 'word-meaning';
+                    const STORAGE_KEY = 'tmk-diy-sessions';
+                    
+                    function qs(s){return document.querySelector(s);}
+                    function qsa(s){return Array.from(document.querySelectorAll(s));}
+                    
+                    function debounce(func, delay) {
+                        let timeoutId;
+                        return function(...args) {
+                            clearTimeout(timeoutId);
+                            timeoutId = setTimeout(() => func(...args), delay);
+                        };
+                    }
+                    
+                    function saveToStorage() {
+                        const inputs = qsa('input, textarea');
+                        const data = { timestamp: Date.now() };
+                        inputs.forEach((input, index) => {
+                            const key = (input.name || input.className || 'field') + '__' + index;
+                            data[key] = input.value;
+                        });
+                        const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                        allSessions[FORM_NAME] = data;
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+                    }
+                    
+                    function restoreFromStorage() {
+                        const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                        const data = allSessions[FORM_NAME];
+                        if (data) {
+                            const inputs = qsa('input, textarea');
+                            inputs.forEach((input, index) => {
+                                const key = (input.name || input.className || 'field') + '__' + index;
+                                const legacyKey = input.name || input.className;
+                                if (Object.prototype.hasOwnProperty.call(data, key)) {
+                                    input.value = data[key];
+                                } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                                    input.value = data[legacyKey];
+                                }
+                            });
+                        }
+                    }
+                    
+                    const debouncedSave = debounce(saveToStorage, 300);
+                    
+                    // Restore data on load
+                    restoreFromStorage();
+                    
+                    // Auto-save on input event
+                    const allInputs = qsa('input, textarea');
+                    allInputs.forEach(input => {
+                        input.addEventListener('input', debouncedSave);
+                    });
+                    window.addEventListener('storage', function(e) {
+                        if (e.key === STORAGE_KEY) {
+                            restoreFromStorage();
+                        }
+                    });
+                    
+                    // Clear button handlers
+                    var btnClearPrompt=qs('.btn-clear-prompt-words');
+                    var btnClearAlgo=qs('.btn-clear-algo-words');
+                    var btnClearAnswer=qs('.btn-clear-answer-words');
+                    if(btnClearPrompt){btnClearPrompt.addEventListener('click',function(e){e.preventDefault();qsa('input[name^="prompt-word"]').forEach(function(i){i.value='';});debouncedSave();});}
+                    if(btnClearAlgo){btnClearAlgo.addEventListener('click',function(e){e.preventDefault();qsa('input[name^="algo-phrase"]').forEach(function(i){i.value='';});debouncedSave();});}
+                    if(btnClearAnswer){btnClearAnswer.addEventListener('click',function(e){e.preventDefault();qsa('input[name^="answer-word"]').forEach(function(i){i.value='';});debouncedSave();});}
+                    
+                    // PDF button
+                    var pdfBtn=qs('#childDownloadPdfBtn');
+                    if(pdfBtn){pdfBtn.addEventListener('click',function(){window.print();});}
+                    
+                    // Close button - sync before closing
+                    var closeBtn=qs('#childCloseBtn');
+                    if(closeBtn){closeBtn.addEventListener('click',function(){
+                        saveToStorage();
+                        if(window.opener && window.opener.refreshMainPageInputs){
+                            window.opener.refreshMainPageInputs();
+                        }
+                        window.close();
+                    });}
+                    
+                    // Flush pending saves and notify parent before window unload
+                    window.addEventListener('beforeunload', function() {
+                        saveToStorage();
+                        if (window.opener && window.opener.refreshMainPageInputs) {
+                            window.opener.refreshMainPageInputs();
+                        }
+                    });
+                    
+                    // Focus first input
+                    var first=qs('.prompt-word-input, input');
+                    if(first)first.focus();
+                })();<\/script>`);
+                child.document.write('</body></html>');
+                child.document.close();
+            });
+        }
+    </script>
+</body>
+</html>

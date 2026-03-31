@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MORPH, which?</title>
+    <style>
+       .container {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .container > div:not(.header-controls):not(#printWrapper) {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        #printWrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header-controls {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            margin-bottom: 5px;
+            min-width: 900px;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: left;
+            border: none;
+            border-bottom: 3px solid #4020A7;
+            padding-bottom: 8px;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 10px;
+        }
+
+        .header-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-column img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 2px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #000;
+            margin-bottom: 0;
+            margin-top: 0;
+            font-style: italic;
+        }
+
+        .header-morpheme-input {
+             border: 1px solid #4020A7;
+             padding: 8px 0;
+              font-size: 1.2em;
+              color: #4020A7;
+             transition: border-color 0.6s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+             max-width: 150px;
+        }
+
+        .header-morpheme-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .instructions {
+            font-size: 1em;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+
+        .content {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .morphWhich-item {
+            margin-bottom: 40px;
+        }
+
+        .morphWhich-item  .row {
+            display: grid;
+            grid-template-columns: 3fr 3fr 3fr 3fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .morphWhich-item  .question-row {
+            display: grid;
+            grid-template-columns: 1fr 24fr;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .item {
+            display: contents;
+        }
+
+        .question-item-input {
+            border: 1px solid #4020A7;
+            border-radius: 6px;
+            padding: 8px 0;
+            font-size: 1em;
+            color: #333;
+            transition: border-color 0.3s ease;
+            background: transparent;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .question-item-input:focus {
+            outline: none;
+            border-bottom-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding: 8px 8px;
+        }
+
+        .question-item-input::placeholder {
+            color: #ccc;
+        }
+
+        .question-number {
+            min-width: 30px;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1em;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .answer-item-input {
+            border: 1px solid #4020A7;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 1em;
+            color: #222;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+            background: #fffef9;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+            box-sizing: border-box;
+            -webkit-text-fill-color: #222;
+        }
+
+        /* Item-specific shaded backgrounds */
+        input.answer-item-input[name^="answer-item1a"], 
+        input.answer-item-input[name^="answer-item2a"], 
+        input.answer-item-input[name^="answer-item3a"],
+        input.answer-item-input[name^="answer-item4a"],
+        input.answer-item-input[name^="answer-item5a"]  {
+            background: linear-gradient(90deg, #fff9db 0%, #fff4b8 100%);
+        }
+
+        input.answer-item-input[name^="answer-item1b"], 
+        input.answer-item-input[name^="answer-item2b"], 
+        input.answer-item-input[name^="answer-item3b"],
+        input.answer-item-input[name^="answer-item4b"],
+        input.answer-item-input[name^="answer-item5b"]  {
+            background: linear-gradient(90deg, #e8fff0 0%, #ccf5d1 100%);
+        }
+
+        input.answer-item-input[name^="answer-item1c"], 
+        input.answer-item-input[name^="answer-item2c"], 
+        input.answer-item-input[name^="answer-item3c"],
+        input.answer-item-input[name^="answer-item4c"],
+        input.answer-item-input[name^="answer-item5c"]  {
+            background: linear-gradient(90deg, #f3e9ff 0%, #e6d4ff 100%);
+        }
+
+        input.answer-item-input[name^="answer-item1d"], 
+        input.answer-item-input[name^="answer-item2d"], 
+        input.answer-item-input[name^="answer-item3d"],
+        input.answer-item-input[name^="answer-item4d"],
+        input.answer-item-input[name^="answer-item5d"]  {
+            background: linear-gradient(90deg, #fff0e0 0%, #ffd2a8 100%);
+        }
+
+        /* Per-item focus styles */
+        input.answer-item-input[name^="answer-item1a"]:focus,
+        input.answer-item-input[name^="answer-item2a"]:focus,
+        input.answer-item-input[name^="answer-item3a"]:focus,
+        input.answer-item-input[name^="answer-item4a"]:focus,
+        input.answer-item-input[name^="answer-item5a"]:focus {
+            outline: none;
+            border-color: #c89f00;
+            box-shadow: 0 4px 14px rgba(200,159,0,0.18);
+            padding: 8px 10px;
+            transform: translateY(-1px);
+        }
+
+        input.answer-item-input[name^="answer-item1b"]:focus,
+        input.answer-item-input[name^="answer-item2b"]:focus,
+        input.answer-item-input[name^="answer-item3b"]:focus,
+        input.answer-item-input[name^="answer-item4b"]:focus,
+        input.answer-item-input[name^="answer-item5b"]:focus {
+            outline: none;
+            border-color: #2e7d32;
+            box-shadow: 0 4px 14px rgba(46,125,50,0.16);
+            padding: 8px 10px;
+            transform: translateY(-1px);
+        }
+
+        input.answer-item-input[name^="answer-item1c"]:focus,
+        input.answer-item-input[name^="answer-item2c"]:focus,
+        input.answer-item-input[name^="answer-item3c"]:focus,
+        input.answer-item-input[name^="answer-item4c"]:focus,
+        input.answer-item-input[name^="answer-item5c"]:focus {
+            outline: none;
+            border-color: #6a1b9a;
+            box-shadow: 0 4px 14px rgba(106,27,154,0.16);
+            padding: 8px 10px;
+            transform: translateY(-1px);
+        }
+
+        input.answer-item-input[name^="answer-item1d"]:focus,
+        input.answer-item-input[name^="answer-item2d"]:focus,
+        input.answer-item-input[name^="answer-item3d"]:focus,
+        input.answer-item-input[name^="answer-item4d"]:focus,
+        input.answer-item-input[name^="answer-item5d"]:focus {
+            outline: none;
+            border-color: #ff6f00;
+            box-shadow: 0 4px 14px rgba(255,111,0,0.16);
+            padding: 8px 10px;
+            transform: translateY(-1px);
+        }
+
+        .answer-item-input::placeholder {
+            color: #999;
+        }
+
+        /* Print-friendly toned backgrounds (muted) */
+        @media print {
+            input.answer-item-input[name^="answer-item1"] {
+                background: #fffaf0 !important;
+                color: #000 !important;
+                border-color: #000 !important;
+            }
+
+            input.answer-item-input[name^="answer-item2"] {
+                background: #f6fff6 !important;
+                color: #000 !important;
+                border-color: #000 !important;
+            }
+
+            input.answer-item-input[name^="answer-item3"] {
+                background: #fbf8ff !important;
+                color: #000 !important;
+                border-color: #000 !important;
+            }
+
+            input.answer-item-input[name^="answer-item4"] {
+                background: #fff7f0 !important;
+                color: #000 !important;
+                border-color: #000 !important;
+            }
+
+            input.answer-item-input {
+                box-shadow: none !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-width: 150px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #4020A7;
+            min-width: 150px;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .btn-clear:active {
+            background: #d0d0d0;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .feedback.show {
+            display: block;
+        }
+        .feedback.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .feedback.partial {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .feedback.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stats {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .title {
+                font-size: 1.8em;
+            }
+
+            .content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+
+        .btn-download {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-download:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            min-width: 200px;
+            display: none;
+        }
+
+        .context-menu.show {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #333;
+            transition: background-color 0.2s ease;
+        }
+
+        .context-menu-item:hover {
+            background-color: #667eea;
+            color: white;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+                max-width: 100%;
+            }
+
+            .header-controls {
+                display: none;
+            }
+
+            .controls,
+            .feedback,
+            .stats {
+                display: none !important;
+            }
+
+            .item-input{
+                border-bottom: 1px solid #000;
+            }
+
+            .title {
+                page-break-after: avoid;
+            }
+
+            .content {
+                page-break-inside: avoid;
+            }
+
+            input {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-controls">
+            <button type="button" id="downloadPdfBtn" class="btn-download">Download as PDF</button>
+            <button type="button" id="openChildBtn" class="btn-download" style="background:#007bff;margin-left:8px;">Open in Pop-up Screen</button>
+            <button type="button" id="saveSessionBtn" class="btn-download" style="background:#6c757d;margin-left:8px;">Save Session</button>
+            <button type="button" id="clearSessionBtn" class="btn-download" style="background:#dc3545;margin-left:8px;">Clear Saved Data</button>
+        </div>
+        <div id="printWrapper">
+            <div class="header">
+                <div class="header-column">
+                        <h1 class="title">MORPH, which?</h1>
+                        <p class="subtitle">Morpheme(s): <input type="text" placeholder="" class="header-morpheme-input"></p>
+                </div>
+                <div class="header-column">
+                    <p><img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit®"></p>
+                </div>
+            </div>
+
+            <form id="morphWhichForm">
+                <div class="content">
+                    <div class="morphWhich-item">
+                        <div class="question-row">
+                            <span class="question-number">1.</span>
+                            <div class="item"><input type="text" class="question-item-input" name="question-1" placeholder=""></div>
+                        </div>
+                        <div class="row">
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item1a" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item1b" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item1c" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item1d" placeholder=""></div>
+                        </div>
+                    </div>
+                    <div class="morphWhich-item">
+                        <div class="question-row">
+                            <span class="question-number">2.</span>
+                            <div class="item"><input type="text" class="question-item-input" name="question-2" placeholder=""></div>
+                        </div>
+                        <div class="row">
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item2a" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item2b" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item2c" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item2d" placeholder=""></div>
+                        </div>
+                    </div>
+                    <div class="morphWhich-item">
+                        <div class="question-row">
+                            <span class="question-number">3.</span>
+                            <div class="item"><input type="text" class="question-item-input" name="question-3" placeholder=""></div>
+                        </div>
+                        <div class="row">
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item3a" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item3b" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item3c" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item3d" placeholder=""></div>
+                        </div>
+                    </div>
+                    <div class="morphWhich-item">
+                        <div class="question-row">
+                            <span class="question-number">4.</span>
+                            <div class="item"><input type="text" class="question-item-input" name="question-4" placeholder=""></div>
+                        </div>
+                        <div class="row">
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item4a" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item4b" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item4c" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item4d" placeholder=""></div>
+                        </div>
+                    </div>
+                    <div class="morphWhich-item">
+                        <div class="question-row">
+                            <span class="question-number">5.</span>
+                            <div class="item"><input type="text" class="question-item-input" name="question-5" placeholder=""></div>
+                        </div>
+                        <div class="row">
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item5a" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item5b" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item5c" placeholder=""></div>
+                            <div class="item"><input type="text" class="answer-item-input" name="answer-item5d" placeholder=""></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button type="button" class="btn-clear-questions">Clear Questions</button>
+                    <button type="button" class="btn-clear-answers">Clear Answers</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div id="contextMenu" class="context-menu"></div>
+
+    <script>
+        // ===== STORAGE UTILITIES =====
+        const FORM_NAME = 'morph-which';
+        const STORAGE_KEY = 'tmk-diy-sessions';
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func(...args), delay);
+            };
+        }
+
+        function saveToStorage() {
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const data = { timestamp: Date.now() };
+            inputs.forEach((input, index) => {
+                const key = (input.name || input.className || 'field') + '__' + index;
+                data[key] = input.value;
+            });
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            allSessions[FORM_NAME] = data;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+        }
+
+        function restoreFromStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const data = allSessions[FORM_NAME];
+            if (data) {
+                const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+                inputs.forEach((input, index) => {
+                    const key = (input.name || input.className || 'field') + '__' + index;
+                    const legacyKey = input.name || input.className;
+                    if (Object.prototype.hasOwnProperty.call(data, key)) {
+                        input.value = data[key];
+                    } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                        input.value = data[legacyKey];
+                    }
+                });
+            }
+        }
+
+        function clearFormStorage() {
+            const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            delete allSessions[FORM_NAME];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+            const inputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            inputs.forEach(input => input.value = '');
+        }
+
+        const debouncedSave = debounce(saveToStorage, 300);
+
+        // ===== FORM CONTROLS =====
+        const btnClearQuestions = document.querySelector('.btn-clear-questions');
+        const btnClearAnswers = document.querySelector('.btn-clear-answers');
+
+        btnClearQuestions.addEventListener('click', function(e) {
+            e.preventDefault();
+            // clear the question inputs
+            const questionInputs = document.querySelectorAll('input[class^="question-item-input"]');
+            questionInputs.forEach((input) => {
+                input.value = '';
+            });
+            debouncedSave();
+        });
+
+        btnClearAnswers.addEventListener('click', function(e) {
+            e.preventDefault();
+            // clear the answer inputs
+            const answerInputs = document.querySelectorAll('input[class^="answer-item-input"]');
+            answerInputs.forEach((input) => {
+                input.value = '';
+            });
+            debouncedSave();
+        });
+
+        // Add keyboard navigation
+        const form = document.getElementById('morphWhichForm');
+        const inputs = form ? form.querySelectorAll('.item-input') : document.querySelectorAll('.item-input');
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    } else {
+                        form.dispatchEvent(new Event('submit'));
+                    }
+                }
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                }
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                }
+            });
+        });
+
+        // Set focus and restore saved data on load
+        window.addEventListener('load', function() {
+            restoreFromStorage();
+            inputs[0].focus();
+        });
+
+        // Sync with child window: listen for storage changes from child window
+        window.addEventListener('storage', function(e) {
+            if (e.key === STORAGE_KEY) {
+                restoreFromStorage();
+            }
+        });
+
+        // Function for child window to call when closing
+        window.refreshMainPageInputs = function() {
+            restoreFromStorage();
+        };
+
+        // Context menu for grid inputs
+        const contextMenu = document.getElementById('contextMenu');
+
+        // Close context menu on click elsewhere
+        document.addEventListener('click', function() {
+            contextMenu.classList.remove('show');
+        });
+
+        // Auto-save on input event (debounced)
+        const allInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+        allInputs.forEach(input => {
+            input.addEventListener('input', debouncedSave);
+        });
+
+        // ===== STORAGE BUTTON HANDLERS =====
+        const saveSessionBtn = document.getElementById('saveSessionBtn');
+        const clearSessionBtn = document.getElementById('clearSessionBtn');
+
+        if (saveSessionBtn) {
+            saveSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                saveToStorage();
+                alert('Session saved successfully!');
+            });
+        }
+
+        if (clearSessionBtn) {
+            clearSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Clear all saved data for this exercise?')) {
+                    clearFormStorage();
+                    alert('Saved data cleared!');
+                }
+            });
+        }
+
+        // ===== PDF DOWNLOAD =====
+        // Download as PDF functionality
+        const downloadBtn = document.getElementById('downloadPdfBtn');
+        downloadBtn.addEventListener('click', function() {
+            const printWrapper = document.getElementById('printWrapper');
+            const printContent = printWrapper.cloneNode(true);
+            
+            // Create a new window
+            const printWindow = window.open('', '', 'width=800,height=600');
+            
+            // Write the minimal HTML with styling
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>WORD MEANING</title>
+                    <style>
+                        /* Simplified print stylesheet (keeps separate styling from live page) */
+                        body {
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            padding: 20px;
+                            line-height: 1.6;
+                        }
+                        .header {
+                            text-align: left;
+                            border-bottom: 3px solid #4020A7;
+                            padding-bottom: 5px;
+                            display: grid;
+                            grid-template-columns: 3fr 1fr;
+                            gap: 10px;
+                        }
+                        .header-column {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 4px;
+                        }
+                        .header-column img {
+                            max-width: 200px;
+                            height: auto;
+                        }
+                        .title {
+                            font-size: 1.6em;
+                            font-weight: bold;
+                            margin-bottom: 0;
+                            color: #000;
+                            letter-spacing: 1px;
+                        }
+                        .subtitle {
+                            font-size: 1.2em;
+                            color: #000;
+                            margin-bottom: 0;
+                            margin-top: 0;
+                            font-style: italic;
+                        }
+
+                        .header-morpheme-input {
+                            border: 1px solid #4020A7;
+                            padding: 8px 0;
+                            font-size: 1.2em;
+                            color: #4020A7;
+                            transition: border-color 0.6s ease;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            max-width: 150px;
+                        }
+
+                        .header-morpheme-input:focus {
+                            outline: none;
+                            border-bottom-color: #667eea;
+                            background-color: rgba(102, 126, 234, 0.05);
+                            padding: 8px 8px;
+                        }
+                        .instructions {
+                            font-size: 1em;
+                            margin-top: 5px;
+                            color: #555;
+                            line-height: 1.6;
+                        }
+                        /* Use a single-column flow so each question block is full width in print */
+                        .content { display: block; margin-top: 28px; }
+                        .morphWhich-item {
+                            margin-bottom: 40px;
+                        }
+
+                        /* Question row: number + wide question input */
+                        .question-row { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: center; margin-bottom: 10px; }
+                        .question-number { min-width: 40px; font-weight: bold; }
+                        .question-item-input { 
+                            border: 1px solid #4020A7;
+                            border-radius: 6px;
+                            padding: 8px 0;
+                            background: transparent;
+                            box-sizing: border-box;
+                            width: 100%; }
+
+                        /* Answers: grid of four equal columns that wrap to next line if needed */
+                        .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+
+                        .item { display: block; }
+
+                        /* Inputs shown clearly for printed worksheets */
+                        input.item-input, input.answer-item-input {
+                            border: 1px solid #222;
+                            border-radius: 4px;
+                            padding: 6px 8px;
+                            background: transparent;
+                            font-family: 'Courier New', monospace;
+                            font-size: 0.98em;
+                            width: 100%;
+                            box-sizing: border-box;
+                        }
+
+                         input.answer-item-input[name^="answer-item1a"], 
+                            input.answer-item-input[name^="answer-item2a"], 
+                            input.answer-item-input[name^="answer-item3a"],
+                            input.answer-item-input[name^="answer-item4a"],
+                            input.answer-item-input[name^="answer-item5a"]  {
+                                background: linear-gradient(90deg, #fff9db 0%, #fff4b8 100%);
+                            }
+
+                            input.answer-item-input[name^="answer-item1b"], 
+                            input.answer-item-input[name^="answer-item2b"], 
+                            input.answer-item-input[name^="answer-item3b"],
+                            input.answer-item-input[name^="answer-item4b"],
+                            input.answer-item-input[name^="answer-item5b"]  {
+                                background: linear-gradient(90deg, #e8fff0 0%, #ccf5d1 100%);
+                            }
+
+                            input.answer-item-input[name^="answer-item1c"], 
+                            input.answer-item-input[name^="answer-item2c"], 
+                            input.answer-item-input[name^="answer-item3c"],
+                            input.answer-item-input[name^="answer-item4c"],
+                            input.answer-item-input[name^="answer-item5c"]  {
+                                background: linear-gradient(90deg, #f3e9ff 0%, #e6d4ff 100%);
+                            }
+
+                            input.answer-item-input[name^="answer-item1d"], 
+                            input.answer-item-input[name^="answer-item2d"], 
+                            input.answer-item-input[name^="answer-item3d"],
+                            input.answer-item-input[name^="answer-item4d"],
+                            input.answer-item-input[name^="answer-item5d"]  {
+                                background: linear-gradient(90deg, #fff0e0 0%, #ffd2a8 100%);
+                            }
+
+                        /* Hide interactive controls/buttons in the print window */
+                        .controls, .header-controls, .context-menu, button, .btn-download, .btn-clear, .btn-submit { display: none !important; }
+
+                        @media print {
+                            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                            body { padding: 12mm; }
+                            .print-container { box-shadow: none; border-radius: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+            `);
+            
+            // Copy input values from original to cloned content
+            const sourceInputs = document.querySelectorAll('#printWrapper input, #printWrapper textarea');
+            const clonedInputs = printContent.querySelectorAll('input, textarea');
+            sourceInputs.forEach((input, index) => {
+                if (clonedInputs[index]) {
+                    clonedInputs[index].value = input.value;
+                    clonedInputs[index].setAttribute('value', input.value);
+                    if (clonedInputs[index].tagName === 'TEXTAREA') {
+                        clonedInputs[index].textContent = input.value;
+                    }
+                }
+            });
+            
+            // Append the cloned content with values
+            printWindow.document.write(printContent.outerHTML);
+            
+            // Close the HTML
+            printWindow.document.write(`
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            
+            // Trigger print dialog after content loads
+            printWindow.onload = function() {
+                setTimeout(function() {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            };
+        });
+
+        // Open `printWrapper` in a persistent Pop-up Screen (browser-view)
+        const openChildBtn = document.getElementById('openChildBtn');
+        if (openChildBtn) {
+            openChildBtn.addEventListener('click', function() {
+                const printWrapper = document.getElementById('printWrapper');
+                const printContent = printWrapper.cloneNode(true);
+                const styleEl = document.querySelector('head style');
+                const styleHTML = styleEl ? styleEl.innerHTML : '';
+                const child = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+                child.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${document.title} — Browser View</title><style>${styleHTML}\ninput.answer-item-input[name$="a"] { background: linear-gradient(90deg, #fff9db 0%, #fff4b8 100%) !important; }\ninput.answer-item-input[name$="b"] { background: linear-gradient(90deg, #e8fff0 0%, #ccf5d1 100%) !important; }\ninput.answer-item-input[name$="c"] { background: linear-gradient(90deg, #f3e9ff 0%, #e6d4ff 100%) !important; }\ninput.answer-item-input[name$="d"] { background: linear-gradient(90deg, #fff0e0 0%, #ffd2a8 100%) !important; }\n.btn-child-download{padding:10px 20px;background-color:#667eea;color:white;border:none;border-radius:4px;cursor:pointer;font-size:1em;margin-bottom:15px;}\n.btn-child-download:hover{background-color:#764ba2;}\n@media print{body{margin:0;padding:10px;}.btn-child-download{display:none !important;}.btn-clear-questions{display:none !important;}.btn-clear-answers{display:none !important;}.container{page-break-inside:avoid;orphans:3;widows:3;margin:0;padding:10px;}.section{page-break-inside:avoid;}form{page-break-inside:avoid;}}</style></head><body>`);
+                child.document.write('<div class="container" style="min-height:100vh;padding:20px;">');
+                child.document.write('<button id="childDownloadPdfBtn" class="btn-child-download" type="button">Download as PDF</button>');
+                child.document.write('<button id="childCloseBtn" class="btn-child-download" style="background:#dc3545;margin-left:8px;" type="button">Close Window & Sync</button>');
+                child.document.write(printContent.outerHTML);
+                child.document.write('</div>');
+                child.document.write(`<script>(function(){
+    const FORM_NAME = 'morph-which';
+    const STORAGE_KEY = 'tmk-diy-sessions';
+    function debounce(func, delay) {
+        let timeoutId;
+        return function(...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func(...args), delay);
+        };
+    }
+    function saveToStorage() {
+        const inputs = document.querySelectorAll('input, textarea');
+        const data = { timestamp: Date.now() };
+        inputs.forEach((input, index) => {
+            const key = (input.name || input.className || 'field') + '__' + index;
+            data[key] = input.value;
+        });
+        const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        allSessions[FORM_NAME] = data;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessions));
+    }
+    function restoreFromStorage() {
+        const allSessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        const data = allSessions[FORM_NAME];
+        if (data) {
+            const inputs = document.querySelectorAll('input, textarea');
+            inputs.forEach((input, index) => {
+                const key = (input.name || input.className || 'field') + '__' + index;
+                const legacyKey = input.name || input.className;
+                if (Object.prototype.hasOwnProperty.call(data, key)) {
+                    input.value = data[key];
+                } else if (legacyKey && Object.prototype.hasOwnProperty.call(data, legacyKey)) {
+                    input.value = data[legacyKey];
+                }
+            });
+        }
+    }
+    const debouncedSave = debounce(saveToStorage, 300);
+    const childInputs = document.querySelectorAll('input, textarea');
+    childInputs.forEach(input => {
+        input.addEventListener('input', debouncedSave);
+    });
+    window.addEventListener('storage', function(e) {
+        if (e.key === STORAGE_KEY) {
+            restoreFromStorage();
+        }
+    });
+function qs(s){return document.querySelector(s);}function qsa(s){return Array.from(document.querySelectorAll(s));}function hexToRgba(hex,alpha){var h=hex.replace('#','');var bigint=parseInt(h,16);var r=(bigint>>16)&255;var g=(bigint>>8)&255;var b=bigint&255;return 'rgba('+r+', '+g+', '+b+', '+alpha+')';}function createContextMenu(){if(document.getElementById('contextMenu'))return;var cm=document.createElement('div');cm.id='contextMenu';cm.className='context-menu';document.body.appendChild(cm);}function attachRemoveHandlers(){var sels=['.remove-word','.wb-item-remove','.item-remove','.wb-item-remove','.remove-btn','.wb-remove'];sels.forEach(function(sel){qsa(sel).forEach(function(btn){if(btn._listenerAttached)return;btn._listenerAttached=true;btn.addEventListener('click',function(){var li=btn.closest('li')||btn.parentElement; if(li) li.remove();debouncedSave();});});});}function attachClearHandlers(){qsa('.btn-clear-questions').forEach(function(btn){if(btn._clearAttached)return;btn._clearAttached=true;btn.addEventListener('click',function(){qsa('input[class^="question-item-input"]').forEach(function(i){i.value='';});debouncedSave();});});qsa('.btn-clear-answers').forEach(function(btn){if(btn._clearAttached)return;btn._clearAttached=true;btn.addEventListener('click',function(){qsa('input[class^="answer-item-input"]').forEach(function(idebouncedSave();){i.value='';});});});}function attachSortContext(){qsa('.sort-words-input').forEach(function(input){input.addEventListener('contextmenu',function(e){e.preventDefault();var cm=document.getElementById('contextMenu');cm.innerHTML='';var lists=document.querySelectorAll('.sort-box-list');lists.forEach(function(list,idx){var item=document.createElement('div');item.className='context-menu-item';item.textContent='Add to Column '+(idx+1);item.addEventListener('click',function(){if(input.value){var li=document.createElement('li');li.textContent=input.value;var b=document.createElement('button');b.type='button';b.className='remove-word';b.textContent='×';b.addEventListener('click',function(){li.remove();debouncedSave();});li.appendChild(b);list.appendChild(li);input.value='';cm.classList.remove('show');debouncedSave();}});cm.appendChild(item);});cm.style.left=e.pageX+'px';cm.style.top=e.pageY+'px';cm.classList.add('show');});});}function attachGridContext(){qsa('.grid-input').forEach(function(input){input.addEventListener('contextmenu',function(e){e.preventDefault();var cm=document.getElementById('contextMenu');cm.innerHTML='';var form=input.closest('form')||document;var prefixes=form.querySelectorAll('input[name$="a"]');prefixes.forEach(function(pref,idx){var item=document.createElement('div');item.className='context-menu-item';item.textContent='Item '+(idx+1);item.addEventListener('click',function(){var valueToUse=input.value||pref.value; if(valueToUse){input.value=valueToUse; if(input.value) pref.value=input.value;}pref.scrollIntoView({behavior:'smooth',block:'center'});pref.focus();cm.classList.remove('show');debouncedSave();});cm.appendChild(item);});cm.style.left=e.pageX+'px';cm.style.top=e.pageY+'px';cm.classList.add('show');});});}function attachFocusToRelatedContext(){qsa('.focus-word-input').forEach(function(focusInput){focusInput.addEventListener('contextmenu',function(e){e.preventDefault();var cm=document.getElementById('contextMenu');cm.innerHTML='';var related=document.querySelectorAll('.related-word-input');related.forEach(function(r,idx){var item=document.createElement('div');item.className='context-menu-item';item.textContent='Set color for Related Word '+(idx+1);item.addEventListener('click',function(){var bg=getComputedStyle(focusInput).backgroundColor;r.style.backgroundColor=bg;cm.classListdebouncedSave();.remove('show');});cm.appendChild(item);});cm.style.left=e.pageX+'px';cm.style.top=e.pageY+'px';cm.classList.add('show');});});}function attachDoubleClickHandlers(){var colorMap={'a':'#c89f00','b':'#2e7d32','c':'#6a1b9a','d':'#ff6f00'};var inputs=qsa('input.answer-item-input');inputs.forEach(function(input){var cs=window.getComputedStyle(input);input.dataset._origBorder=input.style.border||cs.border;input.dataset._origBox=input.style.boxShadow||cs.boxShadow;var clickTimer=null;input.addEventListener('click',function(){if(clickTimer)clearTimeout(clickTimer);clickTimer=setTimeout(function(){input.classList.remove('answer-selected');input.style.border=input.dataset._origBorder||'';input.style.boxShadow=input.dataset._origBox||'';},300);});input.addEventListener('dblclick',function(){if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}var name=input.getAttribute('name')||'';var m=name.match(/([a-z])$/i);var letter=m?m[1].toLowerCase():'';var color=colorMap[letter]||'#000';input.classList.add('answer-selected');input.style.border='4px solid '+color;input.style.boxShadow='0 6px 18px '+hexToRgba(color,0.18);debouncedSave();});input.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.shiftKey){e.preventDefault();if(input.classList.contains('answer-selected')){input.classList.remove('answer-selected');input.style.border=input.dataset._origBorder||'';input.style.boxShadow=input.dataset._origBox||'';}else{var name=input.getAttribute('name')||'';var m=name.match(/([a-z])$/i);var letter=m?m[1].toLowerCase():'';var color=colorMap[letter]||'#000';input.classList.add('answer-selected');input.style.border='4px solid '+color;input.style.boxShadow='0 6px 18px '+hexToRgba(color,0.18);}debouncedSave();}});;});} document.addEventListener('click',function(e){var cm=document.getElementById('contextMenu');if(cm&&!cm.contains(e.target))cm.classList.remove('show');});createContextMenu();attachRemoveHandlers();attachClearHandlers();attachSortContext();attachGridContext();attachFocusToRelatedContext();attachDoubleClickHandlers();attachRemoveHandlers();var pdfBtn=document.getElementById('childDownloadPdfBtn');if(pdfBtn){pdfBtn.addEventListener('click',function(){window.print();});}var closeBtn=qs('#childCloseBtn');if(closeBtn){closeBtn.addEventListener('click',function(){saveToStorage();if(window.opener && window.opener.refreshMainPageInputs){window.opener.refreshMainPageInputs();}window.close();});}window.addEventListener('beforeunload',function(){saveToStorage();});restoreFromStorage();var first=document.querySelector('.question-item-input, .answer-item-input, input');if(first)first.focus();})();<\/script>`);
+                child.document.write('</body></html>');
+                child.document.close();
+            });
+        }
+
+        // Add selection behavior: dblclick to select (thicker bolder border), click to deselect
+        (function () {
+            // Map by the alphabetical signifier at end of the input name (a, b, c, d)
+            const colorMap = {
+                'a': '#c89f00',
+                'b': '#2e7d32',
+                'c': '#6a1b9a',
+                'd': '#ff6f00'
+            };
+
+            function hexToRgba(hex, alpha) {
+                const h = hex.replace('#', '');
+                const bigint = parseInt(h, 16);
+                const r = (bigint >> 16) & 255;
+                const g = (bigint >> 8) & 255;
+                const b = bigint & 255;
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            }
+
+            const inputs = Array.from(document.querySelectorAll('input.answer-item-input'));
+            inputs.forEach(input => {
+                const cs = window.getComputedStyle(input);
+                input.dataset._origBorder = input.style.border || cs.border;
+                input.dataset._origBox = input.style.boxShadow || cs.boxShadow;
+
+                let clickTimer = null;
+
+                input.addEventListener('click', function () {
+                    if (clickTimer) clearTimeout(clickTimer);
+                    clickTimer = setTimeout(() => {
+                        input.classList.remove('answer-selected');
+                        input.style.border = input.dataset._origBorder || '';
+                        input.style.boxShadow = input.dataset._origBox || '';
+                    }, 300);
+                });
+
+                input.addEventListener('dblclick', function () {
+                    if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+                    const name = input.getAttribute('name') || '';
+                    const m = name.match(/([a-z])$/i);
+                    const letter = m ? m[1].toLowerCase() : '';
+                    const color = colorMap[letter] || '#000';
+                    input.classList.add('answer-selected');
+                    input.style.border = `4px solid ${color}`;
+                    input.style.boxShadow = `0 6px 18px ${hexToRgba(color, 0.18)}`;
+                });
+
+                // Toggle selection with Shift+Enter when input is focused
+                input.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' && e.shiftKey) {
+                        e.preventDefault();
+                        if (input.classList.contains('answer-selected')) {
+                            input.classList.remove('answer-selected');
+                            input.style.border = input.dataset._origBorder || '';
+                            input.style.boxShadow = input.dataset._origBox || '';
+                        } else {
+                            const name = input.getAttribute('name') || '';
+                            const m = name.match(/([a-z])$/i);
+                            const letter = m ? m[1].toLowerCase() : '';
+                            const color = colorMap[letter] || '#000';
+                            input.classList.add('answer-selected');
+                            input.style.border = `4px solid ${color}`;
+                            input.style.boxShadow = `0 6px 18px ${hexToRgba(color, 0.18)}`;
+                        }
+                    }
+                });
+            });
+        })();
+    </script>
+</body>
+</html>
