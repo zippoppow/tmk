@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import {
 	Alert,
 	Box,
@@ -36,6 +37,7 @@ export default function ActivityShell({
 	notice,
 	setNotice,
 }) {
+	const router = useRouter();
 	const authLabel = authLoading
 		? 'Checking login...'
 		: authUser
@@ -75,6 +77,22 @@ export default function ActivityShell({
 			`}</style>
 			<Container maxWidth="lg">
 				<Stack spacing={1.5} sx={{ mb: 1.5 }} direction={{ xs: 'column', md: 'row' }}>
+					<Button
+						variant="outlined"
+						onClick={() => router.push('/dashboard')}
+						sx={{
+							textTransform: 'none',
+							backgroundColor: '#000',
+							color: '#fff',
+							borderColor: '#000',
+							'&:hover': {
+								backgroundColor: '#1f1f1f',
+								borderColor: '#1f1f1f',
+							},
+						}}
+					>
+						Dashboard
+					</Button>
 					<Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
 						{authUser ? 'Logout from Teachable' : 'Login with Teachable'}
 					</Button>

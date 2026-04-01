@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   Card,
@@ -40,6 +41,7 @@ function normalizeConstructorLessonInputData(rawData, expectedCount = 0) {
 }
 
 export default function ConstructorPage() {
+  const router = useRouter();
   const [lessonData, setLessonData] = useState(null);
   const [constructors, setConstructors] = useState([]);
   const [answers, setAnswers] = useState([]);
@@ -210,6 +212,22 @@ export default function ConstructorPage() {
     <Box component="main" sx={{ py: 4, bgcolor: '#f9f9f9', minHeight: '100vh' }}>
       <Container maxWidth="lg">
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ mb: 1.5 }}>
+          <Button
+            variant="outlined"
+            onClick={() => router.push('/dashboard')}
+            sx={{
+              textTransform: 'none',
+              backgroundColor: '#000',
+              color: '#fff',
+              borderColor: '#000',
+              '&:hover': {
+                backgroundColor: '#1f1f1f',
+                borderColor: '#1f1f1f',
+              },
+            }}
+          >
+            Dashboard
+          </Button>
           <Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
             {authUser ? 'Logout from Teachable' : 'Login with Teachable'}
           </Button>
