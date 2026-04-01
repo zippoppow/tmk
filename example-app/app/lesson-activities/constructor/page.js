@@ -24,7 +24,7 @@ import {
   readFormSessionData,
   resolveTmkApiOrigin,
   writeFormSessionData,
-} from '../../app/components/lessonActivityHelpers';
+} from '../../components/lessonActivityHelpers';
 
 const FORM_NAME = 'constructor';
 
