@@ -42,6 +42,10 @@ export const USER_AUTH_ENDPOINTS = {
 	refresh: '/api/auth/user/refresh',
 };
 
+export const TEACHABLE_SESSION_HEADER = 'x-tmk-teachable-session';
+export const TEACHABLE_SESSION_PARAM = 'teachable_session';
+export const TEACHABLE_SESSION_STORAGE_KEY = 'tmk-teachable-session-handoff';
+
 export const DIY_PROJECTS_ENDPOINT = '/api/diy-projects';
 export const DEFAULT_SESSION_STORAGE_KEY = 'tmk-diy-sessions';
 export const PROJECTS_STORAGE_KEY = 'tmk-diy-projects';
@@ -53,6 +57,7 @@ const AUTH_BYPASS_USER = {
 };
 
 let userAccessToken = '';
+let teachableSessionHandoff = '';
 
 export function getUserAccessTokenDebugInfo() {
 	const hasToken = Boolean(userAccessToken);
@@ -60,6 +65,73 @@ export function getUserAccessTokenDebugInfo() {
 		hasToken,
 		tokenPreview: hasToken ? `${userAccessToken.slice(0, 16)}...` : '',
 	};
+}
+
+export function getTeachableSessionDebugInfo() {
+	const session = getTeachableSessionHandoff();
+	const hasSession = Boolean(session);
+	return {
+		hasSession,
+		sessionPreview: hasSession ? `${session.slice(0, 12)}...` : '',
+	};
+}
+
+export function getTeachableSessionHandoff() {
+	if (teachableSessionHandoff) {
+		return teachableSessionHandoff;
+	}
+
+	if (typeof window === 'undefined') {
+		return '';
+	}
+
+	const stored = window.sessionStorage.getItem(TEACHABLE_SESSION_STORAGE_KEY) || '';
+	if (stored) {
+		teachableSessionHandoff = stored;
+	}
+
+	return teachableSessionHandoff;
+}
+
+export function setTeachableSessionHandoff(sessionId) {
+	teachableSessionHandoff = typeof sessionId === 'string' ? sessionId.trim() : '';
+
+	if (typeof window === 'undefined') {
+		return;
+	}
+
+	if (teachableSessionHandoff) {
+		window.sessionStorage.setItem(TEACHABLE_SESSION_STORAGE_KEY, teachableSessionHandoff);
+		return;
+	}
+
+	window.sessionStorage.removeItem(TEACHABLE_SESSION_STORAGE_KEY);
+}
+
+export function captureTeachableSessionFromUrl() {
+	if (typeof window === 'undefined') {
+		return '';
+	}
+
+	const url = new URL(window.location.href);
+	const sessionFromQuery = (url.searchParams.get(TEACHABLE_SESSION_PARAM) || '').trim();
+	if (!sessionFromQuery) {
+		return getTeachableSessionHandoff();
+	}
+
+	setTeachableSessionHandoff(sessionFromQuery);
+	url.searchParams.delete(TEACHABLE_SESSION_PARAM);
+	window.history.replaceState({}, '', url.toString());
+	return sessionFromQuery;
+}
+
+function applyTeachableSessionHeader(headers) {
+	const session = captureTeachableSessionFromUrl() || getTeachableSessionHandoff();
+	if (!session) {
+		return;
+	}
+
+	headers.set(TEACHABLE_SESSION_HEADER, session);
 }
 
 export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
@@ -107,6 +179,10 @@ export function buildTeachableLogoutUrl(redirectTo, apiOrigin) {
 	const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
 	const logoutUrl = new URL(OAUTH_ENDPOINTS.logout, origin);
 	logoutUrl.searchParams.set('redirectTo', redirectTo || window.location.href);
+	const session = getTeachableSessionHandoff();
+	if (session) {
+		logoutUrl.searchParams.set(TEACHABLE_SESSION_PARAM, session);
+	}
 	return logoutUrl.toString();
 }
 
@@ -132,10 +208,12 @@ function getAccessTokenFromPayload(payload) {
 export async function exchangeUserAccessToken(apiOrigin) {
 	try {
 		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+		const headers = new Headers({ 'Content-Type': 'application/json' });
+		applyTeachableSessionHeader(headers);
 		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.token}`, {
 			method: 'POST',
 			credentials: 'include',
-			headers: { 'Content-Type': 'application/json' },
+			headers,
 		});
 
 		if (!response.ok) {
@@ -157,10 +235,12 @@ export async function exchangeUserAccessToken(apiOrigin) {
 export async function refreshUserAccessToken(apiOrigin) {
 	try {
 		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+		const headers = new Headers({ 'Content-Type': 'application/json' });
+		applyTeachableSessionHeader(headers);
 		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.refresh}`, {
 			method: 'POST',
 			credentials: 'include',
-			headers: { 'Content-Type': 'application/json' },
+			headers,
 		});
 
 		if (!response.ok) {
@@ -200,6 +280,7 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 
 		const headers = new Headers(init.headers || {});
 		headers.set('Authorization', `Bearer ${token}`);
+		applyTeachableSessionHeader(headers);
 
 		const requestInit = {
 			...init,
@@ -214,6 +295,15 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 
 		const refreshed = await refreshUserAccessToken(apiOrigin);
 		if (!refreshed) {
+			const exchanged = await exchangeUserAccessToken(apiOrigin);
+			if (!exchanged) {
+				return response;
+			}
+			headers.set('Authorization', `Bearer ${exchanged}`);
+			response = await fetch(`${origin}${endpoint}`, {
+				...requestInit,
+				headers,
+			});
 			return response;
 		}
 
@@ -270,9 +360,12 @@ export async function fetchAuthenticatedUser(apiOrigin) {
 
 	try {
 		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+		const headers = new Headers();
+		applyTeachableSessionHeader(headers);
 		const response = await fetch(`${origin}${OAUTH_ENDPOINTS.me}`, {
 			method: 'GET',
 			credentials: 'include',
+			headers,
 		});
 
 		if (!response.ok) {
