@@ -131,9 +131,8 @@ function getAccessTokenFromPayload(payload) {
 
 export async function exchangeUserAccessToken(apiOrigin) {
 	try {
-		const response = await fetch(`${apiOrigin}${USER_AUTH_ENDPOINTS.token}`, {
+		const response = await fetch(USER_AUTH_ENDPOINTS.token, {
 			method: 'POST',
-			credentials: 'include',
 			headers: { 'Content-Type': 'application/json' },
 		});
 
@@ -155,9 +154,8 @@ export async function exchangeUserAccessToken(apiOrigin) {
 
 export async function refreshUserAccessToken(apiOrigin) {
 	try {
-		const response = await fetch(`${apiOrigin}${USER_AUTH_ENDPOINTS.refresh}`, {
+		const response = await fetch(USER_AUTH_ENDPOINTS.refresh, {
 			method: 'POST',
-			credentials: 'include',
 			headers: { 'Content-Type': 'application/json' },
 		});
 
@@ -201,10 +199,9 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 		const requestInit = {
 			...init,
 			headers,
-			credentials: 'include',
 		};
 
-		let response = await fetch(`${apiOrigin}${endpoint}`, requestInit);
+		let response = await fetch(endpoint, requestInit);
 		if (response.status !== 401) {
 			return response;
 		}
@@ -215,7 +212,7 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 		}
 
 		headers.set('Authorization', `Bearer ${refreshed}`);
-		response = await fetch(`${apiOrigin}${endpoint}`, {
+		response = await fetch(endpoint, {
 			...requestInit,
 			headers,
 		});
