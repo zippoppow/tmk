@@ -24,6 +24,7 @@ function summarizeJson(payload) {
 
 export default function AuthDebugPanel() {
   const apiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
+  const appOrigin = useMemo(() => (typeof window === 'undefined' ? '' : window.location.origin), []);
   const [status, setStatus] = useState('Idle');
   const [details, setDetails] = useState('');
   const [isBusy, setIsBusy] = useState(false);
@@ -109,8 +110,13 @@ export default function AuthDebugPanel() {
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', md: 'center' }}>
         <Typography sx={{ fontWeight: 700, fontSize: '0.9rem' }}>Auth Debug</Typography>
         <Chip size="small" label={tokenInfo.hasToken ? 'Token cached' : 'No token cached'} color={tokenInfo.hasToken ? 'success' : 'default'} />
+        <Chip size="small" label={`App: ${appOrigin || 'unknown'}`} variant="outlined" />
         <Chip size="small" label={`API: ${apiOrigin}`} variant="outlined" />
       </Stack>
+
+      <Typography sx={{ mt: 0.8, fontSize: '0.72rem', color: '#64748b' }}>
+        Session, token, and DIY probes call the API origin directly with credentials include.
+      </Typography>
 
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ mt: 1 }}>
         <Button size="small" variant="outlined" onClick={handleCheckSession} disabled={isBusy}>Check Session</Button>

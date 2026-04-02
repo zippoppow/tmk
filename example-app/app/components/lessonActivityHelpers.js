@@ -131,8 +131,10 @@ function getAccessTokenFromPayload(payload) {
 
 export async function exchangeUserAccessToken(apiOrigin) {
 	try {
-		const response = await fetch(USER_AUTH_ENDPOINTS.token, {
+		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.token}`, {
 			method: 'POST',
+			credentials: 'include',
 			headers: { 'Content-Type': 'application/json' },
 		});
 
@@ -154,8 +156,10 @@ export async function exchangeUserAccessToken(apiOrigin) {
 
 export async function refreshUserAccessToken(apiOrigin) {
 	try {
-		const response = await fetch(USER_AUTH_ENDPOINTS.refresh, {
+		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.refresh}`, {
 			method: 'POST',
+			credentials: 'include',
 			headers: { 'Content-Type': 'application/json' },
 		});
 
@@ -188,6 +192,7 @@ export async function getUserAccessToken(apiOrigin, forceRefresh = false) {
 
 export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 	try {
+		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
 		const token = await getUserAccessToken(apiOrigin);
 		if (!token) {
 			return new Response(null, { status: 401, statusText: 'Unauthorized' });
@@ -199,9 +204,10 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 		const requestInit = {
 			...init,
 			headers,
+			credentials: 'include',
 		};
 
-		let response = await fetch(endpoint, requestInit);
+		let response = await fetch(`${origin}${endpoint}`, requestInit);
 		if (response.status !== 401) {
 			return response;
 		}
@@ -212,7 +218,7 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 		}
 
 		headers.set('Authorization', `Bearer ${refreshed}`);
-		response = await fetch(endpoint, {
+		response = await fetch(`${origin}${endpoint}`, {
 			...requestInit,
 			headers,
 		});
