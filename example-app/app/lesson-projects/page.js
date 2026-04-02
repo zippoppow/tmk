@@ -19,6 +19,7 @@ import {
 import {
 	DIY_PROJECTS_ENDPOINT,
 	buildTeachableLogoutUrl,
+	fetchWithUserToken,
 	fetchAuthenticatedUser,
 	formatActivityDate,
 	formatProjectDate,
@@ -35,6 +36,7 @@ import {
 	mergeDisplayProjects,
 	normalizeCloudProjects,
 } from '../components/projectManagerModel';
+import AuthDebugPanel from '../components/AuthDebugPanel';
 
 const PROJECT_FORM_NAME = 'lesson-activities-project';
 const LESSON_ACTIVITY_TYPES = [
@@ -120,9 +122,8 @@ export default function LessonProjectsPage() {
 		setCloudStatus('');
 
 		try {
-			const response = await fetch(`${apiOrigin}${DIY_PROJECTS_ENDPOINT}`, {
+			const response = await fetchWithUserToken(apiOrigin, DIY_PROJECTS_ENDPOINT, {
 				method: 'GET',
-				credentials: 'include',
 			});
 
 			if (!response.ok) {
@@ -151,12 +152,10 @@ export default function LessonProjectsPage() {
 			const payload = buildDiyProjectsPayload({
 				project,
 				formName: PROJECT_FORM_NAME,
-				userEmail: authUser?.email,
 				normalizeLessonInputData,
 			});
-			const response = await fetch(`${apiOrigin}${DIY_PROJECTS_ENDPOINT}`, {
-				method: 'POST',
-				credentials: 'include',
+			const response = await fetchWithUserToken(apiOrigin, DIY_PROJECTS_ENDPOINT, {
+				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(payload),
 			});
@@ -204,7 +203,7 @@ export default function LessonProjectsPage() {
 	const runAuthCheck = async () => {
 		setAuthLoading(true);
 		try {
-			const user = await fetchAuthenticatedUser();
+			const user = await fetchAuthenticatedUser(apiOrigin);
 			setAuthUser(user);
 		} catch {
 			setAuthUser(null);
@@ -475,6 +474,7 @@ export default function LessonProjectsPage() {
 			}}
 		>
 			<Container maxWidth="xl">
+				<AuthDebugPanel />
 				<Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} sx={{ mb: 2 }}>
 					<Button variant="outlined" onClick={() => router.push('/dashboard')} sx={{ textTransform: 'none' }}>
 						Back to Dashboard

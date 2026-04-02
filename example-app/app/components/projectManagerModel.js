@@ -156,7 +156,7 @@ export function mergeDisplayProjects(localProjects, cloudProjects, formName, nor
 	return [...localWithActivities, ...cloudOnly];
 }
 
-export function buildDiyProjectsPayload({ project, formName, userEmail, normalizeLessonInputData }) {
+export function buildDiyProjectsPayload({ project, formName, normalizeLessonInputData }) {
 	const now = Date.now();
 	const createdAtMs = Number.isFinite(project.createdAtMs) ? project.createdAtMs : now;
 	const modifiedAtMs = Number.isFinite(project.modifiedAtMs) ? project.modifiedAtMs : now;
@@ -175,7 +175,6 @@ export function buildDiyProjectsPayload({ project, formName, userEmail, normaliz
 			];
 
 	return {
-		'user-email': userEmail || '',
 		'diy-projects': [
 			{
 				'project-name': String(project.name || ''),

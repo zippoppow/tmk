@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { buildTeachableLogoutUrl } from '../components/lessonActivityHelpers';
+import { buildTeachableLogoutUrl, fetchAuthenticatedUser, resolveTmkApiOrigin } from '../components/lessonActivityHelpers';
 import {
     Container,
     Box,
@@ -13,12 +13,7 @@ import {
     Grid,
     CircularProgress,
 } from '@mui/material';
-
-const AUTH_BYPASS_ENABLED = true;
-const AUTH_BYPASS_USER = {
-    name: 'Development User',
-    email: 'dev@example.com',
-};
+import AuthDebugPanel from '../components/AuthDebugPanel';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -26,29 +21,15 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (AUTH_BYPASS_ENABLED) {
-            setUser(AUTH_BYPASS_USER);
-            setLoading(false);
-            return;
-        }
-
         // Check authentication status
         const checkAuth = async () => {
             try {
-                const response = await fetch('/api/auth/teachable/me', {
-                    method: 'GET',
-                    credentials: 'include',
-                });
-                if (!response.ok) {
+                const userData = await fetchAuthenticatedUser(resolveTmkApiOrigin());
+                if (!userData) {
                     router.push('/login?next=/dashboard');
                     return;
                 }
-                const userData = await response.json();
-                if (!userData?.authenticated) {
-                    router.push('/login?next=/dashboard');
-                    return;
-                }
-                setUser(userData.user || null);
+                setUser(userData);
             } catch (error) {
                 console.error('Auth check failed:', error);
                 router.push('/login?next=/dashboard');
@@ -61,12 +42,7 @@ export default function DashboardPage() {
     }, [router]);
 
     const handleLogout = () => {
-        if (AUTH_BYPASS_ENABLED) {
-            router.push('/');
-            return;
-        }
-
-        window.location.href = buildTeachableLogoutUrl('/login?next=/dashboard');
+        window.location.href = buildTeachableLogoutUrl('/login?next=/dashboard', resolveTmkApiOrigin());
     };
 
     if (loading) {
@@ -103,6 +79,7 @@ export default function DashboardPage() {
 
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
+            <AuthDebugPanel />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                 <Typography variant="h4" component="h1">
                     Dashboard

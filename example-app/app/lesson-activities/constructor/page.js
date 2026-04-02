@@ -185,7 +185,7 @@ export default function ConstructorPage() {
 
   const handleLoginLogout = () => {
     if (authUser) {
-      window.location.href = buildTeachableLogoutUrl(window.location.href);
+      window.location.href = buildTeachableLogoutUrl(window.location.href, apiOrigin);
       return;
     }
 

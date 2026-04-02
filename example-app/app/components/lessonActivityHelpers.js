@@ -37,15 +37,30 @@ export const OAUTH_ENDPOINTS = {
 	logout: '/api/auth/teachable/logout',
 };
 
+export const USER_AUTH_ENDPOINTS = {
+	token: '/api/auth/user/token',
+	refresh: '/api/auth/user/refresh',
+};
+
 export const DIY_PROJECTS_ENDPOINT = '/api/diy-projects';
 export const DEFAULT_SESSION_STORAGE_KEY = 'tmk-diy-sessions';
 export const PROJECTS_STORAGE_KEY = 'tmk-diy-projects';
-export const AUTH_BYPASS_ENABLED = true;
+export const AUTH_BYPASS_ENABLED = false;
 const AUTH_BYPASS_USER = {
 	id: 'dev-user',
 	name: 'Development User',
 	email: 'dev@example.com',
 };
+
+let userAccessToken = '';
+
+export function getUserAccessTokenDebugInfo() {
+	const hasToken = Boolean(userAccessToken);
+	return {
+		hasToken,
+		tokenPreview: hasToken ? `${userAccessToken.slice(0, 16)}...` : '',
+	};
+}
 
 export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
 	const resolvedOrigins = getConfiguredApiOrigins(origins);
@@ -81,16 +96,134 @@ export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
 }
 
 export function buildTeachableStartUrl(apiOrigin, redirectTo) {
-	const authUrl = new URL(OAUTH_ENDPOINTS.start, window.location.origin);
+	const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+	const authUrl = new URL(OAUTH_ENDPOINTS.start, origin);
 	authUrl.searchParams.set('redirectTo', redirectTo || window.location.href);
 	console.log('[TMK auth] start URL:', authUrl.toString());
 	return authUrl.toString();
 }
 
-export function buildTeachableLogoutUrl(redirectTo) {
-	const logoutUrl = new URL(OAUTH_ENDPOINTS.logout, window.location.origin);
+export function buildTeachableLogoutUrl(redirectTo, apiOrigin) {
+	const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+	const logoutUrl = new URL(OAUTH_ENDPOINTS.logout, origin);
 	logoutUrl.searchParams.set('redirectTo', redirectTo || window.location.href);
 	return logoutUrl.toString();
+}
+
+function getAccessTokenFromPayload(payload) {
+	if (!payload || typeof payload !== 'object') {
+		return '';
+	}
+
+	if (typeof payload.access_token === 'string' && payload.access_token.trim()) {
+		return payload.access_token.trim();
+	}
+
+	if (payload.data && typeof payload.data === 'object') {
+		const nested = payload.data;
+		if (typeof nested.access_token === 'string' && nested.access_token.trim()) {
+			return nested.access_token.trim();
+		}
+	}
+
+	return '';
+}
+
+export async function exchangeUserAccessToken(apiOrigin) {
+	try {
+		const response = await fetch(`${apiOrigin}${USER_AUTH_ENDPOINTS.token}`, {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'Content-Type': 'application/json' },
+		});
+
+		if (!response.ok) {
+			return '';
+		}
+
+		const payload = await response.json().catch(() => ({}));
+		const token = getAccessTokenFromPayload(payload);
+		if (token) {
+			userAccessToken = token;
+		}
+
+		return token;
+	} catch {
+		return '';
+	}
+}
+
+export async function refreshUserAccessToken(apiOrigin) {
+	try {
+		const response = await fetch(`${apiOrigin}${USER_AUTH_ENDPOINTS.refresh}`, {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'Content-Type': 'application/json' },
+		});
+
+		if (!response.ok) {
+			userAccessToken = '';
+			return '';
+		}
+
+		const payload = await response.json().catch(() => ({}));
+		const token = getAccessTokenFromPayload(payload);
+		userAccessToken = token || '';
+		return userAccessToken;
+	} catch {
+		userAccessToken = '';
+		return '';
+	}
+}
+
+export async function getUserAccessToken(apiOrigin, forceRefresh = false) {
+	if (!forceRefresh && userAccessToken) {
+		return userAccessToken;
+	}
+
+	if (forceRefresh) {
+		return refreshUserAccessToken(apiOrigin);
+	}
+
+	return exchangeUserAccessToken(apiOrigin);
+}
+
+export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
+	try {
+		const token = await getUserAccessToken(apiOrigin);
+		if (!token) {
+			return new Response(null, { status: 401, statusText: 'Unauthorized' });
+		}
+
+		const headers = new Headers(init.headers || {});
+		headers.set('Authorization', `Bearer ${token}`);
+
+		const requestInit = {
+			...init,
+			headers,
+			credentials: 'include',
+		};
+
+		let response = await fetch(`${apiOrigin}${endpoint}`, requestInit);
+		if (response.status !== 401) {
+			return response;
+		}
+
+		const refreshed = await refreshUserAccessToken(apiOrigin);
+		if (!refreshed) {
+			return response;
+		}
+
+		headers.set('Authorization', `Bearer ${refreshed}`);
+		response = await fetch(`${apiOrigin}${endpoint}`, {
+			...requestInit,
+			headers,
+		});
+
+		return response;
+	} catch {
+		return new Response(null, { status: 503, statusText: 'Service unavailable' });
+	}
 }
 
 export function extractAuthenticatedUser(data) {
@@ -133,7 +266,8 @@ export async function fetchAuthenticatedUser(apiOrigin) {
 	}
 
 	try {
-		const response = await fetch(OAUTH_ENDPOINTS.me, {
+		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+		const response = await fetch(`${origin}${OAUTH_ENDPOINTS.me}`, {
 			method: 'GET',
 			credentials: 'include',
 		});
@@ -147,6 +281,9 @@ export async function fetchAuthenticatedUser(apiOrigin) {
 
 		const data = await response.json();
 		const user = extractAuthenticatedUser(data);
+		if (user) {
+			await exchangeUserAccessToken(origin);
+		}
 		//if (!user && process.env.NODE_ENV !== 'production') {
 			console.warn('[TMK auth] /me returned 200 but could not extract user. Raw response:', data);
 		//}

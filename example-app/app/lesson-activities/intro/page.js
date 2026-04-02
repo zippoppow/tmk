@@ -19,6 +19,7 @@ import {
 import {
 	buildTeachableLogoutUrl,
 	buildTeachableStartUrl,
+	fetchWithUserToken,
 	fetchAuthenticatedUser,
 	readFormSessionData,
 	resolveTmkApiOrigin,
@@ -166,7 +167,7 @@ export default function IntroPage() {
 	const runAuthCheck = async () => {
 		setAuthLoading(true);
 		try {
-			const user = await fetchAuthenticatedUser();
+			const user = await fetchAuthenticatedUser(projectApiOrigin);
 			setAuthUser(user);
 		} catch {
 			setAuthUser(null);
@@ -220,12 +221,12 @@ export default function IntroPage() {
 	};
 
 	const initiateOAuthLogin = () => {
-		window.location.href = buildTeachableStartUrl(null, window.location.href);
+		window.location.href = buildTeachableStartUrl(projectApiOrigin, window.location.href);
 	};
 
 	const handleLoginLogout = () => {
 		if (authUser) {
-			window.location.href = buildTeachableLogoutUrl(window.location.href);
+			window.location.href = buildTeachableLogoutUrl(window.location.href, projectApiOrigin);
 			return;
 		}
 
@@ -265,20 +266,18 @@ export default function IntroPage() {
 			project.lessonActivities = activities;
 			project.modifiedAtMs = Date.now();
 
-			if (authUser?.email) {
+			if (authUser) {
 				project.syncedAt = null;
 				saveStoredProjects(projects);
 
 				const payload = buildDiyProjectsPayload({
 					project,
 					formName: 'lesson-activities-project',
-					userEmail: authUser.email,
 					normalizeLessonInputData: (data) => data || {},
 				});
 
-				const response = await fetch(`${projectApiOrigin}${DIY_PROJECTS_ENDPOINT}`, {
-					method: 'POST',
-					credentials: 'include',
+				const response = await fetchWithUserToken(projectApiOrigin, DIY_PROJECTS_ENDPOINT, {
+					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(payload),
 				});
