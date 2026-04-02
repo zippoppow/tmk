@@ -42,7 +42,6 @@ export const USER_AUTH_ENDPOINTS = {
 	refresh: '/api/auth/user/refresh',
 };
 
-export const TEACHABLE_SESSION_HEADER = 'x-tmk-teachable-session';
 export const TEACHABLE_SESSION_PARAM = 'teachable_session';
 export const TEACHABLE_SESSION_STORAGE_KEY = 'tmk-teachable-session-handoff';
 
@@ -125,13 +124,14 @@ export function captureTeachableSessionFromUrl() {
 	return sessionFromQuery;
 }
 
-function applyTeachableSessionHeader(headers) {
+function addTeachableSessionToPath(path) {
 	const session = captureTeachableSessionFromUrl() || getTeachableSessionHandoff();
 	if (!session) {
-		return;
+		return path;
 	}
 
-	headers.set(TEACHABLE_SESSION_HEADER, session);
+	const separator = path.includes('?') ? '&' : '?';
+	return `${path}${separator}${TEACHABLE_SESSION_PARAM}=${encodeURIComponent(session)}`;
 }
 
 export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
@@ -208,12 +208,10 @@ function getAccessTokenFromPayload(payload) {
 export async function exchangeUserAccessToken(apiOrigin) {
 	try {
 		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
-		const headers = new Headers({ 'Content-Type': 'application/json' });
-		applyTeachableSessionHeader(headers);
-		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.token}`, {
+		const tokenPath = addTeachableSessionToPath(USER_AUTH_ENDPOINTS.token);
+		const response = await fetch(`${origin}${tokenPath}`, {
 			method: 'POST',
 			credentials: 'include',
-			headers,
 		});
 
 		if (!response.ok) {
@@ -235,12 +233,9 @@ export async function exchangeUserAccessToken(apiOrigin) {
 export async function refreshUserAccessToken(apiOrigin) {
 	try {
 		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
-		const headers = new Headers({ 'Content-Type': 'application/json' });
-		applyTeachableSessionHeader(headers);
 		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.refresh}`, {
 			method: 'POST',
 			credentials: 'include',
-			headers,
 		});
 
 		if (!response.ok) {
@@ -280,7 +275,6 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 
 		const headers = new Headers(init.headers || {});
 		headers.set('Authorization', `Bearer ${token}`);
-		applyTeachableSessionHeader(headers);
 
 		const requestInit = {
 			...init,
@@ -288,7 +282,8 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 			credentials: 'include',
 		};
 
-		let response = await fetch(`${origin}${endpoint}`, requestInit);
+		const endpointPath = addTeachableSessionToPath(endpoint);
+		let response = await fetch(`${origin}${endpointPath}`, requestInit);
 		if (response.status !== 401) {
 			return response;
 		}
@@ -308,7 +303,7 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 		}
 
 		headers.set('Authorization', `Bearer ${refreshed}`);
-		response = await fetch(`${origin}${endpoint}`, {
+		response = await fetch(`${origin}${endpointPath}`, {
 			...requestInit,
 			headers,
 		});
@@ -360,12 +355,10 @@ export async function fetchAuthenticatedUser(apiOrigin) {
 
 	try {
 		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
-		const headers = new Headers();
-		applyTeachableSessionHeader(headers);
-		const response = await fetch(`${origin}${OAUTH_ENDPOINTS.me}`, {
+		const mePath = addTeachableSessionToPath(OAUTH_ENDPOINTS.me);
+		const response = await fetch(`${origin}${mePath}`, {
 			method: 'GET',
 			credentials: 'include',
-			headers,
 		});
 
 		if (!response.ok) {
