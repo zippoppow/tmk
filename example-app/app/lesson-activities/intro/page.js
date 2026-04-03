@@ -19,6 +19,8 @@ import {
 import {
 	buildTeachableLogoutUrl,
 	buildTeachableStartUrl,
+	createLessonActivityId,
+	upsertLessonActivity,
 	fetchWithUserToken,
 	fetchAuthenticatedUser,
 	readFormSessionData,
@@ -257,8 +259,10 @@ export default function IntroPage() {
 			}
 
 			const normalizedInput = normalizeIntroLessonInputData({ morpheme, words, questionMorpheme });
+			const activityId = String(activities[activityIndex].id || createLessonActivityId());
 			activities[activityIndex] = {
 				...activities[activityIndex],
+				id: activityId,
 				'lesson-name': activityName || activities[activityIndex]['lesson-name'] || 'Intro Activity',
 				'lesson-input-data': normalizedInput,
 				'modified-at': Date.now(),
@@ -269,6 +273,22 @@ export default function IntroPage() {
 			if (authUser) {
 				project.syncedAt = null;
 				saveStoredProjects(projects);
+
+				const lessonActivityResponse = await upsertLessonActivity(projectApiOrigin, {
+					id: activityId,
+					projectId,
+					projectName: project.name || '',
+					formName: FORM_NAME,
+					'tmk-template': String(activities[activityIndex]['tmk-template'] || FORM_NAME),
+					'lesson-name': String(activities[activityIndex]['lesson-name'] || 'Intro Activity'),
+					'lesson-input-data': normalizedInput,
+					'created-at': Number.isFinite(Number(activities[activityIndex]['created-at']))
+						? Number(activities[activityIndex]['created-at'])
+						: Date.now(),
+					'modified-at': Number.isFinite(Number(activities[activityIndex]['modified-at']))
+						? Number(activities[activityIndex]['modified-at'])
+						: Date.now(),
+				});
 
 				const payload = buildDiyProjectsPayload({
 					project,
@@ -282,7 +302,7 @@ export default function IntroPage() {
 					body: JSON.stringify(payload),
 				});
 
-				if (response.ok) {
+				if (response.ok && lessonActivityResponse.ok) {
 					const result = await response.json();
 					const updated = getAllStoredProjects();
 					const updatedProject = updated.find((item) => item.id === projectId);

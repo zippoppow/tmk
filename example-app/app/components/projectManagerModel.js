@@ -1,4 +1,4 @@
-import { createProjectId, extractDiyProjectsFromResponse } from './lessonActivityHelpers';
+import { createLessonActivityId, createProjectId, extractDiyProjectsFromResponse } from './lessonActivityHelpers';
 
 export function getProjectLessonActivities(project, formName, normalizeLessonInputData) {
 	if (project && Array.isArray(project.lessonActivities) && project.lessonActivities.length > 0) {
@@ -37,6 +37,7 @@ export function createLessonActivitySnapshot({
 }) {
 	const now = Date.now();
 	return {
+		id: createLessonActivityId(),
 		'tmk-template': formName,
 		'lesson-name': String(lessonName || projectName || ''),
 		'created-at': now,
@@ -100,6 +101,7 @@ export function normalizeCloudProjects(payload, formName, normalizeLessonInputDa
 		const lessonActivities = activities
 			.filter((activity) => activity && activity['lesson-input-data'])
 			.map((activity) => ({
+				id: String(activity.id || activity['lesson-activity-id'] || createLessonActivityId()),
 				'tmk-template': String(activity['tmk-template'] || ''),
 				'lesson-name': String(activity['lesson-name'] || project['project-name'] || ''),
 				'created-at': Number.isFinite(Number(activity['created-at']))

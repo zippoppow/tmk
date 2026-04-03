@@ -18,12 +18,16 @@ import {
 } from '@mui/material';
 import {
 	DIY_PROJECTS_ENDPOINT,
+	LESSON_ACTIVITIES_ENDPOINT,
 	buildTeachableLogoutUrl,
+	createLessonActivityId,
+	deleteLessonActivityById,
 	fetchWithUserToken,
 	fetchAuthenticatedUser,
 	formatActivityDate,
 	formatProjectDate,
 	getAllStoredProjects,
+	listLessonActivities,
 	resolveTmkApiOrigin,
 	saveStoredProjects,
 } from '../components/lessonActivityHelpers';
@@ -133,7 +137,70 @@ export default function LessonProjectsPage() {
 			}
 
 			const payload = await response.json();
-			setCloudProjects(normalizeCloudProjects(payload, PROJECT_FORM_NAME, normalizeLessonInputData));
+			const normalizedProjects = normalizeCloudProjects(payload, PROJECT_FORM_NAME, normalizeLessonInputData);
+			const activityRecords = await listLessonActivities(apiOrigin);
+			const recordsByProjectId = new Map();
+			const recordsByProjectName = new Map();
+			activityRecords.forEach((record) => {
+				const key = String(record?.projectId || '').trim();
+				if (!key) {
+					const nameKey = String(record?.projectName || '').trim();
+					if (!nameKey) {
+						return;
+					}
+					const nameList = recordsByProjectName.get(nameKey) || [];
+					nameList.push(record);
+					recordsByProjectName.set(nameKey, nameList);
+					return;
+				}
+				const list = recordsByProjectId.get(key) || [];
+				list.push(record);
+				recordsByProjectId.set(key, list);
+
+				const nameKey = String(record?.projectName || '').trim();
+				if (nameKey) {
+					const nameList = recordsByProjectName.get(nameKey) || [];
+					nameList.push(record);
+					recordsByProjectName.set(nameKey, nameList);
+				}
+			});
+
+			const enrichedProjects = normalizedProjects.map((project) => {
+				const candidatesById = recordsByProjectId.get(String(project.id || '').trim()) || [];
+				const candidatesByName = recordsByProjectName.get(String(project.name || '').trim()) || [];
+				const candidates = [...candidatesById, ...candidatesByName];
+				if (!candidates.length) {
+					return project;
+				}
+
+				const lessonActivities = project.lessonActivities.map((activity) => {
+					if (activity?.id) {
+						return activity;
+					}
+
+					const match = candidates.find((record) => {
+						const sameTemplate = String(record?.['tmk-template'] || record?.formName || '') === String(activity?.['tmk-template'] || '');
+						const sameName = String(record?.['lesson-name'] || '') === String(activity?.['lesson-name'] || '');
+						return sameTemplate && sameName;
+					});
+
+					if (!match?.id) {
+						return activity;
+					}
+
+					return {
+						...activity,
+						id: String(match.id),
+					};
+				});
+
+				return {
+					...project,
+					lessonActivities,
+				};
+			});
+
+			setCloudProjects(enrichedProjects);
 		} catch (error) {
 			console.error('Failed to load cloud projects:', error);
 			setCloudProjects([]);
@@ -149,6 +216,27 @@ export default function LessonProjectsPage() {
 		}
 
 		try {
+			const activities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
+			for (const activity of activities) {
+				const activityId = String(activity.id || createLessonActivityId());
+				activity.id = activityId;
+				await fetchWithUserToken(apiOrigin, LESSON_ACTIVITIES_ENDPOINT, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						id: activityId,
+						projectId: project.id,
+						projectName: project.name || '',
+						formName: String(activity['tmk-template'] || ''),
+						'tmk-template': String(activity['tmk-template'] || ''),
+						'lesson-name': String(activity['lesson-name'] || project.name || ''),
+						'lesson-input-data': normalizeLessonInputData(activity['lesson-input-data'] || {}),
+						'created-at': Number.isFinite(Number(activity['created-at'])) ? Number(activity['created-at']) : Date.now(),
+						'modified-at': Number.isFinite(Number(activity['modified-at'])) ? Number(activity['modified-at']) : Date.now(),
+					}),
+				});
+			}
+
 			const payload = buildDiyProjectsPayload({
 				project,
 				formName: PROJECT_FORM_NAME,
@@ -280,6 +368,15 @@ export default function LessonProjectsPage() {
 			return;
 		}
 
+		if (isAuthenticated) {
+			const activities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
+			activities.forEach((activity) => {
+				if (activity?.id) {
+					deleteLessonActivityById(apiOrigin, String(activity.id));
+				}
+			});
+		}
+
 		saveStoredProjects(getAllStoredProjects().filter((item) => item.id !== projectId));
 		if (selectedLocalProjectId === projectId) {
 			setSelectedLocalProjectId(null);
@@ -379,7 +476,7 @@ export default function LessonProjectsPage() {
 		showNotice('success', 'Lesson activity name updated.');
 	};
 
-	const handleDeleteActivity = (projectId, activityIndex) => {
+	const handleDeleteActivity = async (projectId, activityIndex) => {
 		const projects = getAllStoredProjects();
 		const projectIndex = projects.findIndex((item) => item.id === projectId);
 		if (projectIndex === -1) {
@@ -401,6 +498,9 @@ export default function LessonProjectsPage() {
 		}
 
 		const nextActivities = activities.filter((_, idx) => idx !== activityIndex);
+		if (isAuthenticated && activity?.id) {
+			await deleteLessonActivityById(apiOrigin, String(activity.id));
+		}
 		if (nextActivities.length === 0) {
 			project.lessonActivities = [];
 		} else {
@@ -639,6 +739,21 @@ export default function LessonProjectsPage() {
 																{activityType}
 																{formatActivityDate(activity['modified-at']) ? ` · ${formatActivityDate(activity['modified-at'])}` : ''}
 															</Typography>
+															{activity?.id ? (
+																<Chip
+																	size="small"
+																	label={`ID: ${String(activity.id).slice(0, 10)}...`}
+																	variant="outlined"
+																	sx={{ height: 20, fontSize: '0.68rem', color: '#4b5563', borderColor: '#cbd5e1' }}
+																/>
+															) : (
+																<Chip
+																	size="small"
+																	label="ID: pending"
+																	variant="outlined"
+																	sx={{ height: 20, fontSize: '0.68rem', color: '#9ca3af', borderColor: '#e5e7eb' }}
+																/>
+															)}
 															<Button
 																size="small"
 																variant="contained"

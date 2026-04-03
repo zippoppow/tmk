@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import {
 	buildTeachableLogoutUrl,
 	buildTeachableStartUrl,
+	createLessonActivityId,
+	upsertLessonActivity,
 	fetchAuthenticatedUser,
 	fetchWithUserToken,
 	readFormSessionData,
@@ -189,8 +191,10 @@ export function useLessonActivityProject({
 			}
 
 			const normalizedInput = normalizeInputData(data);
+			const activityId = String(activities[activityIndex].id || createLessonActivityId());
 			activities[activityIndex] = {
 				...activities[activityIndex],
+				id: activityId,
 				'lesson-name': activityName || activities[activityIndex]['lesson-name'] || defaultActivityName,
 				'lesson-input-data': normalizedInput,
 				'modified-at': Date.now(),
@@ -201,6 +205,22 @@ export function useLessonActivityProject({
 			if (authUser) {
 				project.syncedAt = null;
 				saveStoredProjects(projects);
+
+				const lessonActivityResponse = await upsertLessonActivity(projectApiOrigin, {
+					id: activityId,
+					projectId,
+					projectName: project.name || '',
+					formName,
+					'tmk-template': String(activities[activityIndex]['tmk-template'] || formName),
+					'lesson-name': String(activities[activityIndex]['lesson-name'] || defaultActivityName),
+					'lesson-input-data': normalizedInput,
+					'created-at': Number.isFinite(Number(activities[activityIndex]['created-at']))
+						? Number(activities[activityIndex]['created-at'])
+						: Date.now(),
+					'modified-at': Number.isFinite(Number(activities[activityIndex]['modified-at']))
+						? Number(activities[activityIndex]['modified-at'])
+						: Date.now(),
+				});
 
 				const payload = buildDiyProjectsPayload({
 					project,
@@ -214,7 +234,7 @@ export function useLessonActivityProject({
 					body: JSON.stringify(payload),
 				});
 
-				if (response.ok) {
+				if (response.ok && lessonActivityResponse.ok) {
 					const result = await response.json();
 					const updated = getAllStoredProjects();
 					const updatedProject = updated.find((item) => item.id === projectId);

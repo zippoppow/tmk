@@ -44,6 +44,7 @@ export const USER_AUTH_ENDPOINTS = {
 
 export const TEACHABLE_SESSION_PARAM = 'teachable_session';
 export const TEACHABLE_SESSION_STORAGE_KEY = 'tmk-teachable-session-handoff';
+export const LESSON_ACTIVITIES_ENDPOINT = '/api/lesson-activities';
 
 export const DIY_PROJECTS_ENDPOINT = '/api/diy-projects';
 export const DEFAULT_SESSION_STORAGE_KEY = 'tmk-diy-sessions';
@@ -431,6 +432,67 @@ export function saveStoredProjects(projects, storageKey = PROJECTS_STORAGE_KEY) 
 
 export function createProjectId() {
 	return `proj_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function createLessonActivityId() {
+	return `la_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function normalizeLessonActivityPayload(payload) {
+	if (!payload || typeof payload !== 'object') {
+		return [];
+	}
+
+	if (Array.isArray(payload)) {
+		return payload;
+	}
+
+	if (Array.isArray(payload['lesson-activities'])) {
+		return payload['lesson-activities'];
+	}
+
+	if (payload.data && Array.isArray(payload.data['lesson-activities'])) {
+		return payload.data['lesson-activities'];
+	}
+
+	if (payload.data && Array.isArray(payload.data)) {
+		return payload.data;
+	}
+
+	return [];
+}
+
+export async function upsertLessonActivity(apiOrigin, record) {
+	return fetchWithUserToken(apiOrigin, LESSON_ACTIVITIES_ENDPOINT, {
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(record),
+	});
+}
+
+export async function listLessonActivities(apiOrigin) {
+	const response = await fetchWithUserToken(apiOrigin, LESSON_ACTIVITIES_ENDPOINT, {
+		method: 'GET',
+	});
+
+	if (!response.ok) {
+		return [];
+	}
+
+	const payload = await response.json().catch(() => ({}));
+	return normalizeLessonActivityPayload(payload);
+}
+
+export async function deleteLessonActivityById(apiOrigin, id) {
+	if (!id) {
+		return new Response(null, { status: 400, statusText: 'Missing lesson activity id' });
+	}
+
+	return fetchWithUserToken(apiOrigin, LESSON_ACTIVITIES_ENDPOINT, {
+		method: 'DELETE',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ id }),
+	});
 }
 
 export function extractDiyProjectsFromResponse(payload) {
