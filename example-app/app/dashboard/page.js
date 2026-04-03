@@ -8,12 +8,10 @@ import {
     Box,
     Typography,
     Button,
-    Card,
-    CardContent,
-    Grid,
     CircularProgress,
 } from '@mui/material';
 import AuthDebugPanel from '../components/AuthDebugPanel';
+import LessonActivitySelector from '../components/LessonActivitySelector';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -112,29 +110,10 @@ export default function DashboardPage() {
                 <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
                     Lesson Activities
                 </Typography>
-                <Grid container spacing={2}>
-                    {lessonActivities.map((activity) => (
-                        <Grid item xs={12} sm={6} md={4} key={activity.path}>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant="h6" component="h3" sx={{ mb: 1 }}>
-                                        {activity.name}
-                                    </Typography>
-                                    <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                                        {activity.description}
-                                    </Typography>
-                                    <Button
-                                        variant="contained"
-                                        fullWidth
-                                        onClick={() => router.push(activity.path)}
-                                    >
-                                        Open
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    ))}
-                </Grid>
+                <LessonActivitySelector
+                    activities={lessonActivities}
+                    onOpen={(activity) => router.push(activity.path)}
+                />
             </Box>
 
         </Container>
