@@ -77,6 +77,8 @@ export default function DashboardPage() {
         { name: 'Word Meaning', path: '/lesson-activities/word-meaning', description: 'Infer and record meanings from morph clues' },
     ];
 
+    const displayName = user?.profile?.name || user?.name || user?.profile?.email || user?.email || 'User';
+
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
             <AuthDebugPanel />
@@ -86,7 +88,7 @@ export default function DashboardPage() {
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                     <Typography variant="body1">
-                        Welcome, {user.name || user.email}
+                        Welcome, {displayName}
                     </Typography>
                     <Button variant="outlined" onClick={handleLogout}>
                         Logout

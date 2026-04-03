@@ -336,7 +336,7 @@ export function extractAuthenticatedUser(data) {
 					? root.loggedIn
 					: null;
 
-	const user = root.user || root.member || root.currentUser || null;
+	const user = root.user || root.member || root.currentUser || root.profile || null;
 	const inferredUser = user || (root.email || root.id || root.name ? root : null);
 
 	if (explicitAuth === false) {
