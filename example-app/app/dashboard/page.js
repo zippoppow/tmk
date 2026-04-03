@@ -82,7 +82,7 @@ export default function DashboardPage() {
             <AuthDebugPanel />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                 <Typography variant="h4" component="h1">
-                    Dashboard
+                   DIY Dashboard
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                     <Typography variant="body1">
@@ -99,10 +99,10 @@ export default function DashboardPage() {
                     Projects
                 </Typography>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                    Create and manage project records outside individual lesson pages.
+                    Create and manage projects of lesson sequences and activities.
                 </Typography>
                 <Button variant="contained" onClick={() => router.push('/lesson-projects')}>
-                    Open Create Project
+                    Go to Projects
                 </Button>
             </Box>
 
