@@ -20,18 +20,20 @@ import {
 	DIY_PROJECTS_ENDPOINT,
 	LESSON_ACTIVITIES_ENDPOINT,
 	buildLessonActivityUpsertPayload,
-	buildTeachableLogoutUrl,
 	createLessonActivityId,
 	deleteLessonActivityById,
-	fetchWithUserToken,
-	fetchAuthenticatedUser,
 	formatActivityDate,
 	formatProjectDate,
 	getAllStoredProjects,
 	listLessonActivities,
-	resolveTmkApiOrigin,
 	saveStoredProjects,
 } from '../components/lessonActivityHelpers';
+import {
+	buildTeachableLogoutUrl,
+	fetchAuthenticatedUser,
+	fetchWithUserToken,
+	resolveTmkApiOrigin,
+} from '../components/authHelpers';
 import {
 	buildDiyProjectsPayload,
 	createLessonActivitySnapshot,

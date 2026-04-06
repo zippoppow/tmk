@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { buildTeachableLogoutUrl, fetchAuthenticatedUser, resolveTmkApiOrigin } from '../components/lessonActivityHelpers';
+import { buildTeachableLogoutUrl, fetchAuthenticatedUser, resolveTmkApiOrigin } from '../components/authHelpers';
 import {
     Container,
     Box,

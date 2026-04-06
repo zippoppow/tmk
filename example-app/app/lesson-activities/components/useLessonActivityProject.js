@@ -3,21 +3,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-	buildTeachableLogoutUrl,
-	buildTeachableStartUrl,
 	buildLessonActivityUpsertPayload,
 	createLessonActivityId,
 	fetchLessonActivityById,
 	upsertLessonActivity,
-	fetchAuthenticatedUser,
-	fetchWithUserToken,
 	readFormSessionData,
-	resolveTmkApiOrigin,
 	writeFormSessionData,
 	DIY_PROJECTS_ENDPOINT,
 	getAllStoredProjects,
 	saveStoredProjects,
 } from '../../components/lessonActivityHelpers';
+import {
+	buildTeachableLogoutUrl,
+	buildTeachableStartUrl,
+	fetchAuthenticatedUser,
+	fetchWithUserToken,
+	resolveTmkApiOrigin,
+} from '../../components/authHelpers';
 import {
 	buildDiyProjectsPayload,
 	getProjectLessonActivities,

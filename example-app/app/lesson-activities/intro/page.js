@@ -17,21 +17,23 @@ import {
 	Typography,
 } from '@mui/material';
 import {
-	buildTeachableLogoutUrl,
-	buildTeachableStartUrl,
 	buildLessonActivityUpsertPayload,
 	createLessonActivityId,
 	fetchLessonActivityById,
 	upsertLessonActivity,
-	fetchWithUserToken,
-	fetchAuthenticatedUser,
 	readFormSessionData,
-	resolveTmkApiOrigin,
 	writeFormSessionData,
 	DIY_PROJECTS_ENDPOINT,
 	getAllStoredProjects,
 	saveStoredProjects,
 } from '../../components/lessonActivityHelpers';
+import {
+	buildTeachableLogoutUrl,
+	buildTeachableStartUrl,
+	fetchAuthenticatedUser,
+	fetchWithUserToken,
+	resolveTmkApiOrigin,
+} from '../../components/authHelpers';
 import {
 	buildDiyProjectsPayload,
 	getProjectLessonActivities,

@@ -12,7 +12,7 @@ import {
   getUserAccessTokenDebugInfo,
   refreshUserAccessToken,
   resolveTmkApiOrigin,
-} from './lessonActivityHelpers';
+} from './authHelpers';
 
 const isDev = process.env.NODE_ENV !== 'production';
 

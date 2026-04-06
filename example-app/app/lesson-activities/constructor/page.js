@@ -17,14 +17,16 @@ import {
   Alert,
 } from '@mui/material';
 import {
-  buildTeachableLogoutUrl,
-  buildTeachableStartUrl,
   clearFormSessionData,
-  fetchAuthenticatedUser,
   readFormSessionData,
-  resolveTmkApiOrigin,
   writeFormSessionData,
 } from '../../components/lessonActivityHelpers';
+import {
+  buildTeachableLogoutUrl,
+  buildTeachableStartUrl,
+  fetchAuthenticatedUser,
+  resolveTmkApiOrigin,
+} from '../../components/authHelpers';
 
 const FORM_NAME = 'constructor';
 
