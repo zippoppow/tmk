@@ -1,0 +1,578 @@
+[
+    {
+        "id": "proj_1775451156354_djinn",
+        "name": "All the Samplez",
+        "formName": "lesson-activities-project",
+        "createdAt": "2026-04-06T04:52:36.354Z",
+        "createdAtMs": 1775451156354,
+        "modifiedAtMs": 1775452313887,
+        "syncedAt": null,
+        "lessonActivities": [
+            {
+                "id": "la_1775451169335_k588nwy",
+                "tmk-template": "intro",
+                "lesson-name": "Intro sample",
+                "created-at": 1775451169335,
+                "modified-at": 1775451487849,
+                "lesson-input-data": {
+                    "morpheme": "RE-",
+                    "questionMorpheme": "RE-",
+                    "words": [
+                        "retract",
+                        "retain",
+                        "rewinding",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                }
+            },
+            {
+                "id": "la_1775451187766_i4g3rjd",
+                "tmk-template": "chameleon-prefixes",
+                "lesson-name": "chameleon sample",
+                "created-at": 1775451187766,
+                "modified-at": 1775451644034,
+                "lesson-input-data": {
+                    "morpheme": "AD-",
+                    "grid": [
+                        "AB-",
+                        "AC-",
+                        "AL-",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "pairs": [
+                        {
+                            "prefix": "",
+                            "word": "tionable"
+                        },
+                        {
+                            "prefix": "",
+                            "word": "stracted"
+                        },
+                        {
+                            "prefix": "",
+                            "word": "imony"
+                        },
+                        {
+                            "prefix": "",
+                            "word": ""
+                        },
+                        {
+                            "prefix": "",
+                            "word": ""
+                        },
+                        {
+                            "prefix": "",
+                            "word": ""
+                        },
+                        {
+                            "prefix": "",
+                            "word": ""
+                        },
+                        {
+                            "prefix": "",
+                            "word": ""
+                        },
+                        {
+                            "prefix": "",
+                            "word": ""
+                        },
+                        {
+                            "prefix": "",
+                            "word": ""
+                        },
+                        {
+                            "prefix": "",
+                            "word": ""
+                        },
+                        {
+                            "prefix": "",
+                            "word": ""
+                        }
+                    ]
+                }
+            },
+            {
+                "id": "la_1775451227443_4u63cln",
+                "tmk-template": "common-base-word",
+                "lesson-name": "common base word sample",
+                "created-at": 1775451227443,
+                "modified-at": 1775451791547,
+                "lesson-input-data": {
+                    "morpheme": "PORT",
+                    "grid": [
+                        "portable",
+                        "portentious",
+                        "porting",
+                        "portend",
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "groups": [
+                        "",
+                        "",
+                        ""
+                    ]
+                }
+            },
+            {
+                "id": "la_1775451245562_cw89mn0",
+                "tmk-template": "constructor-deconstructor",
+                "lesson-name": "con-decon sample",
+                "created-at": 1775451245562,
+                "modified-at": 1775451934992,
+                "lesson-input-data": {
+                    "morpheme": "TRACT",
+                    "constructorRows": [
+                        {
+                            "left": "asdf + ASDF + ASDFA",
+                            "sum": "",
+                            "right": ""
+                        },
+                        {
+                            "left": "lkj+ oiu +jlkj",
+                            "sum": "",
+                            "right": ""
+                        },
+                        {
+                            "left": "",
+                            "sum": "",
+                            "right": ""
+                        },
+                        {
+                            "left": "",
+                            "sum": "",
+                            "right": ""
+                        }
+                    ],
+                    "deconstructorRows": [
+                        {
+                            "left": "",
+                            "sum": "",
+                            "right": "aDSadsaSDads"
+                        },
+                        {
+                            "left": "",
+                            "sum": "",
+                            "right": "awerwer"
+                        },
+                        {
+                            "left": "",
+                            "sum": "",
+                            "right": "dsfgasg"
+                        },
+                        {
+                            "left": "",
+                            "sum": "",
+                            "right": ""
+                        }
+                    ]
+                }
+            },
+            {
+                "id": "la_1775451275537_k9jimrb",
+                "tmk-template": "fill-in-the-morph-paragraphs",
+                "lesson-name": "fill in the morph -- para sample",
+                "created-at": 1775451275537,
+                "modified-at": 1775451958656,
+                "lesson-input-data": {
+                    "morpheme": "asdfas",
+                    "newWord": "",
+                    "morphWords": [
+                        "asdfasdf",
+                        "asdf",
+                        "asdf"
+                    ],
+                    "paragraph": "asdfasdfasdfasdfasdfasdfsafadfasfadsfasdf\nadsf\nasdf\nasdf\nasdf\nasdfasdfasdfasdfasdgasgtasgadsasdfadsf"
+                }
+            },
+            {
+                "id": "la_1775451288677_tr67fsx",
+                "tmk-template": "morph-match-definitions",
+                "lesson-name": "morph match -- defs sample",
+                "created-at": 1775451288677,
+                "modified-at": 1775452018400,
+                "lesson-input-data": {
+                    "morpheme": "asdfasdf",
+                    "words": [
+                        "asdfasd",
+                        "asdfasdf",
+                        "asdfasdf",
+                        "",
+                        "asdfasd",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "numbers": [
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "definitions": [
+                        "asdfasdf",
+                        "asdfasdf",
+                        "asdfsadf",
+                        "asdfasdf",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                }
+            },
+            {
+                "id": "la_1775451307861_2jgi92o",
+                "tmk-template": "morph-match-related-words",
+                "lesson-name": "morph match -- related sample",
+                "created-at": 1775451307861,
+                "modified-at": 1775452038551,
+                "lesson-input-data": {
+                    "morpheme": "asdfasdf",
+                    "focusWords": [
+                        "asdfasdf",
+                        "fasdf",
+                        "asdf",
+                        "rrawer",
+                        "awerawe",
+                        "awerawer",
+                        "wawerawer",
+                        ""
+                    ],
+                    "relatedWords": [
+                        "",
+                        "awerawerawer",
+                        "",
+                        "",
+                        "werawer",
+                        "awerawer",
+                        "",
+                        "rawera"
+                    ]
+                }
+            },
+            {
+                "id": "la_1775451320349_gzgnscc",
+                "tmk-template": "morph-morph-match",
+                "lesson-name": "morph morph match sample",
+                "created-at": 1775451320349,
+                "modified-at": 1775452103687,
+                "lesson-input-data": {
+                    "morpheme": "fasdfasdf",
+                    "grid": [
+                        "adsfasd",
+                        "fasdf",
+                        "asdf",
+                        "asdf",
+                        "asdf",
+                        "asdf",
+                        "asdfasdf",
+                        "asdfasdf",
+                        "asdf",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "pairs": [
+                        {
+                            "left": "asdfasdf",
+                            "right": ""
+                        },
+                        {
+                            "left": "asdfasdfdsf",
+                            "right": ""
+                        },
+                        {
+                            "left": "asdfasdfasdfasdf",
+                            "right": ""
+                        },
+                        {
+                            "left": "sadfsad",
+                            "right": ""
+                        },
+                        {
+                            "left": "fdasdff",
+                            "right": ""
+                        },
+                        {
+                            "left": "",
+                            "right": ""
+                        },
+                        {
+                            "left": "",
+                            "right": ""
+                        },
+                        {
+                            "left": "",
+                            "right": ""
+                        },
+                        {
+                            "left": "",
+                            "right": ""
+                        },
+                        {
+                            "left": "",
+                            "right": ""
+                        },
+                        {
+                            "left": "",
+                            "right": ""
+                        },
+                        {
+                            "left": "",
+                            "right": ""
+                        }
+                    ]
+                }
+            },
+            {
+                "id": "la_1775451335775_ayw23pg",
+                "tmk-template": "morph-sort",
+                "lesson-name": "morph sort sample",
+                "created-at": 1775451335775,
+                "modified-at": 1775452167262,
+                "lesson-input-data": {
+                    "morpheme": "asdfasdf",
+                    "words": [
+                        "dsfasdfads",
+                        "werqwerwer",
+                        "asdfagfa",
+                        "rtertert",
+                        "asdfasdf",
+                        "ewrt",
+                        "ads",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "leftSort": "",
+                    "rightSort": ""
+                }
+            },
+            {
+                "id": "la_1775451347671_kbq74qe",
+                "tmk-template": "morph-which",
+                "lesson-name": "morph which sample",
+                "created-at": 1775451347671,
+                "modified-at": 1775452205056,
+                "lesson-input-data": {
+                    "morpheme": "sdf",
+                    "questions": [
+                        "asdfasdfasdfasdfsadfsad",
+                        "afasdfasdqerwtertewrtwert",
+                        "khjkhjklhjklhjkl",
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "choices": [
+                        {
+                            "a": "asdf",
+                            "b": "asdf",
+                            "c": "asasdf",
+                            "d": "asdf"
+                        },
+                        {
+                            "a": "terwtert",
+                            "b": "rterwt",
+                            "c": "werter",
+                            "d": "wert"
+                        },
+                        {
+                            "a": "hjklhjkl",
+                            "b": "jklhjkl",
+                            "c": "lhjkl",
+                            "d": "hjkl"
+                        },
+                        {
+                            "a": "",
+                            "b": "",
+                            "c": "",
+                            "d": ""
+                        },
+                        {
+                            "a": "",
+                            "b": "",
+                            "c": "",
+                            "d": ""
+                        },
+                        {
+                            "a": "",
+                            "b": "",
+                            "c": "",
+                            "d": ""
+                        },
+                        {
+                            "a": "",
+                            "b": "",
+                            "c": "",
+                            "d": ""
+                        },
+                        {
+                            "a": "",
+                            "b": "",
+                            "c": "",
+                            "d": ""
+                        }
+                    ]
+                }
+            },
+            {
+                "id": "la_1775451365691_k3zk7o1",
+                "tmk-template": "part-of-speech",
+                "lesson-name": "part of speech sample",
+                "created-at": 1775451365691,
+                "modified-at": 1775452247033,
+                "lesson-input-data": {
+                    "morpheme": "asfdasd",
+                    "grid": [
+                        "aasdfsad",
+                        "fdsaff",
+                        "werwer",
+                        "hiuyuio",
+                        "hjjklhhjklhjk",
+                        "werwer",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "nounWords": "",
+                    "verbWords": "",
+                    "adjectiveWords": ""
+                }
+            },
+            {
+                "id": "la_1775451379396_zlz4h99",
+                "tmk-template": "word-builder",
+                "lesson-name": "word builder sample",
+                "created-at": 1775451379396,
+                "modified-at": 1775452276455,
+                "lesson-input-data": {
+                    "morpheme": "assdfasdf",
+                    "prefixes": [
+                        "asdf",
+                        "asdf",
+                        "asdf",
+                        "",
+                        ""
+                    ],
+                    "bases": [
+                        "asdf",
+                        ""
+                    ],
+                    "suffixes": [
+                        "asdf",
+                        "dfasdf",
+                        "asdf",
+                        "dfasdf",
+                        ""
+                    ],
+                    "builtWords": [
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                }
+            },
+            {
+                "id": "la_1775451389966_5r5tnvn",
+                "tmk-template": "word-meaning",
+                "lesson-name": "word meaning sample",
+                "created-at": 1775451389966,
+                "modified-at": 1775452313887,
+                "lesson-input-data": {
+                    "morpheme": "asfdasdf",
+                    "promptWords": [
+                        "adsfsadf",
+                        "asdfasdf",
+                        "asdfasdf",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "algoPhrases": [
+                        "asdfsadf",
+                        "asdfasdf",
+                        "asdfasdf",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "answerMeanings": [
+                        "asdfasdf",
+                        "asdfasdf",
+                        "asdfasdf",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                }
+            }
+        ]
+    }
+]

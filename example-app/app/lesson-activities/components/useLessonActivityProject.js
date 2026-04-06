@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import {
 	buildTeachableLogoutUrl,
 	buildTeachableStartUrl,
+	buildLessonActivityUpsertPayload,
 	createLessonActivityId,
+	fetchLessonActivityById,
 	upsertLessonActivity,
 	fetchAuthenticatedUser,
 	fetchWithUserToken,
@@ -54,19 +56,24 @@ export function useLessonActivityProject({
 			return;
 		}
 
-		const url = new URL(window.location.href);
-		const paramProjectId = url.searchParams.get('projectId') || '';
-		const paramActivityIndex = url.searchParams.get('activityIndex');
+		let cancelled = false;
 
-		if (paramProjectId && paramActivityIndex !== null) {
-			const parsedIndex = Number.parseInt(paramActivityIndex, 10);
-			if (!Number.isInteger(parsedIndex)) {
-				showNotice('error', 'Invalid activity context.');
+		const hydrateFromContext = async () => {
+			const url = new URL(window.location.href);
+			const paramProjectId = url.searchParams.get('projectId') || '';
+			const paramActivityIndex = url.searchParams.get('activityIndex');
+			const paramActivityId = (url.searchParams.get('activityId') || '').trim();
+
+			if (!paramProjectId) {
+				const stored = readFormSessionData(formName);
+				if (stored && !cancelled) {
+					setData(normalizeInputData(stored));
+				}
 				return;
 			}
 
+			const parsedIndex = Number.parseInt(paramActivityIndex || '', 10);
 			setProjectId(paramProjectId);
-			setActivityIndex(parsedIndex);
 
 			const projects = getAllStoredProjects();
 			const project = projects.find((item) => item.id === paramProjectId);
@@ -77,22 +84,53 @@ export function useLessonActivityProject({
 
 			setProjectName(project.name || 'Untitled Project');
 			const activities = getProjectLessonActivities(project, 'lesson-activities-project', (input) => input || {});
-			const activity = activities[parsedIndex];
-			if (!activity) {
+
+			let resolvedIndex = Number.isInteger(parsedIndex) ? parsedIndex : -1;
+			if (resolvedIndex < 0 && paramActivityId) {
+				resolvedIndex = activities.findIndex((activity) => String(activity?.id || '') === paramActivityId);
+			}
+
+			if (resolvedIndex < 0) {
+				showNotice('error', 'Invalid activity context.');
+				return;
+			}
+
+			setActivityIndex(resolvedIndex);
+			let resolvedActivity = activities[resolvedIndex];
+
+			if (paramActivityId) {
+				const cloudActivity = await fetchLessonActivityById(projectApiOrigin, paramActivityId);
+				if (cloudActivity && typeof cloudActivity === 'object') {
+					resolvedActivity = {
+						...resolvedActivity,
+						...cloudActivity,
+						id: String(cloudActivity.id || paramActivityId),
+					};
+					if (activities[resolvedIndex]) {
+						activities[resolvedIndex] = resolvedActivity;
+						project.lessonActivities = activities;
+						saveStoredProjects(projects);
+					}
+				}
+			}
+
+			if (!resolvedActivity) {
 				showNotice('error', 'Lesson activity not found.');
 				return;
 			}
 
-			setActivityName(String(activity['lesson-name'] || defaultActivityName));
-			setData(normalizeInputData(activity['lesson-input-data'] || {}));
-			return;
-		}
+			if (!cancelled) {
+				setActivityName(String(resolvedActivity['lesson-name'] || defaultActivityName));
+				setData(normalizeInputData(resolvedActivity['lesson-input-data'] || {}));
+			}
+		};
 
-		const stored = readFormSessionData(formName);
-		if (stored) {
-			setData(normalizeInputData(stored));
-		}
-	}, [defaultActivityName, formName, normalizeInputData]);
+		hydrateFromContext();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [defaultActivityName, formName, normalizeInputData, projectApiOrigin]);
 
 	useEffect(() => {
 		const timeout = setTimeout(() => {
@@ -206,21 +244,22 @@ export function useLessonActivityProject({
 				project.syncedAt = null;
 				saveStoredProjects(projects);
 
-				const lessonActivityResponse = await upsertLessonActivity(projectApiOrigin, {
-					id: activityId,
-					projectId,
-					projectName: project.name || '',
-					formName,
-					'tmk-template': String(activities[activityIndex]['tmk-template'] || formName),
-					'lesson-name': String(activities[activityIndex]['lesson-name'] || defaultActivityName),
-					'lesson-input-data': normalizedInput,
-					'created-at': Number.isFinite(Number(activities[activityIndex]['created-at']))
-						? Number(activities[activityIndex]['created-at'])
-						: Date.now(),
-					'modified-at': Number.isFinite(Number(activities[activityIndex]['modified-at']))
-						? Number(activities[activityIndex]['modified-at'])
-						: Date.now(),
-				});
+				const lessonActivityResponse = await upsertLessonActivity(
+					projectApiOrigin,
+					buildLessonActivityUpsertPayload({
+						id: activityId,
+						template: activities[activityIndex]['tmk-template'] || formName,
+						lessonName: activities[activityIndex]['lesson-name'] || defaultActivityName,
+						lessonInputData: normalizedInput,
+						createdAt: activities[activityIndex]['created-at'],
+						modifiedAt: activities[activityIndex]['modified-at'],
+						extra: {
+							projectId,
+							projectName: project.name || '',
+							formName,
+						},
+					})
+				);
 
 				const payload = buildDiyProjectsPayload({
 					project,

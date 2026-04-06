@@ -19,6 +19,7 @@ import {
 import {
 	DIY_PROJECTS_ENDPOINT,
 	LESSON_ACTIVITIES_ENDPOINT,
+	buildLessonActivityUpsertPayload,
 	buildTeachableLogoutUrl,
 	createLessonActivityId,
 	deleteLessonActivityById,
@@ -220,20 +221,25 @@ export default function LessonProjectsPage() {
 			for (const activity of activities) {
 				const activityId = String(activity.id || createLessonActivityId());
 				activity.id = activityId;
+				const lessonTemplate = String(activity['tmk-template'] || '').trim() || PROJECT_FORM_NAME;
 				await fetchWithUserToken(apiOrigin, LESSON_ACTIVITIES_ENDPOINT, {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						id: activityId,
-						projectId: project.id,
-						projectName: project.name || '',
-						formName: String(activity['tmk-template'] || ''),
-						'tmk-template': String(activity['tmk-template'] || ''),
-						'lesson-name': String(activity['lesson-name'] || project.name || ''),
-						'lesson-input-data': normalizeLessonInputData(activity['lesson-input-data'] || {}),
-						'created-at': Number.isFinite(Number(activity['created-at'])) ? Number(activity['created-at']) : Date.now(),
-						'modified-at': Number.isFinite(Number(activity['modified-at'])) ? Number(activity['modified-at']) : Date.now(),
-					}),
+					body: JSON.stringify(
+						buildLessonActivityUpsertPayload({
+							id: activityId,
+							template: lessonTemplate,
+							lessonName: activity['lesson-name'] || project.name || 'Lesson Activity',
+							lessonInputData: normalizeLessonInputData(activity['lesson-input-data'] || {}),
+							createdAt: activity['created-at'],
+							modifiedAt: activity['modified-at'],
+							extra: {
+								projectId: project.id,
+								projectName: project.name || '',
+								formName: lessonTemplate,
+							},
+						})
+					),
 				});
 			}
 
@@ -437,6 +443,9 @@ export default function LessonProjectsPage() {
 			activityIndex: String(activityIndex),
 			activityType,
 		});
+		if (activity?.id) {
+			params.set('activityId', String(activity.id));
+		}
 		router.push(`${route}?${params.toString()}`);
 	};
 

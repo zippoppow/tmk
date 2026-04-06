@@ -438,6 +438,42 @@ export function createLessonActivityId() {
 	return `la_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function toEpochMs(value) {
+	const num = Number(value);
+	return Number.isFinite(num) ? num : Date.now();
+}
+
+function normalizeLessonInputObject(value) {
+	if (!value || typeof value !== 'object' || Array.isArray(value)) {
+		return {};
+	}
+	return value;
+}
+
+export function buildLessonActivityUpsertPayload({
+	id,
+	template,
+	lessonName,
+	lessonInputData,
+	createdAt,
+	modifiedAt,
+	extra = {},
+}) {
+	const resolvedId = String(id || createLessonActivityId()).trim();
+	const resolvedTemplate = String(template || '').trim() || 'unknown-template';
+	const resolvedLessonName = String(lessonName || '').trim() || 'Untitled Lesson Activity';
+
+	return {
+		...extra,
+		id: resolvedId,
+		'tmk-template': resolvedTemplate,
+		'lesson-name': resolvedLessonName,
+		'lesson-input-data': normalizeLessonInputObject(lessonInputData),
+		'created-at': toEpochMs(createdAt),
+		'modified-at': toEpochMs(modifiedAt),
+	};
+}
+
 function normalizeLessonActivityPayload(payload) {
 	if (!payload || typeof payload !== 'object') {
 		return [];
@@ -462,6 +498,26 @@ function normalizeLessonActivityPayload(payload) {
 	return [];
 }
 
+function normalizeSingleLessonActivityPayload(payload) {
+	if (!payload || typeof payload !== 'object') {
+		return null;
+	}
+
+	if (payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data)) {
+		return payload.data;
+	}
+
+	if (payload.result && typeof payload.result === 'object' && !Array.isArray(payload.result)) {
+		return payload.result;
+	}
+
+	if (!Array.isArray(payload)) {
+		return payload;
+	}
+
+	return null;
+}
+
 export async function upsertLessonActivity(apiOrigin, record) {
 	return fetchWithUserToken(apiOrigin, LESSON_ACTIVITIES_ENDPOINT, {
 		method: 'PUT',
@@ -481,6 +537,25 @@ export async function listLessonActivities(apiOrigin) {
 
 	const payload = await response.json().catch(() => ({}));
 	return normalizeLessonActivityPayload(payload);
+}
+
+export async function fetchLessonActivityById(apiOrigin, id) {
+	if (!id) {
+		return null;
+	}
+
+	const response = await fetchWithUserToken(
+		apiOrigin,
+		`${LESSON_ACTIVITIES_ENDPOINT}/${encodeURIComponent(String(id))}`,
+		{ method: 'GET' }
+	);
+
+	if (!response.ok) {
+		return null;
+	}
+
+	const payload = await response.json().catch(() => ({}));
+	return normalizeSingleLessonActivityPayload(payload);
 }
 
 export async function deleteLessonActivityById(apiOrigin, id) {
