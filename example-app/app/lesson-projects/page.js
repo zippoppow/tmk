@@ -18,9 +18,6 @@ import {
 } from '@mui/material';
 import {
 	DIY_PROJECTS_ENDPOINT,
-	LESSON_ACTIVITIES_ENDPOINT,
-	buildLessonActivityUpsertPayload,
-	createLessonActivityId,
 	deleteLessonActivityById,
 	formatActivityDate,
 	formatProjectDate,
@@ -215,32 +212,6 @@ export default function LessonProjectsPage() {
 		}
 
 		try {
-			const activities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
-			for (const activity of activities) {
-				const activityId = String(activity.id || createLessonActivityId());
-				activity.id = activityId;
-				const lessonTemplate = String(activity['tmk-template'] || '').trim() || PROJECT_FORM_NAME;
-				await fetchWithUserToken(apiOrigin, LESSON_ACTIVITIES_ENDPOINT, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(
-						buildLessonActivityUpsertPayload({
-							id: activityId,
-							template: lessonTemplate,
-							lessonName: activity['lesson-name'] || project.name || 'Lesson Activity',
-							lessonInputData: normalizeLessonInputData(activity['lesson-input-data'] || {}),
-							createdAt: activity['created-at'],
-							modifiedAt: activity['modified-at'],
-							extra: {
-								projectId: project.id,
-								projectName: project.name || '',
-								formName: lessonTemplate,
-							},
-						})
-					),
-				});
-			}
-
 			const payload = buildDiyProjectsPayload({
 				project,
 				formName: PROJECT_FORM_NAME,

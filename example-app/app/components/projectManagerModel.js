@@ -183,6 +183,7 @@ export function buildDiyProjectsPayload({ project, formName, normalizeLessonInpu
 				'created-at': createdAtMs,
 				'modified-at': modifiedAtMs,
 				'lesson-activities': normalizedActivities.map((activity) => ({
+					id: String(activity.id || createLessonActivityId()),
 					'tmk-template': String(activity['tmk-template'] || formName),
 					'lesson-name': String(activity['lesson-name'] || project.name || ''),
 					'created-at': Number.isFinite(Number(activity['created-at']))
