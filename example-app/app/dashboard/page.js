@@ -8,8 +8,14 @@ import {
     Box,
     Typography,
     Button,
+    Paper,
+    Stack,
     CircularProgress,
 } from '@mui/material';
+import {
+    deleteLessonActivityById,
+    listLessonActivities,
+} from '../components/lessonActivityHelpers';
 import AuthDebugPanel from '../components/AuthDebugPanel';
 import LessonActivitySelector from '../components/LessonActivitySelector';
 
@@ -17,6 +23,8 @@ export default function DashboardPage() {
     const router = useRouter();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [standaloneActivities, setStandaloneActivities] = useState([]);
+    const [standaloneLoading, setStandaloneLoading] = useState(false);
 
     useEffect(() => {
         // Check authentication status
@@ -38,6 +46,28 @@ export default function DashboardPage() {
 
         checkAuth();
     }, [router]);
+
+    const loadStandaloneActivities = async () => {
+        if (!user) {
+            return;
+        }
+
+        setStandaloneLoading(true);
+        try {
+            const records = await listLessonActivities(resolveTmkApiOrigin());
+            const nonProjectRecords = records.filter((record) => !String(record?.projectId || '').trim());
+            setStandaloneActivities(nonProjectRecords);
+        } catch (error) {
+            console.error('Failed to load standalone lesson activities:', error);
+            setStandaloneActivities([]);
+        } finally {
+            setStandaloneLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadStandaloneActivities();
+    }, [user]);
 
     const handleLogout = () => {
         window.location.href = buildTeachableLogoutUrl('/login?next=/dashboard', resolveTmkApiOrigin());
@@ -77,6 +107,50 @@ export default function DashboardPage() {
 
     const displayName = user?.profile?.name || user?.name || user?.profile?.email || user?.email || 'User';
 
+    const getActivityPath = (activityRecord) => {
+        const templateName = String(activityRecord?.['tmk-template'] || activityRecord?.formName || '').trim();
+        const match = lessonActivities.find((activity) => activity.path.endsWith(`/${templateName}`));
+        return match?.path || null;
+    };
+
+    const handleManageStandalone = (activityRecord) => {
+        const path = getActivityPath(activityRecord);
+        if (!path) {
+            return;
+        }
+
+        const activityId = String(activityRecord?.id || '').trim();
+        if (!activityId) {
+            router.push(path);
+            return;
+        }
+
+        router.push(`${path}?activityId=${encodeURIComponent(activityId)}`);
+    };
+
+    const handleDeleteStandalone = async (activityRecord) => {
+        const activityId = String(activityRecord?.id || '').trim();
+        if (!activityId) {
+            return;
+        }
+
+        const shouldDelete = window.confirm(`Delete "${activityRecord?.['lesson-name'] || 'Untitled Lesson Activity'}"?`);
+        if (!shouldDelete) {
+            return;
+        }
+
+        try {
+            const response = await deleteLessonActivityById(resolveTmkApiOrigin(), activityId);
+            if (!response.ok) {
+                return;
+            }
+
+            setStandaloneActivities((prev) => prev.filter((activity) => String(activity?.id || '') !== activityId));
+        } catch (error) {
+            console.error('Failed to delete standalone lesson activity:', error);
+        }
+    };
+
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
             <AuthDebugPanel />
@@ -110,10 +184,59 @@ export default function DashboardPage() {
                 <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
                     Lesson Activities
                 </Typography>
-                <LessonActivitySelector
-                    activities={lessonActivities}
-                    onOpen={(activity) => router.push(activity.path)}
-                />
+                <Box sx={{ width: '100%', maxWidth: { xs: '100%', md: '50%' }, mr: 'auto' }}>
+                    <LessonActivitySelector
+                        activities={lessonActivities}
+                        onOpen={(activity) => router.push(activity.path)}
+                    />
+                </Box>
+
+                <Box sx={{ width: '100%', maxWidth: { xs: '100%', md: '50%' }, mr: 'auto', mt: 2 }}>
+                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                        Your Standalone Lesson Activities
+                    </Typography>
+                    {standaloneLoading ? (
+                        <Typography variant="body2" color="textSecondary">Loading lesson activities...</Typography>
+                    ) : standaloneActivities.length === 0 ? (
+                        <Typography variant="body2" color="textSecondary">No standalone lesson activities found.</Typography>
+                    ) : (
+                        <Stack spacing={1}>
+                            {standaloneActivities.map((activity, index) => {
+                                const route = getActivityPath(activity);
+                                return (
+                                <Paper
+                                    key={String(activity?.id || `${activity?.['lesson-name'] || 'activity'}-${index}`)}
+                                    sx={{ p: 1.25, border: '1px solid #e6ebf2', borderRadius: 1.5 }}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
+                                        <Box>
+                                            <Typography sx={{ fontWeight: 600 }}>
+                                                {String(activity?.['lesson-name'] || 'Untitled Lesson Activity')}
+                                            </Typography>
+                                            <Typography variant="caption" color="textSecondary">
+                                                {String(activity?.['tmk-template'] || activity?.formName || 'unknown-template')}
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                            <Button
+                                                size="small"
+                                                variant="outlined"
+                                                disabled={!route}
+                                                onClick={() => handleManageStandalone(activity)}
+                                            >
+                                                Manage
+                                            </Button>
+                                            <Button size="small" color="error" variant="outlined" onClick={() => handleDeleteStandalone(activity)}>
+                                                Delete
+                                            </Button>
+                                        </Box>
+                                    </Box>
+                                </Paper>
+                                );
+                            })}
+                        </Stack>
+                    )}
+                </Box>
             </Box>
 
         </Container>

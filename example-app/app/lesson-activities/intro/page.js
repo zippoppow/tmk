@@ -19,6 +19,7 @@ import {
 import {
 	buildLessonActivityUpsertPayload,
 	createLessonActivityId,
+	deleteLessonActivityById,
 	fetchLessonActivityById,
 	upsertLessonActivity,
 	readFormSessionData,
@@ -74,6 +75,7 @@ export default function IntroPage() {
 	const [activityIndex, setActivityIndex] = useState(null);
 	const [projectName, setProjectName] = useState('');
 	const [activityName, setActivityName] = useState('');
+	const [standaloneActivityId, setStandaloneActivityId] = useState('');
 	const [isSaving, setIsSaving] = useState(false);
 
 	const projectApiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
@@ -100,6 +102,19 @@ export default function IntroPage() {
 			const paramActivityId = (url.searchParams.get('activityId') || '').trim();
 
 			if (!paramProjectId) {
+				if (paramActivityId) {
+					const cloudActivity = await fetchLessonActivityById(projectApiOrigin, paramActivityId);
+					if (cloudActivity && !cancelled) {
+						setStandaloneActivityId(String(cloudActivity.id || paramActivityId));
+						setActivityName(String(cloudActivity['lesson-name'] || 'Intro Activity'));
+						const normalized = normalizeIntroLessonInputData(cloudActivity['lesson-input-data'] || {});
+						setMorpheme(normalized.morpheme);
+						setQuestionMorpheme(normalized.questionMorpheme);
+						setWords(normalized.words);
+						return;
+					}
+				}
+
 				const stored = readFormSessionData(FORM_NAME);
 				if (stored && !cancelled) {
 					const normalized = normalizeIntroLessonInputData(stored);
@@ -371,6 +386,85 @@ export default function IntroPage() {
 		}
 	};
 
+	const handleSaveStandalone = async () => {
+		if (!authUser) {
+			showNotice('error', 'Please login with Teachable to save standalone activities.');
+			return;
+		}
+
+		setIsSaving(true);
+		try {
+			const normalizedInput = normalizeIntroLessonInputData({ morpheme, words, questionMorpheme });
+			const activityId = String(standaloneActivityId || createLessonActivityId());
+
+			const response = await upsertLessonActivity(
+				projectApiOrigin,
+				buildLessonActivityUpsertPayload({
+					id: activityId,
+					template: FORM_NAME,
+					lessonName: activityName || 'Intro Activity',
+					lessonInputData: normalizedInput,
+					createdAt: Date.now(),
+					modifiedAt: Date.now(),
+					extra: {
+						formName: FORM_NAME,
+					},
+				})
+			);
+
+			if (!response.ok) {
+				showNotice('error', 'Could not save standalone lesson activity.');
+				setIsSaving(false);
+				return;
+			}
+
+			setStandaloneActivityId(activityId);
+			const url = new URL(window.location.href);
+			url.searchParams.set('activityId', activityId);
+			window.history.replaceState({}, '', url.toString());
+			showNotice('success', 'Standalone lesson activity saved.');
+		} catch (error) {
+			console.error('Save standalone failed:', error);
+			showNotice('error', 'Could not save standalone lesson activity.');
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
+	const handleDeleteStandalone = async () => {
+		if (!standaloneActivityId) {
+			showNotice('error', 'No standalone activity selected.');
+			return;
+		}
+
+		const shouldDelete = window.confirm('Delete this standalone lesson activity? This cannot be undone.');
+		if (!shouldDelete) {
+			return;
+		}
+
+		setIsSaving(true);
+		try {
+			const response = await deleteLessonActivityById(projectApiOrigin, standaloneActivityId);
+			if (!response.ok) {
+				showNotice('error', 'Delete failed.');
+				setIsSaving(false);
+				return;
+			}
+
+			setStandaloneActivityId('');
+			handleClearForm();
+			const url = new URL(window.location.href);
+			url.searchParams.delete('activityId');
+			window.history.replaceState({}, '', url.toString());
+			showNotice('success', 'Standalone lesson activity deleted.');
+		} catch (error) {
+			console.error('Delete standalone failed:', error);
+			showNotice('error', 'Delete failed.');
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
 	const openContextMenu = (event, targetType, index = -1) => {
 		event.preventDefault();
 		setContextMenu({
@@ -516,6 +610,30 @@ export default function IntroPage() {
 							</Button>
 						</>
 					)}
+					{!projectId && (
+						<>
+							<Button
+								variant="contained"
+								color="primary"
+								disabled={isSaving}
+								onClick={handleSaveStandalone}
+								sx={{ textTransform: 'none' }}
+							>
+								{isSaving ? 'Saving...' : 'Save Activity'}
+							</Button>
+							{standaloneActivityId && (
+								<Button
+									variant="outlined"
+									color="error"
+									disabled={isSaving}
+									onClick={handleDeleteStandalone}
+									sx={{ textTransform: 'none' }}
+								>
+									Delete Activity
+								</Button>
+							)}
+						</>
+					)}
 					<Button variant="contained" color="success" onClick={handleDownloadPdf} sx={{ textTransform: 'none' }}>
 						Download as PDF
 					</Button>
@@ -529,6 +647,20 @@ export default function IntroPage() {
 						<TextField
 							size="small"
 							label="Intro Activity Name"
+							value={activityName}
+							onChange={(event) => setActivityName(event.target.value)}
+							fullWidth
+						/>
+					</Box>
+				)}
+				{!projectId && (
+					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
+						<Typography sx={{ fontSize: '0.8rem', color: '#4a5568', textTransform: 'uppercase', fontWeight: 700 }}>
+							Standalone Intro Activity
+						</Typography>
+						<TextField
+							size="small"
+							label="Activity Name"
 							value={activityName}
 							onChange={(event) => setActivityName(event.target.value)}
 							fullWidth

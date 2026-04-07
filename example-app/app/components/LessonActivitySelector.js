@@ -42,6 +42,7 @@ export default function LessonActivitySelector({
     return (
         <Paper
             sx={{
+                width: '100%',
                 p: 2.5,
                 borderRadius: 1.5,
                 backgroundColor: '#fafbfc',
