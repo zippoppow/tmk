@@ -193,58 +193,62 @@ export default function DashboardPage() {
                 <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
                     Lesson Activities
                 </Typography>
-                <Box sx={{ width: '100%', maxWidth: { xs: '100%', md: '50%' }, mr: 'auto' }}>
-                    <LessonActivitySelector
-                        activities={lessonActivities}
-                        onOpen={handleCreateNewActivity}
-                    />
-                </Box>
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, alignItems: 'flex-start' }}>
+                    {/* Selector — left column on desktop */}
+                    <Box sx={{ width: { xs: '100%', md: '50%' }, flexShrink: 0 }}>
+                        <LessonActivitySelector
+                            activities={lessonActivities}
+                            onOpen={handleCreateNewActivity}
+                        />
+                    </Box>
 
-                <Box sx={{ width: '100%', maxWidth: { xs: '100%', md: '50%' }, mr: 'auto', mt: 2 }}>
-                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                        Your Standalone Lesson Activities
-                    </Typography>
-                    {standaloneLoading ? (
-                        <Typography variant="body2" color="textSecondary">Loading lesson activities...</Typography>
-                    ) : standaloneActivities.length === 0 ? (
-                        <Typography variant="body2" color="textSecondary">No standalone lesson activities found.</Typography>
-                    ) : (
-                        <Stack spacing={1}>
-                            {standaloneActivities.map((activity, index) => {
-                                const route = getActivityPath(activity);
-                                return (
-                                <Paper
-                                    key={String(activity?.id || `${activity?.['lesson-name'] || 'activity'}-${index}`)}
-                                    sx={{ p: 1.25, border: '1px solid #e6ebf2', borderRadius: 1.5 }}
-                                >
-                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
-                                        <Box>
-                                            <Typography sx={{ fontWeight: 600 }}>
-                                                {String(activity?.['lesson-name'] || 'Untitled Lesson Activity')}
-                                            </Typography>
-                                            <Typography variant="caption" color="textSecondary">
-                                                {String(activity?.['tmk-template'] || activity?.formName || 'unknown-template')}
-                                            </Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', gap: 1 }}>
-                                            <Button
-                                                size="small"
-                                                variant="outlined"
-                                                disabled={!route}
-                                                onClick={() => handleManageStandalone(activity)}
-                                            >
-                                                Manage
-                                            </Button>
-                                            <Button size="small" color="error" variant="outlined" onClick={() => handleDeleteStandalone(activity)}>
-                                                Delete
-                                            </Button>
-                                        </Box>
-                                    </Box>
-                                </Paper>
-                                );
-                            })}
-                        </Stack>
-                    )}
+                    {/* Standalone activities list — right column on desktop */}
+                    <Box sx={{ flex: 1, width: { xs: '100%', md: 'auto' } }}>
+                        <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                            Your Standalone Lesson Activities
+                        </Typography>
+                        {standaloneLoading ? (
+                            <Typography variant="body2" color="textSecondary">Loading lesson activities...</Typography>
+                        ) : standaloneActivities.length === 0 ? (
+                            <Typography variant="body2" color="textSecondary">No standalone lesson activities found.</Typography>
+                        ) : (
+                            <Stack spacing={1}>
+                                {standaloneActivities.map((activity, index) => {
+                                    const route = getActivityPath(activity);
+                                    return (
+                                        <Paper
+                                            key={String(activity?.id || `${activity?.['lesson-name'] || 'activity'}-${index}`)}
+                                            sx={{ p: 1.25, border: '1px solid #e6ebf2', borderRadius: 1.5 }}
+                                        >
+                                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
+                                                <Box>
+                                                    <Typography sx={{ fontWeight: 600 }}>
+                                                        {String(activity?.['lesson-name'] || 'Untitled Lesson Activity')}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="textSecondary">
+                                                        {String(activity?.['tmk-template'] || activity?.formName || 'unknown-template')}
+                                                    </Typography>
+                                                </Box>
+                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                    <Button
+                                                        size="small"
+                                                        variant="outlined"
+                                                        disabled={!route}
+                                                        onClick={() => handleManageStandalone(activity)}
+                                                    >
+                                                        Manage
+                                                    </Button>
+                                                    <Button size="small" color="error" variant="outlined" onClick={() => handleDeleteStandalone(activity)}>
+                                                        Delete
+                                                    </Button>
+                                                </Box>
+                                            </Box>
+                                        </Paper>
+                                    );
+                                })}
+                            </Stack>
+                        )}
+                    </Box>
                 </Box>
             </Box>
 
