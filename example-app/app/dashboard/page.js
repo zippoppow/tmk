@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { buildTeachableLogoutUrl, fetchAuthenticatedUser, resolveTmkApiOrigin } from '../components/authHelpers';
+import { buildTeachableLogoutUrl, fetchAuthenticatedUser, fetchWithUserToken, resolveTmkApiOrigin } from '../components/authHelpers';
 import {
     Alert,
     Container,
@@ -16,7 +16,9 @@ import {
 } from '@mui/material';
 import {
     clearFormSessionData,
+    DIY_PROJECTS_ENDPOINT,
     deleteLessonActivityById,
+    extractDiyProjectsFromResponse,
     isStandaloneLessonActivity,
     listLessonActivities,
 } from '../components/lessonActivityHelpers';
@@ -63,13 +65,68 @@ export default function DashboardPage() {
 
         setStandaloneLoading(true);
         try {
-            const records = await listLessonActivities(resolveTmkApiOrigin());
-            const nonProjectRecords = records.filter(isStandaloneLessonActivity);
+            const apiOrigin = resolveTmkApiOrigin();
+            const records = await listLessonActivities(apiOrigin);
+
+            let projectActivityIds = new Set();
+            let projectActivityKeys = new Set();
+            try {
+                const projectResponse = await fetchWithUserToken(apiOrigin, DIY_PROJECTS_ENDPOINT, { method: 'GET' });
+                if (projectResponse.ok) {
+                    const projectPayload = await projectResponse.json().catch(() => ({}));
+                    const projects = extractDiyProjectsFromResponse(projectPayload);
+                    const ids = new Set();
+                    const keys = new Set();
+
+                    projects.forEach((project) => {
+                        const activities = Array.isArray(project?.['lesson-activities']) ? project['lesson-activities'] : [];
+                        activities.forEach((activity) => {
+                            const id = String(activity?.id || '').trim();
+                            if (id) {
+                                ids.add(id);
+                            }
+
+                            const template = String(activity?.['tmk-template'] || activity?.formName || '').trim();
+                            const name = String(activity?.['lesson-name'] || '').trim();
+                            if (template && name) {
+                                keys.add(`${template}::${name}`);
+                            }
+                        });
+                    });
+
+                    projectActivityIds = ids;
+                    projectActivityKeys = keys;
+                }
+            } catch (projectError) {
+                console.error('Failed to load diy-project associations for standalone filter:', projectError);
+            }
+
+            const nonProjectRecords = records.filter((record) => {
+                if (!isStandaloneLessonActivity(record)) {
+                    return false;
+                }
+
+                const id = String(record?.id || '').trim();
+                if (id && projectActivityIds.has(id)) {
+                    return false;
+                }
+
+                const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+                const name = String(record?.['lesson-name'] || '').trim();
+                if (template && name && projectActivityKeys.has(`${template}::${name}`)) {
+                    return false;
+                }
+
+                return true;
+            });
+
             if (process.env.NODE_ENV !== 'production') {
                 console.log('[Dashboard] Lesson activity association summary', {
                     total: records.length,
                     standalone: nonProjectRecords.length,
                     associated: records.length - nonProjectRecords.length,
+                    projectActivityIds: projectActivityIds.size,
+                    projectActivityKeys: projectActivityKeys.size,
                 });
             }
             setStandaloneActivities(nonProjectRecords);
