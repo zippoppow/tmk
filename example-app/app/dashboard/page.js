@@ -65,6 +65,13 @@ export default function DashboardPage() {
         try {
             const records = await listLessonActivities(resolveTmkApiOrigin());
             const nonProjectRecords = records.filter(isStandaloneLessonActivity);
+            if (process.env.NODE_ENV !== 'production') {
+                console.log('[Dashboard] Lesson activity association summary', {
+                    total: records.length,
+                    standalone: nonProjectRecords.length,
+                    associated: records.length - nonProjectRecords.length,
+                });
+            }
             setStandaloneActivities(nonProjectRecords);
         } catch (error) {
             console.error('Failed to load standalone lesson activities:', error);

@@ -146,28 +146,22 @@ export default function LessonProjectsPage() {
 			const recordsByProjectId = new Map();
 			const recordsByProjectName = new Map();
 			activityRecords.forEach((record) => {
-				const { projectId, projectName } = getLessonActivityProjectAssociation(record);
-				const key = projectId;
-				if (!key) {
-					const nameKey = projectName;
-					if (!nameKey) {
-						return;
-					}
-					const nameList = recordsByProjectName.get(nameKey) || [];
-					nameList.push(record);
-					recordsByProjectName.set(nameKey, nameList);
+				const { projectIds, projectNames } = getLessonActivityProjectAssociation(record);
+				if (!projectIds.length && !projectNames.length) {
 					return;
 				}
-				const list = recordsByProjectId.get(key) || [];
-				list.push(record);
-				recordsByProjectId.set(key, list);
 
-				const nameKey = projectName;
-				if (nameKey) {
-					const nameList = recordsByProjectName.get(nameKey) || [];
+				projectIds.forEach((projectId) => {
+					const list = recordsByProjectId.get(projectId) || [];
+					list.push(record);
+					recordsByProjectId.set(projectId, list);
+				});
+
+				projectNames.forEach((projectName) => {
+					const nameList = recordsByProjectName.get(projectName) || [];
 					nameList.push(record);
-					recordsByProjectName.set(nameKey, nameList);
-				}
+					recordsByProjectName.set(projectName, nameList);
+				});
 			});
 
 			const enrichedProjects = normalizedProjects.map((project) => {

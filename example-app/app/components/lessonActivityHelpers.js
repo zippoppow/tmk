@@ -65,16 +65,120 @@ export function createLessonActivityId() {
 	return `la_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function coerceBoolean(value) {
+	if (typeof value === 'boolean') {
+		return value;
+	}
+	if (typeof value === 'string') {
+		const normalized = value.trim().toLowerCase();
+		if (normalized === 'true') {
+			return true;
+		}
+		if (normalized === 'false') {
+			return false;
+		}
+	}
+	return null;
+}
+
+function normalizeStringList(values) {
+	if (!Array.isArray(values)) {
+		return [];
+	}
+
+	const unique = new Set();
+	values.forEach((value) => {
+		const normalized = String(value || '').trim();
+		if (normalized) {
+			unique.add(normalized);
+		}
+	});
+
+	return [...unique];
+}
+
 export function getLessonActivityProjectAssociation(record) {
+	const linkedProjects = Array.isArray(record?.projects) ? record.projects : [];
+	const linkedAssociations = Array.isArray(record?.associations) ? record.associations : [];
+	const linkedProjectRefs = Array.isArray(record?.['diy-projects']) ? record['diy-projects'] : [];
+
+	const projectIds = normalizeStringList([
+		record?.projectId,
+		record?.['project-id'],
+		...(Array.isArray(record?.projectIds) ? record.projectIds : []),
+		...(Array.isArray(record?.['project-ids']) ? record['project-ids'] : []),
+		...(Array.isArray(record?.diyProjectIds) ? record.diyProjectIds : []),
+		...(Array.isArray(record?.['diy-project-ids']) ? record['diy-project-ids'] : []),
+		...linkedProjects.map((project) => project?.id || project?.projectId || project?.['project-id']),
+		...linkedAssociations.map((item) => item?.projectId || item?.['project-id'] || item?.id),
+		...linkedProjectRefs.map((item) => item?.id || item?.projectId || item?.['project-id']),
+	]);
+
+	const projectNames = normalizeStringList([
+		record?.projectName,
+		record?.['project-name'],
+		...(Array.isArray(record?.projectNames) ? record.projectNames : []),
+		...(Array.isArray(record?.['project-names']) ? record['project-names'] : []),
+		...(Array.isArray(record?.diyProjectNames) ? record.diyProjectNames : []),
+		...(Array.isArray(record?.['diy-project-names']) ? record['diy-project-names'] : []),
+		...linkedProjects.map((project) => project?.name || project?.projectName || project?.['project-name']),
+		...linkedAssociations.map((item) => item?.projectName || item?.['project-name'] || item?.name),
+		...linkedProjectRefs.map((item) => item?.name || item?.projectName || item?.['project-name']),
+	]);
+
+	const standaloneExplicitCandidates = [
+		record?.standalone,
+		record?.isStandalone,
+		record?.['is-standalone'],
+		record?.association?.standalone,
+		record?.association?.isStandalone,
+		record?.association?.['is-standalone'],
+		record?.associationStatus === 'standalone' ? true : null,
+		record?.associationType === 'standalone' ? true : null,
+		record?.['association-status'] === 'standalone' ? true : null,
+		record?.['association-type'] === 'standalone' ? true : null,
+	];
+
+	const associatedExplicitCandidates = [
+		record?.associated,
+		record?.isAssociated,
+		record?.['is-associated'],
+		record?.association?.associated,
+		record?.association?.isAssociated,
+		record?.association?.['is-associated'],
+		record?.associationStatus === 'associated' ? true : null,
+		record?.associationType === 'associated' ? true : null,
+		record?.['association-status'] === 'associated' ? true : null,
+		record?.['association-type'] === 'associated' ? true : null,
+	];
+
+	const standaloneExplicit = standaloneExplicitCandidates
+		.map(coerceBoolean)
+		.find((value) => value !== null) ?? null;
+
+	const associatedExplicit = associatedExplicitCandidates
+		.map(coerceBoolean)
+		.find((value) => value !== null) ?? null;
+
 	return {
-		projectId: String(record?.projectId || '').trim(),
-		projectName: String(record?.projectName || '').trim(),
+		projectId: projectIds[0] || '',
+		projectName: projectNames[0] || '',
+		projectIds,
+		projectNames,
+		standaloneExplicit,
+		associatedExplicit,
 	};
 }
 
 export function isProjectLinkedLessonActivity(record) {
-	const { projectId, projectName } = getLessonActivityProjectAssociation(record);
-	return Boolean(projectId || projectName);
+	const association = getLessonActivityProjectAssociation(record);
+	if (association.associatedExplicit === true) {
+		return true;
+	}
+	if (association.standaloneExplicit === true) {
+		return false;
+	}
+	return association.projectIds.length > 0 || association.projectNames.length > 0;
 }
 
 export function isStandaloneLessonActivity(record) {
