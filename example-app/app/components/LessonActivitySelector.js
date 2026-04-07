@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import {
     Box,
     Button,
@@ -48,6 +49,29 @@ export default function LessonActivitySelector({
             }}
         >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {/* Preview Image */}
+                <Box
+                    sx={{
+                        width: '100%',
+                        height: 'auto',
+                        position: 'relative',
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        backgroundColor: '#f0f0f0',
+                        aspectRatio: '16 / 9',
+                    }}
+                >
+                    <Image
+                        src="/lesson-activities/preview-images/lesson-activity-sample.png"
+                        alt="Lesson Activity Preview"
+                        fill
+                        style={{
+                            objectFit: 'cover',
+                        }}
+                        priority
+                    />
+                </Box>
+
                 <TextField
                     select
                     fullWidth
