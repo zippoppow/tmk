@@ -65,6 +65,22 @@ export function createLessonActivityId() {
 	return `la_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+export function getLessonActivityProjectAssociation(record) {
+	return {
+		projectId: String(record?.projectId || '').trim(),
+		projectName: String(record?.projectName || '').trim(),
+	};
+}
+
+export function isProjectLinkedLessonActivity(record) {
+	const { projectId, projectName } = getLessonActivityProjectAssociation(record);
+	return Boolean(projectId || projectName);
+}
+
+export function isStandaloneLessonActivity(record) {
+	return !isProjectLinkedLessonActivity(record);
+}
+
 function toEpochMs(value) {
 	const num = Number(value);
 	return Number.isFinite(num) ? num : Date.now();

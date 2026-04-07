@@ -17,6 +17,7 @@ import {
 import {
     clearFormSessionData,
     deleteLessonActivityById,
+    isStandaloneLessonActivity,
     listLessonActivities,
 } from '../components/lessonActivityHelpers';
 import AuthDebugPanel from '../components/AuthDebugPanel';
@@ -63,7 +64,7 @@ export default function DashboardPage() {
         setStandaloneLoading(true);
         try {
             const records = await listLessonActivities(resolveTmkApiOrigin());
-            const nonProjectRecords = records.filter((record) => !String(record?.projectId || '').trim());
+            const nonProjectRecords = records.filter(isStandaloneLessonActivity);
             setStandaloneActivities(nonProjectRecords);
         } catch (error) {
             console.error('Failed to load standalone lesson activities:', error);

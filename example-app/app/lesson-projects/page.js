@@ -24,6 +24,7 @@ import {
 	deleteLessonActivityById,
 	formatActivityDate,
 	formatProjectDate,
+	getLessonActivityProjectAssociation,
 	getAllStoredProjects,
 	listLessonActivities,
 	saveStoredProjects,
@@ -145,9 +146,10 @@ export default function LessonProjectsPage() {
 			const recordsByProjectId = new Map();
 			const recordsByProjectName = new Map();
 			activityRecords.forEach((record) => {
-				const key = String(record?.projectId || '').trim();
+				const { projectId, projectName } = getLessonActivityProjectAssociation(record);
+				const key = projectId;
 				if (!key) {
-					const nameKey = String(record?.projectName || '').trim();
+					const nameKey = projectName;
 					if (!nameKey) {
 						return;
 					}
@@ -160,7 +162,7 @@ export default function LessonProjectsPage() {
 				list.push(record);
 				recordsByProjectId.set(key, list);
 
-				const nameKey = String(record?.projectName || '').trim();
+				const nameKey = projectName;
 				if (nameKey) {
 					const nameList = recordsByProjectName.get(nameKey) || [];
 					nameList.push(record);
