@@ -361,7 +361,7 @@ export default function LessonProjectsPage() {
 		setSelectedLocalProjectId(projectId);
 	};
 
-	const handleDeleteProject = (projectId) => {
+	const handleDeleteProject = async (projectId) => {
 		const project = getLocalProjectById(projectId);
 		if (!project) {
 			return;
@@ -373,12 +373,46 @@ export default function LessonProjectsPage() {
 		}
 
 		if (isAuthenticated) {
+			const associatedIds = new Set();
+
 			const activities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
 			activities.forEach((activity) => {
-				if (activity?.id) {
-					deleteLessonActivityById(apiOrigin, String(activity.id));
+				const id = String(activity?.id || '').trim();
+				if (id) {
+					associatedIds.add(id);
 				}
 			});
+
+			try {
+				const cloudRecords = await listLessonActivities(apiOrigin);
+				cloudRecords.forEach((record) => {
+					const { projectIds, projectNames } = getLessonActivityProjectAssociation(record);
+					const matchesProject = projectIds.includes(String(project.id || '').trim())
+						|| projectNames.includes(String(project.name || '').trim());
+					if (!matchesProject) {
+						return;
+					}
+
+					const id = String(record?.id || '').trim();
+					if (id) {
+						associatedIds.add(id);
+					}
+				});
+			} catch (error) {
+				console.error('Failed to list lesson activities during project delete:', error);
+			}
+
+			if (associatedIds.size > 0) {
+				const results = await Promise.allSettled(
+					[...associatedIds].map((id) => deleteLessonActivityById(apiOrigin, id))
+				);
+				const failedDeletes = results.filter(
+					(result) => result.status !== 'fulfilled' || !result.value?.ok
+				).length;
+				if (failedDeletes > 0) {
+					showNotice('warning', `Project deleted locally, but ${failedDeletes} associated lesson activit${failedDeletes === 1 ? 'y' : 'ies'} failed to delete in cloud.`);
+				}
+			}
 		}
 
 		saveStoredProjects(getAllStoredProjects().filter((item) => item.id !== projectId));
