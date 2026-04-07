@@ -397,6 +397,9 @@ export default function LessonProjectsPage() {
 			return next;
 		});
 		loadLocalProjects();
+		if (isAuthenticated) {
+			await loadCloudProjects();
+		}
 	};
 
 	const handleNewActivity = (projectId) => {
