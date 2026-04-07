@@ -23,6 +23,7 @@ import {
 	formatProjectDate,
 	getLessonActivityProjectAssociation,
 	getAllStoredProjects,
+	hardDeleteLessonActivityById,
 	listLessonActivities,
 	saveStoredProjects,
 } from '../components/lessonActivityHelpers';
@@ -375,10 +376,10 @@ export default function LessonProjectsPage() {
 
 			if (associatedIds.size > 0) {
 				const results = await Promise.allSettled(
-					[...associatedIds].map((id) => deleteLessonActivityById(apiOrigin, id))
+					[...associatedIds].map((id) => hardDeleteLessonActivityById(apiOrigin, id))
 				);
 				const failedDeletes = results.filter(
-					(result) => result.status !== 'fulfilled' || !result.value?.ok
+					(result) => result.status !== 'fulfilled' || result.value?.ok !== true
 				).length;
 				if (failedDeletes > 0) {
 					showNotice('warning', `Project deleted locally, but ${failedDeletes} associated lesson activit${failedDeletes === 1 ? 'y' : 'ies'} failed to delete in cloud.`);
@@ -511,7 +512,7 @@ export default function LessonProjectsPage() {
 
 		const nextActivities = activities.filter((_, idx) => idx !== activityIndex);
 		if (isAuthenticated && activity?.id) {
-			await deleteLessonActivityById(apiOrigin, String(activity.id));
+			await hardDeleteLessonActivityById(apiOrigin, String(activity.id));
 		}
 		if (nextActivities.length === 0) {
 			project.lessonActivities = [];

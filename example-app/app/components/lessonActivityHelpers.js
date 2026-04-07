@@ -328,6 +328,27 @@ export async function deleteLessonActivityById(apiOrigin, id) {
 	});
 }
 
+export async function hardDeleteLessonActivityById(apiOrigin, id, maxAttempts = 3) {
+	const activityId = String(id || '').trim();
+	if (!activityId) {
+		return { ok: false, attempts: 0, reason: 'missing-id' };
+	}
+
+	for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+		const deleteResponse = await deleteLessonActivityById(apiOrigin, activityId);
+		if (!deleteResponse.ok && deleteResponse.status !== 404) {
+			continue;
+		}
+
+		const existing = await fetchLessonActivityById(apiOrigin, activityId);
+		if (!existing) {
+			return { ok: true, attempts: attempt };
+		}
+	}
+
+	return { ok: false, attempts: maxAttempts, reason: 'still-exists' };
+}
+
 export function extractDiyProjectsFromResponse(payload) {
 	if (Array.isArray(payload)) {
 		return payload.flatMap((item) => {

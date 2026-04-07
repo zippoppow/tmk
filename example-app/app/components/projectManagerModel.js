@@ -163,18 +163,7 @@ export function buildDiyProjectsPayload({ project, formName, normalizeLessonInpu
 	const createdAtMs = Number.isFinite(project.createdAtMs) ? project.createdAtMs : now;
 	const modifiedAtMs = Number.isFinite(project.modifiedAtMs) ? project.modifiedAtMs : now;
 	const sourceActivities = getProjectLessonActivities(project, formName, normalizeLessonInputData);
-	const normalizedActivities =
-		sourceActivities.length > 0
-			? sourceActivities
-			: [
-				createLessonActivitySnapshot({
-					formName,
-					projectName: project.name || '',
-					lessonName: project.name || '',
-					normalizeLessonInputData,
-					currentLessonInputData: {},
-				}),
-			];
+	const normalizedActivities = sourceActivities;
 
 	return {
 		'diy-projects': [
