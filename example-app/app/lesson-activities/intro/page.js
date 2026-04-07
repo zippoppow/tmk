@@ -328,23 +328,6 @@ export default function IntroPage() {
 				project.syncedAt = null;
 				saveStoredProjects(projects);
 
-				const lessonActivityResponse = await upsertLessonActivity(
-					projectApiOrigin,
-					buildLessonActivityUpsertPayload({
-						id: activityId,
-						template: activities[activityIndex]['tmk-template'] || FORM_NAME,
-						lessonName: activities[activityIndex]['lesson-name'] || 'Intro Activity',
-						lessonInputData: normalizedInput,
-						createdAt: activities[activityIndex]['created-at'],
-						modifiedAt: activities[activityIndex]['modified-at'],
-						extra: {
-							projectId,
-							projectName: project.name || '',
-							formName: FORM_NAME,
-						},
-					})
-				);
-
 				const payload = buildDiyProjectsPayload({
 					project,
 					formName: 'lesson-activities-project',
@@ -357,7 +340,7 @@ export default function IntroPage() {
 					body: JSON.stringify(payload),
 				});
 
-				if (response.ok && lessonActivityResponse.ok) {
+				if (response.ok) {
 					const result = await response.json();
 					const updated = getAllStoredProjects();
 					const updatedProject = updated.find((item) => item.id === projectId);
