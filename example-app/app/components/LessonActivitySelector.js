@@ -120,7 +120,7 @@ export default function LessonActivitySelector({
                         fontWeight: 600,
                     }}
                 >
-                    Open Activity
+                    Create New Activity
                 </Button>
             </Box>
         </Paper>

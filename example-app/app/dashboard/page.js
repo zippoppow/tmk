@@ -13,6 +13,7 @@ import {
     CircularProgress,
 } from '@mui/material';
 import {
+    clearFormSessionData,
     deleteLessonActivityById,
     listLessonActivities,
 } from '../components/lessonActivityHelpers';
@@ -151,6 +152,14 @@ export default function DashboardPage() {
         }
     };
 
+    const handleCreateNewActivity = (activity) => {
+        const formName = String(activity?.path || '').split('/').filter(Boolean).pop();
+        if (formName) {
+            clearFormSessionData(formName);
+        }
+        router.push(activity.path);
+    };
+
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
             <AuthDebugPanel />
@@ -187,7 +196,7 @@ export default function DashboardPage() {
                 <Box sx={{ width: '100%', maxWidth: { xs: '100%', md: '50%' }, mr: 'auto' }}>
                     <LessonActivitySelector
                         activities={lessonActivities}
-                        onOpen={(activity) => router.push(activity.path)}
+                        onOpen={handleCreateNewActivity}
                     />
                 </Box>
 
