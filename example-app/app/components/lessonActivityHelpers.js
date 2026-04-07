@@ -172,13 +172,20 @@ export function getLessonActivityProjectAssociation(record) {
 
 export function isProjectLinkedLessonActivity(record) {
 	const association = getLessonActivityProjectAssociation(record);
+	const hasProjectLinks = association.projectIds.length > 0 || association.projectNames.length > 0;
+
+	// Concrete project links always indicate association, even if legacy flags disagree.
+	if (hasProjectLinks) {
+		return true;
+	}
+
 	if (association.associatedExplicit === true) {
 		return true;
 	}
 	if (association.standaloneExplicit === true) {
 		return false;
 	}
-	return association.projectIds.length > 0 || association.projectNames.length > 0;
+	return false;
 }
 
 export function isStandaloneLessonActivity(record) {
