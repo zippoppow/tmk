@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { buildTeachableLogoutUrl, fetchAuthenticatedUser, resolveTmkApiOrigin } from '../components/authHelpers';
 import {
+    Alert,
     Container,
     Box,
     Typography,
     Button,
     Paper,
+    Snackbar,
     Stack,
     CircularProgress,
 } from '@mui/material';
@@ -26,6 +28,11 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [standaloneActivities, setStandaloneActivities] = useState([]);
     const [standaloneLoading, setStandaloneLoading] = useState(false);
+    const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
+
+    const showNotice = (severity, message) => {
+        setNotice({ open: true, severity, message });
+    };
 
     useEffect(() => {
         // Check authentication status
@@ -117,6 +124,7 @@ export default function DashboardPage() {
     const handleManageStandalone = (activityRecord) => {
         const path = getActivityPath(activityRecord);
         if (!path) {
+            showNotice('error', 'No page is implemented yet for this activity type.');
             return;
         }
 
@@ -143,12 +151,15 @@ export default function DashboardPage() {
         try {
             const response = await deleteLessonActivityById(resolveTmkApiOrigin(), activityId);
             if (!response.ok) {
+                showNotice('error', 'Delete failed. Please try again.');
                 return;
             }
 
             setStandaloneActivities((prev) => prev.filter((activity) => String(activity?.id || '') !== activityId));
+            showNotice('success', `"${activityRecord?.['lesson-name'] || 'Lesson Activity'}" deleted.`);
         } catch (error) {
             console.error('Failed to delete standalone lesson activity:', error);
+            showNotice('error', 'Delete failed. Please try again.');
         }
     };
 
@@ -161,6 +172,7 @@ export default function DashboardPage() {
     };
 
     return (
+        <>
         <Container maxWidth="lg" sx={{ py: 4 }}>
             <AuthDebugPanel />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
@@ -253,5 +265,20 @@ export default function DashboardPage() {
             </Box>
 
         </Container>
+
+        <Snackbar
+            open={notice.open}
+            autoHideDuration={3000}
+            onClose={() => setNotice((prev) => ({ ...prev, open: false }))}
+        >
+            <Alert
+                severity={notice.severity}
+                variant="filled"
+                onClose={() => setNotice((prev) => ({ ...prev, open: false }))}
+            >
+                {notice.message}
+            </Alert>
+        </Snackbar>
+        </>
     );
 }
