@@ -29,6 +29,9 @@ export default function ActivityShell({
 	handleAddToProject,
 	handleSaveAndReturn,
 	handleDownloadPdf,
+	standaloneActivityId,
+	handleSaveStandalone,
+	handleDeleteStandalone,
 	projectId,
 	projectName,
 	activityName,
@@ -100,9 +103,31 @@ export default function ActivityShell({
 						Lesson Projects
 					</Button>
 					{!projectId && (
-						<Button variant="contained" color="primary" onClick={handleAddToProject} sx={{ textTransform: 'none' }}>
-							Add To Project
-						</Button>
+						<>
+							<Button
+								variant="contained"
+								color="primary"
+								disabled={isSaving}
+								onClick={handleSaveStandalone}
+								sx={{ textTransform: 'none' }}
+							>
+								{isSaving ? 'Saving...' : 'Save Activity'}
+							</Button>
+							{standaloneActivityId && (
+								<Button
+									variant="outlined"
+									color="error"
+									disabled={isSaving}
+									onClick={handleDeleteStandalone}
+									sx={{ textTransform: 'none' }}
+								>
+									Delete Activity
+								</Button>
+							)}
+							<Button variant="contained" color="primary" onClick={handleAddToProject} sx={{ textTransform: 'none' }}>
+								Add To Project
+							</Button>
+						</>
 					)}
 					{projectId && (
 						<Button
@@ -129,6 +154,21 @@ export default function ActivityShell({
 						<TextField
 							size="small"
 							label={`${title} Activity Name`}
+							value={activityName}
+							onChange={(event) => setActivityName(event.target.value)}
+							fullWidth
+						/>
+					</Box>
+				)}
+
+				{!projectId && (
+					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
+						<Typography sx={{ fontSize: '0.8rem', color: '#4a5568', textTransform: 'uppercase', fontWeight: 700 }}>
+							Standalone {title} Activity
+						</Typography>
+						<TextField
+							size="small"
+							label="Activity Name"
 							value={activityName}
 							onChange={(event) => setActivityName(event.target.value)}
 							fullWidth

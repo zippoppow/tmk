@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
 	buildLessonActivityUpsertPayload,
 	createLessonActivityId,
+	deleteLessonActivityById,
 	fetchLessonActivityById,
 	upsertLessonActivity,
 	readFormSessionData,
@@ -41,6 +42,7 @@ export function useLessonActivityProject({
 	const [activityIndex, setActivityIndex] = useState(null);
 	const [projectName, setProjectName] = useState('');
 	const [activityName, setActivityName] = useState('');
+	const [standaloneActivityId, setStandaloneActivityId] = useState('');
 	const [isSaving, setIsSaving] = useState(false);
 
 	const projectApiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
@@ -67,6 +69,15 @@ export function useLessonActivityProject({
 			const paramActivityId = (url.searchParams.get('activityId') || '').trim();
 
 			if (!paramProjectId) {
+				if (paramActivityId) {
+					const cloudActivity = await fetchLessonActivityById(projectApiOrigin, paramActivityId);
+					if (cloudActivity && !cancelled) {
+						setStandaloneActivityId(String(cloudActivity.id || paramActivityId));
+						setActivityName(String(cloudActivity['lesson-name'] || defaultActivityName));
+						setData(normalizeInputData(cloudActivity['lesson-input-data'] || {}));
+						return;
+					}
+				}
 				const stored = readFormSessionData(formName);
 				if (stored && !cancelled) {
 					setData(normalizeInputData(stored));
@@ -304,6 +315,86 @@ export function useLessonActivityProject({
 		}
 	};
 
+	const handleSaveStandalone = async () => {
+		if (!authUser) {
+			showNotice('error', 'Please login with Teachable to save standalone activities.');
+			return;
+		}
+
+		setIsSaving(true);
+		try {
+			const normalizedInput = normalizeInputData(data);
+			const activityId = String(standaloneActivityId || createLessonActivityId());
+
+			const response = await upsertLessonActivity(
+				projectApiOrigin,
+				buildLessonActivityUpsertPayload({
+					id: activityId,
+					template: formName,
+					lessonName: activityName || defaultActivityName,
+					lessonInputData: normalizedInput,
+					createdAt: Date.now(),
+					modifiedAt: Date.now(),
+					extra: {
+						formName,
+					},
+				})
+			);
+
+			if (!response.ok) {
+				showNotice('error', 'Could not save standalone lesson activity.');
+				setIsSaving(false);
+				return;
+			}
+
+			setStandaloneActivityId(activityId);
+			const url = new URL(window.location.href);
+			url.searchParams.set('activityId', activityId);
+			window.history.replaceState({}, '', url.toString());
+			showNotice('success', 'Standalone lesson activity saved.');
+		} catch (error) {
+			console.error('Save standalone failed:', error);
+			showNotice('error', 'Could not save standalone lesson activity.');
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
+	const handleDeleteStandalone = async () => {
+		if (!standaloneActivityId) {
+			showNotice('error', 'No standalone activity selected.');
+			return;
+		}
+
+		const shouldDelete = window.confirm('Delete this standalone lesson activity? This cannot be undone.');
+		if (!shouldDelete) {
+			return;
+		}
+
+		setIsSaving(true);
+		try {
+			const response = await deleteLessonActivityById(projectApiOrigin, standaloneActivityId);
+			if (!response.ok) {
+				showNotice('error', 'Delete failed.');
+				setIsSaving(false);
+				return;
+			}
+
+			setStandaloneActivityId('');
+			setActivityName('');
+			setData(normalizeInputData({}));
+			const url = new URL(window.location.href);
+			url.searchParams.delete('activityId');
+			window.history.replaceState({}, '', url.toString());
+			showNotice('success', 'Standalone lesson activity deleted.');
+		} catch (error) {
+			console.error('Delete standalone failed:', error);
+			showNotice('error', 'Delete failed.');
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
 	const handleGoToLessonProjects = () => {
 		router.push('/lesson-projects');
 	};
@@ -333,6 +424,9 @@ export function useLessonActivityProject({
 		runAuthCheck,
 		handleLoginLogout,
 		handleSaveAndReturn,
+		standaloneActivityId,
+		handleSaveStandalone,
+		handleDeleteStandalone,
 		handleGoToLessonProjects,
 		handleAddToProject,
 		handleDownloadPdf,
