@@ -88,7 +88,7 @@ export default function LessonProjectsPage() {
 	const [cloudMessageSeverity, setCloudMessageSeverity] = useState('error');
 	const [projectNameInput, setProjectNameInput] = useState('');
 	const [selectedLocalProjectId, setSelectedLocalProjectId] = useState(null);
-	const [activityNameDrafts, setActivityNameDrafts] = useState({});
+
 	const [newActivityTypeByProjectId, setNewActivityTypeByProjectId] = useState({});
 	const [defaultActivityType, setDefaultActivityType] = useState(LESSON_ACTIVITY_TYPES[0].value);
 	const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
@@ -452,41 +452,7 @@ export default function LessonProjectsPage() {
 		router.push(`${route}?${params.toString()}`);
 	};
 
-	const handleUpdateActivityName = (projectId, activityIndex) => {
-		const projects = getAllStoredProjects();
-		const project = projects.find((item) => item.id === projectId);
-		if (!project) {
-			return;
-		}
 
-		const activities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
-		if (!activities[activityIndex]) {
-			return;
-		}
-
-		const key = `${projectId}:${activityIndex}`;
-		const requestedName = activityNameDrafts[key] || activities[activityIndex]['lesson-name'] || '';
-		const uniqueName = getUniqueLessonActivityName({
-			project,
-			requestedName: requestedName || project.name || 'Lesson Activity',
-			formName: PROJECT_FORM_NAME,
-			normalizeLessonInputData,
-			excludeIndex: activityIndex,
-		});
-
-		activities[activityIndex] = {
-			...activities[activityIndex],
-			'lesson-name': uniqueName,
-			'modified-at': Date.now(),
-		};
-		project.lessonActivities = activities;
-		project.modifiedAtMs = Date.now();
-		project.syncedAt = null;
-
-		saveStoredProjects(projects);
-		loadLocalProjects();
-		showNotice('success', 'Lesson activity name updated.');
-	};
 
 	const handleDeleteActivity = async (projectId, activityIndex) => {
 		const projects = getAllStoredProjects();
@@ -731,21 +697,9 @@ export default function LessonProjectsPage() {
 
 													return (
 														<Stack key={draftKey} direction="row" spacing={0.6} alignItems="center">
-															{project.source === 'local' ? (
-																<TextField
-																	size="small"
-																	value={activityNameDrafts[draftKey] ?? String(activity['lesson-name'] || 'Lesson')}
-																	onChange={(event) => {
-																		const value = event.target.value;
-																		setActivityNameDrafts((prev) => ({ ...prev, [draftKey]: value }));
-																	}}
-																	sx={{ flex: 1 }}
-																/>
-															) : (
-																<Typography sx={{ flex: 1, fontSize: '0.78rem', color: '#555' }} noWrap>
+															<Typography sx={{ flex: 1, fontSize: '0.78rem', color: '#555' }} noWrap>
 																	{activity['lesson-name'] || project.name}
 																</Typography>
-															)}
 															<Typography sx={{ fontSize: '0.72rem', color: '#888', minWidth: 98 }}>
 																{activityType}
 																{formatActivityDate(activity['modified-at']) ? ` · ${formatActivityDate(activity['modified-at'])}` : ''}
@@ -775,26 +729,15 @@ export default function LessonProjectsPage() {
 																Open
 															</Button>
 															{project.source === 'local' && (
-																<>
-																	<Button
-																		size="small"
-																		variant="contained"
-																		color="warning"
-																		onClick={() => handleUpdateActivityName(project.id, activityIndex)}
-																		sx={{ textTransform: 'none', minWidth: 70 }}
-																	>
-																		Rename
-																	</Button>
-																	<Button
-																		size="small"
-																		variant="contained"
-																		color="error"
-																		onClick={() => handleDeleteActivity(project.id, activityIndex)}
-																		sx={{ textTransform: 'none', minWidth: 52 }}
-																	>
-																		Del
-																	</Button>
-																</>
+																<Button
+																	size="small"
+																	variant="contained"
+																	color="error"
+																	onClick={() => handleDeleteActivity(project.id, activityIndex)}
+																	sx={{ textTransform: 'none', minWidth: 52 }}
+																>
+																	Del
+																</Button>
 															)}
 														</Stack>
 													);
