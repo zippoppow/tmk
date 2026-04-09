@@ -252,10 +252,6 @@ export default function LessonProjectsPage() {
 		return mergeDisplayProjects(localProjects, cloudProjects, PROJECT_FORM_NAME, normalizeLessonInputData);
 	}, [localProjects, cloudProjects]);
 
-	const unsyncedCount = useMemo(() => {
-		return localProjects.filter((project) => !project.syncedAt).length;
-	}, [localProjects]);
-
 	const selectedProjectText = useMemo(() => {
 		if (!selectedLocalProjectId) {
 			return 'No project selected. Create and select a Lesson Activities Project first.';
@@ -529,32 +525,26 @@ export default function LessonProjectsPage() {
 		loadLocalProjects();
 	};
 
-	const handleSyncAll = async () => {
+	const handleSyncProject = async (projectId) => {
 		if (!isAuthenticated) {
+			showNotice('error', 'Login with Teachable to sync this project.');
 			return;
 		}
 
-		const unsyncedProjects = getAllStoredProjects().filter(
-			(project) => project.formName === PROJECT_FORM_NAME && !project.syncedAt
-		);
-
-		let count = 0;
-		for (const project of unsyncedProjects) {
-			const result = await syncProjectToApi(project);
-			if (result) {
-				count += 1;
-			}
+		const project = getLocalProjectById(projectId);
+		if (!project) {
+			showNotice('error', 'Project not found.');
+			return;
 		}
 
-		if (count > 0) {
-			showNotice('success', `${count} project(s) synced to cloud.`);
-		} else if (unsyncedProjects.length === 0) {
-			showNotice('info', 'All projects are already synced.');
-		} else {
-			showNotice('error', 'Sync failed. Check your connection.');
+		const result = await syncProjectToApi(project);
+		if (result) {
+			showNotice('success', `"${project.name}" synced to cloud.`);
+			await loadCloudProjects();
+			return;
 		}
 
-		await loadCloudProjects();
+		showNotice('error', `Could not sync "${project.name}".`);
 	};
 
 	useEffect(() => {
@@ -721,6 +711,11 @@ export default function LessonProjectsPage() {
 													Add Activity
 												</Button>
 											)}
+											{project.source === 'local' && isAuthenticated && (
+												<Button size="small" variant="contained" color="info" onClick={() => handleSyncProject(project.id)} sx={{ textTransform: 'none' }}>
+													Sync Changes
+												</Button>
+											)}
 											{project.source === 'local' && (
 												<Button size="small" variant="contained" color="error" onClick={() => handleDeleteProject(project.id)} sx={{ textTransform: 'none' }}>
 													Delete Project
@@ -830,19 +825,10 @@ export default function LessonProjectsPage() {
 						{isAuthenticated ? (
 							<Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" flexWrap="wrap">
 								<Typography sx={{ fontSize: '0.82rem', color: '#555' }}>
-									{unsyncedCount > 0 ? `${unsyncedCount} project(s) not yet synced` : 'All projects synced'}
+									Sync each project individually using its `Sync Changes` button.
 									{authUser?.email ? ` - ${authUser.email}` : ''}
 								</Typography>
 								<Stack direction="row" spacing={0.6}>
-									<Button
-										size="small"
-										variant="contained"
-										color="success"
-										onClick={handleSyncAll}
-										sx={{ textTransform: 'none' }}
-									>
-										Sync All
-									</Button>
 									<Button
 										size="small"
 										variant="contained"
