@@ -102,6 +102,13 @@ export default function DashboardPage() {
             }
 
             const nonProjectRecords = records.filter((record) => {
+                const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+
+                // Guard against project-container pseudo records accidentally returned by sync flows.
+                if (template === 'lesson-activities-project') {
+                    return false;
+                }
+
                 if (!isStandaloneLessonActivity(record)) {
                     return false;
                 }
@@ -111,7 +118,6 @@ export default function DashboardPage() {
                     return false;
                 }
 
-                const template = String(record?.['tmk-template'] || record?.formName || '').trim();
                 const name = String(record?.['lesson-name'] || '').trim();
                 if (template && name && projectActivityKeys.has(`${template}::${name}`)) {
                     return false;
