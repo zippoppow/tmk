@@ -109,11 +109,34 @@ export function getLessonActivityProjectAssociation(record) {
 		...(Array.isArray(record?.['project-ids']) ? record['project-ids'] : []),
 		...(Array.isArray(record?.diyProjectIds) ? record.diyProjectIds : []),
 		...(Array.isArray(record?.['diy-project-ids']) ? record['diy-project-ids'] : []),
+		...(Array.isArray(record?.associationIds) ? record.associationIds : []),
+		...(Array.isArray(record?.['association-ids']) ? record['association-ids'] : []),
 		...linkedAssociations,
 		...linkedProjectRefs,
-		...linkedProjects.map((project) => project?.id || project?.projectId || project?.['project-id']),
-		...linkedAssociations.map((item) => item?.projectId || item?.['project-id'] || item?.id),
-		...linkedProjectRefs.map((item) => item?.id || item?.projectId || item?.['project-id']),
+		...linkedProjects.map((project) =>
+			project?.id
+			|| project?.projectId
+			|| project?.['project-id']
+			|| project?.diyProjectId
+			|| project?.['diy-project-id']
+		),
+		...linkedAssociations.map((item) =>
+			item?.projectId
+			|| item?.['project-id']
+			|| item?.id
+			|| item?.diyProjectId
+			|| item?.['diy-project-id']
+			|| item?.project?.id
+			|| item?.project?.projectId
+			|| item?.project?.['project-id']
+		),
+		...linkedProjectRefs.map((item) =>
+			item?.id
+			|| item?.projectId
+			|| item?.['project-id']
+			|| item?.diyProjectId
+			|| item?.['diy-project-id']
+		),
 	]);
 
 	const projectNames = normalizeStringList([
@@ -125,9 +148,30 @@ export function getLessonActivityProjectAssociation(record) {
 		...(Array.isArray(record?.['diy-project-names']) ? record['diy-project-names'] : []),
 		...(Array.isArray(record?.associationNames) ? record.associationNames : []),
 		...(Array.isArray(record?.['association-names']) ? record['association-names'] : []),
-		...linkedProjects.map((project) => project?.name || project?.projectName || project?.['project-name']),
-		...linkedAssociations.map((item) => item?.projectName || item?.['project-name'] || item?.name),
-		...linkedProjectRefs.map((item) => item?.name || item?.projectName || item?.['project-name']),
+		...linkedProjects.map((project) =>
+			project?.name
+			|| project?.projectName
+			|| project?.['project-name']
+			|| project?.diyProjectName
+			|| project?.['diy-project-name']
+		),
+		...linkedAssociations.map((item) =>
+			item?.projectName
+			|| item?.['project-name']
+			|| item?.name
+			|| item?.diyProjectName
+			|| item?.['diy-project-name']
+			|| item?.project?.name
+			|| item?.project?.projectName
+			|| item?.project?.['project-name']
+		),
+		...linkedProjectRefs.map((item) =>
+			item?.name
+			|| item?.projectName
+			|| item?.['project-name']
+			|| item?.diyProjectName
+			|| item?.['diy-project-name']
+		),
 	]);
 
 	const standaloneExplicitCandidates = [
@@ -355,8 +399,14 @@ export function extractDiyProjectsFromResponse(payload) {
 			if (item && Array.isArray(item['diy-projects'])) {
 				return item['diy-projects'];
 			}
+			if (item?.data && Array.isArray(item.data['diy-projects'])) {
+				return item.data['diy-projects'];
+			}
 			if (item && item['project-name']) {
 				return [item];
+			}
+			if (item?.data && item.data['project-name']) {
+				return [item.data];
 			}
 			return [];
 		});
@@ -364,6 +414,22 @@ export function extractDiyProjectsFromResponse(payload) {
 
 	if (payload && typeof payload === 'object' && Array.isArray(payload['diy-projects'])) {
 		return payload['diy-projects'];
+	}
+
+	if (payload?.data && Array.isArray(payload.data['diy-projects'])) {
+		return payload.data['diy-projects'];
+	}
+
+	if (Array.isArray(payload?.data)) {
+		return payload.data.flatMap((item) => {
+			if (item && Array.isArray(item['diy-projects'])) {
+				return item['diy-projects'];
+			}
+			if (item && item['project-name']) {
+				return [item];
+			}
+			return [];
+		});
 	}
 
 	return [];
