@@ -19,6 +19,7 @@ import {
     DIY_PROJECTS_ENDPOINT,
     deleteLessonActivityById,
     extractDiyProjectsFromResponse,
+    getAllStoredProjects,
     isStandaloneLessonActivity,
     listLessonActivities,
 } from '../components/lessonActivityHelpers';
@@ -70,6 +71,25 @@ export default function DashboardPage() {
 
             let projectActivityIds = new Set();
             let projectActivityKeys = new Set();
+
+            const localProjects = getAllStoredProjects().filter(
+                (project) => String(project?.formName || '').trim() === 'lesson-activities-project'
+            );
+            localProjects.forEach((project) => {
+                const activities = Array.isArray(project?.lessonActivities) ? project.lessonActivities : [];
+                activities.forEach((activity) => {
+                    const id = String(activity?.id || '').trim();
+                    if (id) {
+                        projectActivityIds.add(id);
+                    }
+
+                    const template = String(activity?.['tmk-template'] || activity?.formName || '').trim();
+                    const name = String(activity?.['lesson-name'] || '').trim();
+                    if (template && name) {
+                        projectActivityKeys.add(`${template}::${name}`);
+                    }
+                });
+            });
             try {
                 const projectResponse = await fetchWithUserToken(apiOrigin, DIY_PROJECTS_ENDPOINT, { method: 'GET' });
                 if (projectResponse.ok) {
@@ -94,8 +114,8 @@ export default function DashboardPage() {
                         });
                     });
 
-                    projectActivityIds = ids;
-                    projectActivityKeys = keys;
+                    projectActivityIds = new Set([...projectActivityIds, ...ids]);
+                    projectActivityKeys = new Set([...projectActivityKeys, ...keys]);
                 }
             } catch (projectError) {
                 console.error('Failed to load diy-project associations for standalone filter:', projectError);
