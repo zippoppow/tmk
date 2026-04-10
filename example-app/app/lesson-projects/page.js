@@ -590,7 +590,7 @@ export default function LessonProjectsPage() {
 							Create Project
 						</Button>
 					</Stack>
-					<Typography sx={{ color: '#666', fontSize: '0.82rem', mb: 1 }}>{selectedProjectText}</Typography>
+					<Typography sx={{ color: '#666', fontSize: '2rem', mb: 1 }}>{selectedProjectText}</Typography>
 
 					<Divider sx={{ mb: 1.5 }} />
 
@@ -598,7 +598,7 @@ export default function LessonProjectsPage() {
 						Saved Projects
 					</Typography>
 					{displayProjects.length === 0 && (
-						<Typography sx={{ color: '#bbb', fontSize: '0.9rem', textAlign: 'center', py: 2 }}>
+						<Typography sx={{ color: '#bbb', fontSize: '2rem', textAlign: 'center', py: 2 }}>
 							No saved projects yet.
 						</Typography>
 					)}
@@ -620,7 +620,7 @@ export default function LessonProjectsPage() {
 											}}
 										>
 											<Stack direction="row" alignItems="center" spacing={0.8}>
-												<Typography sx={{ fontSize: '0.92rem', fontWeight: 700, flex: 1 }} noWrap title={project.name}>
+												<Typography sx={{ fontSize: '2rem', fontWeight: 700, flex: 1 }} noWrap title={project.name}>
 													{project.name}
 												</Typography>
 												{/* {project.source === 'local' && (
@@ -633,7 +633,7 @@ export default function LessonProjectsPage() {
 														Sync Changes
 													</Button>
 												)}
-												{project.source === 'local' && (
+												{project.source === 'local' && isAuthenticated && (
 													<Button size="small" variant="contained" color="error" onClick={() => handleDeleteProject(project.id)} sx={{ textTransform: 'none' }}>
 														Delete Project
 													</Button>
@@ -643,7 +643,7 @@ export default function LessonProjectsPage() {
 													size="small"
 													sx={{
 														height: 18,
-														fontSize: '0.72rem',
+														fontSize: '0.89rem',
 														backgroundColor: '#eef2ff',
 														color: '#3f37c9',
 													}}
@@ -683,18 +683,18 @@ export default function LessonProjectsPage() {
 											)}
 											</Stack>
 
-											<Stack spacing={0.6}>
+											<Stack spacing={0.8}>
 												{lessonActivities.map((activity, activityIndex) => {
 													const draftKey = `${project.id}:${activityIndex}`;
 													const activityType = String(activity['tmk-template'] || 'unknown');
 													const canOpenType = Boolean(getLessonActivityRoute(activityType));
 
 													return (
-														<Stack key={draftKey} direction="row" spacing={0.6} alignItems="center">
-															<Typography sx={{ flex: 1, fontSize: '0.78rem', color: '#555' }} noWrap>
+														<Stack key={draftKey} direction="row" spacing={0.8} alignItems="center">
+															<Typography sx={{ flex: 1, fontSize: '1.6rem', color: '#555' }} noWrap>
 																	{activity['lesson-name'] || project.name}
 																</Typography>
-															<Typography sx={{ fontSize: '0.72rem', color: '#888', minWidth: 98 }}>
+															<Typography sx={{ fontSize: '1.6rem', color: '#888', minWidth: 98 }}>
 																{activityType}
 																{formatActivityDate(activity['modified-at']) ? ` · ${formatActivityDate(activity['modified-at'])}` : ''}
 															</Typography>
@@ -713,16 +713,18 @@ export default function LessonProjectsPage() {
 																	sx={{ height: 20, fontSize: '0.68rem', color: '#9ca3af', borderColor: '#e5e7eb' }}
 																/>
 															)}
-															<Button
-																size="small"
-																variant="contained"
-																disabled={!canOpenType}
-																onClick={() => handleOpenActivity(project, activity, activityIndex)}
-																sx={{ textTransform: 'none', minWidth: 60 }}
-															>
-																Open
-															</Button>
-															{project.source === 'local' && (
+															{project.source === 'local' && isAuthenticated && (
+																<Button
+																	size="small"
+																	variant="contained"
+																	disabled={!canOpenType}
+																	onClick={() => handleOpenActivity(project, activity, activityIndex)}
+																	sx={{ textTransform: 'none', minWidth: 60 }}
+																>
+																	Open
+																</Button>
+															)}
+															{project.source === 'local' && isAuthenticated && (
 																<Button
 																	size="small"
 																	variant="contained"
@@ -730,7 +732,7 @@ export default function LessonProjectsPage() {
 																	onClick={() => handleDeleteActivity(project.id, activityIndex)}
 																	sx={{ textTransform: 'none', minWidth: 52 }}
 																>
-																	Del
+																	Delete
 																</Button>
 															)}
 														</Stack>
@@ -763,7 +765,7 @@ export default function LessonProjectsPage() {
 							<Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" flexWrap="wrap">
 								<Typography sx={{ fontSize: '0.82rem', color: '#555' }}>
 									Sync each project individually using its `Sync Changes` button.
-									{authUser?.email ? ` - ${authUser.email}` : ''}
+									Licensed for use by {authUser?.email ? ` - ${authUser.email}` : ''}
 								</Typography>
 								<Stack direction="row" spacing={0.6}>
 									<Button
