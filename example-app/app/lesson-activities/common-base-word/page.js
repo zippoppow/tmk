@@ -1,6 +1,7 @@
 'use client';
 
-import { Box, Button, Grid, Stack, TextField, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Box, Button, Grid, Stack, TextField, Typography, Menu, MenuItem } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
 
@@ -28,6 +29,8 @@ function normalizeInputData(rawData) {
 }
 
 export default function CommonBaseWordPage() {
+	const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, gridIndex: -1 });
+
 	const {
 		data,
 		setData,
@@ -71,6 +74,46 @@ export default function CommonBaseWordPage() {
 			next[index] = value;
 			return { ...prev, groups: next };
 		});
+	};
+
+	const openGroupMenu = (event, gridIndex) => {
+		event.stopPropagation();
+		const word = data.grid[gridIndex];
+		if (!word || !word.trim()) return;
+		setContextMenu({
+			open: true,
+			x: event.clientX,
+			y: event.clientY,
+			gridIndex,
+		});
+	};
+
+	const closeGroupMenu = () => {
+		setContextMenu({ open: false, x: 0, y: 0, gridIndex: -1 });
+	};
+
+	const addWordToGroup = (groupIndex) => {
+		if (contextMenu.gridIndex < 0) return;
+		const word = data.grid[contextMenu.gridIndex];
+		if (!word || !word.trim()) {
+			closeGroupMenu();
+			return;
+		}
+
+		setData((prev) => {
+			const currentValue = prev.groups[groupIndex].trim();
+			const newValue = currentValue ? `${currentValue}\n${word}` : word;
+			const nextGroups = [...prev.groups];
+			nextGroups[groupIndex] = newValue;
+			const nextGrid = [...prev.grid];
+			nextGrid[contextMenu.gridIndex] = '';
+			return {
+				...prev,
+				groups: nextGroups,
+				grid: nextGrid,
+			};
+		});
+		closeGroupMenu();
 	};
 
 	return (
@@ -151,6 +194,16 @@ export default function CommonBaseWordPage() {
 					</Grid>
 				))}
 			</Grid>
+			<Menu
+				open={contextMenu.open}
+				onClose={closeGroupMenu}
+				anchorPosition={{ top: contextMenu.y, left: contextMenu.x }}
+				anchorReference="anchorPosition"
+			>
+				<MenuItem onClick={() => addWordToGroup(0)}>Add to Group 1</MenuItem>
+				<MenuItem onClick={() => addWordToGroup(1)}>Add to Group 2</MenuItem>
+				<MenuItem onClick={() => addWordToGroup(2)}>Add to Group 3</MenuItem>
+			</Menu>
 
 			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }}>
 				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>

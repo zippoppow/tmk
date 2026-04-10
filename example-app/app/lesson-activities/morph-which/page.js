@@ -3,6 +3,7 @@
 import { Box, Button, Stack, TextField, Typography } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
+import { useClickDoubleClickSelection } from '../components/interactionUtils';
 
 const FORM_NAME = 'morph-which';
 const DEFAULT_ACTIVITY_NAME = 'Morph Which Activity';
@@ -22,6 +23,7 @@ function emptyData() {
 		morpheme: '',
 		questions: Array.from({ length: 8 }, () => ''),
 		choices: Array.from({ length: 8 }, () => emptyChoiceSet()),
+		selectedChoices: Array.from({ length: 8 }, () => ''),
 	};
 }
 
@@ -29,6 +31,7 @@ function normalizeInputData(rawData) {
 	const source = rawData && typeof rawData === 'object' ? rawData : {};
 	const questions = Array.isArray(source.questions) ? source.questions : [];
 	const choices = Array.isArray(source.choices) ? source.choices : [];
+	const selectedChoices = Array.isArray(source.selectedChoices) ? source.selectedChoices : [];
 	return {
 		morpheme: String(source.morpheme || ''),
 		questions: Array.from({ length: 8 }, (_, index) => String(questions[index] || '')),
@@ -40,6 +43,10 @@ function normalizeInputData(rawData) {
 				c: String(choice.c || ''),
 				d: String(choice.d || ''),
 			};
+		}),
+		selectedChoices: Array.from({ length: 8 }, (_, index) => {
+			const rawValue = String(selectedChoices[index] || '').toLowerCase();
+			return ['a', 'b', 'c', 'd'].includes(rawValue) ? rawValue : '';
 		}),
 	};
 }
@@ -90,6 +97,28 @@ export default function MorphWhichPage() {
 		});
 	};
 
+	const clearSelectedChoice = (questionIndex) => {
+		setData((prev) => {
+			const next = [...(prev.selectedChoices || Array.from({ length: 8 }, () => ''))];
+			next[questionIndex] = '';
+			return { ...prev, selectedChoices: next };
+		});
+	};
+
+	const selectChoice = (questionIndex, optionKey) => {
+		setData((prev) => {
+			const next = [...(prev.selectedChoices || Array.from({ length: 8 }, () => ''))];
+			next[questionIndex] = optionKey;
+			return { ...prev, selectedChoices: next };
+		});
+	};
+
+	const { handleClick: handleOptionClick, handleDoubleClick: handleOptionDoubleClick } = useClickDoubleClickSelection({
+		onClick: ({ questionIndex }) => clearSelectedChoice(questionIndex),
+		onDoubleClick: ({ questionIndex, optionKey }) => selectChoice(questionIndex, optionKey),
+		delayMs: 300,
+	});
+
 	return (
 		<ActivityShell
 			title="MORPH, WHICH?"
@@ -131,23 +160,32 @@ export default function MorphWhichPage() {
 							/>
 							<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 1 }}>
 								{['a', 'b', 'c', 'd'].map((key, keyIndex) => (
+									(() => {
+										const isSelected = String(data.selectedChoices?.[index] || '') === key;
+										return (
 									<TextField
 										key={key}
 										variant="standard"
 										value={data.choices[index]?.[key] || ''}
 										onChange={(event) => setChoice(index, key, event.target.value)}
+										onClick={() => handleOptionClick({ questionIndex: index, optionKey: key })}
+										onDoubleClick={() => handleOptionDoubleClick({ questionIndex: index, optionKey: key })}
 										placeholder={`Option ${String.fromCharCode(65 + keyIndex)}`}
 										inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
 										sx={{
 											background: OPTION_STYLES[keyIndex].bg,
 											px: 0.75,
 											borderRadius: 0.5,
-											boxShadow: `inset 0 0 0 1px ${OPTION_STYLES[keyIndex].shadow}`,
+											boxShadow: isSelected
+												? `inset 0 0 0 4px ${OPTION_STYLES[keyIndex].shadow}, 0 6px 18px ${OPTION_STYLES[keyIndex].shadow}40`
+												: `inset 0 0 0 1px ${OPTION_STYLES[keyIndex].shadow}`,
 											'& .MuiInputBase-root::before': { borderBottom: '2px solid transparent' },
 											'& .MuiInputBase-root.Mui-focused': { boxShadow: `inset 0 0 0 2px ${OPTION_STYLES[keyIndex].shadow}` },
 										}}
 									/>
-								))}
+										);
+									})()
+								)}
 							</Box>
 						</Stack>
 					</Box>

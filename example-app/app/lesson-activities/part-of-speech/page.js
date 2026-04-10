@@ -1,8 +1,10 @@
 'use client';
 
-import { Box, Button, Grid, Stack, TextField, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Box, Button, Grid, Stack, TextField, Typography, Menu, MenuItem } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
+import { useClickDoubleClickSelection } from '../components/interactionUtils';
 
 const FORM_NAME = 'part-of-speech';
 const DEFAULT_ACTIVITY_NAME = 'Part Of Speech Activity';
@@ -11,6 +13,7 @@ function emptyData() {
 	return {
 		morpheme: '',
 		grid: Array.from({ length: 9 }, () => ''),
+		gridCategories: Array.from({ length: 9 }, () => ''),
 		nounWords: '',
 		verbWords: '',
 		adjectiveWords: '',
@@ -20,9 +23,11 @@ function emptyData() {
 function normalizeInputData(rawData) {
 	const source = rawData && typeof rawData === 'object' ? rawData : {};
 	const grid = Array.isArray(source.grid) ? source.grid : [];
+	const gridCategories = Array.isArray(source.gridCategories) ? source.gridCategories : [];
 	return {
 		morpheme: String(source.morpheme || ''),
 		grid: Array.from({ length: 9 }, (_, index) => String(grid[index] || '')),
+		gridCategories: Array.from({ length: 9 }, (_, index) => String(gridCategories[index] || '')),
 		nounWords: String(source.nounWords || ''),
 		verbWords: String(source.verbWords || ''),
 		adjectiveWords: String(source.adjectiveWords || ''),
@@ -30,6 +35,8 @@ function normalizeInputData(rawData) {
 }
 
 export default function PartOfSpeechPage() {
+	const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, gridIndex: -1 });
+
 	const {
 		data,
 		setData,
@@ -65,6 +72,48 @@ export default function PartOfSpeechPage() {
 			next[index] = value;
 			return { ...prev, grid: next };
 		});
+	};
+
+	const openCategoryMenu = (event, gridIndex) => {
+		event.stopPropagation();
+		const word = data.grid[gridIndex];
+		if (!word || !word.trim()) return;
+		setContextMenu({
+			open: true,
+			x: event.clientX,
+			y: event.clientY,
+			gridIndex,
+		});
+	};
+
+	const closeCategoryMenu = () => {
+		setContextMenu({ open: false, x: 0, y: 0, gridIndex: -1 });
+	};
+
+	const assignToCategory = (category) => {
+		if (contextMenu.gridIndex < 0) return;
+		const word = data.grid[contextMenu.gridIndex];
+		if (!word || !word.trim()) {
+			closeCategoryMenu();
+			return;
+		}
+
+		setData((prev) => {
+			const categoryFieldKey = category === 'noun' ? 'nounWords' : category === 'verb' ? 'verbWords' : 'adjectiveWords';
+			const currentValue = prev[categoryFieldKey].trim();
+			const newValue = currentValue ? `${currentValue}\n${word}` : word;
+			const nextGrid = [...prev.grid];
+			nextGrid[contextMenu.gridIndex] = '';
+			const nextCategories = [...prev.gridCategories];
+			nextCategories[contextMenu.gridIndex] = category;
+			return {
+				...prev,
+				[categoryFieldKey]: newValue,
+				grid: nextGrid,
+				gridCategories: nextCategories,
+			};
+		});
+		closeCategoryMenu();
 	};
 
 	return (
@@ -103,6 +152,7 @@ export default function PartOfSpeechPage() {
 									key={index}
 									value={data.grid[index] || ''}
 									onChange={(event) => setGridValue(index, event.target.value)}
+									onDoubleClick={(event) => openCategoryMenu(event, index)}
 									inputProps={{ style: { textAlign: 'center', fontFamily: 'Courier New, monospace' } }}
 									sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#4020A7', borderWidth: '2px' } }}
 								/>
@@ -111,6 +161,16 @@ export default function PartOfSpeechPage() {
 					</Box>
 				))}
 			</Box>
+			<Menu
+				open={contextMenu.open}
+				onClose={closeCategoryMenu}
+				anchorPosition={{ top: contextMenu.y, left: contextMenu.x }}
+				anchorReference="anchorPosition"
+			>
+				<MenuItem onClick={() => assignToCategory('noun')}>Noun</MenuItem>
+				<MenuItem onClick={() => assignToCategory('verb')}>Verb</MenuItem>
+				<MenuItem onClick={() => assignToCategory('adjective')}>Adjective / Adverb</MenuItem>
+			</Menu>
 			<Grid container spacing={2}>
 				<Grid item xs={12} md={4}>
 					<Typography sx={{ fontWeight: 700, mb: 1 }}>Nouns</Typography>

@@ -39,6 +39,7 @@ import {
 	buildDiyProjectsPayload,
 	getProjectLessonActivities,
 } from '../../components/projectManagerModel';
+import { useContextActionMenu } from '../components/interactionUtils';
 
 const FORM_NAME = 'chameleon-prefixes';
 
@@ -82,7 +83,6 @@ export default function ChameleonPrefixesPage() {
 	const [authLoading, setAuthLoading] = useState(true);
 	const [authFromSuccessRedirect, setAuthFromSuccessRedirect] = useState(false);
 	const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
-	const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, targetType: '', index: -1, field: '' });
 	const [projectId, setProjectId] = useState('');
 	const [activityIndex, setActivityIndex] = useState(null);
 	const [projectName, setProjectName] = useState('');
@@ -90,6 +90,11 @@ export default function ChameleonPrefixesPage() {
 	const [isSaving, setIsSaving] = useState(false);
 	const [standaloneActivityId, setStandaloneActivityId] = useState('');
 	const pairPrefixRefs = useRef([]);
+	const {
+		menuState: contextMenu,
+		openMenu: openContextMenuMenu,
+		closeMenu: closeContextMenu,
+	} = useContextActionMenu({ targetType: '', index: -1, field: '' });
 
 	const projectApiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
 
@@ -473,12 +478,7 @@ export default function ChameleonPrefixesPage() {
 	};
 
 	const openContextMenu = (event, targetType, index = -1, field = '') => {
-		event.preventDefault();
-		setContextMenu({ open: true, x: event.clientX, y: event.clientY, targetType, index, field });
-	};
-
-	const closeContextMenu = () => {
-		setContextMenu((prev) => ({ ...prev, open: false }));
+		openContextMenuMenu(event, { targetType, index, field });
 	};
 
 	const getContextTargetValue = () => {

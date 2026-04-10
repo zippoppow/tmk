@@ -1,6 +1,7 @@
 'use client';
 
-import { Box, Button, Grid, Stack, TextField, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Box, Button, Grid, Stack, TextField, Typography, Menu, MenuItem } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
 
@@ -28,6 +29,8 @@ function normalizeInputData(rawData) {
 }
 
 export default function MorphSortPage() {
+	const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, wordIndex: -1 });
+
 	const {
 		data,
 		setData,
@@ -63,6 +66,45 @@ export default function MorphSortPage() {
 			next[index] = value;
 			return { ...prev, words: next };
 		});
+	};
+
+	const openSortMenu = (event, wordIndex) => {
+		event.stopPropagation();
+		const word = data.words[wordIndex];
+		if (!word || !word.trim()) return;
+		setContextMenu({
+			open: true,
+			x: event.clientX,
+			y: event.clientY,
+			wordIndex,
+		});
+	};
+
+	const closeSortMenu = () => {
+		setContextMenu({ open: false, x: 0, y: 0, wordIndex: -1 });
+	};
+
+	const addWordToSort = (targetBox) => {
+		if (contextMenu.wordIndex < 0) return;
+		const word = data.words[contextMenu.wordIndex];
+		if (!word || !word.trim()) {
+			closeSortMenu();
+			return;
+		}
+
+		setData((prev) => {
+			const targetField = targetBox === 'left' ? 'leftSort' : 'rightSort';
+			const currentValue = prev[targetField].trim();
+			const newValue = currentValue ? `${currentValue}\n${word}` : word;
+			const nextWords = [...prev.words];
+			nextWords[contextMenu.wordIndex] = '';
+			return {
+				...prev,
+				[targetField]: newValue,
+				words: nextWords,
+			};
+		});
+		closeSortMenu();
 	};
 
 	return (
@@ -115,12 +157,22 @@ export default function MorphSortPage() {
 								variant="standard"
 								value={word}
 								onChange={(event) => setWord(index, event.target.value)}
+								onContextMenu={(event) => openSortMenu(event, index)}
 								inputProps={{ style: { fontFamily: 'Courier New, monospace', fontSize: '1.2em', color: '#4020A7' } }}
 								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 							/>
 						))}
 					</Stack>
 				</Grid>
+				<Menu
+					open={contextMenu.open}
+					onClose={closeSortMenu}
+					anchorPosition={{ top: contextMenu.y, left: contextMenu.x }}
+					anchorReference="anchorPosition"
+				>
+					<MenuItem onClick={() => addWordToSort('left')}>Add to Sort Box A</MenuItem>
+					<MenuItem onClick={() => addWordToSort('right')}>Add to Sort Box B</MenuItem>
+				</Menu>
 				<Grid item xs={12} md={4}>
 					<Typography sx={{ fontWeight: 700, mb: 1 }}>Sort Box B</Typography>
 					<Box sx={{ border: '2px solid #4a4a4a', borderRadius: 1, minHeight: '68vh', maxHeight: '68vh', p: 1.5, overflow: 'auto' }}>

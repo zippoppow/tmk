@@ -39,6 +39,7 @@ import {
 	buildDiyProjectsPayload,
 	getProjectLessonActivities,
 } from '../../components/projectManagerModel';
+import { useContextActionMenu } from '../components/interactionUtils';
 
 const FORM_NAME = 'intro';
 
@@ -70,13 +71,17 @@ export default function IntroPage() {
 	const [authLoading, setAuthLoading] = useState(true);
 	const [authFromSuccessRedirect, setAuthFromSuccessRedirect] = useState(false);
 	const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
-	const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, targetType: '', index: -1 });
 	const [projectId, setProjectId] = useState('');
 	const [activityIndex, setActivityIndex] = useState(null);
 	const [projectName, setProjectName] = useState('');
 	const [activityName, setActivityName] = useState('');
 	const [standaloneActivityId, setStandaloneActivityId] = useState('');
 	const [isSaving, setIsSaving] = useState(false);
+	const {
+		menuState: contextMenu,
+		openMenu: openContextMenuMenu,
+		closeMenu: closeContextMenu,
+	} = useContextActionMenu({ targetType: '', index: -1 });
 
 	const projectApiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
 
@@ -449,18 +454,7 @@ export default function IntroPage() {
 	};
 
 	const openContextMenu = (event, targetType, index = -1) => {
-		event.preventDefault();
-		setContextMenu({
-			open: true,
-			x: event.clientX,
-			y: event.clientY,
-			targetType,
-			index,
-		});
-	};
-
-	const closeContextMenu = () => {
-		setContextMenu((prev) => ({ ...prev, open: false }));
+		openContextMenuMenu(event, { targetType, index });
 	};
 
 	const getContextTargetValue = () => {
