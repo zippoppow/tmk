@@ -548,7 +548,7 @@ export default function LessonProjectsPage() {
 				</Stack>
 
 				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
-					<Typography sx={{ fontSize: '1.3rem', fontWeight: 800, mb: 0.5 }}>DIY Projects</Typography>
+					<Typography sx={{ fontSize: '2rem', fontWeight: 800, mb: 0.5 }}>DIY Projects</Typography>
 					<Typography sx={{ color: '#5a6472', fontSize: '0.95rem', mb: 2 }}>
 						Create a project first. Then choose a Lesson Activity type and add activities under that project.
 					</Typography>
@@ -574,11 +574,11 @@ export default function LessonProjectsPage() {
 
 					<Divider sx={{ mb: 1.5 }} />
 
-					<Typography sx={{ fontSize: '0.78rem', textTransform: 'uppercase', color: '#777', fontWeight: 700, mb: 1 }}>
+					<Typography sx={{ fontSize: '2rem', textTransform: 'uppercase', color: '#777', fontWeight: 700, mb: 1 }}>
 						Saved Projects
 					</Typography>
 					{displayProjects.length === 0 && (
-						<Typography sx={{ color: '#bbb', fontSize: '2rem', textAlign: 'center', py: 2 }}>
+						<Typography sx={{ color: '#bbb', fontSize: '1.2rem', textAlign: 'center', py: 2 }}>
 							No saved projects yet.
 						</Typography>
 					)}
@@ -599,7 +599,7 @@ export default function LessonProjectsPage() {
 											}}
 										>
 											<Stack direction="row" alignItems="center" spacing={0.8}>
-												<Typography sx={{ fontSize: '2rem', fontWeight: 700, flex: 1 }} noWrap title={project.name}>
+												<Typography sx={{ fontSize: '1.4rem', fontWeight: 700, flex: 1 }} noWrap title={project.name}>
 													{project.name}
 												</Typography>
 												{project.source === 'local' && isAuthenticated && (
@@ -665,10 +665,10 @@ export default function LessonProjectsPage() {
 
 													return (
 														<Stack key={draftKey} direction="row" spacing={0.8} alignItems="center">
-															<Typography sx={{ flex: 1, fontSize: '1.6rem', color: '#555' }} noWrap>
+															<Typography sx={{ flex: 1, fontSize: '1.2rem', color: '#555' }} noWrap>
 																	{activity['lesson-name'] || project.name}
 																</Typography>
-															<Typography sx={{ fontSize: '1.6rem', color: '#888', minWidth: 98 }}>
+															<Typography sx={{ fontSize: '1.2rem', color: '#888', minWidth: 98 }}>
 																{activityType}
 																{formatActivityDate(activity['modified-at']) ? ` · ${formatActivityDate(activity['modified-at'])}` : ''}
 															</Typography>
