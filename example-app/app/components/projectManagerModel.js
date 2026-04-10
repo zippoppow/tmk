@@ -118,8 +118,18 @@ export function normalizeCloudProjects(payload, formName, normalizeLessonInputDa
 		}
 
 		const latest = lessonActivities[lessonActivities.length - 1];
+		const remoteId = String(
+			project?.id
+			|| project?.projectId
+			|| project?.['project-id']
+			|| project?.diyProjectId
+			|| project?.['diy-project-id']
+			|| ''
+		).trim();
+
 		normalized.push({
-			id: `cloud_${projectIndex}_${String(project['project-name'] || 'project')}`,
+			id: remoteId || `cloud_${projectIndex}_${String(project['project-name'] || 'project')}`,
+			remoteId: remoteId || null,
 			source: 'cloud',
 			name: String(project['project-name'] || latest['lesson-name'] || 'Untitled Cloud Project'),
 			createdAt: createdAtIso,

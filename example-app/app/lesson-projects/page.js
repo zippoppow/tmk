@@ -39,7 +39,6 @@ import {
 	createLocalProjectRecord,
 	getProjectLessonActivities,
 	getUniqueLessonActivityName,
-	mergeDisplayProjects,
 	normalizeCloudProjects,
 } from '../components/projectManagerModel';
 import AuthDebugPanel from '../components/AuthDebugPanel';
@@ -82,7 +81,6 @@ export default function LessonProjectsPage() {
 	const [authLoading, setAuthLoading] = useState(true);
 	const [authUser, setAuthUser] = useState(null);
 	const [localProjects, setLocalProjects] = useState([]);
-	const [cloudProjects, setCloudProjects] = useState([]);
 	const [isLoadingCloudProjects, setIsLoadingCloudProjects] = useState(false);
 	const [cloudMessage, setCloudMessage] = useState('');
 	const [cloudMessageSeverity, setCloudMessageSeverity] = useState('error');
@@ -116,9 +114,141 @@ export default function LessonProjectsPage() {
 		return getAllStoredProjects().find((project) => project.id === projectId && project.formName === PROJECT_FORM_NAME) || null;
 	};
 
+	const syncCloudProjectsToLocal = (projectsFromCloud) => {
+		if (!Array.isArray(projectsFromCloud) || projectsFromCloud.length === 0) {
+			return;
+		}
+
+		const normalizeNameKey = (value) => String(value || '').trim().toLowerCase();
+		const normalizeRemoteId = (value) => {
+			const id = String(value || '').trim();
+			if (!id || id.startsWith('cloud_')) {
+				return '';
+			}
+			return id;
+		};
+		const getActivityIds = (project) => {
+			const activities = Array.isArray(project?.lessonActivities) ? project.lessonActivities : [];
+			return new Set(
+				activities
+					.map((activity) => String(activity?.id || '').trim())
+					.filter(Boolean)
+			);
+		};
+		const buildActivityFingerprint = (project) => {
+			const activities = Array.isArray(project?.lessonActivities) ? project.lessonActivities : [];
+			return activities
+				.map((activity) => {
+					const type = String(activity?.['tmk-template'] || '').trim();
+					const name = String(activity?.['lesson-name'] || '').trim();
+					const modifiedAt = String(activity?.['modified-at'] || '').trim();
+					const inputData = JSON.stringify(normalizeLessonInputData(activity?.['lesson-input-data'] || {}));
+					return `${type}|${name}|${modifiedAt}|${inputData}`;
+				})
+				.sort()
+				.join('||');
+		};
+
+		const allStoredProjects = getAllStoredProjects();
+		const nonLessonProjects = allStoredProjects.filter((project) => project.formName !== PROJECT_FORM_NAME);
+		const lessonProjects = allStoredProjects
+			.filter((project) => project.formName === PROJECT_FORM_NAME)
+			.map((project) => ({ ...project }));
+
+		const byRemoteId = new Map();
+		const byName = new Map();
+		lessonProjects.forEach((project) => {
+			const remoteIdKey = normalizeRemoteId(project?.remoteId || project?.id);
+			if (remoteIdKey) {
+				byRemoteId.set(remoteIdKey, project);
+			}
+
+			const key = normalizeNameKey(project.name);
+			if (key) {
+				byName.set(key, project);
+			}
+		});
+
+		projectsFromCloud.forEach((cloudProject) => {
+			const name = String(cloudProject?.name || '').trim();
+			const key = normalizeNameKey(name);
+			if (!key) {
+				return;
+			}
+
+			const cloudRemoteId = normalizeRemoteId(cloudProject?.remoteId || cloudProject?.id);
+
+			const cloudActivities = Array.isArray(cloudProject.lessonActivities) ? cloudProject.lessonActivities : [];
+			const cloudCreatedAtMs = Number.isFinite(Number(cloudProject.createdAtMs))
+				? Number(cloudProject.createdAtMs)
+				: Date.now();
+			const cloudModifiedAtMs = Number.isFinite(Number(cloudProject.modifiedAtMs))
+				? Number(cloudProject.modifiedAtMs)
+				: Date.now();
+
+			const cloudActivityIds = getActivityIds(cloudProject);
+			const cloudFingerprint = buildActivityFingerprint(cloudProject);
+
+			let existing = cloudRemoteId ? byRemoteId.get(cloudRemoteId) : null;
+			if (!existing) {
+				existing = lessonProjects.find((localProject) => {
+					const localIds = getActivityIds(localProject);
+					if (localIds.size === 0 || cloudActivityIds.size === 0) {
+						return false;
+					}
+					for (const id of cloudActivityIds) {
+						if (localIds.has(id)) {
+							return true;
+						}
+					}
+					return false;
+				});
+			}
+			if (!existing && cloudFingerprint) {
+				existing = lessonProjects.find((localProject) => buildActivityFingerprint(localProject) === cloudFingerprint);
+			}
+			if (!existing) {
+				existing = byName.get(key);
+			}
+
+			if (existing) {
+				existing.name = name || existing.name;
+				existing.lessonActivities = cloudActivities;
+				if (cloudRemoteId) {
+					existing.remoteId = cloudRemoteId;
+					byRemoteId.set(cloudRemoteId, existing);
+				}
+				existing.createdAtMs = Number.isFinite(Number(existing.createdAtMs))
+					? Number(existing.createdAtMs)
+					: cloudCreatedAtMs;
+				existing.createdAt = existing.createdAt || new Date(existing.createdAtMs).toISOString();
+				existing.modifiedAtMs = cloudModifiedAtMs;
+				existing.syncedAt = cloudProject.syncedAt || new Date(cloudModifiedAtMs).toISOString();
+				return;
+			}
+
+			const created = createLocalProjectRecord(name, PROJECT_FORM_NAME);
+			created.lessonActivities = cloudActivities;
+			if (cloudRemoteId) {
+				created.remoteId = cloudRemoteId;
+			}
+			created.createdAtMs = cloudCreatedAtMs;
+			created.createdAt = new Date(cloudCreatedAtMs).toISOString();
+			created.modifiedAtMs = cloudModifiedAtMs;
+			created.syncedAt = cloudProject.syncedAt || new Date(cloudModifiedAtMs).toISOString();
+			lessonProjects.unshift(created);
+			byName.set(key, created);
+			if (cloudRemoteId) {
+				byRemoteId.set(cloudRemoteId, created);
+			}
+		});
+
+		saveStoredProjects([...nonLessonProjects, ...lessonProjects]);
+		loadLocalProjects();
+	};
+
 	const loadCloudProjects = async () => {
 		if (!isAuthenticated) {
-			setCloudProjects([]);
 			setCloudStatus('');
 			return;
 		}
@@ -132,7 +262,6 @@ export default function LessonProjectsPage() {
 			});
 
 			if (!response.ok) {
-				setCloudProjects([]);
 				setCloudStatus('Cloud load failed. Please try Refresh Cloud.');
 				return;
 			}
@@ -196,10 +325,9 @@ export default function LessonProjectsPage() {
 				};
 			});
 
-			setCloudProjects(enrichedProjects);
+			syncCloudProjectsToLocal(enrichedProjects);
 		} catch (error) {
 			console.error('Failed to load cloud projects:', error);
-			setCloudProjects([]);
 			setCloudStatus('Cloud load failed. Please try Refresh Cloud.');
 		} finally {
 			setIsLoadingCloudProjects(false);
@@ -248,8 +376,14 @@ export default function LessonProjectsPage() {
 	};
 
 	const displayProjects = useMemo(() => {
-		return mergeDisplayProjects(localProjects, cloudProjects, PROJECT_FORM_NAME, normalizeLessonInputData);
-	}, [localProjects, cloudProjects]);
+		return localProjects.map((project) => {
+			const lessonActivities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
+			return {
+				...project,
+				lessonActivities,
+			};
+		});
+	}, [localProjects]);
 
 	const runAuthCheck = async () => {
 		setAuthLoading(true);
@@ -503,7 +637,6 @@ export default function LessonProjectsPage() {
 		if (isAuthenticated) {
 			loadCloudProjects();
 		} else {
-			setCloudProjects([]);
 			setCloudStatus('');
 		}
 	}, [isAuthenticated]);
@@ -602,12 +735,12 @@ export default function LessonProjectsPage() {
 												<Typography sx={{ fontSize: '1.4rem', fontWeight: 700, flex: 1 }} noWrap title={project.name}>
 													{project.name}
 												</Typography>
-												{project.source === 'local' && isAuthenticated && (
+												{isAuthenticated && (
 													<Button size="small" variant="contained" color="info" onClick={() => handleSyncProject(project.id)} sx={{ textTransform: 'none' }}>
 														Sync Changes
 													</Button>
 												)}
-												{project.source === 'local' && isAuthenticated && (
+												{isAuthenticated && (
 													<Button size="small" variant="contained" color="error" onClick={() => handleDeleteProject(project.id)} sx={{ textTransform: 'none' }}>
 														Delete Project
 													</Button>
@@ -627,11 +760,11 @@ export default function LessonProjectsPage() {
 											<Typography sx={{ fontSize: '0.75rem', color: '#888', mt: 0.2 }}>
 												{formatProjectDate(project.createdAt)}
 												{' · '}
-												{project.source === 'cloud' ? 'Cloud' : project.syncedAt ? 'Synced' : 'Local'}
+												{project.syncedAt ? 'Synced' : 'Saved'}
 											</Typography>
 
 											<Stack direction={{ xs: 'column', md: 'row' }} spacing={0.6} sx={{ mt: 1, mb: lessonActivities.length ? 0.8 : 0 }}>
-											{project.source === 'local' && (
+											{(
 												<TextField
 													select
 													size="small"
@@ -650,7 +783,7 @@ export default function LessonProjectsPage() {
 													))}
 												</TextField>
 											)}
-											{project.source === 'local' && (
+											{(
 												<Button size="small" variant="contained" color="success" onClick={() => handleNewActivity(project.id)} sx={{ textTransform: 'none' }}>
 													Add Activity
 												</Button>
@@ -687,7 +820,7 @@ export default function LessonProjectsPage() {
 																	sx={{ height: 20, fontSize: '0.68rem', color: '#9ca3af', borderColor: '#e5e7eb' }}
 																/>
 															)}
-															{project.source === 'local' && isAuthenticated && (
+															{isAuthenticated && (
 																<Button
 																	size="small"
 																	variant="contained"
@@ -698,7 +831,7 @@ export default function LessonProjectsPage() {
 																	Open
 																</Button>
 															)}
-															{project.source === 'local' && isAuthenticated && (
+															{isAuthenticated && (
 																<Button
 																	size="small"
 																	variant="contained"
