@@ -25,19 +25,27 @@ function normalizeInputData(rawData) {
 	const builtWords = Array.isArray(source.builtWords) ? source.builtWords : [];
 	return {
 		morpheme: String(source.morpheme || ''),
-		prefixes: Array.from({ length: 5 }, (_, index) => String(prefixes[index] || '')),
-		bases: Array.from({ length: 2 }, (_, index) => String(bases[index] || '')),
-		suffixes: Array.from({ length: 5 }, (_, index) => String(suffixes[index] || '')),
+		prefixes: prefixes.length > 0 ? prefixes.map((value) => String(value || '')) : Array.from({ length: 5 }, () => ''),
+		bases: bases.length > 0 ? bases.map((value) => String(value || '')) : Array.from({ length: 2 }, () => ''),
+		suffixes: suffixes.length > 0 ? suffixes.map((value) => String(value || '')) : Array.from({ length: 5 }, () => ''),
 		builtWords: Array.from({ length: 15 }, (_, index) => String(builtWords[index] || '')),
 	};
 }
 
-function ColumnList({ title, values, onChange, bg }) {
+function ColumnList({ title, values, onChange, onAdd, onRemove, bg }) {
 	return (
 		<Stack spacing={1} sx={{ p: 1.5, borderRadius: 1, background: bg, border: '1px solid rgba(64,32,167,0.18)' }}>
-			<Typography sx={{ fontWeight: 700 }}>{title}</Typography>
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
+				<Typography sx={{ fontWeight: 700 }}>{title}</Typography>
+				<Button size="small" variant="outlined" onClick={onAdd} sx={{ minWidth: 0, px: 1.25, py: 0.25 }}>
+					+ Add
+				</Button>
+			</Box>
+			{values.length === 0 ? (
+				<Typography sx={{ fontSize: '0.88rem', color: '#666' }}>No items yet.</Typography>
+			) : null}
 			{values.map((value, index) => (
-				<Box key={index} sx={{ px: 1, py: 0.25, borderRadius: 0.75, backgroundColor: 'rgba(255,255,255,0.55)' }}>
+				<Box key={index} sx={{ px: 1, py: 0.25, borderRadius: 0.75, backgroundColor: 'rgba(255,255,255,0.55)', display: 'flex', alignItems: 'center', gap: 1 }}>
 					<TextField
 						variant="standard"
 						value={value}
@@ -45,6 +53,16 @@ function ColumnList({ title, values, onChange, bg }) {
 						fullWidth
 						inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
 					/>
+					<Button
+						type="button"
+						onClick={() => onRemove(index)}
+						size="small"
+						sx={{ minWidth: 0, px: 1, color: '#b23a2f', borderColor: 'rgba(178,58,47,0.5)' }}
+						variant="outlined"
+						aria-label={`Remove ${title} item ${index + 1}`}
+					>
+						x
+					</Button>
 				</Box>
 			))}
 		</Stack>
@@ -89,6 +107,20 @@ export default function WordBuilderPage() {
 		});
 	};
 
+	const addListItem = (key) => {
+		setData((prev) => ({
+			...prev,
+			[key]: [...prev[key], ''],
+		}));
+	};
+
+	const removeListItem = (key, index) => {
+		setData((prev) => ({
+			...prev,
+			[key]: prev[key].filter((_, itemIndex) => itemIndex !== index),
+		}));
+	};
+
 	return (
 		<ActivityShell
 			title="WORD BUILDER"
@@ -117,13 +149,34 @@ export default function WordBuilderPage() {
 		>
 			<Grid container spacing={2} sx={{ mt: 2 }}>
 				<Grid item xs={12} md={4}>
-					<ColumnList title="Prefixes" values={data.prefixes} onChange={(index, value) => setList('prefixes', index, value)} bg="linear-gradient(180deg,#e8f0ff,#f6f9ff)" />
+					<ColumnList
+						title="Prefixes"
+						values={data.prefixes}
+						onChange={(index, value) => setList('prefixes', index, value)}
+						onAdd={() => addListItem('prefixes')}
+						onRemove={(index) => removeListItem('prefixes', index)}
+						bg="linear-gradient(180deg,#e8f0ff,#f6f9ff)"
+					/>
 				</Grid>
 				<Grid item xs={12} md={4}>
-					<ColumnList title="Base Elements" values={data.bases} onChange={(index, value) => setList('bases', index, value)} bg="linear-gradient(180deg,#fffce8,#fffef6)" />
+					<ColumnList
+						title="Base Elements"
+						values={data.bases}
+						onChange={(index, value) => setList('bases', index, value)}
+						onAdd={() => addListItem('bases')}
+						onRemove={(index) => removeListItem('bases', index)}
+						bg="linear-gradient(180deg,#fffce8,#fffef6)"
+					/>
 				</Grid>
 				<Grid item xs={12} md={4}>
-					<ColumnList title="Suffixes" values={data.suffixes} onChange={(index, value) => setList('suffixes', index, value)} bg="linear-gradient(180deg,#eaffef,#f6fff8)" />
+					<ColumnList
+						title="Suffixes"
+						values={data.suffixes}
+						onChange={(index, value) => setList('suffixes', index, value)}
+						onAdd={() => addListItem('suffixes')}
+						onRemove={(index) => removeListItem('suffixes', index)}
+						bg="linear-gradient(180deg,#eaffef,#f6fff8)"
+					/>
 				</Grid>
 			</Grid>
 			<Box sx={{ mt: 3 }}>
