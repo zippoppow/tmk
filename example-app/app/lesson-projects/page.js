@@ -87,7 +87,6 @@ export default function LessonProjectsPage() {
 	const [cloudMessage, setCloudMessage] = useState('');
 	const [cloudMessageSeverity, setCloudMessageSeverity] = useState('error');
 	const [projectNameInput, setProjectNameInput] = useState('');
-	const [selectedLocalProjectId, setSelectedLocalProjectId] = useState(null);
 
 	const [newActivityTypeByProjectId, setNewActivityTypeByProjectId] = useState({});
 	const [defaultActivityType, setDefaultActivityType] = useState(LESSON_ACTIVITY_TYPES[0].value);
@@ -252,14 +251,6 @@ export default function LessonProjectsPage() {
 		return mergeDisplayProjects(localProjects, cloudProjects, PROJECT_FORM_NAME, normalizeLessonInputData);
 	}, [localProjects, cloudProjects]);
 
-	const selectedProjectText = useMemo(() => {
-		if (!selectedLocalProjectId) {
-			return 'No project selected. Create and select a Lesson Activities Project first.';
-		}
-		const project = getLocalProjectById(selectedLocalProjectId);
-		return project ? `Selected project: ${project.name}` : 'No project selected.';
-	}, [selectedLocalProjectId, localProjects]);
-
 	const runAuthCheck = async () => {
 		setAuthLoading(true);
 		try {
@@ -309,10 +300,9 @@ export default function LessonProjectsPage() {
 			(project) => project.formName === PROJECT_FORM_NAME && (project.name || '').trim() === trimmedName
 		);
 		if (existing) {
-			//setSelectedLocalProjectId(existing.id);
 			setProjectNameInput('');
 			loadLocalProjects();
-			showNotice('info', 'Project already exists. Selected existing project.');
+			showNotice('info', 'Project already exists.');
 			return;
 		}
 
@@ -320,13 +310,8 @@ export default function LessonProjectsPage() {
 		projects.unshift(created);
 		saveStoredProjects(projects);
 		setProjectNameInput('');
-		//setSelectedLocalProjectId(created.id);
 		setNewActivityTypeByProjectId((prev) => ({ ...prev, [created.id]: defaultActivityType }));
 		loadLocalProjects();
-	};
-
-	const handleSelectProject = (projectId) => {
-		//setSelectedLocalProjectId(projectId);
 	};
 
 	const handleDeleteProject = async (projectId) => {
@@ -384,9 +369,6 @@ export default function LessonProjectsPage() {
 		}
 
 		saveStoredProjects(getAllStoredProjects().filter((item) => item.id !== projectId));
-		// if (selectedLocalProjectId === projectId) {
-		// 	setSelectedLocalProjectId(null);
-		// }
 		setNewActivityTypeByProjectId((prev) => {
 			const next = { ...prev };
 			delete next[projectId];
@@ -429,7 +411,6 @@ export default function LessonProjectsPage() {
 
 		saveStoredProjects(projects);
 		loadLocalProjects();
-		//setSelectedLocalProjectId(project.id);
 		showNotice('success', `${requestedType} lesson activity added.`);
 	};
 
@@ -590,7 +571,6 @@ export default function LessonProjectsPage() {
 							Create Project
 						</Button>
 					</Stack>
-					<Typography sx={{ color: '#666', fontSize: '2rem', mb: 1 }}>{selectedProjectText}</Typography>
 
 					<Divider sx={{ mb: 1.5 }} />
 
@@ -606,28 +586,22 @@ export default function LessonProjectsPage() {
 					<Stack spacing={1}>
 								{displayProjects.map((project) => {
 									const lessonActivities = Array.isArray(project.lessonActivities) ? project.lessonActivities : [];
-									const isSelected = project.source === 'local' && project.id === selectedLocalProjectId;
 
 									return (
 										<Box
 											key={project.id}
 											sx={{
 												border: '1px solid',
-												borderColor: isSelected ? '#667eea' : '#e0e0e0',
+											borderColor: '#e0e0e0',
 												borderRadius: 1,
 												p: 1.2,
-												backgroundColor: isSelected ? '#eef2ff' : '#fafafa',
+											backgroundColor: '#fafafa',
 											}}
 										>
 											<Stack direction="row" alignItems="center" spacing={0.8}>
 												<Typography sx={{ fontSize: '2rem', fontWeight: 700, flex: 1 }} noWrap title={project.name}>
 													{project.name}
 												</Typography>
-												{/* {project.source === 'local' && (
-													<Button size="small" variant="outlined" onClick={() => handleSelectProject(project.id)} sx={{ textTransform: 'none' }}>
-														Select
-													</Button>
-												)} */}
 												{project.source === 'local' && isAuthenticated && (
 													<Button size="small" variant="contained" color="info" onClick={() => handleSyncProject(project.id)} sx={{ textTransform: 'none' }}>
 														Sync Changes
