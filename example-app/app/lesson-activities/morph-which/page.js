@@ -159,33 +159,31 @@ export default function MorphWhichPage() {
 								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 							/>
 							<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 1 }}>
-								{['a', 'b', 'c', 'd'].map((key, keyIndex) => (
-									(() => {
-										const isSelected = String(data.selectedChoices?.[index] || '') === key;
-										return (
-									<TextField
-										key={key}
-										variant="standard"
-										value={data.choices[index]?.[key] || ''}
-										onChange={(event) => setChoice(index, key, event.target.value)}
-										onClick={() => handleOptionClick({ questionIndex: index, optionKey: key })}
-										onDoubleClick={() => handleOptionDoubleClick({ questionIndex: index, optionKey: key })}
-										placeholder={`Option ${String.fromCharCode(65 + keyIndex)}`}
-										inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
-										sx={{
-											background: OPTION_STYLES[keyIndex].bg,
-											px: 0.75,
-											borderRadius: 0.5,
-											boxShadow: isSelected
-												? `inset 0 0 0 4px ${OPTION_STYLES[keyIndex].shadow}, 0 6px 18px ${OPTION_STYLES[keyIndex].shadow}40`
-												: `inset 0 0 0 1px ${OPTION_STYLES[keyIndex].shadow}`,
-											'& .MuiInputBase-root::before': { borderBottom: '2px solid transparent' },
-											'& .MuiInputBase-root.Mui-focused': { boxShadow: `inset 0 0 0 2px ${OPTION_STYLES[keyIndex].shadow}` },
-										}}
-									/>
-										);
-									})()
-								)}
+								{['a', 'b', 'c', 'd'].map((key, keyIndex) => {
+									const isSelected = String(data.selectedChoices?.[index] || '') === key;
+									return (
+										<TextField
+											key={key}
+											variant="standard"
+											value={data.choices[index]?.[key] || ''}
+											onChange={(event) => setChoice(index, key, event.target.value)}
+											onClick={() => handleOptionClick({ questionIndex: index, optionKey: key })}
+											onDoubleClick={() => handleOptionDoubleClick({ questionIndex: index, optionKey: key })}
+											placeholder={`Option ${String.fromCharCode(65 + keyIndex)}`}
+											inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+											sx={{
+												background: OPTION_STYLES[keyIndex].bg,
+												px: 0.75,
+												borderRadius: 0.5,
+												boxShadow: isSelected
+													? `inset 0 0 0 4px ${OPTION_STYLES[keyIndex].shadow}, 0 6px 18px ${OPTION_STYLES[keyIndex].shadow}40`
+													: `inset 0 0 0 1px ${OPTION_STYLES[keyIndex].shadow}`,
+												'& .MuiInputBase-root::before': { borderBottom: '2px solid transparent' },
+												'& .MuiInputBase-root.Mui-focused': { boxShadow: `inset 0 0 0 2px ${OPTION_STYLES[keyIndex].shadow}` },
+											}}
+										/>
+									);
+								})}
 							</Box>
 						</Stack>
 					</Box>
