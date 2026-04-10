@@ -8,10 +8,10 @@ import { useClickDoubleClickSelection } from '../components/interactionUtils';
 const FORM_NAME = 'morph-which';
 const DEFAULT_ACTIVITY_NAME = 'Morph Which Activity';
 const OPTION_STYLES = [
-	{ bg: 'linear-gradient(180deg, #fff8c6, #fff3a0)', shadow: '#c89f00' },
-	{ bg: 'linear-gradient(180deg, #dff7e1, #c8efcb)', shadow: '#2e7d32' },
-	{ bg: 'linear-gradient(180deg, #efe1ff, #e1d0ff)', shadow: '#6a1b9a' },
-	{ bg: 'linear-gradient(180deg, #ffe9d6, #ffd7b1)', shadow: '#c96b00' },
+	{ bg: 'linear-gradient(90deg, #fff9db 0%, #fff4b8 100%)', shadow: '#c89f00' },
+	{ bg: 'linear-gradient(90deg, #e8fff0 0%, #ccf5d1 100%)', shadow: '#2e7d32' },
+	{ bg: 'linear-gradient(90deg, #f3e9ff 0%, #e6d4ff 100%)', shadow: '#6a1b9a' },
+	{ bg: 'linear-gradient(90deg, #fff0e0 0%, #ffd2a8 100%)', shadow: '#ff6f00' },
 ];
 
 function emptyChoiceSet() {
@@ -113,6 +113,18 @@ export default function MorphWhichPage() {
 		});
 	};
 
+	const handleClearQuestions = () => {
+		setData((prev) => ({ ...prev, questions: Array.from({ length: 8 }, () => '') }));
+	};
+
+	const handleClearAnswers = () => {
+		setData((prev) => ({
+			...prev,
+			choices: Array.from({ length: 8 }, () => emptyChoiceSet()),
+			selectedChoices: Array.from({ length: 8 }, () => ''),
+		}));
+	};
+
 	const { handleClick: handleOptionClick, handleDoubleClick: handleOptionDoubleClick } = useClickDoubleClickSelection({
 		onClick: ({ questionIndex }) => clearSelectedChoice(questionIndex),
 		onDoubleClick: ({ questionIndex, optionKey }) => selectChoice(questionIndex, optionKey),
@@ -189,8 +201,9 @@ export default function MorphWhichPage() {
 					</Box>
 				))}
 			</Stack>
-			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }}>
-				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>Clear All</Button>
+		<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', gap: 2, mt: 4 }}>
+			<Button variant="outlined" onClick={handleClearQuestions} sx={{ minWidth: 150 }}>Clear Questions</Button>
+			<Button variant="outlined" onClick={handleClearAnswers} sx={{ minWidth: 150 }}>Clear Answers</Button>
 			</Box>
 		</ActivityShell>
 	);

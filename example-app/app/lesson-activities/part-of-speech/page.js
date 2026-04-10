@@ -1,41 +1,61 @@
 'use client';
 
 import { useState } from 'react';
-import { Box, Button, Grid, Stack, TextField, Typography, Menu, MenuItem } from '@mui/material';
+import { Box, Button, Grid, IconButton, TextField, Typography } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
-import { useClickDoubleClickSelection } from '../components/interactionUtils';
 
 const FORM_NAME = 'part-of-speech';
 const DEFAULT_ACTIVITY_NAME = 'Part Of Speech Activity';
+const CATEGORY_ORDER = ['adjective', 'noun', 'verb', 'adverb'];
+const CATEGORY_LABELS = {
+	adjective: 'Adjective',
+	noun: 'Noun',
+	verb: 'Verb',
+	adverb: 'Adverb',
+};
 
 function emptyData() {
 	return {
 		morpheme: '',
 		grid: Array.from({ length: 9 }, () => ''),
-		gridCategories: Array.from({ length: 9 }, () => ''),
-		nounWords: '',
-		verbWords: '',
-		adjectiveWords: '',
+		sortBoxes: {
+			adjective: [],
+			noun: [],
+			verb: [],
+			adverb: [],
+		},
 	};
 }
 
 function normalizeInputData(rawData) {
 	const source = rawData && typeof rawData === 'object' ? rawData : {};
 	const grid = Array.isArray(source.grid) ? source.grid : [];
-	const gridCategories = Array.isArray(source.gridCategories) ? source.gridCategories : [];
+	const sortBoxes = source.sortBoxes && typeof source.sortBoxes === 'object' ? source.sortBoxes : {};
+
 	return {
 		morpheme: String(source.morpheme || ''),
 		grid: Array.from({ length: 9 }, (_, index) => String(grid[index] || '')),
-		gridCategories: Array.from({ length: 9 }, (_, index) => String(gridCategories[index] || '')),
-		nounWords: String(source.nounWords || ''),
-		verbWords: String(source.verbWords || ''),
-		adjectiveWords: String(source.adjectiveWords || ''),
+		sortBoxes: {
+			adjective: Array.isArray(sortBoxes.adjective) ? sortBoxes.adjective.map(String) : [],
+			noun: Array.isArray(sortBoxes.noun) ? sortBoxes.noun.map(String) : [],
+			verb: Array.isArray(sortBoxes.verb) ? sortBoxes.verb.map(String) : [],
+			adverb: Array.isArray(sortBoxes.adverb) ? sortBoxes.adverb.map(String) : [],
+		},
+	};
+}
+
+function cloneSortBoxes(sortBoxes) {
+	return {
+		adjective: [...sortBoxes.adjective],
+		noun: [...sortBoxes.noun],
+		verb: [...sortBoxes.verb],
+		adverb: [...sortBoxes.adverb],
 	};
 }
 
 export default function PartOfSpeechPage() {
-	const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, gridIndex: -1 });
+	const [dragOverTarget, setDragOverTarget] = useState(null);
 
 	const {
 		data,
@@ -68,52 +88,104 @@ export default function PartOfSpeechPage() {
 
 	const setGridValue = (index, value) => {
 		setData((prev) => {
-			const next = [...prev.grid];
-			next[index] = value;
-			return { ...prev, grid: next };
+			const nextGrid = [...prev.grid];
+			nextGrid[index] = value;
+			return { ...prev, grid: nextGrid };
 		});
 	};
 
-	const openCategoryMenu = (event, gridIndex) => {
-		event.stopPropagation();
-		const word = data.grid[gridIndex];
-		if (!word || !word.trim()) return;
-		setContextMenu({
-			open: true,
-			x: event.clientX,
-			y: event.clientY,
-			gridIndex,
+	const removeSortItem = (category, itemIndex) => {
+		setData((prev) => {
+			const nextSortBoxes = cloneSortBoxes(prev.sortBoxes);
+			nextSortBoxes[category].splice(itemIndex, 1);
+			return { ...prev, sortBoxes: nextSortBoxes };
 		});
 	};
 
-	const closeCategoryMenu = () => {
-		setContextMenu({ open: false, x: 0, y: 0, gridIndex: -1 });
+	const parseDragPayload = (event) => {
+		const raw = event.dataTransfer.getData('text/plain');
+		if (!raw) return null;
+
+		try {
+			return JSON.parse(raw);
+		} catch {
+			return null;
+		}
 	};
 
-	const assignToCategory = (category) => {
-		if (contextMenu.gridIndex < 0) return;
-		const word = data.grid[contextMenu.gridIndex];
-		if (!word || !word.trim()) {
-			closeCategoryMenu();
+	const handleGridDragStart = (event, gridIndex) => {
+		const value = String(data.grid[gridIndex] || '').trim();
+		if (!value) {
+			event.preventDefault();
 			return;
 		}
 
+		event.dataTransfer.effectAllowed = 'move';
+		event.dataTransfer.setData('text/plain', JSON.stringify({ sourceType: 'grid', gridIndex, value }));
+	};
+
+	const handleSortItemDragStart = (event, category, itemIndex) => {
+		const value = String(data.sortBoxes[category][itemIndex] || '').trim();
+		if (!value) {
+			event.preventDefault();
+			return;
+		}
+
+		event.dataTransfer.effectAllowed = 'move';
+		event.dataTransfer.setData('text/plain', JSON.stringify({ sourceType: 'sort', category, itemIndex, value }));
+	};
+
+	const moveToSortBox = (targetCategory, payload) => {
+		if (!payload?.value) return;
+
 		setData((prev) => {
-			const categoryFieldKey = category === 'noun' ? 'nounWords' : category === 'verb' ? 'verbWords' : 'adjectiveWords';
-			const currentValue = prev[categoryFieldKey].trim();
-			const newValue = currentValue ? `${currentValue}\n${word}` : word;
 			const nextGrid = [...prev.grid];
-			nextGrid[contextMenu.gridIndex] = '';
-			const nextCategories = [...prev.gridCategories];
-			nextCategories[contextMenu.gridIndex] = category;
+			const nextSortBoxes = cloneSortBoxes(prev.sortBoxes);
+
+			if (payload.sourceType === 'grid') {
+				nextGrid[payload.gridIndex] = '';
+			}
+
+			if (payload.sourceType === 'sort') {
+				nextSortBoxes[payload.category].splice(payload.itemIndex, 1);
+			}
+
+			nextSortBoxes[targetCategory].push(payload.value);
+
 			return {
 				...prev,
-				[categoryFieldKey]: newValue,
 				grid: nextGrid,
-				gridCategories: nextCategories,
+				sortBoxes: nextSortBoxes,
 			};
 		});
-		closeCategoryMenu();
+	};
+
+	const moveToGrid = (targetGridIndex, payload) => {
+		if (!payload?.value) return;
+
+		setData((prev) => {
+			if (String(prev.grid[targetGridIndex] || '').trim()) {
+				return prev;
+			}
+
+			const nextGrid = [...prev.grid];
+			const nextSortBoxes = cloneSortBoxes(prev.sortBoxes);
+			nextGrid[targetGridIndex] = payload.value;
+
+			if (payload.sourceType === 'sort') {
+				nextSortBoxes[payload.category].splice(payload.itemIndex, 1);
+			}
+
+			return {
+				...prev,
+				grid: nextGrid,
+				sortBoxes: nextSortBoxes,
+			};
+		});
+	};
+
+	const handleClearWordGrid = () => {
+		setData((prev) => ({ ...prev, grid: Array.from({ length: 9 }, () => '') }));
 	};
 
 	return (
@@ -121,7 +193,7 @@ export default function PartOfSpeechPage() {
 			title="PART OF SPEECH SORT"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Sort the words by part of speech after exploring the morph set."
+			instructions="Drag words from the grid into the correct part-of-speech boxes, or drag sorted items back into empty grid cells."
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}
@@ -147,52 +219,117 @@ export default function PartOfSpeechPage() {
 					<Box key={rowIndex} sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.25, mb: 1.25 }}>
 						{Array.from({ length: 3 }, (_, colIndex) => {
 							const index = rowIndex * 3 + colIndex;
+							const isDragOver = dragOverTarget?.type === 'grid' && dragOverTarget.index === index;
+
 							return (
 								<TextField
 									key={index}
 									value={data.grid[index] || ''}
 									onChange={(event) => setGridValue(index, event.target.value)}
-									onDoubleClick={(event) => openCategoryMenu(event, index)}
-									inputProps={{ style: { textAlign: 'center', fontFamily: 'Courier New, monospace' } }}
-									sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#4020A7', borderWidth: '2px' } }}
+									onDragStart={(event) => handleGridDragStart(event, index)}
+									onDragOver={(event) => {
+										event.preventDefault();
+										setDragOverTarget({ type: 'grid', index });
+									}}
+									onDragLeave={() => setDragOverTarget((prev) => (prev?.type === 'grid' && prev.index === index ? null : prev))}
+									onDrop={(event) => {
+										event.preventDefault();
+										setDragOverTarget(null);
+										moveToGrid(index, parseDragPayload(event));
+									}}
+									inputProps={{
+										style: {
+											textAlign: 'center',
+											fontFamily: 'Courier New, monospace',
+											cursor: String(data.grid[index] || '').trim() ? 'grab' : 'text',
+										},
+										draggable: Boolean(String(data.grid[index] || '').trim()),
+									}}
+									sx={{
+										'& .MuiOutlinedInput-root': {
+											backgroundColor: isDragOver ? 'rgba(102, 126, 234, 0.08)' : '#fff',
+											'& fieldset': {
+												borderColor: isDragOver ? '#667eea' : '#4020A7',
+												borderWidth: isDragOver ? '3px' : '2px',
+											},
+										},
+									}}
 								/>
 							);
 						})}
 					</Box>
 				))}
 			</Box>
-			<Menu
-				open={contextMenu.open}
-				onClose={closeCategoryMenu}
-				anchorPosition={{ top: contextMenu.y, left: contextMenu.x }}
-				anchorReference="anchorPosition"
-			>
-				<MenuItem onClick={() => assignToCategory('noun')}>Noun</MenuItem>
-				<MenuItem onClick={() => assignToCategory('verb')}>Verb</MenuItem>
-				<MenuItem onClick={() => assignToCategory('adjective')}>Adjective / Adverb</MenuItem>
-			</Menu>
+
 			<Grid container spacing={2}>
-				<Grid item xs={12} md={4}>
-					<Typography sx={{ fontWeight: 700, mb: 1 }}>Nouns</Typography>
-					<Box sx={{ border: '2px solid #4020A7', borderRadius: 1, minHeight: 260, maxHeight: 420, p: 1.25 }}>
-						<TextField multiline minRows={8} fullWidth variant="standard" InputProps={{ disableUnderline: true }} value={data.nounWords} onChange={(event) => setData((prev) => ({ ...prev, nounWords: event.target.value }))} inputProps={{ style: { fontFamily: 'Courier New, monospace' } }} />
-					</Box>
-				</Grid>
-				<Grid item xs={12} md={4}>
-					<Typography sx={{ fontWeight: 700, mb: 1 }}>Verbs</Typography>
-					<Box sx={{ border: '2px solid #4020A7', borderRadius: 1, minHeight: 260, maxHeight: 420, p: 1.25 }}>
-						<TextField multiline minRows={8} fullWidth variant="standard" InputProps={{ disableUnderline: true }} value={data.verbWords} onChange={(event) => setData((prev) => ({ ...prev, verbWords: event.target.value }))} inputProps={{ style: { fontFamily: 'Courier New, monospace' } }} />
-					</Box>
-				</Grid>
-				<Grid item xs={12} md={4}>
-					<Typography sx={{ fontWeight: 700, mb: 1 }}>Adjectives / Adverbs</Typography>
-					<Box sx={{ border: '2px solid #4020A7', borderRadius: 1, minHeight: 260, maxHeight: 420, p: 1.25 }}>
-						<TextField multiline minRows={8} fullWidth variant="standard" InputProps={{ disableUnderline: true }} value={data.adjectiveWords} onChange={(event) => setData((prev) => ({ ...prev, adjectiveWords: event.target.value }))} inputProps={{ style: { fontFamily: 'Courier New, monospace' } }} />
-					</Box>
-				</Grid>
+				{CATEGORY_ORDER.map((category) => {
+					const isDragOver = dragOverTarget?.type === 'box' && dragOverTarget.category === category;
+
+					return (
+						<Grid key={category} item xs={12} md={category === 'adjective' ? 12 : 4}>
+							<Typography sx={{ fontWeight: 700, mb: 1 }}>{CATEGORY_LABELS[category]}</Typography>
+							<Box
+								onDragOver={(event) => {
+									event.preventDefault();
+									setDragOverTarget({ type: 'box', category });
+								}}
+								onDragLeave={() => setDragOverTarget((prev) => (prev?.type === 'box' && prev.category === category ? null : prev))}
+								onDrop={(event) => {
+									event.preventDefault();
+									setDragOverTarget(null);
+									moveToSortBox(category, parseDragPayload(event));
+								}}
+								sx={{
+									border: '2px solid #4020A7',
+									borderColor: isDragOver ? '#667eea' : '#4020A7',
+									borderRadius: 1,
+									minHeight: category === 'adjective' ? 120 : 260,
+									p: 1.25,
+									display: 'flex',
+									flexDirection: 'column',
+									gap: 1,
+									backgroundColor: isDragOver ? 'rgba(102, 126, 234, 0.08)' : '#fff',
+								}}
+							>
+								{data.sortBoxes[category].length === 0 ? <Box sx={{ minHeight: 32 }} /> : null}
+
+								{data.sortBoxes[category].map((item, itemIndex) => (
+									<Box
+										key={`${category}-${itemIndex}-${item}`}
+										draggable
+										onDragStart={(event) => handleSortItemDragStart(event, category, itemIndex)}
+										sx={{
+											display: 'flex',
+											alignItems: 'center',
+											justifyContent: 'space-between',
+											gap: 1,
+											px: 1.25,
+											py: 0.75,
+											borderRadius: 1,
+											background: 'linear-gradient(180deg, #ffffff, #f5f5fb)',
+											border: '1px solid #d5d5e5',
+											cursor: 'grab',
+										}}
+									>
+										<Typography sx={{ fontFamily: 'Courier New, monospace' }}>{item}</Typography>
+										<IconButton size="small" onClick={() => removeSortItem(category, itemIndex)} sx={{ color: '#777', fontSize: '1rem' }}>
+											×
+										</IconButton>
+									</Box>
+								))}
+							</Box>
+						</Grid>
+					);
+				})}
 			</Grid>
-			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }}>
-				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>Clear All</Button>
+
+			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', gap: 2, mt: 4 }}>
+				<Button variant="outlined" onClick={handleClearWordGrid} sx={{ minWidth: 150 }}>
+					Clear Word Grid
+				</Button>
+				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>
+					Clear All
+				</Button>
 			</Box>
 		</ActivityShell>
 	);

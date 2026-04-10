@@ -105,15 +105,26 @@ export default function CommonBaseWordPage() {
 			const newValue = currentValue ? `${currentValue}\n${word}` : word;
 			const nextGroups = [...prev.groups];
 			nextGroups[groupIndex] = newValue;
-			const nextGrid = [...prev.grid];
-			nextGrid[contextMenu.gridIndex] = '';
 			return {
 				...prev,
 				groups: nextGroups,
-				grid: nextGrid,
 			};
 		});
 		closeGroupMenu();
+	};
+
+	const handleClearWordGrid = () => {
+		setData((prev) => ({
+			...prev,
+			grid: Array.from({ length: 9 }, () => ''),
+		}));
+	};
+
+	const handleClearSortingBoxes = () => {
+		setData((prev) => ({
+			...prev,
+			groups: Array.from({ length: 3 }, () => ''),
+		}));
 	};
 
 	return (
@@ -152,6 +163,7 @@ export default function CommonBaseWordPage() {
 									key={index}
 									value={data.grid[index] || ''}
 									onChange={(event) => setGridValue(index, event.target.value)}
+									onContextMenu={(event) => openGroupMenu(event, index)}
 									size="small"
 									inputProps={{ style: { textAlign: 'center', fontFamily: 'Courier New, monospace' } }}
 									sx={{
@@ -200,14 +212,17 @@ export default function CommonBaseWordPage() {
 				anchorPosition={{ top: contextMenu.y, left: contextMenu.x }}
 				anchorReference="anchorPosition"
 			>
-				<MenuItem onClick={() => addWordToGroup(0)}>Add to Group 1</MenuItem>
-				<MenuItem onClick={() => addWordToGroup(1)}>Add to Group 2</MenuItem>
-				<MenuItem onClick={() => addWordToGroup(2)}>Add to Group 3</MenuItem>
+				<MenuItem onClick={() => addWordToGroup(0)}>Add to Column 1</MenuItem>
+				<MenuItem onClick={() => addWordToGroup(1)}>Add to Column 2</MenuItem>
+				<MenuItem onClick={() => addWordToGroup(2)}>Add to Column 3</MenuItem>
 			</Menu>
 
-			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }}>
-				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>
-					Clear All
+			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap', mt: 4 }}>
+				<Button variant="outlined" onClick={handleClearWordGrid} sx={{ minWidth: 180 }}>
+					Clear the Word Grid
+				</Button>
+				<Button variant="outlined" onClick={handleClearSortingBoxes} sx={{ minWidth: 190 }}>
+					Clear the Sorting Boxes
 				</Button>
 			</Box>
 		</ActivityShell>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Box, Button, Grid, Stack, TextField, Typography, Menu, MenuItem } from '@mui/material';
+import { Box, Button, Grid, IconButton, List, ListItem, ListItemText, Stack, TextField, Typography, Menu, MenuItem } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
 
@@ -12,8 +12,8 @@ function emptyData() {
 	return {
 		morpheme: '',
 		words: Array.from({ length: 11 }, () => ''),
-		leftSort: '',
-		rightSort: '',
+		leftItems: [],
+		rightItems: [],
 	};
 }
 
@@ -23,8 +23,8 @@ function normalizeInputData(rawData) {
 	return {
 		morpheme: String(source.morpheme || ''),
 		words: Array.from({ length: 11 }, (_, index) => String(words[index] || '')),
-		leftSort: String(source.leftSort || ''),
-		rightSort: String(source.rightSort || ''),
+		leftItems: Array.isArray(source.leftItems) ? source.leftItems.map(String) : [],
+		rightItems: Array.isArray(source.rightItems) ? source.rightItems.map(String) : [],
 	};
 }
 
@@ -69,7 +69,7 @@ export default function MorphSortPage() {
 	};
 
 	const openSortMenu = (event, wordIndex) => {
-		event.stopPropagation();
+		event.preventDefault();
 		const word = data.words[wordIndex];
 		if (!word || !word.trim()) return;
 		setContextMenu({
@@ -84,27 +84,28 @@ export default function MorphSortPage() {
 		setContextMenu({ open: false, x: 0, y: 0, wordIndex: -1 });
 	};
 
-	const addWordToSort = (targetBox) => {
+	const addWordToColumn = (column) => {
 		if (contextMenu.wordIndex < 0) return;
 		const word = data.words[contextMenu.wordIndex];
-		if (!word || !word.trim()) {
-			closeSortMenu();
-			return;
-		}
-
+		if (!word || !word.trim()) { closeSortMenu(); return; }
 		setData((prev) => {
-			const targetField = targetBox === 'left' ? 'leftSort' : 'rightSort';
-			const currentValue = prev[targetField].trim();
-			const newValue = currentValue ? `${currentValue}\n${word}` : word;
-			const nextWords = [...prev.words];
-			nextWords[contextMenu.wordIndex] = '';
-			return {
-				...prev,
-				[targetField]: newValue,
-				words: nextWords,
-			};
+			const field = column === 'left' ? 'leftItems' : 'rightItems';
+			return { ...prev, [field]: [...prev[field], word] };
 		});
 		closeSortMenu();
+	};
+
+	const removeItem = (column, itemIndex) => {
+		setData((prev) => {
+			const field = column === 'left' ? 'leftItems' : 'rightItems';
+			const next = [...prev[field]];
+			next.splice(itemIndex, 1);
+			return { ...prev, [field]: next };
+		});
+	};
+
+	const handleClearWords = () => {
+		setData((prev) => ({ ...prev, words: Array.from({ length: 11 }, () => '') }));
 	};
 
 	return (
@@ -137,16 +138,19 @@ export default function MorphSortPage() {
 				<Grid item xs={12} md={4}>
 					<Typography sx={{ fontWeight: 700, mb: 1 }}>Sort Box A</Typography>
 					<Box sx={{ border: '2px solid #4a4a4a', borderRadius: 1, minHeight: '68vh', maxHeight: '68vh', p: 1.5, overflow: 'auto' }}>
-						<TextField
-							multiline
-							minRows={18}
-							fullWidth
-							value={data.leftSort}
-							onChange={(event) => setData((prev) => ({ ...prev, leftSort: event.target.value }))}
-							variant="standard"
-							InputProps={{ disableUnderline: true }}
-							inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
-						/>
+						<List dense disablePadding>
+							{data.leftItems.map((item, itemIndex) => (
+								<ListItem
+									key={itemIndex}
+									disableGutters
+									secondaryAction={
+										<IconButton size="small" onClick={() => removeItem('left', itemIndex)} sx={{ fontSize: '1rem', color: '#999' }}>×</IconButton>
+									}
+								>
+									<ListItemText primary={item} primaryTypographyProps={{ fontFamily: 'Courier New, monospace' }} />
+								</ListItem>
+							))}
+						</List>
 					</Box>
 				</Grid>
 				<Grid item xs={12} md={4}>
@@ -170,29 +174,32 @@ export default function MorphSortPage() {
 					anchorPosition={{ top: contextMenu.y, left: contextMenu.x }}
 					anchorReference="anchorPosition"
 				>
-					<MenuItem onClick={() => addWordToSort('left')}>Add to Sort Box A</MenuItem>
-					<MenuItem onClick={() => addWordToSort('right')}>Add to Sort Box B</MenuItem>
+					<MenuItem onClick={() => addWordToColumn('left')}>Add to Column 1</MenuItem>
+					<MenuItem onClick={() => addWordToColumn('right')}>Add to Column 2</MenuItem>
 				</Menu>
 				<Grid item xs={12} md={4}>
 					<Typography sx={{ fontWeight: 700, mb: 1 }}>Sort Box B</Typography>
 					<Box sx={{ border: '2px solid #4a4a4a', borderRadius: 1, minHeight: '68vh', maxHeight: '68vh', p: 1.5, overflow: 'auto' }}>
-						<TextField
-							multiline
-							minRows={18}
-							fullWidth
-							value={data.rightSort}
-							onChange={(event) => setData((prev) => ({ ...prev, rightSort: event.target.value }))}
-							variant="standard"
-							InputProps={{ disableUnderline: true }}
-							inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
-						/>
+						<List dense disablePadding>
+							{data.rightItems.map((item, itemIndex) => (
+								<ListItem
+									key={itemIndex}
+									disableGutters
+									secondaryAction={
+										<IconButton size="small" onClick={() => removeItem('right', itemIndex)} sx={{ fontSize: '1rem', color: '#999' }}>×</IconButton>
+									}
+								>
+									<ListItemText primary={item} primaryTypographyProps={{ fontFamily: 'Courier New, monospace' }} />
+								</ListItem>
+							))}
+						</List>
 					</Box>
 				</Grid>
 			</Grid>
 
 			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }}>
-				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>
-					Clear All
+				<Button variant="outlined" onClick={handleClearWords} sx={{ minWidth: 150 }}>
+					Clear Words
 				</Button>
 			</Box>
 		</ActivityShell>

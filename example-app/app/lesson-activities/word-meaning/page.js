@@ -135,9 +135,6 @@ export default function WordMeaningPage() {
 					<InputColumn title="Word Meaning" values={data.answerMeanings} onChange={(index, value) => setList('answerMeanings', index, value)} onClear={() => clearList('answerMeanings')} />
 				</Grid>
 			</Grid>
-			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }}>
-				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>Clear All</Button>
-			</Box>
 		</ActivityShell>
 	);
 }

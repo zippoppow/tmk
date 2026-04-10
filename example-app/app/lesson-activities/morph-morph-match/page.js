@@ -1,8 +1,10 @@
 'use client';
 
-import { Box, Button, Stack, TextField, Typography } from '@mui/material';
+import { useRef } from 'react';
+import { Box, Button, Menu, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
+import { useContextActionMenu } from '../components/interactionUtils';
 
 const FORM_NAME = 'morph-morph-match';
 const DEFAULT_ACTIVITY_NAME = 'Morph Morph Match Activity';
@@ -12,10 +14,15 @@ function emptyPair() {
 	return { left: '', right: '' };
 }
 
+function emptyHeaders() {
+	return { leftTitle: '', leftSub1: '', leftSub2: '', rightTitle: '', rightSub1: '', rightSub2: '' };
+}
+
 function emptyData() {
 	return {
 		morpheme: '',
 		grid: Array.from({ length: 24 }, () => ''),
+		sectionHeaders: emptyHeaders(),
 		pairs: Array.from({ length: 12 }, () => emptyPair()),
 	};
 }
@@ -24,9 +31,18 @@ function normalizeInputData(rawData) {
 	const source = rawData && typeof rawData === 'object' ? rawData : {};
 	const grid = Array.isArray(source.grid) ? source.grid : [];
 	const pairs = Array.isArray(source.pairs) ? source.pairs : [];
+	const sh = source.sectionHeaders && typeof source.sectionHeaders === 'object' ? source.sectionHeaders : {};
 	return {
 		morpheme: String(source.morpheme || ''),
 		grid: Array.from({ length: 24 }, (_, index) => String(grid[index] || '')),
+		sectionHeaders: {
+			leftTitle: String(sh.leftTitle || ''),
+			leftSub1: String(sh.leftSub1 || ''),
+			leftSub2: String(sh.leftSub2 || ''),
+			rightTitle: String(sh.rightTitle || ''),
+			rightSub1: String(sh.rightSub1 || ''),
+			rightSub2: String(sh.rightSub2 || ''),
+		},
 		pairs: Array.from({ length: 12 }, (_, index) => {
 			const pair = pairs[index] || {};
 			return { left: String(pair.left || ''), right: String(pair.right || '') };
@@ -80,6 +96,38 @@ export default function MorphMorphMatchPage() {
 		});
 	};
 
+	const setSectionHeader = (field, value) => {
+		setData((prev) => ({ ...prev, sectionHeaders: { ...prev.sectionHeaders, [field]: value } }));
+	};
+
+	const { menuState: gridMenu, openMenu: openGridMenu, closeMenu: closeGridMenu } = useContextActionMenu();
+
+	const pairLeftRefs = useRef([]);
+
+	const handleSyncGridToPair = (pairIndex) => {
+		const gridValue = data.grid[gridMenu.index];
+		if (gridValue) {
+			setPairValue(pairIndex, 'left', gridValue);
+		}
+		closeGridMenu();
+		if (pairLeftRefs.current[pairIndex]) {
+			pairLeftRefs.current[pairIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+			pairLeftRefs.current[pairIndex].focus();
+		}
+	};
+
+	const handleClearTopSection = () => {
+		setData((prev) => ({ ...prev, grid: Array.from({ length: 24 }, () => '') }));
+	};
+
+	const handleClearSectionHeaders = () => {
+		setData((prev) => ({ ...prev, sectionHeaders: emptyHeaders() }));
+	};
+
+	const handleClearLowerSection = () => {
+		setData((prev) => ({ ...prev, pairs: Array.from({ length: 12 }, () => emptyPair()) }));
+	};
+
 	return (
 		<ActivityShell
 			title="MORPH, MORPH? MATCH"
@@ -121,6 +169,7 @@ export default function MorphMorphMatchPage() {
 									key={index}
 									value={data.grid[index] || ''}
 									onChange={(event) => setGridValue(index, event.target.value)}
+									onContextMenu={(event) => openGridMenu(event, { targetType: 'grid', index })}
 									size="small"
 									inputProps={{ style: { textAlign: 'center', fontFamily: 'Courier New, monospace' } }}
 									sx={{
@@ -135,10 +184,73 @@ export default function MorphMorphMatchPage() {
 						})}
 					</Box>
 				))}
+				<Box sx={{ pt: 1 }}>
+					<Button variant="outlined" size="small" onClick={handleClearTopSection}>
+						Clear Top Section
+					</Button>
+				</Box>
 			</Box>
 
 			<Box sx={{ borderTop: '2px solid #eee', pt: 3, mt: 2 }}>
-				<Typography sx={{ fontWeight: 700, mb: 1.5 }}>Base Word / Related Word</Typography>
+				<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, mb: 2 }}>
+					<Stack spacing={1}>
+						<TextField
+							variant="standard"
+							placeholder="Left column title"
+							value={data.sectionHeaders.leftTitle}
+							onChange={(e) => setSectionHeader('leftTitle', e.target.value)}
+							inputProps={{ style: { fontFamily: 'Courier New, monospace', fontWeight: 700 } }}
+							sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #4020A7' } }}
+						/>
+						<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+							<TextField
+								variant="standard"
+								placeholder="Sub-header 1"
+								value={data.sectionHeaders.leftSub1}
+								onChange={(e) => setSectionHeader('leftSub1', e.target.value)}
+								inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+							/>
+							<TextField
+								variant="standard"
+								placeholder="Sub-header 2"
+								value={data.sectionHeaders.leftSub2}
+								onChange={(e) => setSectionHeader('leftSub2', e.target.value)}
+								inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+							/>
+						</Box>
+					</Stack>
+					<Stack spacing={1}>
+						<TextField
+							variant="standard"
+							placeholder="Right column title"
+							value={data.sectionHeaders.rightTitle}
+							onChange={(e) => setSectionHeader('rightTitle', e.target.value)}
+							inputProps={{ style: { fontFamily: 'Courier New, monospace', fontWeight: 700 } }}
+							sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #4020A7' } }}
+						/>
+						<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+							<TextField
+								variant="standard"
+								placeholder="Sub-header 1"
+								value={data.sectionHeaders.rightSub1}
+								onChange={(e) => setSectionHeader('rightSub1', e.target.value)}
+								inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+							/>
+							<TextField
+								variant="standard"
+								placeholder="Sub-header 2"
+								value={data.sectionHeaders.rightSub2}
+								onChange={(e) => setSectionHeader('rightSub2', e.target.value)}
+								inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+							/>
+						</Box>
+					</Stack>
+				</Box>
+
 			<Stack spacing={1.25}>
 				{data.pairs.map((pair, index) => (
 					<Box key={index} sx={{ display: 'grid', gridTemplateColumns: '32px 1fr 1fr', gap: 1.5, alignItems: 'center' }}>
@@ -147,6 +259,7 @@ export default function MorphMorphMatchPage() {
 							variant="standard"
 							value={pair.left}
 							onChange={(event) => setPairValue(index, 'left', event.target.value)}
+							inputRef={(el) => { pairLeftRefs.current[index] = el; }}
 							inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
 							sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 						/>
@@ -160,13 +273,28 @@ export default function MorphMorphMatchPage() {
 					</Box>
 				))}
 			</Stack>
+				<Box sx={{ display: 'flex', gap: 2, pt: 2 }}>
+					<Button variant="outlined" size="small" onClick={handleClearSectionHeaders}>
+						Clear Section Headers
+					</Button>
+					<Button variant="outlined" size="small" onClick={handleClearLowerSection}>
+						Clear Lower Section
+					</Button>
+				</Box>
 			</Box>
 
-			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }}>
-				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>
-					Clear All
-				</Button>
-			</Box>
+			<Menu
+				open={gridMenu.open}
+				onClose={closeGridMenu}
+				anchorReference="anchorPosition"
+				anchorPosition={gridMenu.open ? { top: gridMenu.y, left: gridMenu.x } : undefined}
+			>
+				{data.pairs.map((_, pairIndex) => (
+					<MenuItem key={pairIndex} onClick={() => handleSyncGridToPair(pairIndex)}>
+						Item {pairIndex + 1}
+					</MenuItem>
+				))}
+			</Menu>
 		</ActivityShell>
 	);
 }

@@ -1,8 +1,9 @@
 'use client';
 
-import { Box, Button, Stack, TextField } from '@mui/material';
+import { Box, Button, Menu, MenuItem, Stack, TextField } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
+import { useContextActionMenu } from '../components/interactionUtils';
 
 const FORM_NAME = 'morph-match-related-words';
 const DEFAULT_ACTIVITY_NAME = 'Morph Match Related Words Activity';
@@ -14,6 +15,7 @@ function emptyData() {
 		morpheme: '',
 		focusWords: Array.from({ length: 8 }, () => ''),
 		relatedWords: Array.from({ length: 8 }, () => ''),
+		relatedWordColors: Array.from({ length: 8 }, () => ''),
 	};
 }
 
@@ -21,10 +23,12 @@ function normalizeInputData(rawData) {
 	const source = rawData && typeof rawData === 'object' ? rawData : {};
 	const focusWords = Array.isArray(source.focusWords) ? source.focusWords : [];
 	const relatedWords = Array.isArray(source.relatedWords) ? source.relatedWords : [];
+	const relatedWordColors = Array.isArray(source.relatedWordColors) ? source.relatedWordColors : [];
 	return {
 		morpheme: String(source.morpheme || ''),
 		focusWords: Array.from({ length: 8 }, (_, index) => String(focusWords[index] || '')),
 		relatedWords: Array.from({ length: 8 }, (_, index) => String(relatedWords[index] || '')),
+		relatedWordColors: Array.from({ length: 8 }, (_, index) => String(relatedWordColors[index] || '')),
 	};
 }
 
@@ -66,6 +70,33 @@ export default function MorphMatchRelatedWordsPage() {
 		});
 	};
 
+	const { menuState: focusMenu, openMenu: openFocusMenu, closeMenu: closeFocusMenu } = useContextActionMenu();
+
+	const handleSetRelatedColor = (relatedIndex) => {
+		setData((prev) => {
+			const next = [...prev.relatedWordColors];
+			next[relatedIndex] = FOCUS_COLORS[focusMenu.index];
+			return { ...prev, relatedWordColors: next };
+		});
+		closeFocusMenu();
+	};
+
+	const handleClearRelatedColor = (relatedIndex) => {
+		setData((prev) => {
+			const next = [...prev.relatedWordColors];
+			next[relatedIndex] = '';
+			return { ...prev, relatedWordColors: next };
+		});
+	};
+
+	const handleClearFocusWords = () => {
+		setData((prev) => ({ ...prev, focusWords: Array.from({ length: 8 }, () => '') }));
+	};
+
+	const handleClearRelatedWords = () => {
+		setData((prev) => ({ ...prev, relatedWords: Array.from({ length: 8 }, () => '') }));
+	};
+
 	return (
 		<ActivityShell
 			title="MORPH MATCH -- RELATED WORDS"
@@ -100,10 +131,16 @@ export default function MorphMatchRelatedWordsPage() {
 							variant="standard"
 							value={value}
 							onChange={(event) => setListValue('focusWords', index, event.target.value)}
+							onContextMenu={(event) => openFocusMenu(event, { targetType: 'focusWord', index })}
 							inputProps={{ style: { fontFamily: 'Courier New, monospace', width: '90%' } }}
 							sx={{ backgroundColor: FOCUS_COLORS[index], borderRadius: 0.5, px: 1, '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 						/>
 					))}
+					<Box sx={{ pt: 1 }}>
+						<Button variant="outlined" size="small" onClick={handleClearFocusWords}>
+							Clear Focus Words
+						</Button>
+					</Box>
 				</Stack>
 				<Stack spacing={1.8}>
 					{data.relatedWords.map((value, index) => (
@@ -112,18 +149,31 @@ export default function MorphMatchRelatedWordsPage() {
 							variant="standard"
 							value={value}
 							onChange={(event) => setListValue('relatedWords', index, event.target.value)}
+							onDoubleClick={() => handleClearRelatedColor(index)}
 							inputProps={{ style: { fontFamily: 'Courier New, monospace', width: '90%' } }}
-							sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+							sx={{ backgroundColor: data.relatedWordColors[index] || 'transparent', borderRadius: 0.5, px: 1, '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 						/>
 					))}
+					<Box sx={{ pt: 1 }}>
+						<Button variant="outlined" size="small" onClick={handleClearRelatedWords}>
+							Clear Related Words
+						</Button>
+					</Box>
 				</Stack>
 			</Box>
 
-			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }}>
-				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>
-					Clear All
-				</Button>
-			</Box>
+			<Menu
+				open={focusMenu.open}
+				onClose={closeFocusMenu}
+				anchorReference="anchorPosition"
+				anchorPosition={focusMenu.open ? { top: focusMenu.y, left: focusMenu.x } : undefined}
+			>
+				{data.relatedWords.map((_, relatedIndex) => (
+					<MenuItem key={relatedIndex} onClick={() => handleSetRelatedColor(relatedIndex)}>
+						Set color for Related Word {relatedIndex + 1}
+					</MenuItem>
+				))}
+			</Menu>
 		</ActivityShell>
 	);
 }

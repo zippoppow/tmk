@@ -857,17 +857,17 @@ export default function ChameleonPrefixesPage() {
 					contextMenu.open ? { top: contextMenu.y, left: contextMenu.x } : undefined
 				}
 			>
-				<MenuItem onClick={handleCopyTarget}>Copy value</MenuItem>
-				<MenuItem onClick={handlePasteTarget}>Paste value</MenuItem>
-				<MenuItem onClick={handleClearTarget}>Clear field</MenuItem>
-				{contextMenu.targetType === 'grid' && [
-					<MenuItem key="sync-header" disabled sx={{ opacity: 0.6, fontSize: '0.75rem' }}>Sync to prefix…</MenuItem>,
-					...Array.from({ length: 12 }, (_, i) => (
-						<MenuItem key={`sync-${i}`} onClick={() => handleSyncGridToPair(i)}>
-							Item {i + 1}
-						</MenuItem>
-					)),
-				]}
+				{contextMenu.targetType === 'grid'
+					? Array.from({ length: 12 }, (_, i) => (
+							<MenuItem key={`sync-${i}`} onClick={() => handleSyncGridToPair(i)}>
+								Item {i + 1}
+							</MenuItem>
+						))
+					: [
+						<MenuItem key="copy" onClick={handleCopyTarget}>Copy value</MenuItem>,
+						<MenuItem key="paste" onClick={handlePasteTarget}>Paste value</MenuItem>,
+						<MenuItem key="clear" onClick={handleClearTarget}>Clear field</MenuItem>,
+					]}
 			</Menu>
 
 			<Snackbar

@@ -67,6 +67,27 @@ export default function MorphMatchDefinitionsPage() {
 		});
 	};
 
+	const handleClearWords = () => {
+		setData((prev) => ({
+			...prev,
+			words: Array.from({ length: 8 }, () => ''),
+		}));
+	};
+
+	const handleClearNumbers = () => {
+		setData((prev) => ({
+			...prev,
+			numbers: Array.from({ length: 8 }, () => ''),
+		}));
+	};
+
+	const handleClearDefinitions = () => {
+		setData((prev) => ({
+			...prev,
+			definitions: Array.from({ length: 8 }, () => ''),
+		}));
+	};
+
 	return (
 		<ActivityShell
 			title="MORPH MATCH -- DEFINITIONS"
@@ -113,6 +134,14 @@ export default function MorphMatchDefinitionsPage() {
 								/>
 							</Box>
 						))}
+						<Box sx={{ display: 'flex', gap: 1.25, flexWrap: 'wrap', pt: 1 }}>
+							<Button variant="outlined" onClick={handleClearWords} sx={{ minWidth: 140 }}>
+								Clear Words
+							</Button>
+							<Button variant="outlined" onClick={handleClearNumbers} sx={{ minWidth: 150 }}>
+								Clear Numbers
+							</Button>
+						</Box>
 					</Stack>
 				</Grid>
 				<Grid item xs={12} md={8}>
@@ -131,15 +160,14 @@ export default function MorphMatchDefinitionsPage() {
 								/>
 							</Box>
 						))}
+						<Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' }, pt: 1 }}>
+							<Button variant="outlined" onClick={handleClearDefinitions} sx={{ minWidth: 170 }}>
+								Clear Definitions
+							</Button>
+						</Box>
 					</Stack>
 				</Grid>
 			</Grid>
-
-			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }}>
-				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>
-					Clear All
-				</Button>
-			</Box>
 		</ActivityShell>
 	);
 }
