@@ -564,18 +564,12 @@ export default function LessonProjectsPage() {
 					>
 						{isAuthenticated ? 'Logout from Teachable' : 'Login with Teachable'}
 					</Button>
-					<Chip
-						label="Project-first workflow"
-						color="primary"
-						variant="outlined"
-						sx={{ alignSelf: { xs: 'flex-start', md: 'center' } }}
-					/>
 				</Stack>
 
 				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
-					<Typography sx={{ fontSize: '1.3rem', fontWeight: 800, mb: 0.5 }}>Lesson Activities Projects</Typography>
+					<Typography sx={{ fontSize: '1.3rem', fontWeight: 800, mb: 0.5 }}>DIY Projects</Typography>
 					<Typography sx={{ color: '#5a6472', fontSize: '0.95rem', mb: 2 }}>
-						Create a project first. Then choose a Lesson Activity type and add activities under that project. For now, Intro is the implemented example type.
+						Create a project first. Then choose a Lesson Activity type and add activities under that project.
 					</Typography>
 
 					<Stack direction="row" spacing={1} sx={{ mb: 1.2 }}>
@@ -629,6 +623,21 @@ export default function LessonProjectsPage() {
 												<Typography sx={{ fontSize: '0.92rem', fontWeight: 700, flex: 1 }} noWrap title={project.name}>
 													{project.name}
 												</Typography>
+												{project.source === 'local' && (
+													<Button size="small" variant="outlined" onClick={() => handleSelectProject(project.id)} sx={{ textTransform: 'none' }}>
+														Select
+													</Button>
+												)}
+												{project.source === 'local' && isAuthenticated && (
+													<Button size="small" variant="contained" color="info" onClick={() => handleSyncProject(project.id)} sx={{ textTransform: 'none' }}>
+														Sync Changes
+													</Button>
+												)}
+												{project.source === 'local' && (
+													<Button size="small" variant="contained" color="error" onClick={() => handleDeleteProject(project.id)} sx={{ textTransform: 'none' }}>
+														Delete Project
+													</Button>
+												)}
 												<Chip
 													label={lessonActivities.length}
 													size="small"
@@ -647,12 +656,7 @@ export default function LessonProjectsPage() {
 												{project.source === 'cloud' ? 'Cloud' : project.syncedAt ? 'Synced' : 'Local'}
 											</Typography>
 
-<Stack direction={{ xs: 'column', md: 'row' }} spacing={0.6} sx={{ mt: 1, mb: lessonActivities.length ? 0.8 : 0 }}>
-											{project.source === 'local' && (
-												<Button size="small" variant="outlined" onClick={() => handleSelectProject(project.id)} sx={{ textTransform: 'none' }}>
-													Select
-												</Button>
-											)}
+											<Stack direction={{ xs: 'column', md: 'row' }} spacing={0.6} sx={{ mt: 1, mb: lessonActivities.length ? 0.8 : 0 }}>
 											{project.source === 'local' && (
 												<TextField
 													select
@@ -677,16 +681,6 @@ export default function LessonProjectsPage() {
 													Add Activity
 												</Button>
 											)}
-											{project.source === 'local' && isAuthenticated && (
-												<Button size="small" variant="contained" color="info" onClick={() => handleSyncProject(project.id)} sx={{ textTransform: 'none' }}>
-													Sync Changes
-												</Button>
-											)}
-											{project.source === 'local' && (
-												<Button size="small" variant="contained" color="error" onClick={() => handleDeleteProject(project.id)} sx={{ textTransform: 'none' }}>
-													Delete Project
-													</Button>
-												)}
 											</Stack>
 
 											<Stack spacing={0.6}>
