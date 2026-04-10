@@ -41,6 +41,16 @@ export default function ActivityShell({
 	setNotice,
 }) {
 	const router = useRouter();
+	const outlinedControlButtonSx = {
+		textTransform: 'none',
+		bgcolor: '#fff',
+		color: '#1f2937',
+		borderColor: '#d1d5db',
+		'&:hover': {
+			bgcolor: '#f3f4f6',
+			borderColor: '#9ca3af',
+		},
+	};
 	const authLabel = authLoading
 		? 'Checking login...'
 		: authUser
@@ -62,6 +72,14 @@ export default function ActivityShell({
 		>
 			<style jsx global>{`
 				@media print {
+					@page {
+						size: auto;
+						margin: 0.35in;
+					}
+					html,
+					body {
+						background: #fff !important;
+					}
 					body * {
 						visibility: hidden !important;
 					}
@@ -70,11 +88,18 @@ export default function ActivityShell({
 						visibility: visible !important;
 					}
 					#lesson-activity-print-root {
-						position: absolute;
-						left: 0;
-						top: 0;
+						position: static !important;
+						margin: 0 !important;
 						width: 100%;
+						max-width: 100% !important;
 						box-shadow: none !important;
+						break-inside: avoid-page;
+					}
+					#lesson-activity-print-root .MuiCardContent-root {
+						padding: 12px !important;
+					}
+					#lesson-activity-print-root .no-print {
+						display: none !important;
 					}
 				}
 			`}</style>
@@ -84,14 +109,8 @@ export default function ActivityShell({
 						variant="outlined"
 						onClick={() => router.push('/dashboard')}
 						sx={{
-							textTransform: 'none',
-							backgroundColor: '#000',
-							color: '#fff',
-							borderColor: '#000',
-							'&:hover': {
-								backgroundColor: '#1f1f1f',
-								borderColor: '#1f1f1f',
-							},
+							...outlinedControlButtonSx,
+							fontWeight: 700,
 						}}
 					>
 						Dashboard
@@ -99,7 +118,7 @@ export default function ActivityShell({
 					<Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
 						{authUser ? 'Logout from Teachable' : 'Login with Teachable'}
 					</Button>
-					<Button variant="outlined" onClick={handleGoToLessonProjects} sx={{ textTransform: 'none' }}>
+					<Button variant="outlined" onClick={handleGoToLessonProjects} sx={outlinedControlButtonSx}>
 						Lesson Projects
 					</Button>
 					{!projectId && (
@@ -119,7 +138,15 @@ export default function ActivityShell({
 									color="error"
 									disabled={isSaving}
 									onClick={handleDeleteStandalone}
-									sx={{ textTransform: 'none' }}
+									sx={{
+										...outlinedControlButtonSx,
+										borderColor: '#ef4444',
+										color: '#b91c1c',
+										'&:hover': {
+											bgcolor: '#fee2e2',
+											borderColor: '#dc2626',
+										},
+									}}
 								>
 									Delete Activity
 								</Button>
@@ -197,7 +224,7 @@ export default function ActivityShell({
 						<Button
 							size="small"
 							variant="outlined"
-							sx={{ textTransform: 'none', bgcolor: 'white', fontSize: '0.8rem' }}
+							sx={{ ...outlinedControlButtonSx, fontSize: '0.8rem' }}
 							onClick={runAuthCheck}
 						>
 							Retry session check

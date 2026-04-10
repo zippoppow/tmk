@@ -113,7 +113,7 @@ export default function MorphSortPage() {
 			title="MORPH SORT"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Sort the center words into left and right groups based on morph features."
+			instructions="Sort the center words into left and right groups."
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}
@@ -137,7 +137,21 @@ export default function MorphSortPage() {
 			<Grid container spacing={2} sx={{ mt: 2 }}>
 				<Grid item xs={12} md={4}>
 					<Typography sx={{ fontWeight: 700, mb: 1 }}>Sort Box A</Typography>
-					<Box sx={{ border: '2px solid #4a4a4a', borderRadius: 1, minHeight: '68vh', maxHeight: '68vh', p: 1.5, overflow: 'auto' }}>
+					<Box
+						sx={{
+							border: '2px solid #4a4a4a',
+							borderRadius: 1,
+							minHeight: '68vh',
+							maxHeight: '68vh',
+							p: 1.5,
+							overflow: 'auto',
+							'@media print': {
+								minHeight: '42vh',
+								maxHeight: '42vh',
+								p: 1,
+							},
+						}}
+					>
 						<List dense disablePadding>
 							{data.leftItems.map((item, itemIndex) => (
 								<ListItem
@@ -174,12 +188,26 @@ export default function MorphSortPage() {
 					anchorPosition={{ top: contextMenu.y, left: contextMenu.x }}
 					anchorReference="anchorPosition"
 				>
-					<MenuItem onClick={() => addWordToColumn('left')}>Add to Column 1</MenuItem>
-					<MenuItem onClick={() => addWordToColumn('right')}>Add to Column 2</MenuItem>
+					<MenuItem onClick={() => addWordToColumn('left')}>Add to "Sort Box A"</MenuItem>
+					<MenuItem onClick={() => addWordToColumn('right')}>Add to "Sort Box B"</MenuItem>
 				</Menu>
 				<Grid item xs={12} md={4}>
 					<Typography sx={{ fontWeight: 700, mb: 1 }}>Sort Box B</Typography>
-					<Box sx={{ border: '2px solid #4a4a4a', borderRadius: 1, minHeight: '68vh', maxHeight: '68vh', p: 1.5, overflow: 'auto' }}>
+					<Box
+						sx={{
+							border: '2px solid #4a4a4a',
+							borderRadius: 1,
+							minHeight: '68vh',
+							maxHeight: '68vh',
+							p: 1.5,
+							overflow: 'auto',
+							'@media print': {
+								minHeight: '42vh',
+								maxHeight: '42vh',
+								p: 1,
+							},
+						}}
+					>
 						<List dense disablePadding>
 							{data.rightItems.map((item, itemIndex) => (
 								<ListItem
@@ -197,8 +225,17 @@ export default function MorphSortPage() {
 				</Grid>
 			</Grid>
 
-			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }}>
-				<Button variant="outlined" onClick={handleClearWords} sx={{ minWidth: 150 }}>
+			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }} className="no-print">
+				<Button
+					variant="contained"
+					onClick={handleClearWords}
+					sx={{
+						minWidth: 150,
+						bgcolor: '#111827',
+						color: '#fff',
+						'&:hover': { bgcolor: '#1f2937' },
+					}}
+				>
 					Clear Words
 				</Button>
 			</Box>
