@@ -136,17 +136,29 @@ export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
 		return resolvedOrigins.production;
 	}
 
-	const { protocol, hostname } = window.location;
+	const { protocol, hostname, origin } = window.location;
+	const browserOrigin = trimOrigin(origin);
 	const isLocalHost =
 		protocol === 'file:' ||
 		!hostname ||
 		hostname === 'localhost' ||
 		hostname === '127.0.0.1' ||
-		hostname.endsWith('.local') ||
+		hostname.endsWith('.local');
+
+	const isTunnelHost =
+		hostname.endsWith('.ngrok-free.app') ||
+		hostname.endsWith('.ngrok.io') ||
+		hostname.endsWith('.loca.lt');
+
+	if ((isLocalHost || isTunnelHost) && browserOrigin) {
+		return browserOrigin;
+	}
+
+	const isStagingLikeHost =
 		hostname.includes('railway.app') ||
 		hostname.includes('staging');
 
-	if (isLocalHost) {
+	if (isStagingLikeHost) {
 		return resolvedOrigins.staging;
 	}
 
