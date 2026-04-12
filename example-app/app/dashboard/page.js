@@ -298,14 +298,14 @@ export default function DashboardPage() {
                 </Typography>
                 <Box
                     sx={{
-                        display: 'grid',
-                        gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) minmax(0, 1fr)' },
+                        display: 'flex',
+                        flexWrap: 'wrap',
                         gap: { xs: 2, md: 3 },
-                        alignItems: 'start',
+                        alignItems: 'flex-start',
                     }}
                 >
                     {/* Selector — left column on desktop */}
-                    <Box sx={{ minWidth: 0 }}>
+                    <Box sx={{ flex: '1 1 420px', minWidth: 0, maxWidth: '100%' }}>
                         <LessonActivitySelector
                             activities={lessonActivities}
                             onOpen={handleCreateNewActivity}
@@ -313,7 +313,7 @@ export default function DashboardPage() {
                     </Box>
 
                     {/* Standalone activities list — right column on desktop */}
-                    <Box sx={{ minWidth: 0 }}>
+                    <Box sx={{ flex: '1 1 520px', minWidth: 0, maxWidth: '100%' }}>
                         <Typography variant="subtitle1" sx={{ mb: 1.5 }}>
                             Your Standalone Lesson Activities
                         </Typography>
