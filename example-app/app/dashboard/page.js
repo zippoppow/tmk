@@ -296,9 +296,16 @@ export default function DashboardPage() {
                 <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
                     Lesson Activities
                 </Typography>
-                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, alignItems: 'flex-start' }}>
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) minmax(0, 1fr)' },
+                        gap: { xs: 2, md: 3 },
+                        alignItems: 'start',
+                    }}
+                >
                     {/* Selector — left column on desktop */}
-                    <Box sx={{ width: { xs: '100%', md: '50%' }, flexShrink: 0 }}>
+                    <Box sx={{ minWidth: 0 }}>
                         <LessonActivitySelector
                             activities={lessonActivities}
                             onOpen={handleCreateNewActivity}
@@ -306,8 +313,8 @@ export default function DashboardPage() {
                     </Box>
 
                     {/* Standalone activities list — right column on desktop */}
-                    <Box sx={{ flex: 1, width: { xs: '100%', md: 'auto' } }}>
-                        <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                    <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="subtitle1" sx={{ mb: 1.5 }}>
                             Your Standalone Lesson Activities
                         </Typography>
                         {standaloneLoading ? (
@@ -315,24 +322,32 @@ export default function DashboardPage() {
                         ) : standaloneActivities.length === 0 ? (
                             <Typography variant="body2" color="textSecondary">No standalone lesson activities found.</Typography>
                         ) : (
-                            <Stack spacing={1}>
+                            <Stack spacing={1.25}>
                                 {standaloneActivities.map((activity, index) => {
                                     const route = getActivityPath(activity);
                                     return (
                                         <Paper
                                             key={String(activity?.id || `${activity?.['lesson-name'] || 'activity'}-${index}`)}
-                                            sx={{ p: 1.25, border: '1px solid #e6ebf2', borderRadius: 1.5 }}
+                                            sx={{ p: 1.5, border: '1px solid #e6ebf2', borderRadius: 1.5 }}
                                         >
-                                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
-                                                <Box>
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: { xs: 'flex-start', sm: 'center' },
+                                                    justifyContent: 'space-between',
+                                                    gap: 1.5,
+                                                    flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                                                }}
+                                            >
+                                                <Box sx={{ minWidth: 0, flex: 1 }}>
                                                     <Typography sx={{ fontWeight: 600 }}>
                                                         {String(activity?.['lesson-name'] || 'Untitled Lesson Activity')}
                                                     </Typography>
-                                                    <Typography variant="caption" color="textSecondary">
+                                                    <Typography variant="caption" color="textSecondary" sx={{ wordBreak: 'break-word' }}>
                                                         {String(activity?.['tmk-template'] || activity?.formName || 'unknown-template')}
                                                     </Typography>
                                                 </Box>
-                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
                                                     <Button
                                                         size="small"
                                                         variant="outlined"
