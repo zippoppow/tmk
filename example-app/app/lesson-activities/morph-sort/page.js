@@ -108,6 +108,75 @@ export default function MorphSortPage() {
 		setData((prev) => ({ ...prev, words: Array.from({ length: 11 }, () => '') }));
 	};
 
+	const handleDownloadPdfCustom = () => {
+		const wordItems = data.words
+			.map((w) => `<div class="word-cell">${(w || '').replace(/</g, '&lt;')}</div>`)
+			.join('');
+
+		const leftItems = data.leftItems.map((item) => `<li>${(item || '').replace(/</g, '&lt;')}</li>`).join('');
+		const rightItems = data.rightItems.map((item) => `<li>${(item || '').replace(/</g, '&lt;')}</li>`).join('');
+
+		const licenseFooter = authUser?.email
+			? `<div class="license-footer">Licensed for use by: ${authUser.email.replace(/</g, '&lt;')}</div>`
+			: '';
+
+		const printWindow = window.open('', '', 'width=1100,height=1400');
+		printWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>${(activityName || DEFAULT_ACTIVITY_NAME).replace(/</g, '&lt;')}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.4; }
+    .header { border-bottom: 3px solid #4020A7; padding-bottom: 8px; display: grid; grid-template-columns: 3fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .header-column { display: flex; flex-direction: column; gap: 4px; }
+    .header-column img { max-width: 180px; height: auto; }
+    .title { font-size: 1.5em; font-weight: bold; letter-spacing: 1px; }
+    .subtitle { font-size: 1.1em; font-style: italic; }
+    .morpheme-value { font-family: 'Courier New', monospace; color: #4020A7; }
+    .instructions { font-size: 0.95em; color: #555; margin-top: 4px; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+    .col-title { font-weight: 700; font-size: 0.95em; margin-bottom: 8px; }
+    .sort-box { border: 2px solid #4a4a4a; border-radius: 4px; min-height: 480px; padding: 10px; }
+    .word-cell { border-bottom: 2px solid #ddd; padding: 8px 0; font-family: 'Courier New', monospace; color: #4020A7; font-size: 1.05em; }
+    .sort-box li { font-family: 'Courier New', monospace; list-style: none; padding: 6px 0; border-bottom: 1px solid #eee; }
+    .license-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e5e7eb; text-align: right; font-size: 0.8em; color: #4b5563; font-style: italic; }
+    @media print { @page { size: letter portrait; margin: 0.4in; } body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-column">
+      <div class="title">MORPH SORT</div>
+      <div class="subtitle">Morpheme(s): <span class="morpheme-value">${(data.morpheme || '').replace(/</g, '&lt;')}</span></div>
+      <div class="instructions">Sort the center words into left and right groups.</div>
+    </div>
+    <div class="header-column">
+      <img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit" />
+    </div>
+  </div>
+  <div class="cols">
+    <div>
+      <div class="col-title">Sort Box A</div>
+      <ul class="sort-box">${leftItems}</ul>
+    </div>
+    <div>
+      <div class="col-title">Words</div>
+      <div>${wordItems}</div>
+    </div>
+    <div>
+      <div class="col-title">Sort Box B</div>
+      <ul class="sort-box">${rightItems}</ul>
+    </div>
+  </div>
+  ${licenseFooter}
+</body>
+</html>`);
+		printWindow.document.close();
+		printWindow.onload = () => setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
+	};
+
 	return (
 		<ActivityShell
 			title="MORPH SORT"
@@ -122,7 +191,7 @@ export default function MorphSortPage() {
 			handleGoToLessonProjects={handleGoToLessonProjects}
 			handleAddToProject={handleAddToProject}
 			handleSaveAndReturn={handleSaveAndReturn}
-			handleDownloadPdf={handleDownloadPdf}
+			handleDownloadPdf={handleDownloadPdfCustom}
 			standaloneActivityId={standaloneActivityId}
 			handleSaveStandalone={handleSaveStandalone}
 			handleDeleteStandalone={handleDeleteStandalone}

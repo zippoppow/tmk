@@ -125,6 +125,81 @@ export default function MorphWhichPage() {
 		}));
 	};
 
+	const OPTION_BG_COLORS = ['#fff9db', '#e8fff0', '#f3e9ff', '#fff0e0'];
+
+	const handleDownloadPdfCustom = () => {
+		const questionBlocks = data.questions.map((question, i) => {
+			const selected = String(data.selectedChoices?.[i] || '');
+			const options = ['a', 'b', 'c', 'd'].map((key, ki) => {
+				const isSelected = selected === key;
+				const bg = isSelected ? OPTION_BG_COLORS[ki] : '#fafafa';
+				const border = isSelected ? '2px solid #4020A7' : '1px solid #ddd';
+				return `<div class="option" style="background:${bg};border:${border};">
+					<span class="option-label">${String.fromCharCode(65 + ki)}.</span>
+					<span>${(data.choices[i]?.[key] || '').replace(/</g, '&lt;')}</span>
+				</div>`;
+			}).join('');
+			return `
+			<div class="question-block">
+				<div class="q-row">
+					<span class="q-num">${i + 1}.</span>
+					<span class="q-text">${(question || '').replace(/</g, '&lt;')}</span>
+				</div>
+				<div class="options">${options}</div>
+			</div>`;
+		}).join('');
+
+		const licenseFooter = authUser?.email
+			? `<div class="license-footer">Licensed for use by: ${authUser.email.replace(/</g, '&lt;')}</div>`
+			: '';
+
+		const printWindow = window.open('', '', 'width=1100,height=1400');
+		printWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>${(activityName || DEFAULT_ACTIVITY_NAME).replace(/</g, '&lt;')}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.4; }
+    .header { border-bottom: 3px solid #4020A7; padding-bottom: 8px; display: grid; grid-template-columns: 3fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .header-column { display: flex; flex-direction: column; gap: 4px; }
+    .header-column img { max-width: 180px; height: auto; }
+    .title { font-size: 1.5em; font-weight: bold; letter-spacing: 1px; }
+    .subtitle { font-size: 1.1em; font-style: italic; }
+    .morpheme-value { font-family: 'Courier New', monospace; color: #4020A7; }
+    .instructions { font-size: 0.95em; color: #555; margin-top: 4px; }
+    .questions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .question-block { padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px; }
+    .q-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .q-num { font-weight: 700; min-width: 20px; }
+    .q-text { font-family: 'Courier New', monospace; }
+    .options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .option { display: flex; gap: 6px; align-items: center; padding: 5px 8px; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 0.9em; }
+    .option-label { font-weight: 700; min-width: 16px; }
+    .license-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e5e7eb; text-align: right; font-size: 0.8em; color: #4b5563; font-style: italic; }
+    @media print { @page { size: letter landscape; margin: 0.4in; } body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-column">
+      <div class="title">MORPH, WHICH?</div>
+      <div class="subtitle">Morpheme(s): <span class="morpheme-value">${(data.morpheme || '').replace(/</g, '&lt;')}</span></div>
+      <div class="instructions">Write the focus prompt, then fill four option paths for each numbered item.</div>
+    </div>
+    <div class="header-column">
+      <img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit" />
+    </div>
+  </div>
+  <div class="questions">${questionBlocks}</div>
+  ${licenseFooter}
+</body>
+</html>`);
+		printWindow.document.close();
+		printWindow.onload = () => setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
+	};
+
 	const { handleClick: handleOptionClick, handleDoubleClick: handleOptionDoubleClick } = useClickDoubleClickSelection({
 		onClick: ({ questionIndex }) => clearSelectedChoice(questionIndex),
 		onDoubleClick: ({ questionIndex, optionKey }) => selectChoice(questionIndex, optionKey),
@@ -145,7 +220,7 @@ export default function MorphWhichPage() {
 			handleGoToLessonProjects={handleGoToLessonProjects}
 			handleAddToProject={handleAddToProject}
 			handleSaveAndReturn={handleSaveAndReturn}
-			handleDownloadPdf={handleDownloadPdf}
+			handleDownloadPdf={handleDownloadPdfCustom}
 			standaloneActivityId={standaloneActivityId}
 			handleSaveStandalone={handleSaveStandalone}
 			handleDeleteStandalone={handleDeleteStandalone}

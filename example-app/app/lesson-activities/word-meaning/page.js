@@ -98,6 +98,64 @@ export default function WordMeaningPage() {
 		setData((prev) => ({ ...prev, [key]: prev[key].map(() => '') }));
 	};
 
+	const handleDownloadPdfCustom = () => {
+		const rows = Array.from({ length: 12 }, (_, i) => `
+			<div class="cell">${(data.promptWords[i] || '').replace(/</g, '&lt;')}</div>
+			<div class="cell">${(data.algoPhrases[i] || '').replace(/</g, '&lt;')}</div>
+			<div class="cell">${(data.answerMeanings[i] || '').replace(/</g, '&lt;')}</div>
+		`).join('');
+
+		const licenseFooter = authUser?.email
+			? `<div class="license-footer">Licensed for use by: ${authUser.email.replace(/</g, '&lt;')}</div>`
+			: '';
+
+		const printWindow = window.open('', '', 'width=1100,height=1400');
+		printWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>${(activityName || DEFAULT_ACTIVITY_NAME).replace(/</g, '&lt;')}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.4; }
+    .header { border-bottom: 3px solid #4020A7; padding-bottom: 8px; display: grid; grid-template-columns: 3fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .header-column { display: flex; flex-direction: column; gap: 4px; }
+    .header-column img { max-width: 180px; height: auto; }
+    .title { font-size: 1.5em; font-weight: bold; letter-spacing: 1px; }
+    .subtitle { font-size: 1.1em; font-style: italic; }
+    .morpheme-value { font-family: 'Courier New', monospace; color: #4020A7; }
+    .instructions { font-size: 0.95em; color: #555; margin-top: 4px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .col-header { font-weight: 700; font-size: 0.9em; text-transform: uppercase; border: 2px solid #4020A7; padding: 8px; background: #f0ecff; text-align: center; }
+    .cell { border: 1px solid #ccc; border-top: none; padding: 8px; font-family: 'Courier New', monospace; min-height: 36px; }
+    .license-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e5e7eb; text-align: right; font-size: 0.8em; color: #4b5563; font-style: italic; }
+    @media print { @page { size: letter landscape; margin: 0.4in; } body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-column">
+      <div class="title">WORD MEANING</div>
+      <div class="subtitle">Morpheme(s): <span class="morpheme-value">${(data.morpheme || '').replace(/</g, '&lt;')}</span></div>
+      <div class="instructions">Interpret each prompt word using the morph clues and write the meaning.</div>
+    </div>
+    <div class="header-column">
+      <img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit" />
+    </div>
+  </div>
+  <div class="grid">
+    <div class="col-header">Prompt Words</div>
+    <div class="col-header">Algo Phrase</div>
+    <div class="col-header">Word Meaning</div>
+    ${rows}
+  </div>
+  ${licenseFooter}
+</body>
+</html>`);
+		printWindow.document.close();
+		printWindow.onload = () => setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
+	};
+
 	return (
 		<ActivityShell
 			title="WORD MEANING"
@@ -112,7 +170,7 @@ export default function WordMeaningPage() {
 			handleGoToLessonProjects={handleGoToLessonProjects}
 			handleAddToProject={handleAddToProject}
 			handleSaveAndReturn={handleSaveAndReturn}
-			handleDownloadPdf={handleDownloadPdf}
+			handleDownloadPdf={handleDownloadPdfCustom}
 			standaloneActivityId={standaloneActivityId}
 			handleSaveStandalone={handleSaveStandalone}
 			handleDeleteStandalone={handleDeleteStandalone}

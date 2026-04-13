@@ -118,9 +118,9 @@ export default function ActivityShell({
 					<Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
 						{authUser ? 'Logout from Teachable' : 'Login with Teachable'}
 					</Button>
-					<Button variant="outlined" onClick={handleGoToLessonProjects} sx={outlinedControlButtonSx}>
+					{/* <Button variant="outlined" onClick={handleGoToLessonProjects} sx={outlinedControlButtonSx}>
 						Lesson Projects
-					</Button>
+					</Button> */}
 					{!projectId && (
 						<>
 							<Button
