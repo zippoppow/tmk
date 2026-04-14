@@ -797,33 +797,73 @@ export default function LessonProjectsPage() {
 											</Stack>
 
 											<Stack spacing={0.8}>
+												{lessonActivities.length > 0 && (
+													<Stack
+														direction="row"
+														spacing={0.8}
+														alignItems="center"
+														sx={{
+															px: 1.2,
+															py: 0.8,
+															borderRadius: 1,
+															backgroundColor: '#eef2ff',
+														}}
+													>
+														<Typography sx={{ flex: 1, fontSize: '0.78rem', fontWeight: 700, color: '#374151' }}>
+															Activity
+														</Typography>
+														<Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', minWidth: 130 }}>
+															Activity Template
+														</Typography>
+														<Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', minWidth: 120 }}>
+															Date Synced
+														</Typography>
+														<Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', minWidth: 120 }}>
+															Activity ID
+														</Typography>
+														<Box sx={{ minWidth: isAuthenticated ? 126 : 0 }} />
+													</Stack>
+												)}
 												{lessonActivities.map((activity, activityIndex) => {
 													const draftKey = `${project.id}:${activityIndex}`;
 													const activityType = String(activity['tmk-template'] || 'unknown');
 													const canOpenType = Boolean(getLessonActivityRoute(activityType));
 
 													return (
-														<Stack key={draftKey} direction="row" spacing={0.8} alignItems="center">
-															<Typography sx={{ flex: 1, fontSize: '1.2rem', color: '#555' }} noWrap>
-																	{activity['lesson-name'] || project.name}
-																</Typography>
-															<Typography sx={{ fontSize: '1.2rem', color: '#888', minWidth: 98 }}>
+														<Stack
+															key={draftKey}
+															direction="row"
+															spacing={0.8}
+															alignItems="center"
+															sx={{
+																px: 1.2,
+																py: 0.9,
+																borderRadius: 1,
+																backgroundColor: activityIndex % 2 === 0 ? '#ffffff' : '#f8fafc',
+															}}
+														>
+															<Typography sx={{ flex: 1, fontSize: '1rem', color: '#555' }} noWrap>
+																{activity['lesson-name'] || project.name}
+															</Typography>
+															<Typography sx={{ fontSize: '0.95rem', color: '#6b7280', minWidth: 130 }} noWrap>
 																{activityType}
-																{formatActivityDate(activity['modified-at']) ? ` · ${formatActivityDate(activity['modified-at'])}` : ''}
+															</Typography>
+															<Typography sx={{ fontSize: '0.95rem', color: '#888', minWidth: 120 }}>
+																{formatActivityDate(activity['modified-at']) || '--'}
 															</Typography>
 															{activity?.id ? (
 																<Chip
 																	size="small"
 																	label={`ID: ${String(activity.id).slice(0, 10)}...`}
 																	variant="outlined"
-																	sx={{ height: 20, fontSize: '0.68rem', color: '#4b5563', borderColor: '#cbd5e1' }}
+																	sx={{ height: 20, minWidth: 120, fontSize: '0.68rem', color: '#4b5563', borderColor: '#cbd5e1' }}
 																/>
 															) : (
 																<Chip
 																	size="small"
 																	label="ID: pending"
 																	variant="outlined"
-																	sx={{ height: 20, fontSize: '0.68rem', color: '#9ca3af', borderColor: '#e5e7eb' }}
+																	sx={{ height: 20, minWidth: 120, fontSize: '0.68rem', color: '#9ca3af', borderColor: '#e5e7eb' }}
 																/>
 															)}
 															{isAuthenticated && (

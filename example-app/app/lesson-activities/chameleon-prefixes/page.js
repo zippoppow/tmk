@@ -60,7 +60,6 @@ export default function ChameleonPrefixesPage() {
 		handleSaveAndReturn,
 		handleGoToLessonProjects,
 		handleAddToProject,
-		handleDownloadPdf,
 		standaloneActivityId,
 		handleSaveStandalone,
 		handleDeleteStandalone,
@@ -157,6 +156,157 @@ export default function ChameleonPrefixesPage() {
 		closeContextMenu();
 	};
 
+	const handleDownloadPdfLandscape = () => {
+		const escapeHtml = (value) => String(value || '')
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+
+		const gridHtml = data.grid
+			.map((item) => `<div class="grid-cell">${escapeHtml(item)}</div>`)
+			.join('');
+
+		const pairRowsHtml = data.pairs
+			.map((pair, index) => (
+				`<div class="pair-row"><div class="pair-index">${index + 1}.</div><div class="pair-prefix">${escapeHtml(pair?.prefix)}</div><div class="pair-word">${escapeHtml(pair?.word)}</div></div>`
+			))
+			.join('');
+
+		const printWindow = window.open('', '', 'width=1400,height=900');
+		if (!printWindow) {
+			showNotice('error', 'Unable to open print window. Please allow popups and try again.');
+			return;
+		}
+
+		printWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>${escapeHtml(activityName || DEFAULT_ACTIVITY_NAME)}</title>
+	<style>
+		* { box-sizing: border-box; margin: 0; padding: 0; }
+		@page { size: letter landscape; margin: 0.22in; }
+		html, body {
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			font-family: 'Lato', 'Segoe UI', Arial, sans-serif;
+			color: #111827;
+			background: #fff;
+		}
+		.sheet {
+			width: 100%;
+			min-height: 100%;
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			page-break-inside: avoid;
+			break-inside: avoid;
+		}
+		.header {
+			display: grid;
+			grid-template-columns: 3fr 1fr;
+			gap: 14px;
+			align-items: start;
+			border-bottom: 3px solid #4020A7;
+			padding-bottom: 6px;
+		}
+		.title { font-size: 24px; letter-spacing: 0.07em; font-weight: 800; }
+		.morpheme { margin-top: 4px; font-size: 17px; font-style: italic; }
+		.morpheme-value {
+			font-family: 'Courier New', monospace;
+			color: #4020A7;
+			font-style: normal;
+			margin-left: 6px;
+		}
+		.instructions { margin-top: 4px; color: #4b5563; font-size: 12px; }
+		.logo {
+			width: 100%;
+			max-width: 160px;
+			justify-self: end;
+			object-fit: contain;
+		}
+		.grid {
+			display: grid;
+			grid-template-columns: repeat(6, 1fr);
+			gap: 6px;
+		}
+		.grid-cell {
+			min-height: 28px;
+			border: 1px solid #374151;
+			border-radius: 3px;
+			padding: 4px 6px;
+			font-family: 'Courier New', monospace;
+			font-size: 13px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		.pairs {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 8px 16px;
+			margin-top: 2px;
+		}
+		.pair-row {
+			display: grid;
+			grid-template-columns: 24px 1fr 2fr;
+			align-items: center;
+			gap: 6px;
+			min-height: 22px;
+		}
+		.pair-index { font-weight: 700; font-size: 12px; }
+		.pair-prefix, .pair-word {
+			border-bottom: 1px solid #9ca3af;
+			padding: 1px 2px;
+			font-family: 'Courier New', monospace;
+			font-size: 12px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		.license {
+			margin-top: auto;
+			border-top: 1px solid #e5e7eb;
+			padding-top: 6px;
+			text-align: right;
+			font-size: 11px;
+			color: #4b5563;
+			font-style: italic;
+		}
+	</style>
+</head>
+<body>
+	<main class="sheet">
+		<header class="header">
+			<div>
+				<div class="title">CHAMELEON PREFIXES</div>
+				<div class="morpheme">Morpheme(s): <span class="morpheme-value">${escapeHtml(data.morpheme)}</span></div>
+				<div class="instructions">Fill-in the correct form of the morpheme and read the following words.</div>
+			</div>
+			<img class="logo" src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit" />
+		</header>
+		<section class="grid">${gridHtml}</section>
+		<section class="pairs">${pairRowsHtml}</section>
+		${authUser?.email ? `<footer class="license">Licensed for use by: ${escapeHtml(authUser.email)}</footer>` : ''}
+	</main>
+</body>
+</html>`);
+
+		printWindow.document.close();
+		printWindow.onload = () => {
+			setTimeout(() => {
+				printWindow.print();
+				printWindow.close();
+			}, 200);
+		};
+	};
+
 	return (
 		<ActivityShell
 			title="Chameleon Prefixes"
@@ -173,7 +323,7 @@ export default function ChameleonPrefixesPage() {
 			handleAddToProject={handleAddToProject}
 			handleSave={handleSave}
 			handleSaveAndReturn={handleSaveAndReturn}
-			handleDownloadPdf={handleDownloadPdf}
+			handleDownloadPdf={handleDownloadPdfLandscape}
 			standaloneActivityId={standaloneActivityId}
 			handleSaveStandalone={handleSaveStandalone}
 			handleDeleteStandalone={handleDeleteStandalone}
