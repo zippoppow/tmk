@@ -828,7 +828,7 @@ export default function LessonProjectsPage() {
 													<Stack
 														direction="row"
 														spacing={0.8}
-														alignItems="center"
+														alignItems="flex-start"
 														sx={{
 															px: 1.2,
 															py: 0.8,
@@ -836,16 +836,16 @@ export default function LessonProjectsPage() {
 															backgroundColor: '#eef2ff',
 														}}
 													>
-														<Typography sx={{ flex: 1, fontSize: '0.78rem', fontWeight: 700, color: '#374151' }}>
+														<Typography sx={{ flex: 1, fontSize: '1.1rem', fontWeight: 700, color: '#374151' }}>
 															Activity
 														</Typography>
-														<Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', minWidth: 130 }}>
+														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', minWidth: 230 }}>
 															Activity Template
 														</Typography>
-														<Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', minWidth: 120 }}>
+														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', minWidth: 120 }}>
 															Date Synced
 														</Typography>
-														<Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', minWidth: 120 }}>
+														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', minWidth: 120 }}>
 															Activity ID
 														</Typography>
 														<Box sx={{ minWidth: isAuthenticated ? 168 : 24 }} />
@@ -861,7 +861,7 @@ export default function LessonProjectsPage() {
 															key={draftKey}
 															direction="row"
 															spacing={0.8}
-															alignItems="center"
+															alignItems="flex-start"
 															sx={{
 																px: 1.2,
 																py: 0.9,
@@ -886,7 +886,7 @@ export default function LessonProjectsPage() {
 															<Typography sx={{ flex: 1, fontSize: '1rem', color: '#555' }} noWrap>
 																{activity['lesson-name'] || project.name}
 															</Typography>
-															<Typography sx={{ fontSize: '0.95rem', color: '#6b7280', minWidth: 130 }} noWrap>
+															<Typography sx={{ fontSize: '0.95rem', color: '#6b7280', minWidth: 230 }} noWrap>
 																{activityType}
 															</Typography>
 															<Typography sx={{ fontSize: '0.95rem', color: '#888', minWidth: 120 }}>
