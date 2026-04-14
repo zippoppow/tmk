@@ -213,10 +213,11 @@ export default function ImportWordsPage() {
               <Card sx={{ bgcolor: 'blue.50', p: 2, mb: 3, border: '2px dashed', borderColor: 'primary.main' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <CloudUploadIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-                  </Box>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                       Choose CSV File
                     </Typography>
-                    <Typography variant="caption" sx={{ color: '#666' }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                       CSV should have columns: name, wordConstructor, totalSyllables, partOfSpeech, vocabularyTier, instructionalLevel, dictionaryRef, prefixes, suffixes
                     </Typography>
                   </Box>
