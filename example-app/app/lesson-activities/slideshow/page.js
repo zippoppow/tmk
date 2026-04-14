@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Box, Button, Container, Paper, Stack, Typography } from '@mui/material';
 import { getAllStoredProjects } from '../../components/lessonActivityHelpers';
@@ -43,11 +43,20 @@ export default function LessonActivitySlideshowPage() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+	const [isClient, setIsClient] = useState(false);
+
+	useEffect(() => {
+		setIsClient(true);
+	}, []);
 
 	const projectId = String(searchParams.get('projectId') || '').trim();
 	const selectedIndices = useMemo(() => parseIndices(searchParams.get('indices')), [searchParams]);
 
 	const slideshow = useMemo(() => {
+		if (!isClient || typeof window === 'undefined') {
+			return { projectName: '', slides: [] };
+		}
+
 		if (!projectId || selectedIndices.length === 0) {
 			return { projectName: '', slides: [] };
 		}
@@ -93,7 +102,7 @@ export default function LessonActivitySlideshowPage() {
 			projectName: String(project.name || 'Untitled Project'),
 			slides,
 		};
-	}, [projectId, selectedIndices]);
+	}, [isClient, projectId, selectedIndices]);
 
 	const slides = slideshow.slides;
 	const totalSlides = slides.length;
@@ -107,6 +116,17 @@ export default function LessonActivitySlideshowPage() {
 	const goToNext = () => {
 		setCurrentSlideIndex((prev) => Math.min(totalSlides - 1, prev + 1));
 	};
+
+	if (!isClient) {
+		return (
+			<Container maxWidth="md" sx={{ py: 4 }}>
+				<Paper sx={{ p: 3, borderRadius: 2 }}>
+					<Typography sx={{ fontWeight: 700, mb: 1.2 }}>Lesson Activity Slideshow</Typography>
+					<Typography sx={{ color: '#555' }}>Loading slideshow...</Typography>
+				</Paper>
+			</Container>
+		);
+	}
 
 	if (!projectId || selectedIndices.length === 0) {
 		return (
