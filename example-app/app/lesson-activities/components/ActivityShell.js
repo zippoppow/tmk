@@ -18,6 +18,7 @@ export default function ActivityShell({
 	title,
 	morpheme,
 	onMorphemeChange,
+	onMorphemeContextMenu,
 	instructions,
 	children,
 	authUser,
@@ -263,6 +264,7 @@ export default function ActivityShell({
 										variant="standard"
 										value={morpheme}
 										onChange={(event) => onMorphemeChange(event.target.value)}
+										onContextMenu={onMorphemeContextMenu}
 										sx={{ minWidth: 180 }}
 										inputProps={{
 											style: {

@@ -1,47 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-	Alert,
-	Box,
-	Button,
-	Card,
-	CardContent,
-	Container,
-	Menu,
-	MenuItem,
-	Snackbar,
-	Stack,
-	TextField,
-	Typography,
-} from '@mui/material';
-import {
-	buildLessonActivityUpsertPayload,
-	createLessonActivityId,
-	deleteLessonActivityById,
-	fetchLessonActivityById,
-	upsertLessonActivity,
-	readFormSessionData,
-	writeFormSessionData,
-	DIY_PROJECTS_ENDPOINT,
-	getAllStoredProjects,
-	saveStoredProjects,
-} from '../../components/lessonActivityHelpers';
-import {
-	buildTeachableLogoutUrl,
-	buildTeachableStartUrl,
-	fetchWithUserToken,
-	fetchAuthenticatedUser,
-	resolveTmkApiOrigin,
-} from '../../components/authHelpers';
-import {
-	buildDiyProjectsPayload,
-	getProjectLessonActivities,
-} from '../../components/projectManagerModel';
+import { useRef } from 'react';
+import { Box, Button, Menu, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import ActivityShell from '../components/ActivityShell';
+import { useLessonActivityProject } from '../components/useLessonActivityProject';
 import { useContextActionMenu } from '../components/interactionUtils';
 
 const FORM_NAME = 'chameleon-prefixes';
+const DEFAULT_ACTIVITY_NAME = 'Chameleon Prefixes Activity';
 
 function emptyGrid() {
 	return Array.from({ length: 12 }, () => '');
@@ -74,21 +40,37 @@ function normalizeChameleonPrefixesLessonInputData(rawData) {
 }
 
 export default function ChameleonPrefixesPage() {
-	const router = useRouter();
-	const [morpheme, setMorpheme] = useState('');
-	const [grid, setGrid] = useState(emptyGrid);
-	const [pairs, setPairs] = useState(emptyPairs);
+	const {
+		data,
+		setData,
+		authUser,
+		authLoading,
+		authFromSuccessRedirect,
+		notice,
+		setNotice,
+		showNotice,
+		projectId,
+		projectName,
+		activityName,
+		setActivityName,
+		isSaving,
+		runAuthCheck,
+		handleLoginLogout,
+		handleSave,
+		handleSaveAndReturn,
+		handleGoToLessonProjects,
+		handleAddToProject,
+		handleDownloadPdf,
+		standaloneActivityId,
+		handleSaveStandalone,
+		handleDeleteStandalone,
+	} = useLessonActivityProject({
+		formName: FORM_NAME,
+		defaultActivityName: DEFAULT_ACTIVITY_NAME,
+		initialData: { morpheme: '', grid: emptyGrid(), pairs: emptyPairs() },
+		normalizeInputData: normalizeChameleonPrefixesLessonInputData,
+	});
 
-	const [authUser, setAuthUser] = useState(null);
-	const [authLoading, setAuthLoading] = useState(true);
-	const [authFromSuccessRedirect, setAuthFromSuccessRedirect] = useState(false);
-	const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
-	const [projectId, setProjectId] = useState('');
-	const [activityIndex, setActivityIndex] = useState(null);
-	const [projectName, setProjectName] = useState('');
-	const [activityName, setActivityName] = useState('');
-	const [isSaving, setIsSaving] = useState(false);
-	const [standaloneActivityId, setStandaloneActivityId] = useState('');
 	const pairPrefixRefs = useRef([]);
 	const {
 		menuState: contextMenu,
@@ -96,389 +78,24 @@ export default function ChameleonPrefixesPage() {
 		closeMenu: closeContextMenu,
 	} = useContextActionMenu({ targetType: '', index: -1, field: '' });
 
-	const projectApiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
-
-	const persist = (nextState) => {
-		writeFormSessionData(FORM_NAME, nextState);
-	};
-
-	const showNotice = (severity, message) => {
-		setNotice({ open: true, severity, message });
-	};
-
-	useEffect(() => {
-		if (typeof window === 'undefined') {
-			return;
-		}
-
-		let cancelled = false;
-
-		const hydrateFromContext = async () => {
-			const url = new URL(window.location.href);
-			const paramProjectId = url.searchParams.get('projectId') || '';
-			const paramActivityIndex = url.searchParams.get('activityIndex');
-			const paramActivityId = (url.searchParams.get('activityId') || '').trim();
-
-			if (!paramProjectId) {
-				if (paramActivityId) {
-					const cloudActivity = await fetchLessonActivityById(projectApiOrigin, paramActivityId);
-					if (cloudActivity && !cancelled) {
-						setStandaloneActivityId(String(cloudActivity.id || paramActivityId));
-						setActivityName(String(cloudActivity['lesson-name'] || 'Chameleon Prefixes Activity'));
-						const normalized = normalizeChameleonPrefixesLessonInputData(cloudActivity['lesson-input-data'] || {});
-						setMorpheme(normalized.morpheme);
-						setGrid(normalized.grid);
-						setPairs(normalized.pairs);
-						return;
-					}
-				}
-				const stored = readFormSessionData(FORM_NAME);
-				if (stored && !cancelled) {
-					const normalized = normalizeChameleonPrefixesLessonInputData(stored);
-					setMorpheme(normalized.morpheme);
-					setGrid(normalized.grid);
-					setPairs(normalized.pairs);
-				}
-				return;
-			}
-
-			const parsedIndex = Number.parseInt(paramActivityIndex || '', 10);
-			setProjectId(paramProjectId);
-
-			const projects = getAllStoredProjects();
-			const project = projects.find((item) => item.id === paramProjectId);
-			if (!project) {
-				showNotice('error', 'Project not found.');
-				return;
-			}
-
-			setProjectName(project.name || 'Untitled Project');
-			const activities = getProjectLessonActivities(project, 'lesson-activities-project', (data) => data || {});
-			let resolvedIndex = Number.isInteger(parsedIndex) ? parsedIndex : -1;
-			if (resolvedIndex < 0 && paramActivityId) {
-				resolvedIndex = activities.findIndex((activity) => String(activity?.id || '') === paramActivityId);
-			}
-
-			if (resolvedIndex < 0) {
-				showNotice('error', 'Invalid activity context.');
-				return;
-			}
-
-			setActivityIndex(resolvedIndex);
-			let resolvedActivity = activities[resolvedIndex];
-
-			if (paramActivityId) {
-				const cloudActivity = await fetchLessonActivityById(projectApiOrigin, paramActivityId);
-				if (cloudActivity && typeof cloudActivity === 'object') {
-					resolvedActivity = {
-						...resolvedActivity,
-						...cloudActivity,
-						id: String(cloudActivity.id || paramActivityId),
-					};
-					if (activities[resolvedIndex]) {
-						activities[resolvedIndex] = resolvedActivity;
-						project.lessonActivities = activities;
-						saveStoredProjects(projects);
-					}
-				}
-			}
-
-			if (!resolvedActivity) {
-				showNotice('error', 'Lesson activity not found.');
-				return;
-			}
-
-			if (!cancelled) {
-				setActivityName(String(resolvedActivity['lesson-name'] || 'Chameleon Prefixes Activity'));
-				const normalized = normalizeChameleonPrefixesLessonInputData(resolvedActivity['lesson-input-data'] || {});
-				setMorpheme(normalized.morpheme);
-				setGrid(normalized.grid);
-				setPairs(normalized.pairs);
-			}
-		};
-
-		hydrateFromContext();
-
-		return () => {
-			cancelled = true;
-		};
-	}, [projectApiOrigin]);
-
-	useEffect(() => {
-		const timeout = setTimeout(() => {
-			const normalizedInput = normalizeChameleonPrefixesLessonInputData({ morpheme, grid, pairs });
-			persist(normalizedInput);
-
-			if (projectId && Number.isInteger(activityIndex)) {
-				const projects = getAllStoredProjects();
-				const project = projects.find((item) => item.id === projectId);
-				if (!project) {
-					return;
-				}
-
-				const activities = getProjectLessonActivities(project, 'lesson-activities-project', (data) => data || {});
-				if (!activities[activityIndex]) {
-					return;
-				}
-
-				activities[activityIndex] = {
-					...activities[activityIndex],
-					'lesson-name': activityName || activities[activityIndex]['lesson-name'] || 'Chameleon Prefixes Activity',
-					'lesson-input-data': normalizedInput,
-					'modified-at': Date.now(),
-				};
-				project.lessonActivities = activities;
-				project.modifiedAtMs = Date.now();
-				project.syncedAt = null;
-				saveStoredProjects(projects);
-			}
-		}, 300);
-
-		return () => clearTimeout(timeout);
-	}, [morpheme, grid, pairs, projectId, activityIndex, activityName]);
-
-	const runAuthCheck = async () => {
-		setAuthLoading(true);
-		try {
-			const user = await fetchAuthenticatedUser(projectApiOrigin);
-			setAuthUser(user);
-		} catch {
-			setAuthUser(null);
-		} finally {
-			setAuthLoading(false);
-		}
-	};
-
-	useEffect(() => {
-		if (typeof window !== 'undefined') {
-			const url = new URL(window.location.href);
-			if (url.searchParams.get('auth') === 'success') {
-				setAuthFromSuccessRedirect(true);
-				showNotice('success', 'Teachable login successful.');
-				url.searchParams.delete('auth');
-				window.history.replaceState({}, '', url.toString());
-			} else if (url.searchParams.get('auth') === 'error') {
-				const rawMessage = url.searchParams.get('message');
-				showNotice('error', rawMessage || 'Teachable login failed. Please try again.');
-				url.searchParams.delete('auth');
-				url.searchParams.delete('message');
-				window.history.replaceState({}, '', url.toString());
-			}
-		}
-
-		runAuthCheck();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
 	const handleGridChange = (index, value) => {
-		setGrid((prev) => {
-			const next = [...prev];
+		setData((prev) => {
+			const next = [...prev.grid];
 			next[index] = value;
-			return next;
+			return { ...prev, grid: next };
 		});
 	};
 
 	const handlePairChange = (index, field, value) => {
-		setPairs((prev) => {
-			const next = [...prev];
+		setData((prev) => {
+			const next = [...prev.pairs];
 			next[index] = { ...next[index], [field]: value };
-			return next;
+			return { ...prev, pairs: next };
 		});
 	};
 
 	const handleClearForm = () => {
-		setMorpheme('');
-		setGrid(emptyGrid());
-		setPairs(emptyPairs());
-	};
-
-	const handleDownloadPdf = () => {
-		window.print();
-	};
-
-	const handleGoToLessonProjects = () => {
-		router.push('/lesson-projects');
-	};
-
-	const handleAddToProject = () => {
-		router.push('/lesson-projects?activityType=chameleon-prefixes');
-	};
-
-	const initiateOAuthLogin = () => {
-		window.location.href = buildTeachableStartUrl(projectApiOrigin, window.location.href);
-	};
-
-	const handleLoginLogout = () => {
-		if (authUser) {
-			window.location.href = buildTeachableLogoutUrl(window.location.href, projectApiOrigin);
-			return;
-		}
-
-		initiateOAuthLogin();
-	};
-
-	const handleSaveStandalone = async () => {
-		if (!authUser) {
-			showNotice('error', 'Please login with Teachable to save standalone activities.');
-			return;
-		}
-
-		setIsSaving(true);
-		try {
-			const normalizedInput = normalizeChameleonPrefixesLessonInputData({ morpheme, grid, pairs });
-			const activityId = String(standaloneActivityId || createLessonActivityId());
-
-			const response = await upsertLessonActivity(
-				projectApiOrigin,
-				buildLessonActivityUpsertPayload({
-					id: activityId,
-					template: FORM_NAME,
-					lessonName: activityName || 'Chameleon Prefixes Activity',
-					lessonInputData: normalizedInput,
-					createdAt: Date.now(),
-					modifiedAt: Date.now(),
-					extra: {
-						formName: FORM_NAME,
-					},
-				})
-			);
-
-			if (!response.ok) {
-				showNotice('error', 'Could not save standalone lesson activity.');
-				setIsSaving(false);
-				return;
-			}
-
-			setStandaloneActivityId(activityId);
-			const url = new URL(window.location.href);
-			url.searchParams.set('activityId', activityId);
-			window.history.replaceState({}, '', url.toString());
-			showNotice('success', 'Standalone lesson activity saved.');
-		} catch (error) {
-			console.error('Save standalone failed:', error);
-			showNotice('error', 'Could not save standalone lesson activity.');
-		} finally {
-			setIsSaving(false);
-		}
-	};
-
-	const handleDeleteStandalone = async () => {
-		if (!standaloneActivityId) {
-			showNotice('error', 'No standalone activity selected.');
-			return;
-		}
-
-		const shouldDelete = window.confirm('Delete this standalone lesson activity? This cannot be undone.');
-		if (!shouldDelete) {
-			return;
-		}
-
-		setIsSaving(true);
-		try {
-			const response = await deleteLessonActivityById(projectApiOrigin, standaloneActivityId);
-			if (!response.ok) {
-				showNotice('error', 'Delete failed.');
-				setIsSaving(false);
-				return;
-			}
-
-			setStandaloneActivityId('');
-			setActivityName('');
-			handleClearForm();
-			const url = new URL(window.location.href);
-			url.searchParams.delete('activityId');
-			window.history.replaceState({}, '', url.toString());
-			showNotice('success', 'Standalone lesson activity deleted.');
-		} catch (error) {
-			console.error('Delete standalone failed:', error);
-			showNotice('error', 'Delete failed.');
-		} finally {
-			setIsSaving(false);
-		}
-	};
-
-	const handleSave = async () => {
-		if (!projectId || !Number.isInteger(activityIndex)) {
-			showNotice('error', 'No project context available.');
-			return;
-		}
-
-		setIsSaving(true);
-		try {
-			const projects = getAllStoredProjects();
-			const project = projects.find((item) => item.id === projectId);
-			if (!project) {
-				showNotice('error', 'Project not found.');
-				setIsSaving(false);
-				return;
-			}
-
-			const activities = getProjectLessonActivities(project, 'lesson-activities-project', (data) => data || {});
-			if (!activities[activityIndex]) {
-				showNotice('error', 'Lesson activity not found.');
-				setIsSaving(false);
-				return;
-			}
-
-			const normalizedInput = normalizeChameleonPrefixesLessonInputData({ morpheme, grid, pairs });
-			const activityId = String(activities[activityIndex].id || createLessonActivityId());
-			activities[activityIndex] = {
-				...activities[activityIndex],
-				id: activityId,
-				'lesson-name': activityName || activities[activityIndex]['lesson-name'] || 'Chameleon Prefixes Activity',
-				'lesson-input-data': normalizedInput,
-				'modified-at': Date.now(),
-			};
-			project.lessonActivities = activities;
-			project.modifiedAtMs = Date.now();
-
-			if (authUser) {
-				project.syncedAt = null;
-				saveStoredProjects(projects);
-
-				const payload = buildDiyProjectsPayload({
-					project,
-					formName: 'lesson-activities-project',
-					normalizeLessonInputData: (data) => data || {},
-				});
-
-				const response = await fetchWithUserToken(projectApiOrigin, DIY_PROJECTS_ENDPOINT, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(payload),
-				});
-
-				if (response.ok) {
-					const result = await response.json();
-					const updated = getAllStoredProjects();
-					const updatedProject = updated.find((item) => item.id === projectId);
-					if (updatedProject) {
-						updatedProject.syncedAt = new Date().toISOString();
-						if (result?.id) {
-							updatedProject.remoteId = result.id;
-						}
-						saveStoredProjects(updated);
-					}
-					showNotice('success', 'Lesson activity saved.');
-				} else {
-					saveStoredProjects(projects);
-					showNotice('warning', 'Saved locally. Cloud sync failed.');
-				}
-			} else {
-				saveStoredProjects(projects);
-				showNotice('success', 'Saved locally.');
-			}
-		} catch (error) {
-			console.error('Save failed:', error);
-			showNotice('error', 'Could not save lesson activity.');
-		} finally {
-			setIsSaving(false);
-		}
-	};
-
-	const handleSaveAndReturn = async () => {
-		await handleSave();
-		router.push('/lesson-projects');
+		setData({ morpheme: '', grid: emptyGrid(), pairs: emptyPairs() });
 	};
 
 	const openContextMenu = (event, targetType, index = -1, field = '') => {
@@ -486,16 +103,16 @@ export default function ChameleonPrefixesPage() {
 	};
 
 	const getContextTargetValue = () => {
-		if (contextMenu.targetType === 'grid') return grid[contextMenu.index] || '';
-		if (contextMenu.targetType === 'pair') return pairs[contextMenu.index]?.[contextMenu.field] || '';
-		if (contextMenu.targetType === 'morpheme') return morpheme;
+		if (contextMenu.targetType === 'grid') return data.grid[contextMenu.index] || '';
+		if (contextMenu.targetType === 'pair') return data.pairs[contextMenu.index]?.[contextMenu.field] || '';
+		if (contextMenu.targetType === 'morpheme') return data.morpheme;
 		return '';
 	};
 
 	const setContextTargetValue = (value) => {
 		if (contextMenu.targetType === 'grid') { handleGridChange(contextMenu.index, value); return; }
 		if (contextMenu.targetType === 'pair') { handlePairChange(contextMenu.index, contextMenu.field, value); return; }
-		if (contextMenu.targetType === 'morpheme') setMorpheme(value);
+		if (contextMenu.targetType === 'morpheme') setData((prev) => ({ ...prev, morpheme: value }));
 	};
 
 	const handleCopyTarget = async () => {
@@ -525,8 +142,8 @@ export default function ChameleonPrefixesPage() {
 	};
 
 	const handleSyncGridToPair = (pairIndex) => {
-		const gridValue = grid[contextMenu.index] || '';
-		const prefixValue = pairs[pairIndex]?.prefix || '';
+		const gridValue = data.grid[contextMenu.index] || '';
+		const prefixValue = data.pairs[pairIndex]?.prefix || '';
 		const valueToUse = gridValue || prefixValue;
 		if (valueToUse) {
 			handleGridChange(contextMenu.index, valueToUse);
@@ -540,331 +157,143 @@ export default function ChameleonPrefixesPage() {
 		closeContextMenu();
 	};
 
-	const authLabel = authLoading
-		? 'Checking login...'
-		: authUser
-			? `Logged in: ${authUser.name || authUser.email || 'Teachable'}`
-			: authFromSuccessRedirect
-				? 'Login flow completed — verifying session…'
-				: 'Not logged in';
-	const licenseLabel = authUser?.email ? `Licenses for use by: ${authUser.email}` : '';
-
 	return (
-		<Box
-			component="main"
-			sx={{
-				minHeight: '100vh',
-				py: { xs: 2, md: 4 },
-				px: 1,
-				background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-			}}
+		<ActivityShell
+			title="Chameleon Prefixes"
+			morpheme={data.morpheme}
+			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
+			onMorphemeContextMenu={(event) => openContextMenu(event, 'morpheme')}
+			instructions="Fill-in the correct form of the morpheme and read the following words."
+			authUser={authUser}
+			authLoading={authLoading}
+			authFromSuccessRedirect={authFromSuccessRedirect}
+			runAuthCheck={runAuthCheck}
+			handleLoginLogout={handleLoginLogout}
+			handleGoToLessonProjects={handleGoToLessonProjects}
+			handleAddToProject={handleAddToProject}
+			handleSave={handleSave}
+			handleSaveAndReturn={handleSaveAndReturn}
+			handleDownloadPdf={handleDownloadPdf}
+			standaloneActivityId={standaloneActivityId}
+			handleSaveStandalone={handleSaveStandalone}
+			handleDeleteStandalone={handleDeleteStandalone}
+			projectId={projectId}
+			projectName={projectName}
+			activityName={activityName}
+			setActivityName={setActivityName}
+			isSaving={isSaving}
+			notice={notice}
+			setNotice={setNotice}
 		>
-			<style jsx global>{`
-				@media print {
-					body * {
-						visibility: hidden !important;
-					}
-					#lesson-activity-print-root,
-					#lesson-activity-print-root * {
-						visibility: visible !important;
-					}
-					#lesson-activity-print-root {
-						position: absolute;
-						left: 0;
-						top: 0;
-						width: 100%;
-						box-shadow: none !important;
-					}
-				}
-			`}</style>
-			<Container maxWidth="lg">
-				<Stack spacing={1.5} sx={{ mb: 1.5 }} direction={{ xs: 'column', md: 'row' }}>
-					<Button
-						variant="outlined"
-						onClick={() => router.push('/dashboard')}
-						sx={{
-							textTransform: 'none',
-							backgroundColor: '#000',
-							color: '#fff',
-							borderColor: '#000',
-							'&:hover': {
-								backgroundColor: '#1f1f1f',
-								borderColor: '#1f1f1f',
-							},
-						}}
-					>
-						Dashboard
-					</Button>
-					<Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
-						{authUser ? 'Logout from Teachable' : 'Login with Teachable'}
-					</Button>
-					<Button variant="outlined" onClick={handleGoToLessonProjects} sx={{ textTransform: 'none' }}>
-						Lesson Projects
-					</Button>
-					{!projectId && (
-						<Button variant="contained" color="primary" onClick={handleAddToProject} sx={{ textTransform: 'none' }}>
-							Add To Project
-						</Button>
-					)}
-					{projectId && (
-						<>
-							<Button variant="outlined" onClick={handleGoToLessonProjects} sx={{ textTransform: 'none' }}>
-								Back to Lesson Projects
-							</Button>
-							<Button
-								variant="contained"
-								color="primary"
-								disabled={isSaving}
-								onClick={handleSaveAndReturn}
-								sx={{ textTransform: 'none' }}
-							>
-								{isSaving ? 'Saving...' : 'Save & Return'}
-							</Button>
-						</>
-					)}
-					<Button variant="contained" color="success" onClick={handleDownloadPdf} sx={{ textTransform: 'none' }}>
-						Download as PDF
-					</Button>
-				</Stack>
-				{projectId && (
-					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
-						<Typography sx={{ fontSize: '0.8rem', color: '#4a5568', textTransform: 'uppercase', fontWeight: 700 }}>
-							Project
-						</Typography>
-						<Typography sx={{ mb: 1.2, fontWeight: 700 }}>{projectName}</Typography>
-						<TextField
-							size="small"
-							label="Chameleon Prefixes Activity Name"
-							value={activityName}
-							onChange={(event) => setActivityName(event.target.value)}
-							fullWidth
-						/>
-					</Box>
-				)}
-				{!projectId && (
-					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
-						<Typography sx={{ fontSize: '0.8rem', color: '#4a5568', textTransform: 'uppercase', fontWeight: 700 }}>
-							Standalone Chameleon Prefixes Activity
-						</Typography>
-						<TextField
-							size="small"
-							label="Activity Name"
-							value={activityName}
-							onChange={(event) => setActivityName(event.target.value)}
-							fullWidth
-						/>
-					</Box>
-				)}
-				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+			<Box sx={{ my: 3 }}>
+				{[0, 1].map((rowIndex) => (
 					<Box
+						key={rowIndex}
 						sx={{
-							display: 'inline-flex',
-							alignItems: 'center',
-							px: 1.5,
-							py: 0.75,
-							borderRadius: 1,
-							backgroundColor: authUser ? '#d4edda' : authFromSuccessRedirect ? '#cce5ff' : '#fff3cd',
-							color: authUser ? '#155724' : authFromSuccessRedirect ? '#004085' : '#856404',
-							border: `1px solid ${authUser ? '#c3e6cb' : authFromSuccessRedirect ? '#b8daff' : '#ffeaa7'}`,
-							fontWeight: 700,
-							fontSize: '0.85rem',
+							display: 'grid',
+							gridTemplateColumns: 'repeat(6, 1fr)',
+							gap: 2,
+							mb: rowIndex === 0 ? 2 : 0,
 						}}
 					>
-						{authLabel}
-					</Box>
-					{!authLoading && !authUser && authFromSuccessRedirect && (
-						<Button
-							size="small"
-							variant="outlined"
-							sx={{ textTransform: 'none', bgcolor: 'white', fontSize: '0.8rem' }}
-							onClick={runAuthCheck}
-						>
-							Retry session check
-						</Button>
-					)}
-				</Box>
-
-				<Card id="lesson-activity-print-root" sx={{ borderRadius: 2, boxShadow: 8 }}>
-					<CardContent sx={{ p: { xs: 2, md: 4 } }}>
-						<Box
-							sx={{
-								display: 'grid',
-								gridTemplateColumns: { xs: '1fr', md: '3fr 1fr' },
-								gap: 2,
-								borderBottom: '3px solid #4020A7',
-								pb: 1.5,
-							}}
-						>
-							<Stack spacing={0.8}>
-								<Typography sx={{ fontWeight: 800, fontSize: '1.6rem', letterSpacing: '0.08em' }}>
-									Chameleon Prefixes
-								</Typography>
-
-								<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-									<Typography sx={{ fontStyle: 'italic', fontSize: '1.1rem' }}>Morpheme(s):</Typography>
-									<TextField
-										variant="standard"
-										value={morpheme}
-										onChange={(e) => setMorpheme(e.target.value)}
-										onContextMenu={(e) => openContextMenu(e, 'morpheme')}
-										sx={{ minWidth: 180 }}
-										inputProps={{
-											style: {
-												fontFamily: 'Courier New, monospace',
-												fontSize: '1.1rem',
-												color: '#4020A7',
-											},
-										}}
-									/>
-								</Box>
-
-								<Typography color="text.secondary">
-									Fill-in the correct form of the morpheme and read the following words.
-								</Typography>
-							</Stack>
-
-							<Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, alignItems: 'flex-start' }}>
-								<Box
-									component="img"
-									src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png"
-									alt="The Morphology Kit"
-									sx={{ width: '100%', maxWidth: 200, height: 'auto' }}
-								/>
-							</Box>
-						</Box>
-
-						{/* Chameleon Grid: 2 rows × 6 columns */}
-						<Box sx={{ my: 3 }}>
-							{[0, 1].map((rowIndex) => (
-								<Box
-									key={rowIndex}
-									sx={{
-										display: 'grid',
-										gridTemplateColumns: 'repeat(6, 1fr)',
-										gap: 2,
-										mb: rowIndex === 0 ? 2 : 0,
+						{Array.from({ length: 6 }, (_, colIndex) => {
+							const cellIndex = rowIndex * 6 + colIndex;
+							return (
+								<TextField
+									key={cellIndex}
+									value={data.grid[cellIndex] || ''}
+									onChange={(event) => handleGridChange(cellIndex, event.target.value)}
+									onContextMenu={(event) => openContextMenu(event, 'grid', cellIndex)}
+									variant="outlined"
+									size="small"
+									inputProps={{
+										style: {
+											textAlign: 'center',
+											fontFamily: 'Courier New, monospace',
+											fontSize: '0.9rem',
+										},
 									}}
-								>
-									{Array.from({ length: 6 }, (_, colIndex) => {
-										const cellIndex = rowIndex * 6 + colIndex;
-										return (
-											<TextField
-												key={cellIndex}
-												value={grid[cellIndex] || ''}
-												onChange={(e) => handleGridChange(cellIndex, e.target.value)}
-												onContextMenu={(e) => openContextMenu(e, 'grid', cellIndex)}
-												variant="outlined"
-												size="small"
-												inputProps={{
-													style: {
-														textAlign: 'center',
-														fontFamily: 'Courier New, monospace',
-														fontSize: '0.9rem',
-													},
-												}}
-												sx={{
-													'& .MuiOutlinedInput-root': {
-														'& fieldset': { borderColor: '#333', borderWidth: '1px', borderRadius: '2px' },
-														'&:hover fieldset': { borderColor: '#4020A7' },
-														'&.Mui-focused fieldset': { borderColor: '#4020A7' },
-													},
-												}}
-											/>
-										);
-									})}
+									sx={{
+										'& .MuiOutlinedInput-root': {
+											'& fieldset': { borderColor: '#333', borderWidth: '1px', borderRadius: '2px' },
+											'&:hover fieldset': { borderColor: '#4020A7' },
+											'&.Mui-focused fieldset': { borderColor: '#4020A7' },
+										},
+									}}
+								/>
+							);
+						})}
+					</Box>
+				))}
+			</Box>
+
+			<Box
+				sx={{
+					display: 'grid',
+					gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+					gap: { xs: 2, md: 5 },
+					mt: 3,
+				}}
+			>
+				{[0, 1].map((colIndex) => (
+					<Stack key={colIndex} spacing={2.5}>
+						{Array.from({ length: 6 }, (_, rowIndex) => {
+							const pairIndex = colIndex * 6 + rowIndex;
+							return (
+								<Box key={pairIndex} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+									<Typography sx={{ minWidth: 30, fontWeight: 700, fontSize: '1.1rem', pt: 0.5 }}>
+										{pairIndex + 1}.
+									</Typography>
+									<Box sx={{ display: 'flex', gap: 1.25, flex: 1 }}>
+										<TextField
+											inputRef={(element) => { pairPrefixRefs.current[pairIndex] = element; }}
+											variant="standard"
+											value={data.pairs[pairIndex]?.prefix || ''}
+											onChange={(event) => handlePairChange(pairIndex, 'prefix', event.target.value)}
+											onContextMenu={(event) => openContextMenu(event, 'pair', pairIndex, 'prefix')}
+											sx={{ width: '33%' }}
+											inputProps={{ style: { fontFamily: 'Courier New, monospace', fontSize: '1rem' } }}
+										/>
+										<TextField
+											variant="standard"
+											value={data.pairs[pairIndex]?.word || ''}
+											onChange={(event) => handlePairChange(pairIndex, 'word', event.target.value)}
+											onContextMenu={(event) => openContextMenu(event, 'pair', pairIndex, 'word')}
+											sx={{ width: '66%' }}
+											inputProps={{ style: { fontFamily: 'Courier New, monospace', fontSize: '1rem' } }}
+										/>
+									</Box>
 								</Box>
-							))}
-						</Box>
+							);
+						})}
+					</Stack>
+				))}
+			</Box>
 
-						{/* Numbered pairs: 2 columns of 6 */}
-						<Box
-							sx={{
-								display: 'grid',
-								gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-								gap: { xs: 2, md: 5 },
-								mt: 3,
-							}}
-						>
-							{[0, 1].map((colIndex) => (
-								<Stack key={colIndex} spacing={2.5}>
-									{Array.from({ length: 6 }, (_, rowIndex) => {
-										const pairIndex = colIndex * 6 + rowIndex;
-										return (
-											<Box key={pairIndex} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-												<Typography sx={{ minWidth: 30, fontWeight: 700, fontSize: '1.1rem', pt: 0.5 }}>
-													{pairIndex + 1}.
-												</Typography>
-												<Box sx={{ display: 'flex', gap: 1.25, flex: 1 }}>
-													<TextField
-														inputRef={(el) => { pairPrefixRefs.current[pairIndex] = el; }}
-														variant="standard"
-														value={pairs[pairIndex]?.prefix || ''}
-														onChange={(e) => handlePairChange(pairIndex, 'prefix', e.target.value)}
-														onContextMenu={(e) => openContextMenu(e, 'pair', pairIndex, 'prefix')}
-														sx={{ width: '33%' }}
-														inputProps={{ style: { fontFamily: 'Courier New, monospace', fontSize: '1rem' } }}
-													/>
-													<TextField
-														variant="standard"
-														value={pairs[pairIndex]?.word || ''}
-														onChange={(e) => handlePairChange(pairIndex, 'word', e.target.value)}
-														onContextMenu={(e) => openContextMenu(e, 'pair', pairIndex, 'word')}
-														sx={{ width: '66%' }}
-														inputProps={{ style: { fontFamily: 'Courier New, monospace', fontSize: '1rem' } }}
-													/>
-												</Box>
-											</Box>
-										);
-									})}
-								</Stack>
-							))}
-						</Box>
-
-						<Box
-							sx={{
-								borderTop: '2px solid #eee',
-								pt: 2.5,
-								display: 'flex',
-								justifyContent: 'center',
-								mt: 4,
-							}}
-						>
-							<Button variant="outlined" onClick={handleClearForm} sx={{ minWidth: 150 }}>
-								Clear All
-							</Button>
-						</Box>
-
-						{licenseLabel && (
-							<Box
-								sx={{
-									mt: 2,
-									pt: 1.5,
-									borderTop: '1px solid #e5e7eb',
-									textAlign: 'right',
-									fontSize: '0.8rem',
-									color: '#4b5563',
-									fontStyle: 'italic',
-								}}
-							>
-								{licenseLabel}
-							</Box>
-						)}
-					</CardContent>
-				</Card>
-			</Container>
+			<Box
+				sx={{
+					borderTop: '2px solid #eee',
+					pt: 2.5,
+					display: 'flex',
+					justifyContent: 'center',
+					mt: 4,
+				}}
+			>
+				<Button variant="outlined" onClick={handleClearForm} sx={{ minWidth: 150 }}>
+					Clear All
+				</Button>
+			</Box>
 
 			<Menu
 				open={contextMenu.open}
 				onClose={closeContextMenu}
 				anchorReference="anchorPosition"
-				anchorPosition={
-					contextMenu.open ? { top: contextMenu.y, left: contextMenu.x } : undefined
-				}
+				anchorPosition={contextMenu.open ? { top: contextMenu.y, left: contextMenu.x } : undefined}
 			>
 				{contextMenu.targetType === 'grid'
-					? Array.from({ length: 12 }, (_, i) => (
-							<MenuItem key={`sync-${i}`} onClick={() => handleSyncGridToPair(i)}>
-								Item {i + 1}
+					? Array.from({ length: 12 }, (_, index) => (
+							<MenuItem key={`sync-${index}`} onClick={() => handleSyncGridToPair(index)}>
+								Item {index + 1}
 							</MenuItem>
 						))
 					: [
@@ -873,16 +302,6 @@ export default function ChameleonPrefixesPage() {
 						<MenuItem key="clear" onClick={handleClearTarget}>Clear field</MenuItem>,
 					]}
 			</Menu>
-
-			<Snackbar
-				open={notice.open}
-				autoHideDuration={2600}
-				onClose={() => setNotice((prev) => ({ ...prev, open: false }))}
-			>
-				<Alert severity={notice.severity} variant="filled" onClose={() => setNotice((prev) => ({ ...prev, open: false }))}>
-					{notice.message}
-				</Alert>
-			</Snackbar>
-		</Box>
+		</ActivityShell>
 	);
 }

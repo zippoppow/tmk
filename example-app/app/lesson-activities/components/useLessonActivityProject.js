@@ -221,7 +221,7 @@ export function useLessonActivityProject({
 	const handleSave = async () => {
 		if (!projectId || !Number.isInteger(activityIndex)) {
 			showNotice('error', 'No project context available.');
-			return;
+			return false;
 		}
 
 		setIsSaving(true);
@@ -231,14 +231,14 @@ export function useLessonActivityProject({
 			if (!project) {
 				showNotice('error', 'Project not found.');
 				setIsSaving(false);
-				return;
+				return false;
 			}
 
 			const activities = getProjectLessonActivities(project, 'lesson-activities-project', (input) => input || {});
 			if (!activities[activityIndex]) {
 				showNotice('error', 'Lesson activity not found.');
 				setIsSaving(false);
-				return;
+				return false;
 			}
 
 			const normalizedInput = normalizeInputData(data);
@@ -281,25 +281,31 @@ export function useLessonActivityProject({
 						saveStoredProjects(updated);
 					}
 					showNotice('success', 'Lesson activity saved.');
+					return true;
 				} else {
 					saveStoredProjects(projects);
 					showNotice('warning', 'Saved locally. Cloud sync failed.');
+					return false;
 				}
 			} else {
 				saveStoredProjects(projects);
 				showNotice('success', 'Saved locally.');
+				return true;
 			}
 		} catch (error) {
 			console.error('Save failed:', error);
 			showNotice('error', 'Could not save lesson activity.');
+			return false;
 		} finally {
 			setIsSaving(false);
 		}
 	};
 
 	const handleSaveAndReturn = async () => {
-		await handleSave();
-		router.push('/lesson-projects');
+		const didSave = await handleSave();
+		if (didSave) {
+			router.push('/lesson-projects');
+		}
 	};
 
 	const handleSaveStandalone = async () => {
