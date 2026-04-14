@@ -823,32 +823,33 @@ export default function LessonProjectsPage() {
 											)}
 											</Stack>
 
-											<Stack spacing={0.8}>
+											<Box sx={{ display: 'grid', gap: 0.8 }}>
 												{lessonActivities.length > 0 && (
-													<Stack
-														direction="row"
-														spacing={0.4}
-														alignItems="flex-start"
+													<Box
 														sx={{
+															display: 'grid',
+															gridTemplateColumns: 'minmax(220px, 1fr) max-content minmax(120px, 1fr) max-content',
+															columnGap: 1,
+															alignItems: 'center',
 															px: 1.2,
 															py: 0.8,
 															borderRadius: 1,
 															backgroundColor: '#eef2ff',
 														}}
 													>
-														<Typography sx={{ flex: 1, fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
+														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
 															Activity
 														</Typography>
-														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left', minWidth: 180 }}>
+														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
 															Activity Template
 														</Typography>
-														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'right', minWidth: 140 }}>
+														<Typography sx={{ justifySelf: 'end', width: '100%', maxWidth: 170, fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
 															Date Synced
 														</Typography>
-														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'right', minWidth: 140 }}>
-															Manage Activity
+														<Typography sx={{ justifySelf: 'end', width: '100%', maxWidth: 170, fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
+															Manage
 														</Typography>
-													</Stack>
+													</Box>
 												)}
 												{lessonActivities.map((activity, activityIndex) => {
 													const draftKey = `${project.id}:${activityIndex}`;
@@ -856,42 +857,45 @@ export default function LessonProjectsPage() {
 													const canOpenType = Boolean(getLessonActivityRoute(activityType));
 
 													return (
-														<Stack
+														<Box
 															key={draftKey}
-															direction="row"
-															spacing={0.4}
-															alignItems="flex-start"
 															sx={{
+																display: 'grid',
+																gridTemplateColumns: 'minmax(220px, 1fr) max-content minmax(120px, 1fr) max-content',
+																columnGap: 1,
+																alignItems: 'center',
 																px: 1.2,
 																py: 0.9,
 																borderRadius: 1,
 																backgroundColor: activityIndex % 2 === 0 ? '#ffffff' : '#f8fafc',
 															}}
 														>
-															<Checkbox
-																size="small"
-																checked={Array.isArray(selectedForSlideshowByProjectId[project.id]) && selectedForSlideshowByProjectId[project.id].includes(activityIndex)}
-																onChange={(event) => {
-																	setSelectedForSlideshowByProjectId((prev) => {
-																		const current = Array.isArray(prev[project.id]) ? prev[project.id] : [];
-																		const next = event.target.checked
-																			? [...new Set([...current, activityIndex])]
-																			: current.filter((idx) => idx !== activityIndex);
-																		return { ...prev, [project.id]: next };
-																	});
-																}}
-																inputProps={{ 'aria-label': `Add ${activity['lesson-name'] || 'activity'} to slideshow` }}
-															/>
-															<Typography sx={{ textAlign: 'left', flex: 1, fontSize: '1rem', color: '#555' }} noWrap>
-																{activity['lesson-name'] || project.name}
-															</Typography>
-															<Typography sx={{ textAlign: 'left', fontSize: '0.95rem', color: '#6b7280', minWidth: 180 }} noWrap>
+															<Stack direction="row" spacing={0.4} alignItems="center" sx={{ minWidth: 0 }}>
+																<Checkbox
+																	size="small"
+																	checked={Array.isArray(selectedForSlideshowByProjectId[project.id]) && selectedForSlideshowByProjectId[project.id].includes(activityIndex)}
+																	onChange={(event) => {
+																		setSelectedForSlideshowByProjectId((prev) => {
+																			const current = Array.isArray(prev[project.id]) ? prev[project.id] : [];
+																			const next = event.target.checked
+																				? [...new Set([...current, activityIndex])]
+																				: current.filter((idx) => idx !== activityIndex);
+																			return { ...prev, [project.id]: next };
+																		});
+																	}}
+																	inputProps={{ 'aria-label': `Add ${activity['lesson-name'] || 'activity'} to slideshow` }}
+																/>
+																<Typography sx={{ fontSize: '1rem', color: '#555', textAlign: 'left' }} noWrap>
+																	{activity['lesson-name'] || project.name}
+																</Typography>
+															</Stack>
+															<Typography sx={{ fontSize: '0.95rem', color: '#6b7280', textAlign: 'left' }} noWrap>
 																{activityType}
 															</Typography>
-															<Typography sx={{ textAlign: 'right', fontSize: '0.95rem', color: '#888', minWidth: 140 }}>
+															<Typography sx={{ justifySelf: 'end', width: '100%', maxWidth: 170, fontSize: '0.95rem', color: '#888', textAlign: 'left' }}>
 																{formatActivityDate(activity['modified-at']) || '--'}
 															</Typography>
-															<Stack direction="row" spacing={0.5} sx={{ minWidth: 140, justifyContent: 'flex-end' }}>
+															<Stack direction="row" spacing={0.5} justifyContent="flex-end" sx={{ justifySelf: 'end', width: '100%', maxWidth: 170 }}>
 																{isAuthenticated && (
 																	<Button
 																		size="small"
@@ -915,10 +919,10 @@ export default function LessonProjectsPage() {
 																	</Button>
 																)}
 															</Stack>
-														</Stack>
+														</Box>
 													);
 												})}
-											</Stack>
+											</Box>
 										</Box>
 									);
 								})}
