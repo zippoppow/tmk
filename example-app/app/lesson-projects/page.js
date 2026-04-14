@@ -832,23 +832,27 @@ export default function LessonProjectsPage() {
 															columnGap: 1,
 															alignItems: 'center',
 															px: 1.2,
-															py: 0.8,
+															py: 0.9,
 															borderRadius: 1,
 															backgroundColor: '#eef2ff',
 														}}
 													>
-														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
-															Activity
-														</Typography>
-														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
+														<Stack direction="row" spacing={0.4} alignItems="flex-start" sx={{ minWidth: 0 }}>
+															<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
+																Activity
+															</Typography>
+														</Stack>
+														<Typography sx={{ fontSize: '0.95rem', color: '#6b7280', textAlign: 'left' }} noWrap>
 															Activity Template
 														</Typography>
-														<Typography sx={{ justifySelf: 'end', width: '100%', maxWidth: 170, fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
+														<Typography sx={{ justifySelf: 'end', width: '100%', maxWidth: 170, fontSize: '0.95rem', color: '#888', textAlign: 'left' }}>
 															Date Synced
 														</Typography>
-														<Typography sx={{ justifySelf: 'end', width: '100%', maxWidth: 170, fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
-															Manage
-														</Typography>
+														<Stack direction="row" spacing={0.5} justifyContent="flex-end" sx={{ justifySelf: 'end', width: '100%', maxWidth: 170 }}>
+															<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
+																Manage
+															</Typography>
+														</Stack>
 													</Box>
 												)}
 												{lessonActivities.map((activity, activityIndex) => {
@@ -870,7 +874,7 @@ export default function LessonProjectsPage() {
 																backgroundColor: activityIndex % 2 === 0 ? '#ffffff' : '#f8fafc',
 															}}
 														>
-															<Stack direction="row" spacing={0.4} alignItems="center" sx={{ minWidth: 0 }}>
+															<Stack direction="row" spacing={0.4} alignItems="flex-start" sx={{ minWidth: 0 }}>
 																<Checkbox
 																	size="small"
 																	checked={Array.isArray(selectedForSlideshowByProjectId[project.id]) && selectedForSlideshowByProjectId[project.id].includes(activityIndex)}
