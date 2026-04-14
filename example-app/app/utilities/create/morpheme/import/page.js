@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import {
-  ThemeProvider,
-  createTheme,
   Box,
   Button,
   Card,
@@ -19,7 +17,6 @@ import {
   Paper,
   Alert,
   CircularProgress,
-  CssBaseline,
   Chip,
   Dialog,
   DialogTitle,
@@ -30,7 +27,6 @@ import {
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { bulkImport } from './bulk-import.js';
 
-const theme = createTheme();
 import { TMK_API_BASE_URL } from '@/lib/tmkApiOrigin.js';
 
 const TMK_API_URL = TMK_API_BASE_URL;
@@ -177,9 +173,7 @@ export default function ImportMorphemesPage() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box component="main" sx={{ py: 4, bgcolor: '#f9f9f9', minHeight: '100vh' }}>
+      <Box component="main" sx={{ py: 4, bgcolor: 'background.default', minHeight: '100vh' }}>
         <Container maxWidth="lg">
           <Card sx={{ boxShadow: 3, mb: 3 }}>
             <CardContent sx={{ p: 4 }}>
@@ -189,7 +183,7 @@ export default function ImportMorphemesPage() {
                 sx={{
                   mb: 2,
                   fontWeight: 'bold',
-                  color: '#004a99',
+                  color: 'primary.main',
                 }}
               >
                 Import Morphemes from CSV
@@ -238,11 +232,10 @@ export default function ImportMorphemesPage() {
               )}
 
               {/* CSV Upload Section */}
-              <Card sx={{ bgcolor: '#f0f8ff', p: 2, mb: 3, border: '2px dashed #004a99' }}>
+              <Card sx={{ bgcolor: 'blue.50', p: 2, mb: 3, border: '2px dashed', borderColor: 'primary.main' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <CloudUploadIcon sx={{ fontSize: 40, color: '#004a99' }} />
-                  <Box>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  <CloudUploadIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+                  </Box>
                       Choose CSV File
                     </Typography>
                     <Typography variant="caption" sx={{ color: '#666' }}>
@@ -340,7 +333,7 @@ export default function ImportMorphemesPage() {
             <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
               <Table>
                 <TableHead>
-                  <TableRow sx={{ bgcolor: '#004a99' }}>
+                  <TableRow sx={{ bgcolor: 'primary.main' }}>
                     <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>
                       Morpheme
                     </TableCell>
@@ -367,7 +360,7 @@ export default function ImportMorphemesPage() {
                         '&:hover': { bgcolor: '#e8f0f8' },
                       }}
                     >
-                      <TableCell sx={{ fontWeight: 'bold', color: '#004a99' }}>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'primary.main' }}>
                         {morpheme.name}
                       </TableCell>
                       <TableCell>

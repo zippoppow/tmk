@@ -1,6 +1,6 @@
 import * as Tokens from "../../tokens";
 
-const fontFamily = `'${Tokens.FontFamilyDisplay}', 'Helvetica', 'Arial', sans-serif`;
+const fontFamily = `'Lato', 'Helvetica', 'Arial', sans-serif`;
 const fwLight = 300;
 const fwRegular = 400;
 const fwMedium = 500;

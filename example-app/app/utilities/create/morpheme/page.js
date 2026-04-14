@@ -210,7 +210,7 @@ export default function CreateMorphemePage() {
   };
 
   return (
-    <Box component="main" sx={{ py: 4, bgcolor: '#f9f9f9', minHeight: '100vh' }}>
+    <Box component="main" sx={{ py: 4, bgcolor: 'background.default', minHeight: '100vh' }}>
       <Container maxWidth="lg">
         <Card sx={{ boxShadow: 3 }}>
           <CardContent sx={{ p: 4 }}>
@@ -371,7 +371,7 @@ export default function CreateMorphemePage() {
                     Variants
                   </Typography>
 
-                  <Paper sx={{ p: 2, mb: 3, bgcolor: '#f0f8ff', border: '1px solid #b3e5fc' }}>
+                  <Paper sx={{ p: 2, mb: 3, bgcolor: 'blue.50', border: '1px solid', borderColor: 'blue.100' }}>
                     <Grid container spacing={2} sx={{ mb: 2 }}>
                       <Grid item xs={12} sm={9}>
                         <TextField
@@ -434,7 +434,7 @@ export default function CreateMorphemePage() {
                     Pronunciations
                   </Typography>
 
-                  <Paper sx={{ p: 2, mb: 3, bgcolor: '#f0f8ff', border: '1px solid #b3e5fc' }}>
+                  <Paper sx={{ p: 2, mb: 3, bgcolor: 'blue.50', border: '1px solid', borderColor: 'blue.100' }}>
                     <Grid container spacing={2} sx={{ mb: 2 }}>
                       <Grid item xs={12} sm={9}>
                         <TextField

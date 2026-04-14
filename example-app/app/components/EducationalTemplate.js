@@ -9,13 +9,8 @@ import {
   Typography,
   Container,
   Paper,
-  ThemeProvider,
-  createTheme,
-  CssBaseline,
   Button,
 } from '@mui/material';
-
-const theme = createTheme();
 
 /**
  * Generic educational template wrapper component
@@ -28,9 +23,7 @@ export default function EducationalTemplate({
   children,
 }) {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box component="main" sx={{ py: 4, bgcolor: '#f9f9f9', minHeight: '100vh' }}>
+      <Box component="main" sx={{ py: 4, bgcolor: 'background.default', minHeight: '100vh' }}>
         <Container maxWidth="md">
           <Card sx={{ boxShadow: 3 }}>
             <CardContent sx={{ p: 4 }}>
@@ -40,7 +33,7 @@ export default function EducationalTemplate({
                 component="h1"
                 sx={{
                   textAlign: 'center',
-                  color: '#004a99',
+                  color: 'primary.main',
                   fontWeight: 'bold',
                   mb: 3,
                   textTransform: 'uppercase',
@@ -55,8 +48,9 @@ export default function EducationalTemplate({
                   sx={{
                     p: 2,
                     mb: 3,
-                    bgcolor: '#f0f8ff',
-                    border: '1px solid #ccc',
+                    bgcolor: 'blue.50',
+                    border: '1px solid',
+                    borderColor: 'grey.200',
                   }}
                 >
                   <Typography variant="body1">{instructions}</Typography>
@@ -71,8 +65,9 @@ export default function EducationalTemplate({
                 <Paper
                   sx={{
                     p: 2,
-                    bgcolor: '#e8f4f8',
-                    border: '1px solid #ccc',
+                    bgcolor: 'grey.100',
+                    border: '1px solid',
+                    borderColor: 'grey.200',
                   }}
                 >
                   <Typography variant="body2">{note}</Typography>
@@ -82,6 +77,5 @@ export default function EducationalTemplate({
           </Card>
         </Container>
       </Box>
-    </ThemeProvider>
   );
 }

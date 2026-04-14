@@ -333,11 +333,10 @@ export default function DashboardPage() {
                                             >
                                                 <Box
                                                     sx={{
-                                                        display: 'flex',
-                                                        alignItems: { xs: 'flex-start', sm: 'center' },
-                                                        justifyContent: 'space-between',
+                                                        display: 'grid',
+                                                        gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) auto' },
+                                                        alignItems: { xs: 'flex-start', lg: 'center' },
                                                         gap: 1.5,
-                                                        flexWrap: { xs: 'wrap', md: 'nowrap' },
                                                         width: '100%',
                                                         minWidth: 0,
                                                     }}
@@ -355,8 +354,7 @@ export default function DashboardPage() {
                                                             display: 'flex',
                                                             gap: 1,
                                                             flexWrap: 'wrap',
-                                                            justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-                                                            flexShrink: 0,
+                                                            justifyContent: { xs: 'flex-start', lg: 'flex-end' },
                                                             maxWidth: '100%',
                                                         }}
                                                     >

@@ -196,7 +196,7 @@ export default function ConstructorPage() {
 
   if (loading) {
     return (
-      <Box component="main" sx={{ py: 4, bgcolor: '#f9f9f9', minHeight: '100vh' }}>
+      <Box component="main" sx={{ py: 4, bgcolor: 'background.default', minHeight: '100vh' }}>
         <Container maxWidth="lg">
           <Card sx={{ boxShadow: 3 }}>
             <CardContent sx={{ p: 4 }}>
@@ -211,7 +211,7 @@ export default function ConstructorPage() {
   }
 
   return (
-    <Box component="main" sx={{ py: 4, bgcolor: '#f9f9f9', minHeight: '100vh' }}>
+    <Box component="main" sx={{ py: 4, bgcolor: 'background.default', minHeight: '100vh' }}>
       <Container maxWidth="lg">
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ mb: 1.5 }}>
           <Button
@@ -275,7 +275,7 @@ export default function ConstructorPage() {
               sx={{
                 p: 2,
                 mb: 3,
-                bgcolor: '#f0f8ff',
+                bgcolor: 'blue.50',
                 border: '1px solid #ccc',
               }}
             >
@@ -326,7 +326,7 @@ export default function ConstructorPage() {
                           size="small"
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              backgroundColor: '#e8f4f8',
+                              backgroundColor: 'grey.100',
                             },
                             '& .MuiOutlinedInput-input::placeholder': {
                               color: '#000000',

@@ -30,10 +30,6 @@ import {
   TableRow,
   Paper,
 } from '@mui/material';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-
-const theme = createTheme();
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -159,8 +155,6 @@ export default function TMKAPIPage() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
       <Box component="main" sx={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
         <Typography variant="h1" sx={{ marginBottom: '2rem' }}>
           TMK API Integration Demo
@@ -198,7 +192,7 @@ export default function TMKAPIPage() {
               <TableContainer component={Paper}>
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: '#004a99' }}>
+                    <TableRow sx={{ bgcolor: 'primary.main' }}>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ID</TableCell>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Meaning</TableCell>
@@ -248,7 +242,7 @@ export default function TMKAPIPage() {
               <TableContainer component={Paper}>
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: '#004a99' }}>
+                    <TableRow sx={{ bgcolor: 'primary.main' }}>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ID</TableCell>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Text</TableCell>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Part of Speech</TableCell>
@@ -296,7 +290,7 @@ export default function TMKAPIPage() {
               <TableContainer component={Paper}>
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: '#004a99' }}>
+                    <TableRow sx={{ bgcolor: 'primary.main' }}>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ID</TableCell>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Description</TableCell>
@@ -342,7 +336,7 @@ export default function TMKAPIPage() {
               <TableContainer component={Paper}>
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: '#004a99' }}>
+                    <TableRow sx={{ bgcolor: 'primary.main' }}>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ID</TableCell>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Root</TableCell>
@@ -390,7 +384,7 @@ export default function TMKAPIPage() {
               <TableContainer component={Paper}>
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: '#004a99' }}>
+                    <TableRow sx={{ bgcolor: 'primary.main' }}>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ID</TableCell>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
                       <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Abbreviation</TableCell>
@@ -419,6 +413,5 @@ export default function TMKAPIPage() {
           )}
         </TabPanel>
       </Box>
-    </ThemeProvider>
   );
 }

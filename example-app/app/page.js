@@ -9,8 +9,6 @@
  * - Render Pegasus icons
  */
 
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -22,13 +20,8 @@ import Link from 'next/link';
 import tokens from '../../tokens/global.json';
 import { templatePages } from './templates';
 
-// Create a Material-UI theme using Pegasus tokens
-const theme = createTheme();
-
 export default function Main() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
       <Box component="main" sx={{ padding: '2rem' }}>
         <Typography variant="h1" sx={{ marginBottom: '2rem' }}>
           The Morphology Kit® Admin
@@ -118,6 +111,5 @@ export default function Main() {
           </Grid>
         </Box>
       </Box>
-    </ThemeProvider>
   );
 }

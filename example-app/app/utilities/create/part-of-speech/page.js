@@ -97,7 +97,7 @@ export default function CreatePartOfSpeechPage() {
   };
 
   return (
-    <Box component="main" sx={{ py: 4, bgcolor: '#f9f9f9', minHeight: '100vh' }}>
+    <Box component="main" sx={{ py: 4, bgcolor: 'background.default', minHeight: '100vh' }}>
       <Container maxWidth="lg">
         <Card sx={{ boxShadow: 3 }}>
           <CardContent sx={{ p: 4 }}>

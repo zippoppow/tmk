@@ -66,6 +66,24 @@ export const pegasus = createTheme({
   shadows,
   typography,
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        "html, body": {
+          backgroundColor: palette.background.default,
+          color: palette.text.primary,
+        },
+        body: {
+          margin: 0,
+        },
+        a: {
+          color: palette.primary.main,
+        },
+        "::selection": {
+          backgroundColor: palette.blue[200],
+          color: palette.common.black,
+        },
+      },
+    },
     MuiButtonBase: buttonBase,
     MuiButton: button,
     MuiIconButton: iconButton,
@@ -107,6 +125,14 @@ export const pegasus = createTheme({
     MuiAppBar: appBar,
     MuiSpeedDialIcon: speedDialIcon,
     MuiSpeedDialAction: speedDialAction,
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: "none",
+          border: `1px solid ${palette.grey[200]}`,
+        },
+      },
+    },
     MuiCard: card,
     MuiCardActions: cardActions,
     MuiDialog: dialog,
