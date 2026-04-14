@@ -336,18 +336,26 @@ export default function DashboardPage() {
                                                     alignItems: { xs: 'flex-start', sm: 'center' },
                                                     justifyContent: 'space-between',
                                                     gap: 1.5,
-                                                    flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                                                    flexWrap: { xs: 'wrap', md: 'nowrap' },
                                                 }}
                                             >
                                                 <Box sx={{ minWidth: 0, flex: 1 }}>
-                                                    <Typography sx={{ fontWeight: 600 }}>
+                                                    <Typography sx={{ fontWeight: 600, lineHeight: 1.3, wordBreak: 'break-word' }}>
                                                         {String(activity?.['lesson-name'] || 'Untitled Lesson Activity')}
                                                     </Typography>
                                                     <Typography variant="caption" color="textSecondary" sx={{ wordBreak: 'break-word' }}>
                                                         {String(activity?.['tmk-template'] || activity?.formName || 'unknown-template')}
                                                     </Typography>
                                                 </Box>
-                                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        gap: 1,
+                                                        flexWrap: 'wrap',
+                                                        justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                                                        flexShrink: 0,
+                                                    }}
+                                                >
                                                     <Button
                                                         size="small"
                                                         variant="outlined"
