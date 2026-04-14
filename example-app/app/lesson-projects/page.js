@@ -681,6 +681,12 @@ export default function LessonProjectsPage() {
 				</Stack>
 
 				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
+					<Box
+						component="img"
+						src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png"
+						alt="The Morphology Kit"
+						sx={{ width: '100%', maxWidth: 200, height: 'auto', mb: 2 }}
+					/>
 					<Typography sx={{ fontSize: '2rem', fontWeight: 800, mb: 0.5 }}>DIY Projects</Typography>
 					<Typography sx={{ color: '#5a6472', fontSize: '0.95rem', mb: 2 }}>
 						Create a project first. Then choose a Lesson Activity type and add activities under that project.

@@ -268,6 +268,12 @@ export default function DashboardPage() {
         <Container maxWidth="lg" sx={{ py: 4 }}>
             <AuthDebugPanel />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                <Box
+					component="img"
+					src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png"
+					alt="The Morphology Kit"
+					sx={{ width: '100%', maxWidth: 200, height: 'auto', mb: 2 }}
+				/>
                 <Typography variant="h4" component="h1">
                    DIY Dashboard
                 </Typography>
@@ -297,75 +303,82 @@ export default function DashboardPage() {
                 <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
                     Lesson Activities
                 </Typography>
-                <Grid container spacing={{ xs: 2, md: 3 }} alignItems="flex-start">
-                    <Grid item xs={12} md={5} lg={4}>
-                        <LessonActivitySelector
-                            activities={lessonActivities}
-                            onOpen={handleCreateNewActivity}
-                        />
+                <Grid container spacing={{ xs: 2, md: 3 }} alignItems="stretch">
+                    <Grid item xs={12} md={6} sx={{ minWidth: 0, display: 'flex' }}>
+                        <Box sx={{ width: '100%', minWidth: 0 }}>
+                            <LessonActivitySelector
+                                activities={lessonActivities}
+                                onOpen={handleCreateNewActivity}
+                            />
+                        </Box>
                     </Grid>
 
-                    <Grid item xs={12} md={7} lg={8}>
-                        <Typography variant="subtitle1" sx={{ mb: 1.5 }}>
-                            Your Standalone Lesson Activities
-                        </Typography>
-                        {standaloneLoading ? (
-                            <Typography variant="body2" color="textSecondary">Loading lesson activities...</Typography>
-                        ) : standaloneActivities.length === 0 ? (
-                            <Typography variant="body2" color="textSecondary">No standalone lesson activities found.</Typography>
-                        ) : (
-                            <Stack spacing={1.25}>
-                                {standaloneActivities.map((activity, index) => {
-                                    const route = getActivityPath(activity);
-                                    return (
-                                        <Paper
-                                            key={String(activity?.id || `${activity?.['lesson-name'] || 'activity'}-${index}`)}
-                                            sx={{ p: 1.5, border: '1px solid #e6ebf2', borderRadius: 1.5 }}
-                                        >
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: { xs: 'flex-start', sm: 'center' },
-                                                    justifyContent: 'space-between',
-                                                    gap: 1.5,
-                                                    flexWrap: { xs: 'wrap', md: 'nowrap' },
-                                                }}
+                    <Grid item xs={12} md={6} sx={{ minWidth: 0, display: 'flex' }}>
+                        <Box sx={{ width: '100%', minWidth: 0 }}>
+                            <Typography variant="subtitle1" sx={{ mb: 1.5 }}>
+                                Your Standalone Lesson Activities
+                            </Typography>
+                            {standaloneLoading ? (
+                                <Typography variant="body2" color="textSecondary">Loading lesson activities...</Typography>
+                            ) : standaloneActivities.length === 0 ? (
+                                <Typography variant="body2" color="textSecondary">No standalone lesson activities found.</Typography>
+                            ) : (
+                                <Stack spacing={1} sx={{ width: '100%', minWidth: 0 }}>
+                                    {standaloneActivities.map((activity, index) => {
+                                        const route = getActivityPath(activity);
+                                        return (
+                                            <Paper
+                                                key={String(activity?.id || `${activity?.['lesson-name'] || 'activity'}-${index}`)}
+                                                sx={{ p: 1.5, border: '1px solid #e6ebf2', borderRadius: 1.5, width: '100%', minWidth: 0 }}
                                             >
-                                                <Box sx={{ minWidth: 0, flex: 1 }}>
-                                                    <Typography sx={{ fontWeight: 600, lineHeight: 1.3, wordBreak: 'break-word' }}>
-                                                        {String(activity?.['lesson-name'] || 'Untitled Lesson Activity')}
-                                                    </Typography>
-                                                    <Typography variant="caption" color="textSecondary" sx={{ wordBreak: 'break-word' }}>
-                                                        {String(activity?.['tmk-template'] || activity?.formName || 'unknown-template')}
-                                                    </Typography>
-                                                </Box>
                                                 <Box
                                                     sx={{
                                                         display: 'flex',
-                                                        gap: 1,
-                                                        flexWrap: 'wrap',
-                                                        justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-                                                        flexShrink: 0,
+                                                        alignItems: { xs: 'flex-start', sm: 'center' },
+                                                        justifyContent: 'space-between',
+                                                        gap: 1.5,
+                                                        flexWrap: { xs: 'wrap', md: 'nowrap' },
+                                                        width: '100%',
+                                                        minWidth: 0,
                                                     }}
                                                 >
-                                                    <Button
-                                                        size="small"
-                                                        variant="outlined"
-                                                        disabled={!route}
-                                                        onClick={() => handleManageStandalone(activity)}
+                                                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                                                        <Typography sx={{ fontWeight: 600, lineHeight: 1.3, wordBreak: 'break-word' }}>
+                                                            {String(activity?.['lesson-name'] || 'Untitled Lesson Activity')}
+                                                        </Typography>
+                                                        <Typography variant="caption" color="textSecondary" sx={{ wordBreak: 'break-word' }}>
+                                                            {String(activity?.['tmk-template'] || activity?.formName || 'unknown-template')}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box
+                                                        sx={{
+                                                            display: 'flex',
+                                                            gap: 1,
+                                                            flexWrap: 'wrap',
+                                                            justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                                                            flexShrink: 0,
+                                                            maxWidth: '100%',
+                                                        }}
                                                     >
-                                                        Manage
-                                                    </Button>
-                                                    <Button size="small" color="error" variant="outlined" onClick={() => handleDeleteStandalone(activity)}>
-                                                        Delete
-                                                    </Button>
+                                                        <Button
+                                                            size="small"
+                                                            variant="outlined"
+                                                            disabled={!route}
+                                                            onClick={() => handleManageStandalone(activity)}
+                                                        >
+                                                            Manage
+                                                        </Button>
+                                                        <Button size="small" color="error" variant="outlined" onClick={() => handleDeleteStandalone(activity)}>
+                                                            Delete
+                                                        </Button>
+                                                    </Box>
                                                 </Box>
-                                            </Box>
-                                        </Paper>
-                                    );
-                                })}
-                            </Stack>
-                        )}
+                                            </Paper>
+                                        );
+                                    })}
+                                </Stack>
+                            )}
+                        </Box>
                     </Grid>
                 </Grid>
             </Box>
