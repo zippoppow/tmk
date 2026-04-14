@@ -1,53 +1,18 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-	Alert,
-	Box,
-	Button,
-	Card,
-	CardContent,
-	Container,
-	Menu,
-	MenuItem,
-	Snackbar,
-	Stack,
-	TextField,
-	Typography,
-} from '@mui/material';
-import {
-	buildLessonActivityUpsertPayload,
-	createLessonActivityId,
-	deleteLessonActivityById,
-	fetchLessonActivityById,
-	upsertLessonActivity,
-	readFormSessionData,
-	writeFormSessionData,
-	DIY_PROJECTS_ENDPOINT,
-	getAllStoredProjects,
-	saveStoredProjects,
-} from '../../components/lessonActivityHelpers';
-import {
-	buildTeachableLogoutUrl,
-	buildTeachableStartUrl,
-	fetchAuthenticatedUser,
-	fetchWithUserToken,
-	resolveTmkApiOrigin,
-} from '../../components/authHelpers';
-import {
-	buildDiyProjectsPayload,
-	getProjectLessonActivities,
-} from '../../components/projectManagerModel';
+import { Box, Button, Menu, MenuItem, TextField, Typography } from '@mui/material';
+import ActivityShell from '../components/ActivityShell';
+import { useLessonActivityProject } from '../components/useLessonActivityProject';
 import { useContextActionMenu } from '../components/interactionUtils';
 
 const FORM_NAME = 'intro';
+const DEFAULT_ACTIVITY_NAME = 'Intro Activity';
 
 function emptyWordList() {
 	return Array.from({ length: 9 }, () => '');
 }
 
-function normalizeIntroLessonInputData(rawData) {
+function normalizeInputData(rawData) {
 	const source = rawData && typeof rawData === 'object' ? rawData : {};
 	const incomingWords = Array.isArray(source.words) ? source.words : emptyWordList();
 	const words = incomingWords
@@ -63,398 +28,54 @@ function normalizeIntroLessonInputData(rawData) {
 }
 
 export default function IntroPage() {
-	const router = useRouter();
-	const [morpheme, setMorpheme] = useState('');
-	const [words, setWords] = useState(emptyWordList);
-	const [questionMorpheme, setQuestionMorpheme] = useState('');
-	const [authUser, setAuthUser] = useState(null);
-	const [authLoading, setAuthLoading] = useState(true);
-	const [authFromSuccessRedirect, setAuthFromSuccessRedirect] = useState(false);
-	const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
-	const [projectId, setProjectId] = useState('');
-	const [activityIndex, setActivityIndex] = useState(null);
-	const [projectName, setProjectName] = useState('');
-	const [activityName, setActivityName] = useState('');
-	const [standaloneActivityId, setStandaloneActivityId] = useState('');
-	const [isSaving, setIsSaving] = useState(false);
+	const {
+		data,
+		setData,
+		authUser,
+		authLoading,
+		authFromSuccessRedirect,
+		notice,
+		setNotice,
+		showNotice,
+		projectId,
+		projectName,
+		activityName,
+		setActivityName,
+		isSaving,
+		runAuthCheck,
+		handleLoginLogout,
+		handleSave,
+		handleSaveAndReturn,
+		handleGoToLessonProjects,
+		handleAddToProject,
+		handleDownloadPdf,
+		standaloneActivityId,
+		handleSaveStandalone,
+		handleDeleteStandalone,
+	} = useLessonActivityProject({
+		formName: FORM_NAME,
+		defaultActivityName: DEFAULT_ACTIVITY_NAME,
+		initialData: { morpheme: '', questionMorpheme: '', words: emptyWordList() },
+		normalizeInputData,
+	});
+
 	const {
 		menuState: contextMenu,
 		openMenu: openContextMenuMenu,
 		closeMenu: closeContextMenu,
 	} = useContextActionMenu({ targetType: '', index: -1 });
 
-	const projectApiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
-
-	const persist = (nextState) => {
-		writeFormSessionData(FORM_NAME, nextState);
-	};
-
-	const showNotice = (severity, message) => {
-		setNotice({ open: true, severity, message });
-	};
-
-	useEffect(() => {
-		if (typeof window === 'undefined') {
-			return;
-		}
-
-		let cancelled = false;
-
-		const hydrateFromContext = async () => {
-			const url = new URL(window.location.href);
-			const paramProjectId = url.searchParams.get('projectId') || '';
-			const paramActivityIndex = url.searchParams.get('activityIndex');
-			const paramActivityId = (url.searchParams.get('activityId') || '').trim();
-
-			if (!paramProjectId) {
-				if (paramActivityId) {
-					const cloudActivity = await fetchLessonActivityById(projectApiOrigin, paramActivityId);
-					if (cloudActivity && !cancelled) {
-						setStandaloneActivityId(String(cloudActivity.id || paramActivityId));
-						setActivityName(String(cloudActivity['lesson-name'] || 'Intro Activity'));
-						const normalized = normalizeIntroLessonInputData(cloudActivity['lesson-input-data'] || {});
-						setMorpheme(normalized.morpheme);
-						setQuestionMorpheme(normalized.questionMorpheme);
-						setWords(normalized.words);
-						return;
-					}
-				}
-
-				const stored = readFormSessionData(FORM_NAME);
-				if (stored && !cancelled) {
-					const normalized = normalizeIntroLessonInputData(stored);
-					setMorpheme(normalized.morpheme);
-					setQuestionMorpheme(normalized.questionMorpheme);
-					setWords(normalized.words);
-				}
-				return;
-			}
-
-			const parsedIndex = Number.parseInt(paramActivityIndex || '', 10);
-			setProjectId(paramProjectId);
-
-			const projects = getAllStoredProjects();
-			const project = projects.find((item) => item.id === paramProjectId);
-			if (!project) {
-				showNotice('error', 'Project not found.');
-				return;
-			}
-
-			setProjectName(project.name || 'Untitled Project');
-			const activities = getProjectLessonActivities(project, 'lesson-activities-project', (data) => data || {});
-			let resolvedIndex = Number.isInteger(parsedIndex) ? parsedIndex : -1;
-			if (resolvedIndex < 0 && paramActivityId) {
-				resolvedIndex = activities.findIndex((activity) => String(activity?.id || '') === paramActivityId);
-			}
-
-			if (resolvedIndex < 0) {
-				showNotice('error', 'Invalid activity context.');
-				return;
-			}
-
-			setActivityIndex(resolvedIndex);
-			let resolvedActivity = activities[resolvedIndex];
-
-			if (paramActivityId) {
-				const cloudActivity = await fetchLessonActivityById(projectApiOrigin, paramActivityId);
-				if (cloudActivity && typeof cloudActivity === 'object') {
-					resolvedActivity = {
-						...resolvedActivity,
-						...cloudActivity,
-						id: String(cloudActivity.id || paramActivityId),
-					};
-					if (activities[resolvedIndex]) {
-						activities[resolvedIndex] = resolvedActivity;
-						project.lessonActivities = activities;
-						saveStoredProjects(projects);
-					}
-				}
-			}
-
-			if (!resolvedActivity) {
-				showNotice('error', 'Lesson activity not found.');
-				return;
-			}
-
-			if (!cancelled) {
-				setActivityName(String(resolvedActivity['lesson-name'] || 'Intro Activity'));
-				const normalized = normalizeIntroLessonInputData(resolvedActivity['lesson-input-data'] || {});
-				setMorpheme(normalized.morpheme);
-				setQuestionMorpheme(normalized.questionMorpheme);
-				setWords(normalized.words);
-			}
-		};
-
-		hydrateFromContext();
-
-		return () => {
-			cancelled = true;
-		};
-	}, [projectApiOrigin]);
-
-	useEffect(() => {
-		const timeout = setTimeout(() => {
-			const normalizedInput = normalizeIntroLessonInputData({ morpheme, words, questionMorpheme });
-			persist(normalizedInput);
-
-			if (projectId && Number.isInteger(activityIndex)) {
-				const projects = getAllStoredProjects();
-				const project = projects.find((item) => item.id === projectId);
-				if (!project) {
-					return;
-				}
-
-				const activities = getProjectLessonActivities(project, 'lesson-activities-project', (data) => data || {});
-				if (!activities[activityIndex]) {
-					return;
-				}
-
-				activities[activityIndex] = {
-					...activities[activityIndex],
-					'lesson-name': activityName || activities[activityIndex]['lesson-name'] || 'Intro Activity',
-					'lesson-input-data': normalizedInput,
-					'modified-at': Date.now(),
-				};
-				project.lessonActivities = activities;
-				project.modifiedAtMs = Date.now();
-				project.syncedAt = null;
-				saveStoredProjects(projects);
-			}
-		}, 300);
-
-		return () => clearTimeout(timeout);
-	}, [morpheme, words, questionMorpheme, projectId, activityIndex, activityName]);
-
-	const runAuthCheck = async () => {
-		setAuthLoading(true);
-		try {
-			const user = await fetchAuthenticatedUser(projectApiOrigin);
-			setAuthUser(user);
-		} catch {
-			setAuthUser(null);
-		} finally {
-			setAuthLoading(false);
-		}
-	};
-
-	useEffect(() => {
-		if (typeof window !== 'undefined') {
-			const url = new URL(window.location.href);
-			if (url.searchParams.get('auth') === 'success') {
-				setAuthFromSuccessRedirect(true);
-				showNotice('success', 'Teachable login successful.');
-				url.searchParams.delete('auth');
-				window.history.replaceState({}, '', url.toString());
-			} else if (url.searchParams.get('auth') === 'error') {
-				const rawMessage = url.searchParams.get('message');
-				showNotice('error', rawMessage || 'Teachable login failed. Please try again.');
-				url.searchParams.delete('auth');
-				url.searchParams.delete('message');
-				window.history.replaceState({}, '', url.toString());
-			}
-		}
-
-		runAuthCheck();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
 	const handleWordChange = (index, value) => {
-		setWords((prev) => {
-			const next = [...prev];
+		setData((prev) => {
+			const next = [...prev.words];
 			next[index] = value;
-			return next;
+			return { ...prev, words: next };
 		});
 	};
 
-	const handleClearForm = () => {
-		setMorpheme('');
-		setWords(emptyWordList());
-		setQuestionMorpheme('');
-	};
-
 	const handleClearWordsOnly = () => {
-		setWords(emptyWordList());
+		setData((prev) => ({ ...prev, words: emptyWordList() }));
 		closeContextMenu();
-	};
-
-	const handleDownloadPdf = () => {
-		window.print();
-	};
-
-	const initiateOAuthLogin = () => {
-		window.location.href = buildTeachableStartUrl(projectApiOrigin, window.location.href);
-	};
-
-	const handleLoginLogout = () => {
-		if (authUser) {
-			window.location.href = buildTeachableLogoutUrl(window.location.href, projectApiOrigin);
-			return;
-		}
-
-		initiateOAuthLogin();
-	};
-
-	const handleSave = async () => {
-		if (!projectId || !Number.isInteger(activityIndex)) {
-			showNotice('error', 'No project context available.');
-			return;
-		}
-
-		setIsSaving(true);
-		try {
-			const projects = getAllStoredProjects();
-			const project = projects.find((item) => item.id === projectId);
-			if (!project) {
-				showNotice('error', 'Project not found.');
-				setIsSaving(false);
-				return;
-			}
-
-			const activities = getProjectLessonActivities(project, 'lesson-activities-project', (data) => data || {});
-			if (!activities[activityIndex]) {
-				showNotice('error', 'Lesson activity not found.');
-				setIsSaving(false);
-				return;
-			}
-
-			const normalizedInput = normalizeIntroLessonInputData({ morpheme, words, questionMorpheme });
-			const activityId = String(activities[activityIndex].id || createLessonActivityId());
-			activities[activityIndex] = {
-				...activities[activityIndex],
-				id: activityId,
-				'lesson-name': activityName || activities[activityIndex]['lesson-name'] || 'Intro Activity',
-				'lesson-input-data': normalizedInput,
-				'modified-at': Date.now(),
-			};
-			project.lessonActivities = activities;
-			project.modifiedAtMs = Date.now();
-
-			if (authUser) {
-				project.syncedAt = null;
-				saveStoredProjects(projects);
-
-				const payload = buildDiyProjectsPayload({
-					project,
-					formName: 'lesson-activities-project',
-					normalizeLessonInputData: (data) => data || {},
-				});
-
-				const response = await fetchWithUserToken(projectApiOrigin, DIY_PROJECTS_ENDPOINT, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(payload),
-				});
-
-				if (response.ok) {
-					const result = await response.json();
-					const updated = getAllStoredProjects();
-					const updatedProject = updated.find((item) => item.id === projectId);
-					if (updatedProject) {
-						updatedProject.syncedAt = new Date().toISOString();
-						if (result?.id) {
-							updatedProject.remoteId = result.id;
-						}
-						saveStoredProjects(updated);
-					}
-					showNotice('success', 'Lesson activity saved.');
-				} else {
-					saveStoredProjects(projects);
-					showNotice('warning', 'Saved locally. Cloud sync failed.');
-				}
-			} else {
-				saveStoredProjects(projects);
-				showNotice('success', 'Saved locally.');
-			}
-		} catch (error) {
-			console.error('Save failed:', error);
-			showNotice('error', 'Could not save lesson activity.');
-		} finally {
-			setIsSaving(false);
-		}
-	};
-
-	const handleSaveAndReturn = async () => {
-		await handleSave();
-		router.push('/lesson-projects');
-	};
-
-	const handleSaveStandalone = async () => {
-		if (!authUser) {
-			showNotice('error', 'Please login with Teachable to save standalone activities.');
-			return;
-		}
-
-		setIsSaving(true);
-		try {
-			const normalizedInput = normalizeIntroLessonInputData({ morpheme, words, questionMorpheme });
-			const activityId = String(standaloneActivityId || createLessonActivityId());
-
-			const response = await upsertLessonActivity(
-				projectApiOrigin,
-				buildLessonActivityUpsertPayload({
-					id: activityId,
-					template: FORM_NAME,
-					lessonName: activityName || 'Intro Activity',
-					lessonInputData: normalizedInput,
-					createdAt: Date.now(),
-					modifiedAt: Date.now(),
-					extra: {
-						formName: FORM_NAME,
-					},
-				})
-			);
-
-			if (!response.ok) {
-				showNotice('error', 'Could not save standalone lesson activity.');
-				setIsSaving(false);
-				return;
-			}
-
-			setStandaloneActivityId(activityId);
-			const url = new URL(window.location.href);
-			url.searchParams.set('activityId', activityId);
-			window.history.replaceState({}, '', url.toString());
-			showNotice('success', 'Standalone lesson activity saved.');
-		} catch (error) {
-			console.error('Save standalone failed:', error);
-			showNotice('error', 'Could not save standalone lesson activity.');
-		} finally {
-			setIsSaving(false);
-		}
-	};
-
-	const handleDeleteStandalone = async () => {
-		if (!standaloneActivityId) {
-			showNotice('error', 'No standalone activity selected.');
-			return;
-		}
-
-		const shouldDelete = window.confirm('Delete this standalone lesson activity? This cannot be undone.');
-		if (!shouldDelete) {
-			return;
-		}
-
-		setIsSaving(true);
-		try {
-			const response = await deleteLessonActivityById(projectApiOrigin, standaloneActivityId);
-			if (!response.ok) {
-				showNotice('error', 'Delete failed.');
-				setIsSaving(false);
-				return;
-			}
-
-			setStandaloneActivityId('');
-			handleClearForm();
-			const url = new URL(window.location.href);
-			url.searchParams.delete('activityId');
-			window.history.replaceState({}, '', url.toString());
-			showNotice('success', 'Standalone lesson activity deleted.');
-		} catch (error) {
-			console.error('Delete standalone failed:', error);
-			showNotice('error', 'Delete failed.');
-		} finally {
-			setIsSaving(false);
-		}
 	};
 
 	const openContextMenu = (event, targetType, index = -1) => {
@@ -463,13 +84,13 @@ export default function IntroPage() {
 
 	const getContextTargetValue = () => {
 		if (contextMenu.targetType === 'word' && contextMenu.index >= 0) {
-			return words[contextMenu.index] || '';
+			return data.words[contextMenu.index] || '';
 		}
 		if (contextMenu.targetType === 'morpheme') {
-			return morpheme;
+			return data.morpheme;
 		}
 		if (contextMenu.targetType === 'questionMorpheme') {
-			return questionMorpheme;
+			return data.questionMorpheme;
 		}
 		return '';
 	};
@@ -480,11 +101,11 @@ export default function IntroPage() {
 			return;
 		}
 		if (contextMenu.targetType === 'morpheme') {
-			setMorpheme(value);
+			setData((prev) => ({ ...prev, morpheme: value }));
 			return;
 		}
 		if (contextMenu.targetType === 'questionMorpheme') {
-			setQuestionMorpheme(value);
+			setData((prev) => ({ ...prev, questionMorpheme: value }));
 		}
 	};
 
@@ -519,296 +140,131 @@ export default function IntroPage() {
 			closeContextMenu();
 			return;
 		}
-
 		const rowStart = Math.floor(contextMenu.index / 3) * 3;
-		setWords((prev) => {
-			const next = [...prev];
+		setData((prev) => {
+			const next = [...prev.words];
 			next[rowStart] = '';
 			next[rowStart + 1] = '';
 			next[rowStart + 2] = '';
-			return next;
+			return { ...prev, words: next };
 		});
 		closeContextMenu();
 	};
 
 	const handleCopyMorphemeToQuestion = () => {
-		setQuestionMorpheme(morpheme);
+		setData((prev) => ({ ...prev, questionMorpheme: prev.morpheme }));
 		closeContextMenu();
 	};
 
-	const authLabel = authLoading
-		? 'Checking login...'
-		: authUser
-			? `Logged in: ${authUser.name || authUser.email || 'Teachable'}`
-			: authFromSuccessRedirect
-				? 'Login flow completed — verifying session…'
-				: 'Not logged in';
-
 	return (
-		<Box
-			component="main"
-			sx={{
-				minHeight: '100vh',
-				py: { xs: 2, md: 4 },
-				px: 1,
-				background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-			}}
+		<ActivityShell
+			title="INTRO"
+			morpheme={data.morpheme}
+			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
+			instructions="Fill-in the correct form of the morpheme and read the following words."
+			authUser={authUser}
+			authLoading={authLoading}
+			authFromSuccessRedirect={authFromSuccessRedirect}
+			runAuthCheck={runAuthCheck}
+			handleLoginLogout={handleLoginLogout}
+			handleGoToLessonProjects={handleGoToLessonProjects}
+			handleAddToProject={handleAddToProject}
+			handleSave={handleSave}
+			handleSaveAndReturn={handleSaveAndReturn}
+			handleDownloadPdf={handleDownloadPdf}
+			standaloneActivityId={standaloneActivityId}
+			handleSaveStandalone={handleSaveStandalone}
+			handleDeleteStandalone={handleDeleteStandalone}
+			projectId={projectId}
+			projectName={projectName}
+			activityName={activityName}
+			setActivityName={setActivityName}
+			isSaving={isSaving}
+			notice={notice}
+			setNotice={setNotice}
 		>
-			<Container maxWidth="lg">
-				<Stack spacing={1.5} sx={{ mb: 1.5 }} direction={{ xs: 'column', md: 'row' }}>
-					<Button
-						variant="outlined"
-						onClick={() => router.push('/dashboard')}
-						sx={{
-							textTransform: 'none',
-							backgroundColor: '#000',
-							color: '#fff',
-							borderColor: '#000',
-							'&:hover': {
-								backgroundColor: '#1f1f1f',
-								borderColor: '#1f1f1f',
-							},
-						}}
-					>
-						Dashboard
-					</Button>
-					<Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
-						{authUser ? 'Logout from Teachable' : 'Login with Teachable'}
-					</Button>
-					{projectId && (
-						<>
-							<Button variant="outlined" onClick={() => router.push('/lesson-projects')} sx={{ textTransform: 'none' }}>
-								Back to Lesson Projects
-							</Button>
-							<Button
-								variant="contained"
-								color="primary"
-								disabled={isSaving}
-								onClick={handleSaveAndReturn}
-								sx={{ textTransform: 'none' }}
-							>
-								{isSaving ? 'Saving...' : 'Save & Return'}
-							</Button>
-						</>
-					)}
-					{!projectId && (
-						<>
-							<Button
-								variant="contained"
-								color="primary"
-								disabled={isSaving}
-								onClick={handleSaveStandalone}
-								sx={{ textTransform: 'none' }}
-							>
-								{isSaving ? 'Saving...' : 'Save Activity'}
-							</Button>
-							{standaloneActivityId && (
-								<Button
-									variant="outlined"
-									color="error"
-									disabled={isSaving}
-									onClick={handleDeleteStandalone}
-									sx={{ textTransform: 'none' }}
-								>
-									Delete Activity
-								</Button>
-							)}
-						</>
-					)}
-					<Button variant="contained" color="success" onClick={handleDownloadPdf} sx={{ textTransform: 'none' }}>
-						Download as PDF
-					</Button>
-				</Stack>
-				{projectId && (
-					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
-						<Typography sx={{ fontSize: '0.8rem', color: '#4a5568', textTransform: 'uppercase', fontWeight: 700 }}>
-							Project
-						</Typography>
-						<Typography sx={{ mb: 1.2, fontWeight: 700 }}>{projectName}</Typography>
-						<TextField
-							size="small"
-							label="Intro Activity Name"
-							value={activityName}
-							onChange={(event) => setActivityName(event.target.value)}
-							fullWidth
-						/>
-					</Box>
-				)}
-				{!projectId && (
-					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
-						<Typography sx={{ fontSize: '0.8rem', color: '#4a5568', textTransform: 'uppercase', fontWeight: 700 }}>
-							Standalone Intro Activity
-						</Typography>
-						<TextField
-							size="small"
-							label="Activity Name"
-							value={activityName}
-							onChange={(event) => setActivityName(event.target.value)}
-							fullWidth
-						/>
-					</Box>
-				)}
-				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+			<Box sx={{ mt: 4, mb: 3 }}>
+				{Array.from({ length: 3 }, (_, rowIndex) => (
 					<Box
+						key={rowIndex}
 						sx={{
-							display: 'inline-flex',
-							alignItems: 'center',
-							px: 1.5,
-							py: 0.75,
-							borderRadius: 1,
-							backgroundColor: authUser ? '#d4edda' : authFromSuccessRedirect ? '#cce5ff' : '#fff3cd',
-							color: authUser ? '#155724' : authFromSuccessRedirect ? '#004085' : '#856404',
-							border: `1px solid ${authUser ? '#c3e6cb' : authFromSuccessRedirect ? '#b8daff' : '#ffeaa7'}`,
-							fontWeight: 700,
-							fontSize: '0.85rem',
+							display: 'grid',
+							gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+							gap: 1.5,
+							mb: 1.5,
 						}}
 					>
-						{authLabel}
-					</Box>
-					{!authLoading && !authUser && authFromSuccessRedirect && (
-						<Button
-							size="small"
-							variant="outlined"
-							sx={{ textTransform: 'none', bgcolor: 'white', fontSize: '0.8rem' }}
-							onClick={runAuthCheck}
-						>
-							Retry session check
-						</Button>
-					)}
-				</Box>
-
-				<Card sx={{ borderRadius: 2, boxShadow: 8 }}>
-					<CardContent sx={{ p: { xs: 2, md: 4 } }}>
-						<Box
-							sx={{
-								display: 'grid',
-								gridTemplateColumns: { xs: '1fr', md: '3fr 1fr' },
-								gap: 2,
-								borderBottom: '3px solid #4020A7',
-								pb: 1.5,
-							}}
-						>
-							<Stack spacing={0.8}>
-								<Typography sx={{ fontWeight: 800, fontSize: '1.6rem', letterSpacing: '0.08em' }}>
-									INTRO
-								</Typography>
-
-								<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-									<Typography sx={{ fontStyle: 'italic', fontSize: '1.1rem' }}>Morpheme(s):</Typography>
-									<TextField
-										variant="standard"
-										value={morpheme}
-										onChange={(e) => setMorpheme(e.target.value)}
-										onContextMenu={(e) => openContextMenu(e, 'morpheme')}
-										sx={{ minWidth: 180 }}
-										inputProps={{
-											style: {
-												fontFamily: 'Courier New, monospace',
-												fontSize: '1.1rem',
-												color: '#4020A7',
-											},
-										}}
-									/>
-								</Box>
-
-								<Typography color="text.secondary">
-									Fill-in the correct form of the morpheme and read the following words.
-								</Typography>
-							</Stack>
-
-							<Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, alignItems: 'flex-start' }}>
-								<Box
-									component="img"
-									src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png"
-									alt="The Morphology Kit"
-									sx={{ width: '100%', maxWidth: 200, height: 'auto' }}
-								/>
-							</Box>
-						</Box>
-
-						<Box sx={{ mt: 4, mb: 3 }}>
-							{Array.from({ length: 3 }, (_, rowIndex) => (
-								<Box
-									key={rowIndex}
-									sx={{
-										display: 'grid',
-										gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
-										gap: 1.5,
-										mb: 1.5,
+						{Array.from({ length: 3 }, (_, cellIndex) => {
+							const index = rowIndex * 3 + cellIndex;
+							return (
+								<TextField
+									key={`intro-word-${index}`}
+									value={data.words[index] || ''}
+									onChange={(e) => handleWordChange(index, e.target.value)}
+									onContextMenu={(e) => openContextMenu(e, 'word', index)}
+									variant="outlined"
+									fullWidth
+									inputProps={{
+										style: {
+											textAlign: 'center',
+											fontFamily: 'Courier New, monospace',
+											fontSize: '1rem',
+										},
 									}}
-								>
-									{Array.from({ length: 3 }, (_, cellIndex) => {
-										const index = rowIndex * 3 + cellIndex;
-										return (
-											<TextField
-												key={`intro-word-${index}`}
-												value={words[index] || ''}
-												onChange={(e) => handleWordChange(index, e.target.value)}
-												onContextMenu={(e) => openContextMenu(e, 'word', index)}
-												variant="outlined"
-												fullWidth
-												inputProps={{
-													style: {
-														textAlign: 'center',
-														fontFamily: 'Courier New, monospace',
-														fontSize: '1rem',
-													},
-												}}
-												sx={{
-													'& .MuiOutlinedInput-root': {
-														'& fieldset': { borderColor: '#4020A7', borderWidth: '2px' },
-														'&:hover fieldset': { borderColor: '#667eea' },
-														'&.Mui-focused fieldset': { borderColor: '#667eea' },
-													},
-												}}
-											/>
-										);
-									})}
-								</Box>
-							))}
-						</Box>
+									sx={{
+										'& .MuiOutlinedInput-root': {
+											'& fieldset': { borderColor: '#4020A7', borderWidth: '2px' },
+											'&:hover fieldset': { borderColor: '#667eea' },
+											'&.Mui-focused fieldset': { borderColor: '#667eea' },
+										},
+									}}
+								/>
+							);
+						})}
+					</Box>
+				))}
+			</Box>
 
-						<Typography component="div" sx={{ textAlign: 'center', fontSize: '1.1rem', mb: 4 }}>
-							How does{' '}
-							<TextField
-								variant="standard"
-								value={questionMorpheme}
-								onChange={(e) => setQuestionMorpheme(e.target.value)}
-								onContextMenu={(e) => openContextMenu(e, 'questionMorpheme')}
-								sx={{ minWidth: 140, mx: 0.5 }}
-								inputProps={{
-									style: {
-										textAlign: 'center',
-										fontFamily: 'Courier New, monospace',
-									},
-								}}
-							/>{' '}
-							affect the meaning of these words?
-						</Typography>
+			<Typography component="div" sx={{ textAlign: 'center', fontSize: '1.1rem', mb: 4 }}>
+				How does{' '}
+				<TextField
+					variant="standard"
+					value={data.questionMorpheme}
+					onChange={(e) => setData((prev) => ({ ...prev, questionMorpheme: e.target.value }))}
+					onContextMenu={(e) => openContextMenu(e, 'questionMorpheme')}
+					sx={{ minWidth: 140, mx: 0.5 }}
+					inputProps={{
+						style: {
+							textAlign: 'center',
+							fontFamily: 'Courier New, monospace',
+						},
+					}}
+				/>{' '}
+				affect the meaning of these words?
+			</Typography>
 
-						<Box
-							sx={{
-								borderTop: '2px solid #eee',
-								pt: 2.5,
-								display: 'flex',
-								justifyContent: 'center',
-							}}
-						>
-							<Button variant="outlined" onClick={handleClearForm} sx={{ minWidth: 150 }}>
-								Clear
-							</Button>
-						</Box>
-					</CardContent>
-				</Card>
-			</Container>
+			<Box
+				sx={{
+					borderTop: '2px solid #eee',
+					pt: 2.5,
+					display: 'flex',
+					justifyContent: 'center',
+				}}
+			>
+				<Button
+					variant="outlined"
+					onClick={() => setData({ morpheme: '', questionMorpheme: '', words: emptyWordList() })}
+					sx={{ minWidth: 150 }}
+				>
+					Clear
+				</Button>
+			</Box>
 
 			<Menu
 				open={contextMenu.open}
 				onClose={closeContextMenu}
 				anchorReference="anchorPosition"
-				anchorPosition={
-					contextMenu.open ? { top: contextMenu.y, left: contextMenu.x } : undefined
-				}
+				anchorPosition={contextMenu.open ? { top: contextMenu.y, left: contextMenu.x } : undefined}
 			>
 				<MenuItem onClick={handleCopyTarget}>Copy value</MenuItem>
 				<MenuItem onClick={handlePasteTarget}>Paste value</MenuItem>
@@ -819,16 +275,6 @@ export default function IntroPage() {
 					<MenuItem onClick={handleCopyMorphemeToQuestion}>Copy morpheme to question</MenuItem>
 				)}
 			</Menu>
-
-			<Snackbar
-				open={notice.open}
-				autoHideDuration={2600}
-				onClose={() => setNotice((prev) => ({ ...prev, open: false }))}
-			>
-				<Alert severity={notice.severity} variant="filled" onClose={() => setNotice((prev) => ({ ...prev, open: false }))}>
-					{notice.message}
-				</Alert>
-			</Snackbar>
-		</Box>
+		</ActivityShell>
 	);
 }
