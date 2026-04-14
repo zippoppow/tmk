@@ -6,6 +6,7 @@ import {
 	Alert,
 	Box,
 	Button,
+	Checkbox,
 	Chip,
 	Container,
 	Divider,
@@ -88,6 +89,7 @@ export default function LessonProjectsPage() {
 
 	const [newActivityTypeByProjectId, setNewActivityTypeByProjectId] = useState({});
 	const [defaultActivityType, setDefaultActivityType] = useState(LESSON_ACTIVITY_TYPES[0].value);
+	const [selectedForSlideshowByProjectId, setSelectedForSlideshowByProjectId] = useState({});
 	const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
 	const hasAppliedRequestedActivityType = useRef(false);
 
@@ -567,6 +569,26 @@ export default function LessonProjectsPage() {
 		router.push(`${route}?${params.toString()}`);
 	};
 
+	const handleLaunchSlideshow = (projectId) => {
+		const selected = Array.isArray(selectedForSlideshowByProjectId[projectId])
+			? selectedForSlideshowByProjectId[projectId]
+			: [];
+		const uniqueSorted = [...new Set(selected)]
+			.filter((index) => Number.isInteger(index) && index >= 0)
+			.sort((a, b) => a - b);
+
+		if (uniqueSorted.length === 0) {
+			showNotice('error', 'Select at least one lesson activity to start a slideshow.');
+			return;
+		}
+
+		const params = new URLSearchParams({
+			projectId: String(projectId),
+			indices: uniqueSorted.join(','),
+		});
+		router.push(`/lesson-activities/slideshow?${params.toString()}`);
+	};
+
 
 
 	const handleDeleteActivity = async (projectId, activityIndex) => {
@@ -794,6 +816,11 @@ export default function LessonProjectsPage() {
 													Add Activity
 												</Button>
 											)}
+											{lessonActivities.length > 0 && (
+												<Button size="small" variant="outlined" onClick={() => handleLaunchSlideshow(project.id)} sx={{ textTransform: 'none' }}>
+													Start Slideshow
+												</Button>
+											)}
 											</Stack>
 
 											<Stack spacing={0.8}>
@@ -821,7 +848,7 @@ export default function LessonProjectsPage() {
 														<Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151', minWidth: 120 }}>
 															Activity ID
 														</Typography>
-														<Box sx={{ minWidth: isAuthenticated ? 126 : 0 }} />
+														<Box sx={{ minWidth: isAuthenticated ? 168 : 24 }} />
 													</Stack>
 												)}
 												{lessonActivities.map((activity, activityIndex) => {
@@ -842,6 +869,20 @@ export default function LessonProjectsPage() {
 																backgroundColor: activityIndex % 2 === 0 ? '#ffffff' : '#f8fafc',
 															}}
 														>
+															<Checkbox
+																size="small"
+																checked={Array.isArray(selectedForSlideshowByProjectId[project.id]) && selectedForSlideshowByProjectId[project.id].includes(activityIndex)}
+																onChange={(event) => {
+																	setSelectedForSlideshowByProjectId((prev) => {
+																		const current = Array.isArray(prev[project.id]) ? prev[project.id] : [];
+																		const next = event.target.checked
+																			? [...new Set([...current, activityIndex])]
+																			: current.filter((idx) => idx !== activityIndex);
+																		return { ...prev, [project.id]: next };
+																	});
+																}}
+																inputProps={{ 'aria-label': `Add ${activity['lesson-name'] || 'activity'} to slideshow` }}
+															/>
 															<Typography sx={{ flex: 1, fontSize: '1rem', color: '#555' }} noWrap>
 																{activity['lesson-name'] || project.name}
 															</Typography>
