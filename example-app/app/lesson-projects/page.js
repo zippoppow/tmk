@@ -827,7 +827,7 @@ export default function LessonProjectsPage() {
 												{lessonActivities.length > 0 && (
 													<Stack
 														direction="row"
-														spacing={0.8}
+														spacing={0.4}
 														alignItems="flex-start"
 														sx={{
 															px: 1.2,
@@ -836,19 +836,18 @@ export default function LessonProjectsPage() {
 															backgroundColor: '#eef2ff',
 														}}
 													>
-														<Typography sx={{ flex: 1, fontSize: '1.1rem', fontWeight: 700, color: '#374151' }}>
+														<Typography sx={{ flex: 1, fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
 															Activity
 														</Typography>
-														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', minWidth: 230 }}>
+														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left', minWidth: 180 }}>
 															Activity Template
 														</Typography>
-														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', minWidth: 120 }}>
+														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'right', minWidth: 140 }}>
 															Date Synced
 														</Typography>
-														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', minWidth: 120 }}>
-															Activity ID
+														<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'right', minWidth: 140 }}>
+															Manage Activity
 														</Typography>
-														<Box sx={{ minWidth: isAuthenticated ? 168 : 24 }} />
 													</Stack>
 												)}
 												{lessonActivities.map((activity, activityIndex) => {
@@ -860,7 +859,7 @@ export default function LessonProjectsPage() {
 														<Stack
 															key={draftKey}
 															direction="row"
-															spacing={0.8}
+															spacing={0.4}
 															alignItems="flex-start"
 															sx={{
 																px: 1.2,
@@ -883,52 +882,39 @@ export default function LessonProjectsPage() {
 																}}
 																inputProps={{ 'aria-label': `Add ${activity['lesson-name'] || 'activity'} to slideshow` }}
 															/>
-															<Typography sx={{ flex: 1, fontSize: '1rem', color: '#555' }} noWrap>
+															<Typography sx={{ textAlign: 'left', flex: 1, fontSize: '1rem', color: '#555' }} noWrap>
 																{activity['lesson-name'] || project.name}
 															</Typography>
-															<Typography sx={{ fontSize: '0.95rem', color: '#6b7280', minWidth: 230 }} noWrap>
+															<Typography sx={{ textAlign: 'left', fontSize: '0.95rem', color: '#6b7280', minWidth: 180 }} noWrap>
 																{activityType}
 															</Typography>
-															<Typography sx={{ fontSize: '0.95rem', color: '#888', minWidth: 120 }}>
+															<Typography sx={{ textAlign: 'right', fontSize: '0.95rem', color: '#888', minWidth: 140 }}>
 																{formatActivityDate(activity['modified-at']) || '--'}
 															</Typography>
-															{activity?.id ? (
-																<Chip
-																	size="small"
-																	label={`ID: ${String(activity.id).slice(0, 10)}...`}
-																	variant="outlined"
-																	sx={{ height: 20, minWidth: 120, fontSize: '0.68rem', color: '#4b5563', borderColor: '#cbd5e1' }}
-																/>
-															) : (
-																<Chip
-																	size="small"
-																	label="ID: pending"
-																	variant="outlined"
-																	sx={{ height: 20, minWidth: 120, fontSize: '0.68rem', color: '#9ca3af', borderColor: '#e5e7eb' }}
-																/>
-															)}
-															{isAuthenticated && (
-																<Button
-																	size="small"
-																	variant="contained"
-																	disabled={!canOpenType}
-																	onClick={() => handleOpenActivity(project, activity, activityIndex)}
-																	sx={{ textTransform: 'none', minWidth: 60 }}
-																>
-																	Open
-																</Button>
-															)}
-															{isAuthenticated && (
-																<Button
-																	size="small"
-																	variant="contained"
-																	color="error"
-																	onClick={() => handleDeleteActivity(project.id, activityIndex)}
-																	sx={{ textTransform: 'none', minWidth: 52 }}
-																>
-																	Delete
-																</Button>
-															)}
+															<Stack direction="row" spacing={0.5} sx={{ minWidth: 140, justifyContent: 'flex-end' }}>
+																{isAuthenticated && (
+																	<Button
+																		size="small"
+																		variant="contained"
+																		disabled={!canOpenType}
+																		onClick={() => handleOpenActivity(project, activity, activityIndex)}
+																		sx={{ textTransform: 'none', minWidth: 60 }}
+																	>
+																		Open
+																	</Button>
+																)}
+																{isAuthenticated && (
+																	<Button
+																		size="small"
+																		variant="contained"
+																		color="error"
+																		onClick={() => handleDeleteActivity(project.id, activityIndex)}
+																		sx={{ textTransform: 'none', minWidth: 52 }}
+																	>
+																		Delete
+																	</Button>
+																)}
+															</Stack>
 														</Stack>
 													);
 												})}
