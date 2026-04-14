@@ -173,6 +173,7 @@ export default function ImportMorphemesPage() {
   };
 
   return (
+    <>
       <Box component="main" sx={{ py: 4, bgcolor: 'background.default', minHeight: '100vh' }}>
         <Container maxWidth="lg">
           <Card sx={{ boxShadow: 3, mb: 3 }}>
@@ -408,5 +409,6 @@ export default function ImportMorphemesPage() {
           </Button>
         </DialogActions>
       </Dialog>
+    </>
   );
 }
