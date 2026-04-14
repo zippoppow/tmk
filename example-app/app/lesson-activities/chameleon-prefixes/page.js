@@ -156,7 +156,7 @@ export default function ChameleonPrefixesPage() {
 		closeContextMenu();
 	};
 
-	const handleDownloadPdfLandscape = () => {
+	const handleDownloadPdfCustom = () => {
 		const escapeHtml = (value) => String(value || '')
 			.replace(/&/g, '&amp;')
 			.replace(/</g, '&lt;')
@@ -174,7 +174,7 @@ export default function ChameleonPrefixesPage() {
 			))
 			.join('');
 
-		const printWindow = window.open('', '', 'width=1400,height=900');
+		const printWindow = window.open('', '', 'width=1100,height=1400');
 		if (!printWindow) {
 			showNotice('error', 'Unable to open print window. Please allow popups and try again.');
 			return;
@@ -187,23 +187,27 @@ export default function ChameleonPrefixesPage() {
 	<title>${escapeHtml(activityName || DEFAULT_ACTIVITY_NAME)}</title>
 	<style>
 		* { box-sizing: border-box; margin: 0; padding: 0; }
-		@page { size: letter landscape; margin: 0.22in; }
+		@page { size: letter portrait; margin: 0.4in; }
 		html, body {
 			width: 100%;
 			height: 100%;
-			overflow: hidden;
+			overflow: visible;
 			font-family: 'Lato', 'Segoe UI', Arial, sans-serif;
 			color: #111827;
 			background: #fff;
 		}
 		.sheet {
 			width: 100%;
-			min-height: 100%;
+			min-height: auto;
 			display: flex;
 			flex-direction: column;
-			gap: 10px;
+			gap: 12px;
 			page-break-inside: avoid;
 			break-inside: avoid;
+		}
+		@media print {
+			@page { size: letter portrait; margin: 0.4in; }
+			body { padding: 0; }
 		}
 		.header {
 			display: grid;
@@ -299,12 +303,7 @@ export default function ChameleonPrefixesPage() {
 </html>`);
 
 		printWindow.document.close();
-		printWindow.onload = () => {
-			setTimeout(() => {
-				printWindow.print();
-				printWindow.close();
-			}, 200);
-		};
+		printWindow.onload = () => setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
 	};
 
 	return (
@@ -323,7 +322,7 @@ export default function ChameleonPrefixesPage() {
 			handleAddToProject={handleAddToProject}
 			handleSave={handleSave}
 			handleSaveAndReturn={handleSaveAndReturn}
-			handleDownloadPdf={handleDownloadPdfLandscape}
+			handleDownloadPdf={handleDownloadPdfCustom}
 			standaloneActivityId={standaloneActivityId}
 			handleSaveStandalone={handleSaveStandalone}
 			handleDeleteStandalone={handleDeleteStandalone}
