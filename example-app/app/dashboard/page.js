@@ -7,6 +7,7 @@ import {
     Alert,
     Container,
     Box,
+    Grid,
     Typography,
     Button,
     Paper,
@@ -296,24 +297,15 @@ export default function DashboardPage() {
                 <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
                     Lesson Activities
                 </Typography>
-                <Box
-                    sx={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: { xs: 2, md: 3 },
-                        alignItems: 'flex-start',
-                    }}
-                >
-                    {/* Selector — left column on desktop */}
-                    <Box sx={{ flex: '1 1 420px', minWidth: 0, maxWidth: '100%' }}>
+                <Grid container spacing={{ xs: 2, md: 3 }} alignItems="flex-start">
+                    <Grid item xs={12} md={5} lg={4}>
                         <LessonActivitySelector
                             activities={lessonActivities}
                             onOpen={handleCreateNewActivity}
                         />
-                    </Box>
+                    </Grid>
 
-                    {/* Standalone activities list — right column on desktop */}
-                    <Box sx={{ flex: '1 1 520px', minWidth: 0, maxWidth: '100%' }}>
+                    <Grid item xs={12} md={7} lg={8}>
                         <Typography variant="subtitle1" sx={{ mb: 1.5 }}>
                             Your Standalone Lesson Activities
                         </Typography>
@@ -374,8 +366,8 @@ export default function DashboardPage() {
                                 })}
                             </Stack>
                         )}
-                    </Box>
-                </Box>
+                    </Grid>
+                </Grid>
             </Box>
 
         </Container>
