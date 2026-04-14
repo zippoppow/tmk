@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Box, Button, Container, Paper, Stack, Typography } from '@mui/material';
 import { getAllStoredProjects } from '../../components/lessonActivityHelpers';
 import { getProjectLessonActivities } from '../../components/projectManagerModel';
@@ -31,6 +31,7 @@ function parseIndices(rawIndices) {
 	if (!rawIndices) {
 		return [];
 	}
+
 	return [...new Set(
 		String(rawIndices)
 			.split(',')
@@ -41,16 +42,20 @@ function parseIndices(rawIndices) {
 
 export default function LessonActivitySlideshowPage() {
 	const router = useRouter();
-	const searchParams = useSearchParams();
 	const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 	const [isClient, setIsClient] = useState(false);
+	const [projectId, setProjectId] = useState('');
+	const [selectedIndices, setSelectedIndices] = useState([]);
 
 	useEffect(() => {
 		setIsClient(true);
+		if (typeof window === 'undefined') {
+			return;
+		}
+		const params = new URLSearchParams(window.location.search);
+		setProjectId(String(params.get('projectId') || '').trim());
+		setSelectedIndices(parseIndices(params.get('indices')));
 	}, []);
-
-	const projectId = String(searchParams.get('projectId') || '').trim();
-	const selectedIndices = useMemo(() => parseIndices(searchParams.get('indices')), [searchParams]);
 
 	const slideshow = useMemo(() => {
 		if (!isClient || typeof window === 'undefined') {
