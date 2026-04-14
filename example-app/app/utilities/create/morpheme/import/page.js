@@ -408,6 +408,5 @@ export default function ImportMorphemesPage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </ThemeProvider>
   );
 }

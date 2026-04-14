@@ -355,6 +355,5 @@ export default function ImportWordsPage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </ThemeProvider>
   );
 }
