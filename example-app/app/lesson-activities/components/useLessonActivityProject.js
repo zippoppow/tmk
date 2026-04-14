@@ -218,7 +218,7 @@ export function useLessonActivityProject({
 		window.location.href = buildTeachableStartUrl(projectApiOrigin, window.location.href);
 	};
 
-	const handleSaveAndReturn = async () => {
+	const handleSave = async () => {
 		if (!projectId || !Number.isInteger(activityIndex)) {
 			showNotice('error', 'No project context available.');
 			return;
@@ -289,13 +289,17 @@ export function useLessonActivityProject({
 				saveStoredProjects(projects);
 				showNotice('success', 'Saved locally.');
 			}
-
-			router.push('/lesson-projects');
 		} catch (error) {
-			console.error('Save and return failed:', error);
+			console.error('Save failed:', error);
 			showNotice('error', 'Could not save lesson activity.');
+		} finally {
 			setIsSaving(false);
 		}
+	};
+
+	const handleSaveAndReturn = async () => {
+		await handleSave();
+		router.push('/lesson-projects');
 	};
 
 	const handleSaveStandalone = async () => {
@@ -406,6 +410,7 @@ export function useLessonActivityProject({
 		isSaving,
 		runAuthCheck,
 		handleLoginLogout,
+		handleSave,
 		handleSaveAndReturn,
 		standaloneActivityId,
 		handleSaveStandalone,

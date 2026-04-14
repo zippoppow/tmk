@@ -397,7 +397,7 @@ export default function ChameleonPrefixesPage() {
 		}
 	};
 
-	const handleSaveAndReturn = async () => {
+	const handleSave = async () => {
 		if (!projectId || !Number.isInteger(activityIndex)) {
 			showNotice('error', 'No project context available.');
 			return;
@@ -468,13 +468,17 @@ export default function ChameleonPrefixesPage() {
 				saveStoredProjects(projects);
 				showNotice('success', 'Saved locally.');
 			}
-
-			router.push('/lesson-projects');
 		} catch (error) {
-			console.error('Save and return failed:', error);
+			console.error('Save failed:', error);
 			showNotice('error', 'Could not save lesson activity.');
+		} finally {
 			setIsSaving(false);
 		}
+	};
+
+	const handleSaveAndReturn = async () => {
+		await handleSave();
+		router.push('/lesson-projects');
 	};
 
 	const openContextMenu = (event, targetType, index = -1, field = '') => {

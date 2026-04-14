@@ -27,6 +27,7 @@ export default function ActivityShell({
 	handleLoginLogout,
 	handleGoToLessonProjects,
 	handleAddToProject,
+	handleSave,
 	handleSaveAndReturn,
 	handleDownloadPdf,
 	standaloneActivityId,
@@ -157,15 +158,26 @@ export default function ActivityShell({
 						</>
 					)}
 					{projectId && (
-						<Button
-							variant="contained"
-							color="primary"
-							disabled={isSaving}
-							onClick={handleSaveAndReturn}
-							sx={{ textTransform: 'none' }}
-						>
-							{isSaving ? 'Saving...' : 'Save & Return'}
-						</Button>
+						<>
+							<Button
+								variant="contained"
+								color="primary"
+								disabled={isSaving}
+								onClick={handleSave}
+								sx={{ textTransform: 'none' }}
+							>
+								{isSaving ? 'Saving...' : 'Save'}
+							</Button>
+							<Button
+								variant="outlined"
+								color="primary"
+								disabled={isSaving}
+								onClick={handleSaveAndReturn}
+								sx={{ textTransform: 'none' }}
+							>
+								Back to Projects
+							</Button>
+						</>
 					)}
 					<Button variant="contained" color="success" onClick={handleDownloadPdf} sx={{ textTransform: 'none' }}>
 						Download as PDF
