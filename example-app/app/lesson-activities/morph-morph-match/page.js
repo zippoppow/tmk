@@ -186,7 +186,7 @@ export default function MorphMorphMatchPage() {
       <div class="instructions">Use the top grid to explore morph forms, then pair related morph words below.</div>
     </div>
     <div class="header-column">
-      <img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit" />
+      <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
     </div>
   </div>
   <div class="col-labels">

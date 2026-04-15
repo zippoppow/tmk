@@ -171,7 +171,7 @@ export default function WordBuilderPage() {
       <div class="instructions">Build words by combining prefixes, base elements, and suffixes.</div>
     </div>
     <div class="header-column">
-      <img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit" />
+      <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
     </div>
   </div>
   <div class="parts-grid">

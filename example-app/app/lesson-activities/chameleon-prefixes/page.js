@@ -293,7 +293,7 @@ export default function ChameleonPrefixesPage() {
 				<div class="morpheme">Morpheme(s): <span class="morpheme-value">${escapeHtml(data.morpheme)}</span></div>
 				<div class="instructions">Fill-in the correct form of the morpheme and read the following words.</div>
 			</div>
-			<img class="logo" src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit" />
+			<img class="logo" src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
 		</header>
 		<section class="grid">${gridHtml}</section>
 		<section class="pairs">${pairRowsHtml}</section>

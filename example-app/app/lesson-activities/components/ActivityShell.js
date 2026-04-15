@@ -13,6 +13,7 @@ import {
 	TextField,
 	Typography,
 } from '@mui/material';
+import TmkLogo from '../../components/TmkLogo';
 
 export default function ActivityShell({
 	title,
@@ -259,7 +260,7 @@ export default function ActivityShell({
 							<Stack spacing={0.8}>
 								<Typography sx={{ fontWeight: 800, fontSize: '1.6rem', letterSpacing: '0.08em' }}>{title}</Typography>
 								<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-									<Typography sx={{ fontStyle: 'italic', fontSize: '1.1rem' }}>Morpheme(s):</Typography>
+									<Typography sx={{ fontStyle: 'italic', fontSize: '1.5rem', fontFamily: "'Lato', 'Segoe UI', Arial, sans-serif;", color: '#000000 ' }}>Morpheme(s):</Typography>
 									<TextField
 										variant="standard"
 										value={morpheme}
@@ -268,8 +269,8 @@ export default function ActivityShell({
 										sx={{ minWidth: 180 }}
 										inputProps={{
 											style: {
-												fontFamily: 'Courier New, monospace',
-												fontSize: '1.1rem',
+												fontFamily: 'Trebuchet MS, sans-serif',
+												fontSize: '2rem',
 												color: '#4020A7',
 											},
 										}}
@@ -278,12 +279,7 @@ export default function ActivityShell({
 								<Typography color="text.secondary">{instructions}</Typography>
 							</Stack>
 							<Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, alignItems: 'flex-start' }}>
-								<Box
-									component="img"
-									src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png"
-									alt="The Morphology Kit"
-									sx={{ width: '100%', maxWidth: 200, height: 'auto' }}
-								/>
+								<TmkLogo renderMode="img" sx={{ maxWidth: 200 }} />
 							</Box>
 						</Box>
 

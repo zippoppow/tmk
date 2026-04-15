@@ -117,7 +117,20 @@ export const button = {
     containedError: generateContainedButton("red"),
     containedInfo: generateContainedButton("blue"),
     containedWarning: generateContainedButton("yellow"),
-    outlinedPrimary: generateOutlinedButton("blue"),
+    outlinedPrimary: {
+      ...generateOutlinedButton("blue"),
+      backgroundColor: palette.common.white,
+
+      "&:hover": {
+        ...generateOutlinedButton("blue")["&:hover"],
+        backgroundColor: palette.blue[50],
+      },
+
+      "&:active": {
+        ...generateOutlinedButton("blue")["&:active"],
+        backgroundColor: palette.blue[100],
+      },
+    },
     outlinedSecondary: generateOutlinedButton("grey"),
     outlinedSuccess: generateOutlinedButton("green"),
     outlinedError: generateOutlinedButton("red"),

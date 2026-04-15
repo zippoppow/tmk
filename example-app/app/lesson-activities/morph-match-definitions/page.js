@@ -198,7 +198,7 @@ export default function MorphMatchDefinitionsPage() {
       <div class="instructions">Match each morph-based word to the correct numbered definition.</div>
     </div>
     <div class="header-column">
-      <img src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png" alt="The Morphology Kit" />
+      <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
     </div>
   </div>
   <div class="content">
@@ -266,13 +266,13 @@ export default function MorphMatchDefinitionsPage() {
 									variant="standard"
 									value={word}
 									onChange={(event) => setListValue('words', index, event.target.value)}
-									inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+									inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 									sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 								/>
 								<TextField
 									value={data.numbers[index] || ''}
 									onChange={(event) => setListValue('numbers', index, event.target.value)}
-									inputProps={{ style: { textAlign: 'center', fontWeight: 700 } }}
+									inputProps={{ style: { textAlign: 'center', fontWeight: 700, fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000'  } }}
 									sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#ddd', borderWidth: '1px' } }}
 								/>
 								<Box sx={{ display: 'grid', gridTemplateColumns: '32px 1fr', gap: 1, alignItems: 'end' }}>
@@ -281,6 +281,7 @@ export default function MorphMatchDefinitionsPage() {
 										variant="standard"
 										multiline
 										minRows={2}
+										maxRows={2}
 										value={data.definitions[index] || ''}
 										onChange={(event) => setListValue('definitions', index, event.target.value)}
 										inputProps={{ style: { minHeight: '1em', maxHeight: '2.5em', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}

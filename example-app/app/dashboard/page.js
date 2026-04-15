@@ -26,6 +26,7 @@ import {
 } from '../components/lessonActivityHelpers';
 import AuthDebugPanel from '../components/AuthDebugPanel';
 import LessonActivitySelector from '../components/LessonActivitySelector';
+import TmkLogo from '../components/TmkLogo';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -268,12 +269,7 @@ export default function DashboardPage() {
         <Container maxWidth="lg" sx={{ py: 4 }}>
             <AuthDebugPanel />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                <Box
-					component="img"
-					src="https://uploads.teachablecdn.com/attachments/fbdb7d04f47642b38193261d6b2e3101.png"
-					alt="The Morphology Kit"
-					sx={{ width: '100%', maxWidth: 200, height: 'auto', mb: 2 }}
-				/>
+                <TmkLogo sx={{ mb: 2 }} priority />
                 <Typography variant="h4" component="h1">
                    DIY Dashboard
                 </Typography>
