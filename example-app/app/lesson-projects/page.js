@@ -14,6 +14,11 @@ import {
 	Paper,
 	Snackbar,
 	Stack,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableRow,
 	TextField,
 	Typography,
 } from '@mui/material';
@@ -823,110 +828,120 @@ export default function LessonProjectsPage() {
 											)}
 											</Stack>
 
-											<Box sx={{ display: 'grid', gap: 0.8 }}>
-												{lessonActivities.length > 0 && (
-													<Box
-														sx={{
-															display: 'grid',
-															gridTemplateColumns: 'minmax(220px, 1fr) max-content minmax(120px, 1fr) max-content',
-															columnGap: 1,
-															alignItems: 'center',
-															px: 1.2,
-															py: 0.9,
-															borderRadius: 1,
-															backgroundColor: '#eef2ff',
-														}}
-													>
-														<Stack direction="row" spacing={0.4} alignItems="flex-start" sx={{ minWidth: 0 }}>
-															<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
-																Activity
-															</Typography>
-														</Stack>
-														<Typography sx={{ fontSize: '0.95rem', color: '#6b7280', textAlign: 'left' }} noWrap>
-															Activity Template
-														</Typography>
-														<Typography sx={{ justifySelf: 'end', width: '100%', maxWidth: 170, fontSize: '0.95rem', color: '#888', textAlign: 'left' }}>
-															Date Synced
-														</Typography>
-														<Stack direction="row" spacing={0.5} justifyContent="flex-end" sx={{ justifySelf: 'end', width: '100%', maxWidth: 170 }}>
-															<Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
-																Manage
-															</Typography>
-														</Stack>
-													</Box>
-												)}
-												{lessonActivities.map((activity, activityIndex) => {
-													const draftKey = `${project.id}:${activityIndex}`;
-													const activityType = String(activity['tmk-template'] || 'unknown');
-													const canOpenType = Boolean(getLessonActivityRoute(activityType));
-
-													return (
-														<Box
-															key={draftKey}
-															sx={{
-																display: 'grid',
-																gridTemplateColumns: 'minmax(220px, 1fr) max-content minmax(120px, 1fr) max-content',
-																columnGap: 1,
-																alignItems: 'center',
-																px: 1.2,
-																py: 0.9,
-																borderRadius: 1,
-																backgroundColor: activityIndex % 2 === 0 ? '#ffffff' : '#f8fafc',
-															}}
-														>
-															<Stack direction="row" spacing={0.4} alignItems="flex-start" sx={{ minWidth: 0 }}>
-																<Checkbox
-																	size="small"
-																	checked={Array.isArray(selectedForSlideshowByProjectId[project.id]) && selectedForSlideshowByProjectId[project.id].includes(activityIndex)}
-																	onChange={(event) => {
-																		setSelectedForSlideshowByProjectId((prev) => {
-																			const current = Array.isArray(prev[project.id]) ? prev[project.id] : [];
-																			const next = event.target.checked
-																				? [...new Set([...current, activityIndex])]
-																				: current.filter((idx) => idx !== activityIndex);
-																			return { ...prev, [project.id]: next };
-																		});
-																	}}
-																	inputProps={{ 'aria-label': `Add ${activity['lesson-name'] || 'activity'} to slideshow` }}
-																/>
-																<Typography sx={{ fontSize: '1rem', color: '#555', textAlign: 'left' }} noWrap>
-																	{activity['lesson-name'] || project.name}
+											{lessonActivities.length > 0 && (
+												<Table
+													size="small"
+													sx={{
+														borderCollapse: 'separate',
+														borderSpacing: '0 6px',
+														tableLayout: 'fixed',
+														'& .MuiTableCell-root': {
+															borderBottom: 'none',
+														},
+													}}
+												>
+													<TableHead>
+														<TableRow sx={{ backgroundColor: '#eef2ff' }}>
+															<TableCell sx={{ width: 290, py: 0.9, pl: 1.2, pr: 1, borderTopLeftRadius: 6, borderBottomLeftRadius: 6 }}>
+																<Typography sx={{ fontSize: '1.05rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
+																	Activity
 																</Typography>
-															</Stack>
-															<Typography sx={{ fontSize: '0.95rem', color: '#6b7280', textAlign: 'left' }} noWrap>
-																{activityType}
-															</Typography>
-															<Typography sx={{ justifySelf: 'end', width: '100%', maxWidth: 170, fontSize: '0.95rem', color: '#888', textAlign: 'left' }}>
-																{formatActivityDate(activity['modified-at']) || '--'}
-															</Typography>
-															<Stack direction="row" spacing={0.5} justifyContent="flex-end" sx={{ justifySelf: 'end', width: '100%', maxWidth: 170 }}>
-																{isAuthenticated && (
-																	<Button
-																		size="small"
-																		variant="contained"
-																		disabled={!canOpenType}
-																		onClick={() => handleOpenActivity(project, activity, activityIndex)}
-																		sx={{ textTransform: 'none', minWidth: 60 }}
-																	>
-																		Open
-																	</Button>
-																)}
-																{isAuthenticated && (
-																	<Button
-																		size="small"
-																		variant="contained"
-																		color="error"
-																		onClick={() => handleDeleteActivity(project.id, activityIndex)}
-																		sx={{ textTransform: 'none', minWidth: 52 }}
-																	>
-																		Delete
-																	</Button>
-																)}
-															</Stack>
-														</Box>
-													);
-												})}
-											</Box>
+															</TableCell>
+															<TableCell sx={{ width: 220, py: 0.9, px: 1 }}>
+																<Typography sx={{ fontSize: '1.05rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
+																	Activity Template
+																</Typography>
+															</TableCell>
+															<TableCell sx={{ width: '100%', py: 0.9, px: 0 }} />
+															<TableCell sx={{ width: 170, py: 0.9, px: 1, textAlign: 'right' }}>
+																<Typography sx={{ fontSize: '1.05rem', fontWeight: 700, color: '#374151', textAlign: 'left', display: 'inline-block', width: '100%', maxWidth: 170 }}>
+																	Date Synced
+																</Typography>
+															</TableCell>
+															<TableCell sx={{ width: 180, py: 0.9, pl: 1, pr: 1.2, textAlign: 'right', borderTopRightRadius: 6, borderBottomRightRadius: 6 }}>
+																<Typography sx={{ fontSize: '1.05rem', fontWeight: 700, color: '#374151', textAlign: 'left', display: 'inline-block', width: '100%', maxWidth: 180 }}>
+																	Manage
+																</Typography>
+															</TableCell>
+														</TableRow>
+													</TableHead>
+													<TableBody>
+														{lessonActivities.map((activity, activityIndex) => {
+															const draftKey = `${project.id}:${activityIndex}`;
+															const activityType = String(activity['tmk-template'] || 'unknown');
+															const canOpenType = Boolean(getLessonActivityRoute(activityType));
+
+															return (
+																<TableRow
+																	key={draftKey}
+																	sx={{
+																		backgroundColor: activityIndex % 2 === 0 ? '#ffffff' : '#f8fafc',
+																	}}
+																>
+																	<TableCell sx={{ py: 0.9, pl: 1.2, pr: 1, borderTopLeftRadius: 6, borderBottomLeftRadius: 6 }}>
+																		<Stack direction="row" spacing={0.4} alignItems="center" sx={{ minWidth: 0 }}>
+																			<Checkbox
+																				size="small"
+																				checked={Array.isArray(selectedForSlideshowByProjectId[project.id]) && selectedForSlideshowByProjectId[project.id].includes(activityIndex)}
+																				onChange={(event) => {
+																					setSelectedForSlideshowByProjectId((prev) => {
+																						const current = Array.isArray(prev[project.id]) ? prev[project.id] : [];
+																						const next = event.target.checked
+																							? [...new Set([...current, activityIndex])]
+																							: current.filter((idx) => idx !== activityIndex);
+																						return { ...prev, [project.id]: next };
+																					});
+																				}}
+																				inputProps={{ 'aria-label': `Add ${activity['lesson-name'] || 'activity'} to slideshow` }}
+																			/>
+																			<Typography sx={{ fontSize: '1rem', color: '#555', textAlign: 'left' }} noWrap>
+																				{activity['lesson-name'] || project.name}
+																			</Typography>
+																		</Stack>
+																	</TableCell>
+																	<TableCell sx={{ py: 0.9, px: 1 }}>
+																		<Typography sx={{ fontSize: '0.95rem', color: '#6b7280', textAlign: 'left' }} noWrap>
+																			{activityType}
+																		</Typography>
+																	</TableCell>
+																	<TableCell sx={{ py: 0.9, px: 0 }} />
+																	<TableCell sx={{ py: 0.9, px: 1, textAlign: 'right' }}>
+																		<Typography sx={{ fontSize: '0.95rem', color: '#888', textAlign: 'left', display: 'inline-block', width: '100%', maxWidth: 170 }}>
+																			{formatActivityDate(activity['modified-at']) || '--'}
+																		</Typography>
+																	</TableCell>
+																	<TableCell sx={{ py: 0.9, pl: 1, pr: 1.2, textAlign: 'right', borderTopRightRadius: 6, borderBottomRightRadius: 6 }}>
+																		<Stack direction="row" spacing={0.5} justifyContent="flex-end" sx={{ display: 'inline-flex', width: '100%', maxWidth: 180 }}>
+																			{isAuthenticated && (
+																				<Button
+																					size="small"
+																					variant="contained"
+																					disabled={!canOpenType}
+																					onClick={() => handleOpenActivity(project, activity, activityIndex)}
+																					sx={{ textTransform: 'none', minWidth: 60 }}
+																				>
+																					Open
+																				</Button>
+																			)}
+																			{isAuthenticated && (
+																				<Button
+																					size="small"
+																					variant="contained"
+																					color="error"
+																					onClick={() => handleDeleteActivity(project.id, activityIndex)}
+																					sx={{ textTransform: 'none', minWidth: 52 }}
+																				>
+																					Delete
+																				</Button>
+																			)}
+																		</Stack>
+																	</TableCell>
+																</TableRow>
+															);
+														})}
+													</TableBody>
+												</Table>
+											)}
 										</Box>
 									);
 								})}
