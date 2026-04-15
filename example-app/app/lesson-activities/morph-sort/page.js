@@ -245,7 +245,7 @@ export default function MorphSortPage() {
 								value={word}
 								onChange={(event) => setWord(index, event.target.value)}
 								onContextMenu={(event) => openSortMenu(event, index)}
-								inputProps={{ style: { fontFamily: 'Courier New, monospace', fontSize: '1.2em', color: '#4020A7' } }}
+								inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 							/>
 						))}

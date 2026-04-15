@@ -56,19 +56,19 @@ function RowGrid({ rows, onChange, reverse = false }) {
 					<TextField
 						value={row.left}
 						onChange={(event) => onChange(index, 'left', event.target.value)}
-						inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+						inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 						sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#4020A7', borderWidth: '2px' } }}
 					/>
 					<TextField
 						value={row.sum}
 						onChange={(event) => onChange(index, 'sum', event.target.value)}
-						inputProps={{ style: { textAlign: 'center', fontFamily: 'Courier New, monospace' } }}
+						inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 						sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#4020A7', borderWidth: '2px' } }}
 					/>
 					<TextField
 						value={row.right}
 						onChange={(event) => onChange(index, 'right', event.target.value)}
-						inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+						inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 						sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#4020A7', borderWidth: '2px' } }}
 					/>
 				</Box>

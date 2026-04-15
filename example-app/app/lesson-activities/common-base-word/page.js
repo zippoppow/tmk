@@ -232,7 +232,7 @@ export default function CommonBaseWordPage() {
 									onChange={(event) => setGridValue(index, event.target.value)}
 									onContextMenu={(event) => openGroupMenu(event, index)}
 									size="small"
-									inputProps={{ style: { textAlign: 'center', fontFamily: 'Courier New, monospace' } }}
+									inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 									sx={{
 										'& .MuiOutlinedInput-root': {
 											'& fieldset': { borderColor: '#4020A7', borderWidth: '2px', borderRadius: '4px' },

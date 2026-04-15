@@ -242,7 +242,7 @@ export default function MorphWhichPage() {
 								value={question}
 								onChange={(event) => setQuestion(index, event.target.value)}
 								placeholder="Question / root word"
-								inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+								inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 							/>
 							<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 1 }}>
@@ -257,7 +257,7 @@ export default function MorphWhichPage() {
 											onClick={() => handleOptionClick({ questionIndex: index, optionKey: key })}
 											onDoubleClick={() => handleOptionDoubleClick({ questionIndex: index, optionKey: key })}
 											placeholder={`Option ${String.fromCharCode(65 + keyIndex)}`}
-											inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+											inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 											sx={{
 												background: OPTION_STYLES[keyIndex].bg,
 												px: 0.75,

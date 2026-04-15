@@ -375,7 +375,9 @@ export default function IntroPage() {
 					inputProps={{
 						style: {
 							textAlign: 'center',
-							fontFamily: 'Courier New, monospace',
+							fontFamily: 'Trebuchet MS, sans-serif',
+							fontSize: '1.2rem',
+							color: '#000000',
 						},
 					}}
 				/>{' '}

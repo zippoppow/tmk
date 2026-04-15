@@ -263,7 +263,7 @@ export default function WordBuilderPage() {
 							key={index}
 							value={value}
 							onChange={(event) => setList('builtWords', index, event.target.value)}
-							inputProps={{ style: { fontFamily: 'Courier New, monospace', textAlign: 'center' } }}
+						inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000', textAlign: 'center' } }}
 							sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#4020A7', borderWidth: '2px' } }}
 						/>
 					))}

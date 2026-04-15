@@ -258,7 +258,7 @@ export default function MorphMorphMatchPage() {
 									onChange={(event) => setGridValue(index, event.target.value)}
 									onContextMenu={(event) => openGridMenu(event, { targetType: 'grid', index })}
 									size="small"
-									inputProps={{ style: { textAlign: 'center', fontFamily: 'Courier New, monospace' } }}
+								inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 									sx={{
 										'& .MuiOutlinedInput-root': {
 											'& fieldset': { borderColor: '#4020A7', borderWidth: '2px' },
@@ -347,14 +347,14 @@ export default function MorphMorphMatchPage() {
 							value={pair.left}
 							onChange={(event) => setPairValue(index, 'left', event.target.value)}
 							inputRef={(el) => { pairLeftRefs.current[index] = el; }}
-							inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+							inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 							sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 						/>
 						<TextField
 							variant="standard"
 							value={pair.right}
 							onChange={(event) => setPairValue(index, 'right', event.target.value)}
-							inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+							inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 							sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 						/>
 					</Box>

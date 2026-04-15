@@ -168,7 +168,7 @@ export default function FillInTheMorphParagraphsPage() {
 							value={data.newWord}
 							onChange={(event) => setData((prev) => ({ ...prev, newWord: event.target.value }))}
 							placeholder="Add a word..."
-							inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+							inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 							sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 						/>
 						<Button variant="contained" onClick={handleAddWord} sx={{ textTransform: 'none' }}>Add</Button>

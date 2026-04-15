@@ -283,7 +283,7 @@ export default function MorphMatchDefinitionsPage() {
 										minRows={2}
 										value={data.definitions[index] || ''}
 										onChange={(event) => setListValue('definitions', index, event.target.value)}
-										inputProps={{ style: { minHeight: '1em', maxHeight: '2.5em', fontFamily: 'Courier New, monospace' } }}
+										inputProps={{ style: { minHeight: '1em', maxHeight: '2.5em', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 										sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 									/>
 								</Box>

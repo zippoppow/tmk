@@ -45,7 +45,7 @@ function InputColumn({ title, values, onChange, onClear, variant = 'boxed' }) {
 						fullWidth
 						variant={variant === 'underlined' ? 'standard' : 'standard'}
 						InputProps={{ disableUnderline: variant !== 'underlined' }}
-						inputProps={{ style: { minHeight: 56, fontFamily: 'Courier New, monospace' } }}
+							inputProps={{ style: { minHeight: 56, fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 						sx={variant === 'underlined'
 							? { '& .MuiInputBase-root::before': { borderBottom: '2px solid #4020A7' } }
 							: {}}

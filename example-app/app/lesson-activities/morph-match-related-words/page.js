@@ -202,7 +202,7 @@ export default function MorphMatchRelatedWordsPage() {
 							value={value}
 							onChange={(event) => setListValue('focusWords', index, event.target.value)}
 							onContextMenu={(event) => openFocusMenu(event, { targetType: 'focusWord', index })}
-							inputProps={{ style: { fontFamily: 'Courier New, monospace', width: '90%' } }}
+							inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000', width: '90%' } }}
 							sx={{ backgroundColor: FOCUS_COLORS[index], borderRadius: 0.5, px: 1, '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 						/>
 					))}
@@ -220,7 +220,7 @@ export default function MorphMatchRelatedWordsPage() {
 							value={value}
 							onChange={(event) => setListValue('relatedWords', index, event.target.value)}
 							onDoubleClick={() => handleClearRelatedColor(index)}
-							inputProps={{ style: { fontFamily: 'Courier New, monospace', width: '90%' } }}
+							inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000', width: '90%' } }}
 							sx={{ backgroundColor: data.relatedWordColors[index] || 'transparent', borderRadius: 0.5, px: 1, '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 						/>
 					))}
