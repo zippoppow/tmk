@@ -823,7 +823,7 @@ export default function LessonProjectsPage() {
 											)}
 											{lessonActivities.length > 0 && (
 												<Button size="small" variant="outlined" onClick={() => handleLaunchSlideshow(project.id)} sx={{ textTransform: 'none' }}>
-													Start Slideshow
+													Present Lesson Activities
 												</Button>
 											)}
 											</Stack>

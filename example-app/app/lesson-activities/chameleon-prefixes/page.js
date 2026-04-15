@@ -359,7 +359,7 @@ export default function ChameleonPrefixesPage() {
 										style: {
 											textAlign: 'center',
 											fontFamily: 'Courier New, monospace',
-											fontSize: '0.9rem',
+											fontSize: '1.2rem',
 										},
 									}}
 									sx={{
