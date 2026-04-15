@@ -162,11 +162,11 @@ export default function ActivityShell({
 
 				{projectId && (
 					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea', }}>
-						<Typography sx={{ mb: 1.5, color: '#4a5568', fontWeight: 700 }}>
+						<Typography sx={{ mb: 1.5, color: '#000000', fontWeight: 700 }}>
 							PROJECT: {projectName}
 						</Typography>
-						<Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap' }}>
-							<Typography sx={{ mb: 1, color: '#4a5568', fontWeight: 700 }}>
+						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+							<Typography sx={{ mb: 0.8, color: '#011436', fontWeight: 700 }}>
 								{`${title} Activity Name: `}
 							</Typography>
 							<TextField
