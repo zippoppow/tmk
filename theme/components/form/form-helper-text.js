@@ -5,6 +5,7 @@ export const formHelperText = {
     root: {
       margin: "4px 0 0",
       fontSize: typography.fontSizeSM,
+      fontFamily: "'Trebuchet MS', sans-serif",
       color: palette.grey[900],
 
       "&.Mui-disabled": {

@@ -358,8 +358,9 @@ export default function ChameleonPrefixesPage() {
 									inputProps={{
 										style: {
 											textAlign: 'center',
-											fontFamily: 'Courier New, monospace',
+												fontFamily: 'Trebuchet MS, sans-serif',
 											fontSize: '1.2rem',
+												color: '#000000',
 										},
 									}}
 									sx={{
@@ -401,7 +402,7 @@ export default function ChameleonPrefixesPage() {
 											onChange={(event) => handlePairChange(pairIndex, 'prefix', event.target.value)}
 											onContextMenu={(event) => openContextMenu(event, 'pair', pairIndex, 'prefix')}
 											sx={{ width: '33%' }}
-											inputProps={{ style: { fontFamily: 'Courier New, monospace', fontSize: '1rem' } }}
+											inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 										/>
 										<TextField
 											variant="standard"
@@ -409,7 +410,7 @@ export default function ChameleonPrefixesPage() {
 											onChange={(event) => handlePairChange(pairIndex, 'word', event.target.value)}
 											onContextMenu={(event) => openContextMenu(event, 'pair', pairIndex, 'word')}
 											sx={{ width: '66%' }}
-											inputProps={{ style: { fontFamily: 'Courier New, monospace', fontSize: '1rem' } }}
+											inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 										/>
 									</Box>
 								</Box>

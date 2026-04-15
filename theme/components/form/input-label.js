@@ -4,6 +4,7 @@ export const inputLabel = {
   styleOverrides: {
     root: {
       fontSize: typography.fontSizeMD,
+      fontFamily: "'Trebuchet MS', sans-serif",
       lineHeight: 1.5,
       color: palette.grey[600],
       transform: "translate(18px, 16px)",
@@ -29,6 +30,7 @@ export const inputLabel = {
 
     shrink: {
       fontSize: typography.fontSizeSM,
+      fontFamily: "'Trebuchet MS', sans-serif",
       color: palette.grey[600],
       fontWeight: typography.fontWeightMedium,
       transform: "translate(18px, 6px)",
@@ -39,6 +41,7 @@ export const inputLabel = {
     },
 
     standard: {
+      fontFamily: "'Trebuchet MS', sans-serif",
       color: palette.grey[600],
       transform: "translate(18px, 16px)",
 

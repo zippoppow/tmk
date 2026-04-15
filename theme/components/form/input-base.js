@@ -6,6 +6,7 @@ export const inputBase = {
       minHeight: "56px",
       padding: "10px 18px",
       color: palette.grey[900],
+      fontFamily: "'Trebuchet MS', sans-serif",
       overflow: "hidden",
       transition: "all 200ms ease-in",
 
@@ -59,6 +60,7 @@ export const inputBase = {
 
     input: {
       fontSize: typography.fontSizeMD,
+      fontFamily: "'Trebuchet MS', sans-serif",
       color: palette.grey[900],
     },
   },
