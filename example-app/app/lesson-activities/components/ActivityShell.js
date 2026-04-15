@@ -161,17 +161,22 @@ export default function ActivityShell({
 				</Stack>
 
 				{projectId && (
-					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
-						<Typography sx={{ mb: 1.2, color: '#4a5568', fontWeight: 700 }}>
+					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea', }}>
+						<Typography sx={{ mb: 1.5, color: '#4a5568', fontWeight: 700 }}>
 							PROJECT: {projectName}
 						</Typography>
-						<TextField
-							size="small"
-							label={`${title} Activity Name`}
-							value={activityName}
-							onChange={(event) => setActivityName(event.target.value)}
-							fullWidth
-						/>
+						<Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap' }}>
+							<Typography sx={{ mb: 1.2, color: '#4a5568', fontWeight: 700 }}>
+								{`${title} Activity Name: `}
+							</Typography>
+							<TextField
+								size="small"
+								value={activityName}
+								onChange={(event) => setActivityName(event.target.value)}
+								fullWidth
+							/>
+						</Box>
+						
 					</Box>
 				)}
 
