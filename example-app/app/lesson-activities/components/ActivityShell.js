@@ -166,14 +166,14 @@ export default function ActivityShell({
 							PROJECT: {projectName}
 						</Typography>
 						<Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap' }}>
-							<Typography sx={{ mb: 1.2, color: '#4a5568', fontWeight: 700 }}>
+							<Typography sx={{ mb: 1, color: '#4a5568', fontWeight: 700 }}>
 								{`${title} Activity Name: `}
 							</Typography>
 							<TextField
 								size="small"
 								value={activityName}
 								onChange={(event) => setActivityName(event.target.value)}
-								fullWidth
+								sx={{ minWidth: 180 }}
 							/>
 						</Box>
 						
