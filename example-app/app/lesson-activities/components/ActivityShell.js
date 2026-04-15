@@ -121,9 +121,77 @@ export default function ActivityShell({
 					<Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
 						{authUser ? 'Logout from Teachable' : 'Login with Teachable'}
 					</Button>
-					{/* <Button variant="outlined" onClick={handleGoToLessonProjects} sx={outlinedControlButtonSx}>
-						Lesson Projects
-					</Button> */}
+					<Box
+						sx={{
+							display: 'inline-flex',
+							alignItems: 'center',
+							px: 1.5,
+							py: 0.75,
+							borderRadius: 1,
+							backgroundColor: authUser ? '#d4edda' : authFromSuccessRedirect ? '#cce5ff' : '#fff3cd',
+							color: authUser ? '#155724' : authFromSuccessRedirect ? '#004085' : '#856404',
+							border: `1px solid ${authUser ? '#c3e6cb' : authFromSuccessRedirect ? '#b8daff' : '#ffeaa7'}`,
+							fontWeight: 700,
+							fontSize: '0.85rem',
+						}}
+					>
+						{authLabel}
+					</Box>
+					{!authLoading && !authUser && authFromSuccessRedirect && (
+						<Button
+							size="small"
+							variant="outlined"
+							sx={{ ...outlinedControlButtonSx, fontSize: '0.8rem' }}
+							onClick={runAuthCheck}
+						>
+							Retry session check
+						</Button>
+					)}
+					{projectId && (
+						<Button
+							variant="outlined"
+							color="primary"
+							disabled={isSaving}
+							onClick={handleSaveAndReturn}
+							sx={{ textTransform: 'none' }}
+						>
+							Back to Projects
+						</Button>
+					)}
+				</Stack>
+
+				{projectId && (
+					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
+						<Typography sx={{ fontSize: '1rem', color: '#4a5568', textTransform: 'uppercase', fontWeight: 700 }}>
+							Project
+						</Typography>
+						<Typography sx={{ mb: 1.2, fontWeight: 700 }}>{projectName}</Typography>
+						<TextField
+							size="small"
+							label={`${title} Activity Name`}
+							value={activityName}
+							onChange={(event) => setActivityName(event.target.value)}
+							fullWidth
+						/>
+					</Box>
+				)}
+
+				{!projectId && (
+					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
+						<Typography sx={{ fontSize: '1rem', color: '#4a5568', textTransform: 'uppercase', fontWeight: 700 }}>
+							Standalone  Activity: {title}
+						</Typography>
+						<TextField
+							size="small"
+							label="Activity Name"
+							value={activityName}
+							onChange={(event) => setActivityName(event.target.value)}
+							fullWidth
+						/>
+					</Box>
+				)}
+
+				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
 					{!projectId && (
 						<>
 							<Button
@@ -168,82 +236,13 @@ export default function ActivityShell({
 								onClick={handleSave}
 								sx={{ textTransform: 'none' }}
 							>
-								{isSaving ? 'Saving...' : 'Save'}
-							</Button>
-							<Button
-								variant="outlined"
-								color="primary"
-								disabled={isSaving}
-								onClick={handleSaveAndReturn}
-								sx={{ textTransform: 'none' }}
-							>
-								Back to Projects
+								{isSaving ? 'Saving...' : 'Save Activity'}
 							</Button>
 						</>
 					)}
 					<Button variant="contained" color="success" onClick={handleDownloadPdf} sx={{ textTransform: 'none' }}>
 						Download as PDF
 					</Button>
-				</Stack>
-
-				{projectId && (
-					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
-						<Typography sx={{ fontSize: '0.8rem', color: '#4a5568', textTransform: 'uppercase', fontWeight: 700 }}>
-							Project
-						</Typography>
-						<Typography sx={{ mb: 1.2, fontWeight: 700 }}>{projectName}</Typography>
-						<TextField
-							size="small"
-							label={`${title} Activity Name`}
-							value={activityName}
-							onChange={(event) => setActivityName(event.target.value)}
-							fullWidth
-						/>
-					</Box>
-				)}
-
-				{!projectId && (
-					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
-						<Typography sx={{ fontSize: '0.8rem', color: '#4a5568', textTransform: 'uppercase', fontWeight: 700 }}>
-							Standalone {title} Activity
-						</Typography>
-						<TextField
-							size="small"
-							label="Activity Name"
-							value={activityName}
-							onChange={(event) => setActivityName(event.target.value)}
-							fullWidth
-						/>
-					</Box>
-				)}
-
-				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-					<Box
-						sx={{
-							display: 'inline-flex',
-							alignItems: 'center',
-							px: 1.5,
-							py: 0.75,
-							borderRadius: 1,
-							backgroundColor: authUser ? '#d4edda' : authFromSuccessRedirect ? '#cce5ff' : '#fff3cd',
-							color: authUser ? '#155724' : authFromSuccessRedirect ? '#004085' : '#856404',
-							border: `1px solid ${authUser ? '#c3e6cb' : authFromSuccessRedirect ? '#b8daff' : '#ffeaa7'}`,
-							fontWeight: 700,
-							fontSize: '0.85rem',
-						}}
-					>
-						{authLabel}
-					</Box>
-					{!authLoading && !authUser && authFromSuccessRedirect && (
-						<Button
-							size="small"
-							variant="outlined"
-							sx={{ ...outlinedControlButtonSx, fontSize: '0.8rem' }}
-							onClick={runAuthCheck}
-						>
-							Retry session check
-						</Button>
-					)}
 				</Box>
 
 				<Card id="lesson-activity-print-root" sx={{ borderRadius: 2, boxShadow: 8 }}>
