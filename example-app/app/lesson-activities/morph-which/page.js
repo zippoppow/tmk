@@ -126,16 +126,16 @@ export default function MorphWhichPage() {
 		}));
 	};
 
-	const OPTION_BG_COLORS = ['#fff9db', '#e8fff0', '#f3e9ff', '#fff0e0'];
-
 	const handleDownloadPdfCustom = () => {
 		const questionBlocks = data.questions.map((question, i) => {
 			const selected = String(data.selectedChoices?.[i] || '');
 			const options = ['a', 'b', 'c', 'd'].map((key, ki) => {
 				const isSelected = selected === key;
-				const bg = isSelected ? OPTION_BG_COLORS[ki] : '#fafafa';
-				const border = isSelected ? '2px solid #4020A7' : '1px solid #ddd';
-				return `<div class="option" style="background:${bg};border:${border};">
+				const style = OPTION_STYLES[ki];
+				const boxShadow = isSelected
+					? `inset 0 0 0 4px ${style.shadow}, 0 4px 12px ${style.shadow}40`
+					: `inset 0 0 0 1px ${style.shadow}`;
+				return `<div class="option" style="background:${style.bg};box-shadow:${boxShadow};">
 					<span class="option-label">${String.fromCharCode(65 + ki)}.</span>
 					<span>${(data.choices[i]?.[key] || '').replace(/</g, '&lt;')}</span>
 				</div>`;
@@ -155,7 +155,7 @@ export default function MorphWhichPage() {
 			: '';
 
 		openPrintWindow({
-			features: 'width=1100,height=1400',
+			features: 'width=900,height=1200',
 			html: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -177,10 +177,10 @@ export default function MorphWhichPage() {
     .q-num { font-weight: 700; min-width: 20px; }
     .q-text { font-family: 'Courier New', monospace; }
     .options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-    .option { display: flex; gap: 6px; align-items: center; padding: 5px 8px; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 0.9em; }
+    .option { display: flex; gap: 6px; align-items: center; padding: 5px 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.9em; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .option-label { font-weight: 700; min-width: 16px; }
     .license-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e5e7eb; text-align: right; font-size: 0.8em; color: #4b5563; font-style: italic; }
-    @media print { @page { size: letter landscape; margin: 0.4in; } body { padding: 0; } }
+    @media print { @page { size: letter portrait; margin: 0.4in; } body { padding: 0; } }
   </style>
 </head>
 <body>

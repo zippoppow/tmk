@@ -154,7 +154,7 @@ export default function WordBuilderPage() {
     .morpheme-value { font-family: 'Courier New', monospace; color: #4020A7; }
     .instructions { font-size: 0.95em; color: #555; margin-top: 4px; }
     .parts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
-    .col-box { border: 1px solid rgba(64,32,167,0.3); border-radius: 4px; padding: 10px; }
+	.col-box { padding: 10px; }
     .col-title { font-weight: 700; margin-bottom: 8px; font-size: 0.95em; }
     .col-item { border-bottom: 1px solid #e8e8e8; padding: 6px; font-family: 'Courier New', monospace; min-height: 30px; }
     .col-item.empty { color: #bbb; }

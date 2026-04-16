@@ -141,7 +141,7 @@ export default function MorphSortPage() {
     .cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
     .col-title { font-weight: 700; font-size: 0.95em; margin-bottom: 8px; }
     .sort-box { border: 2px solid #4a4a4a; border-radius: 4px; min-height: 480px; padding: 10px; }
-    .word-cell { border-bottom: 2px solid #ddd; padding: 8px 0; font-family: 'Courier New', monospace; color: #4020A7; font-size: 1.05em; }
+    .word-cell { border-bottom: 2px solid #ddd; padding: 0 4px; font-family: 'Courier New', monospace; color: #4020A7; font-size: 1.05em; height: 42px; display: flex; align-items: center; }
     .sort-box li { font-family: 'Courier New', monospace; list-style: none; padding: 6px 0; border-bottom: 1px solid #eee; }
     .license-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e5e7eb; text-align: right; font-size: 0.8em; color: #4b5563; font-style: italic; }
     @media print { @page { size: letter portrait; margin: 0.4in; } body { padding: 0; } }
