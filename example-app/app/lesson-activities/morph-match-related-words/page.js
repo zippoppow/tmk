@@ -7,15 +7,16 @@ import { useContextActionMenu } from '../components/interactionUtils';
 
 const FORM_NAME = 'morph-match-related-words';
 const DEFAULT_ACTIVITY_NAME = 'Morph Match Related Words Activity';
+const ROW_COUNT = 10;
 
-const FOCUS_COLORS = ['#ffe4e1', '#e1f7ff', '#e1ffe4', '#fffbe1', '#e1e1ff', '#ffe1fa', '#e1ffd6', '#f1e1ff'];
+const FOCUS_COLORS = ['#ffe4e1', '#e1f7ff', '#dcffe7', '#fffbe1', '#e1e1ff', '#ffe1fa', '#b9efc0', '#f1e1ff', '#f0ffe0', '#ffeecf'];
 
 function emptyData() {
 	return {
 		morpheme: '',
-		focusWords: Array.from({ length: 8 }, () => ''),
-		relatedWords: Array.from({ length: 8 }, () => ''),
-		relatedWordColors: Array.from({ length: 8 }, () => ''),
+		focusWords: Array.from({ length: ROW_COUNT }, () => ''),
+		relatedWords: Array.from({ length: ROW_COUNT }, () => ''),
+		relatedWordColors: Array.from({ length: ROW_COUNT }, () => ''),
 	};
 }
 
@@ -26,9 +27,9 @@ function normalizeInputData(rawData) {
 	const relatedWordColors = Array.isArray(source.relatedWordColors) ? source.relatedWordColors : [];
 	return {
 		morpheme: String(source.morpheme || ''),
-		focusWords: Array.from({ length: 8 }, (_, index) => String(focusWords[index] || '')),
-		relatedWords: Array.from({ length: 8 }, (_, index) => String(relatedWords[index] || '')),
-		relatedWordColors: Array.from({ length: 8 }, (_, index) => String(relatedWordColors[index] || '')),
+		focusWords: Array.from({ length: ROW_COUNT }, (_, index) => String(focusWords[index] || '')),
+		relatedWords: Array.from({ length: ROW_COUNT }, (_, index) => String(relatedWords[index] || '')),
+		relatedWordColors: Array.from({ length: ROW_COUNT }, (_, index) => String(relatedWordColors[index] || '')),
 	};
 }
 
@@ -90,24 +91,24 @@ export default function MorphMatchRelatedWordsPage() {
 	};
 
 	const handleClearFocusWords = () => {
-		setData((prev) => ({ ...prev, focusWords: Array.from({ length: 8 }, () => '') }));
+		setData((prev) => ({ ...prev, focusWords: Array.from({ length: ROW_COUNT }, () => '') }));
 	};
 
 	const handleClearRelatedWords = () => {
-		setData((prev) => ({ ...prev, relatedWords: Array.from({ length: 8 }, () => '') }));
+		setData((prev) => ({ ...prev, relatedWords: Array.from({ length: ROW_COUNT }, () => '') }));
 	};
 
 	const handleDownloadPdfCustom = () => {
-		const FOCUS_COLORS_HEX = ['#ffe4e1', '#e1f7ff', '#e1ffe4', '#fffbe1', '#e1e1ff', '#ffe1fa', '#e1ffd6', '#f1e1ff'];
+		const FOCUS_COLORS_HEX = FOCUS_COLORS;
 
 		const focusRows = data.focusWords
-			.map((word, i) => `<div class="word-cell" style="background:${FOCUS_COLORS_HEX[i]}">${(word || '').replace(/</g, '&lt;')}</div>`)
+			.map((word, i) => `<div class="word-cell" style="background-color:${FOCUS_COLORS_HEX[i]}">${(word || '').replace(/</g, '&lt;')}</div>`)
 			.join('');
 
 		const relatedRows = data.relatedWords
 			.map((word, i) => {
-				const bg = data.relatedWordColors[i] || 'transparent';
-				return `<div class="word-cell" style="background:${bg}">${(word || '').replace(/</g, '&lt;')}</div>`;
+				const bg = data.relatedWordColors[i] || '#ffffff';
+				return `<div class="word-cell" style="background-color:${bg}">${(word || '').replace(/</g, '&lt;')}</div>`;
 			})
 			.join('');
 
@@ -134,9 +135,24 @@ export default function MorphMatchRelatedWordsPage() {
     .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
     .col-title { font-weight: 700; font-size: 0.95em; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
     .col { display: flex; flex-direction: column; gap: 8px; }
-    .word-cell { border-bottom: 2px solid #ddd; padding: 8px 10px; font-family: 'Courier New', monospace; min-height: 36px; border-radius: 3px; }
+		.word-cell {
+			border-bottom: 2px solid #ddd;
+			padding: 8px 10px;
+			font-family: 'Courier New', monospace;
+			min-height: 47.88px;
+			border-radius: 3px;
+			-webkit-print-color-adjust: exact;
+			print-color-adjust: exact;
+		}
     .license-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e5e7eb; text-align: right; font-size: 0.8em; color: #4b5563; font-style: italic; }
-    @media print { @page { size: letter portrait; margin: 0.4in; } body { padding: 0; } }
+		@media print {
+			@page { size: letter portrait; margin: 0.4in; }
+			body {
+				padding: 0;
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
+		}
   </style>
 </head>
 <body>

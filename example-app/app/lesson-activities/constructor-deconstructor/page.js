@@ -1,27 +1,32 @@
 'use client';
 
+import Image from 'next/image';
 import { Box, Button, Stack, TextField, Typography } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
 
 const FORM_NAME = 'constructor-deconstructor';
 const DEFAULT_ACTIVITY_NAME = 'Constructor Deconstructor Activity';
+const DEFAULT_ROW_COUNT = 5;
+const MIN_ROW_COUNT = 1;
+const MAX_ROW_COUNT = 20;
 
 function emptyRow() {
 	return { left: '', sum: '', right: '' };
 }
 
-function emptyData() {
+function emptyData(rowCount = DEFAULT_ROW_COUNT) {
 	return {
 		morpheme: '',
-		constructorRows: Array.from({ length: 4 }, () => emptyRow()),
-		deconstructorRows: Array.from({ length: 4 }, () => emptyRow()),
+		rowCount,
+		constructorRows: Array.from({ length: rowCount }, () => emptyRow()),
+		deconstructorRows: Array.from({ length: rowCount }, () => emptyRow()),
 	};
 }
 
-function normalizeRows(rows) {
+function normalizeRows(rows, rowCount) {
 	const source = Array.isArray(rows) ? rows : [];
-	return Array.from({ length: 4 }, (_, index) => {
+	return Array.from({ length: rowCount }, (_, index) => {
 		const row = source[index] || {};
 		return {
 			left: String(row.left || ''),
@@ -31,12 +36,44 @@ function normalizeRows(rows) {
 	});
 }
 
+function clampRowCount(value) {
+	const normalized = Number.isFinite(value) ? Math.floor(value) : DEFAULT_ROW_COUNT;
+	return Math.max(MIN_ROW_COUNT, Math.min(MAX_ROW_COUNT, normalized));
+}
+
+function resizeRows(rows, rowCount) {
+	const source = Array.isArray(rows) ? rows : [];
+	if (source.length >= rowCount) {
+		return source.slice(0, rowCount).map((row) => ({
+			left: String(row.left || ''),
+			sum: String(row.sum || ''),
+			right: String(row.right || ''),
+		}));
+	}
+
+	const nextRows = source.map((row) => ({
+		left: String(row.left || ''),
+		sum: String(row.sum || ''),
+		right: String(row.right || ''),
+	}));
+
+	while (nextRows.length < rowCount) {
+		nextRows.push(emptyRow());
+	}
+
+	return nextRows;
+}
+
 function normalizeInputData(rawData) {
 	const source = rawData && typeof rawData === 'object' ? rawData : {};
+	const computedRowCount = clampRowCount(
+		Number(source.rowCount) || Math.max(source.constructorRows?.length || 0, source.deconstructorRows?.length || 0) || DEFAULT_ROW_COUNT
+	);
 	return {
 		morpheme: String(source.morpheme || ''),
-		constructorRows: normalizeRows(source.constructorRows),
-		deconstructorRows: normalizeRows(source.deconstructorRows),
+		rowCount: computedRowCount,
+		constructorRows: normalizeRows(source.constructorRows, computedRowCount),
+		deconstructorRows: normalizeRows(source.deconstructorRows, computedRowCount),
 	};
 }
 
@@ -48,7 +85,7 @@ function RowGrid({ rows, onChange, reverse = false }) {
 					key={index}
 					sx={{
 						display: 'grid',
-						gridTemplateColumns: reverse ? '6fr 1fr 4fr' : '4fr 1fr 6fr',
+						gridTemplateColumns: reverse ? '4fr 1fr 6fr' : '6fr 1fr 4fr',
 						gap: 1.5,
 						alignItems: 'center',
 					}}
@@ -59,11 +96,12 @@ function RowGrid({ rows, onChange, reverse = false }) {
 						inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 						sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#4020A7', borderWidth: '2px' } }}
 					/>
-					<TextField
-						value={row.sum}
-						onChange={(event) => onChange(index, 'sum', event.target.value)}
-						inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
-						sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#4020A7', borderWidth: '2px' } }}
+				<Image
+					src="/lesson-activities/test-arrows.png"
+					alt="Arrow"
+					width={150}
+					height={50}
+					style={{ objectFit: 'contain' }}
 					/>
 					<TextField
 						value={row.right}
@@ -123,23 +161,33 @@ export default function ConstructorDeconstructorPage() {
 		});
 	};
 
+	const handleRowCountChange = (value) => {
+		const parsed = Number(value);
+		const nextCount = clampRowCount(parsed);
+		setData((prev) => ({
+			...prev,
+			rowCount: nextCount,
+			constructorRows: resizeRows(prev.constructorRows, nextCount),
+			deconstructorRows: resizeRows(prev.deconstructorRows, nextCount),
+		}));
+	};
+
 	const handleDownloadPdfCustom = () => {
+		const escapeHtml = (value) => String(value || '').replace(/</g, '&lt;');
+
 		const renderRows = (rows, reverse) =>
 			rows
 				.map((row) => {
-					const [c1, c2, c3] = reverse
-						? [row.left, row.sum, row.right]
-						: [row.left, row.sum, row.right];
-					return `<tr>
-						<td class="cell">${(c1 || '').replace(/</g, '&lt;')}</td>
-						<td class="cell center">${(c2 || '').replace(/</g, '&lt;')}</td>
-						<td class="cell">${(c3 || '').replace(/</g, '&lt;')}</td>
-					</tr>`;
+					return `<div class="print-row ${reverse ? 'reverse' : 'forward'}">
+						<div class="print-cell input-left">${escapeHtml(row.left)}</div>
+						<div class="arrow-cell"><img src="${window.location.origin}/lesson-activities/test-arrows.png" alt="Arrow" /></div>
+						<div class="print-cell input-right">${escapeHtml(row.right)}</div>
+					</div>`;
 				})
 				.join('');
 
 		const licenseFooter = authUser?.email
-			? `<div class="license-footer">Licensed for use by: ${authUser.email.replace(/</g, '&lt;')}</div>`
+			? `<div class="license-footer">Licensed for use by: ${escapeHtml(authUser.email)}</div>`
 			: '';
 
 		const printWindow = window.open('', '', 'width=960,height=1200');
@@ -147,7 +195,7 @@ export default function ConstructorDeconstructorPage() {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>${(activityName || DEFAULT_ACTIVITY_NAME).replace(/</g, '&lt;')}</title>
+	 <title>${escapeHtml(activityName || DEFAULT_ACTIVITY_NAME)}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.4; }
@@ -159,9 +207,13 @@ export default function ConstructorDeconstructorPage() {
     .morpheme-value { font-family: 'Courier New', monospace; color: #4020A7; }
     .instructions { font-size: 0.95em; color: #555; margin-top: 4px; }
     .section-title { font-weight: 800; font-size: 1.05em; text-transform: uppercase; margin: 20px 0 8px; }
-    table { width: 100%; border-collapse: collapse; }
-    .cell { border: 2px solid #4020A7; padding: 10px; font-family: 'Courier New', monospace; min-height: 44px; width: 44%; }
-    .cell.center { width: 12%; text-align: center; border-color: #4020A7; }
+		.rows { display: flex; flex-direction: column; gap: 8px; }
+		.print-row { display: grid; align-items: center; gap: 10px; }
+		.print-row.forward { grid-template-columns: 6fr 1fr 4fr; }
+		.print-row.reverse { grid-template-columns: 4fr 1fr 6fr; }
+		.print-cell { border: 2px solid #4020A7; padding: 10px; min-height: 44px; font-family: 'Courier New', monospace; }
+		.arrow-cell { display: flex; justify-content: center; align-items: center; }
+		.arrow-cell img { width: 100%; max-width: 110px; height: auto; object-fit: contain; }
     .license-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e5e7eb; text-align: right; font-size: 0.8em; color: #4b5563; font-style: italic; }
     @media print { @page { size: letter portrait; margin: 0.4in; } body { padding: 0; } }
   </style>
@@ -170,17 +222,17 @@ export default function ConstructorDeconstructorPage() {
   <div class="header">
     <div class="header-column">
       <div class="title">CONSTRUCTOR/DECONSTRUCTOR</div>
-      <div class="subtitle">Morpheme(s): <span class="morpheme-value">${(data.morpheme || '').replace(/</g, '&lt;')}</span></div>
+		 <div class="subtitle">Morpheme(s): <span class="morpheme-value">${escapeHtml(data.morpheme)}</span></div>
       <div class="instructions">Build words with constructor rows, then break them apart in deconstructor rows.</div>
     </div>
     <div class="header-column">
-      <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
+		 <img src="${window.location.origin}/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
     </div>
   </div>
   <div class="section-title">Constructor</div>
-  <table><tbody>${renderRows(data.constructorRows, false)}</tbody></table>
+	 <div class="rows">${renderRows(data.constructorRows, false)}</div>
   <div class="section-title">Deconstructor</div>
-  <table><tbody>${renderRows(data.deconstructorRows, true)}</tbody></table>
+	 <div class="rows">${renderRows(data.deconstructorRows, true)}</div>
   ${licenseFooter}
 </body>
 </html>`);
@@ -214,6 +266,20 @@ export default function ConstructorDeconstructorPage() {
 			notice={notice}
 			setNotice={setNotice}
 		>
+			<Box sx={{ mt: 2.5, alignItems: 'center' , display: 'flex', justifyContent: 'flex-end' }}>
+				<Typography sx={{ fontSize: '1.1rem', color: '#011436', fontWeight: 600, paddingRight: 1}}>
+					Add/Remove Rows:
+				</Typography>
+				<TextField
+					label="Rows"
+					type="number"
+					value={data.rowCount || DEFAULT_ROW_COUNT}
+					onChange={(event) => handleRowCountChange(event.target.value)}
+					inputProps={{ min: MIN_ROW_COUNT, max: MAX_ROW_COUNT, step: 1, style: { textAlign: 'center' } }}
+					sx={{ width: 140 }}
+				/>
+			</Box>
+
 			<Box sx={{ mt: 3 }}>
 				<Typography sx={{ fontWeight: 800, mb: 1.5, fontSize: '1.15rem', textTransform: 'uppercase' }}>Constructor</Typography>
 				<RowGrid rows={data.constructorRows} onChange={setConstructorValue} />
@@ -225,7 +291,7 @@ export default function ConstructorDeconstructorPage() {
 			</Box>
 
 			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }}>
-				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>
+				<Button variant="outlined" onClick={() => setData(emptyData(data.rowCount || DEFAULT_ROW_COUNT))} sx={{ minWidth: 150 }}>
 					Clear All
 				</Button>
 			</Box>

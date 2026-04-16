@@ -176,7 +176,7 @@ export default function FillInTheMorphParagraphsPage() {
 					<Box sx={{ minHeight: 320 }}>
 						{data.morphWords.map((word, index) => (
 							<Box key={`${word}-${index}`} sx={{ display: 'flex', alignItems: 'center', gap: 1, backgroundColor: '#f7f7f7', borderRadius: 1, px: 1.5, py: 0.75, mb: 0.75 }}>
-								<Box sx={{ flex: 1, fontFamily: 'Courier New, monospace' }}>{word}</Box>
+								<Box sx={{ flex: 1, fontFamily: 'Trebuchet MS, sans-serif' }}>{word}</Box>
 								<Button size="small" color="error" variant="contained" onClick={() => handleRemoveWord(index)} sx={{ minWidth: 0, px: 1 }}>x</Button>
 							</Box>
 						))}
@@ -190,7 +190,7 @@ export default function FillInTheMorphParagraphsPage() {
 						fullWidth
 						value={data.paragraph}
 						onChange={(event) => setData((prev) => ({ ...prev, paragraph: event.target.value }))}
-						inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+						inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif' } }}
 						sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#4020A7', borderWidth: '2px' } }}
 					/>
 				</Box>

@@ -183,10 +183,10 @@ export default function ActivityShell({
 								Activity Name:
 							</Typography>
 							<TextField
-								size="small"
 								value={activityName}
 								onChange={(event) => setActivityName(event.target.value)}
 								sx={{ minWidth: 360 }}
+								inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.4rem', color: '#000000' } }}
 							/>
 						</Box>
 						
@@ -212,6 +212,7 @@ export default function ActivityShell({
 								value={activityName}
 								onChange={(event) => setActivityName(event.target.value)}
 								sx={{ minWidth: 360 }}
+								inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 							/>
 						</Box>
 					</Box>
