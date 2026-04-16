@@ -346,14 +346,24 @@ export default function IntroPage() {
 									inputProps={{
 										style: {
 											textAlign: 'center',
-											fontFamily: 'Courier New, monospace',
-											fontSize: '1rem',
 										},
 									}}
 									sx={{
 										'& .MuiOutlinedInput-root': {
+											borderRadius: '4px',
+											transition: 'border-color 0.3s ease, background-color 0.3s ease',
+											'& .MuiOutlinedInput-notchedOutline legend': {
+												display: 'none',
+											},
+											'& .MuiOutlinedInput-input': {
+												padding: '10px',
+												textAlign: 'center',
+												fontSize: '1.25rem',
+											},
 											'& fieldset': { borderColor: '#4020A7', borderWidth: '2px' },
 											'&:hover fieldset': { borderColor: '#667eea' },
+											'& input::placeholder': { color: '#ccc', opacity: 1 },
+											'&.Mui-focused': { backgroundColor: 'rgba(102, 126, 234, 0.05)' },
 											'&.Mui-focused fieldset': { borderColor: '#667eea' },
 										},
 									}}
@@ -364,24 +374,56 @@ export default function IntroPage() {
 				))}
 			</Box>
 
-			<Typography component="div" sx={{ textAlign: 'center', fontSize: '1.1rem', mb: 4 }}>
-				How does{' '}
+			<Typography
+				component="div"
+				sx={{
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					flexWrap: 'wrap',
+					gap: 0.5,
+					textAlign: 'center',
+					fontSize: '1.2rem',
+					mb: 4,
+				}}
+			>
+				<Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>How does</Box>
 				<TextField
-					variant="standard"
+					variant="outlined"
 					value={data.questionMorpheme}
 					onChange={(e) => setData((prev) => ({ ...prev, questionMorpheme: e.target.value }))}
 					onContextMenu={(e) => openContextMenu(e, 'questionMorpheme')}
-					sx={{ minWidth: 140, mx: 0.5 }}
+					sx={{
+						minWidth: 140,
+						mx: 0.5,
+						'& .MuiOutlinedInput-root': {
+							height: '100%',
+							borderRadius: '4px',
+							transition: 'border-color 0.3s ease, background-color 0.3s ease',
+							'& .MuiOutlinedInput-notchedOutline legend': {
+								display: 'none',
+							},
+							'& .MuiOutlinedInput-input': {
+								padding: '8px 10px',
+								textAlign: 'center',
+								fontSize: '1.5rem',
+							},
+							'& fieldset': { borderColor: '#4020A7', borderWidth: '2px' },
+							'&:hover fieldset': { borderColor: '#667eea' },
+							'& input::placeholder': { color: '#ccc', opacity: 1 },
+							'&.Mui-focused': { backgroundColor: 'rgba(102, 126, 234, 0.05)' },
+							'&.Mui-focused fieldset': { borderColor: '#667eea' },
+						},
+					}}
 					inputProps={{
 						style: {
 							textAlign: 'center',
-							fontFamily: 'Trebuchet MS, sans-serif',
-							fontSize: '1.2rem',
-							color: '#000000',
 						},
 					}}
-				/>{' '}
-				affect the meaning of these words?
+				/>
+				<Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+					affect the meaning of these words?
+				</Box>
 			</Typography>
 
 			<Box

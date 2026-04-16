@@ -201,7 +201,7 @@ export default function ChameleonPrefixesPage() {
 			min-height: auto;
 			display: flex;
 			flex-direction: column;
-			gap: 12px;
+			gap: 27px;
 			page-break-inside: avoid;
 			break-inside: avoid;
 		}
@@ -215,17 +215,17 @@ export default function ChameleonPrefixesPage() {
 			gap: 14px;
 			align-items: start;
 			border-bottom: 3px solid #4020A7;
-			padding-bottom: 6px;
+			padding-bottom: 17px;
 		}
 		.title { font-size: 24px; letter-spacing: 0.07em; font-weight: 800; }
-		.morpheme { margin-top: 4px; font-size: 17px; font-style: italic; }
+		.morpheme { margin-top: 11px; font-size: 17px; font-style: italic; }
 		.morpheme-value {
 			font-family: 'Courier New', monospace;
 			color: #4020A7;
 			font-style: normal;
 			margin-left: 6px;
 		}
-		.instructions { margin-top: 4px; color: #4b5563; font-size: 12px; }
+		.instructions { margin-top: 13px; color: #4b5563; font-size: 12px; line-height: 2.2; }
 		.logo {
 			width: 100%;
 			max-width: 160px;
@@ -235,13 +235,14 @@ export default function ChameleonPrefixesPage() {
 		.grid {
 			display: grid;
 			grid-template-columns: repeat(6, 1fr);
-			gap: 6px;
+			gap: 13px;
+			margin-top: 4px;
 		}
 		.grid-cell {
-			min-height: 28px;
+			min-height: 57px;
 			border: 1px solid #374151;
 			border-radius: 3px;
-			padding: 4px 6px;
+			padding: 11px;
 			font-family: 'Courier New', monospace;
 			font-size: 13px;
 			display: flex;
@@ -254,22 +255,23 @@ export default function ChameleonPrefixesPage() {
 		.pairs {
 			display: grid;
 			grid-template-columns: 1fr 1fr;
-			gap: 8px 16px;
-			margin-top: 2px;
+			gap: 20px 16px;
+			margin-top: 13px;
 		}
 		.pair-row {
 			display: grid;
 			grid-template-columns: 24px 1fr 2fr;
 			align-items: center;
-			gap: 6px;
-			min-height: 22px;
+			gap: 13px;
+			min-height: 47px;
 		}
-		.pair-index { font-weight: 700; font-size: 12px; }
+		.pair-index { font-weight: 700; font-size: 13px; }
 		.pair-prefix, .pair-word {
 			border-bottom: 1px solid #9ca3af;
-			padding: 1px 2px;
+			padding: 5px 2px;
 			font-family: 'Courier New', monospace;
 			font-size: 12px;
+			line-height: 2.2;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			white-space: nowrap;
@@ -358,16 +360,27 @@ export default function ChameleonPrefixesPage() {
 									inputProps={{
 										style: {
 											textAlign: 'center',
-												fontFamily: 'Trebuchet MS, sans-serif',
 											fontSize: '1.2rem',
-												color: '#000000',
+											color: '#000000',
 										},
 									}}
 									sx={{
 										'& .MuiOutlinedInput-root': {
-											'& fieldset': { borderColor: '#333', borderWidth: '1px', borderRadius: '2px' },
-											'&:hover fieldset': { borderColor: '#4020A7' },
-											'&.Mui-focused fieldset': { borderColor: '#4020A7' },
+											border: '2px solid #4020A7',
+											borderRadius: '4px',
+											overflow: 'hidden',
+											transition: 'border-color 0.3s ease, background-color 0.3s ease',
+											'& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+											'& .MuiOutlinedInput-input': {
+												padding: '12px',
+												textAlign: 'center',
+											},
+											'&:hover': { borderColor: '#667eea' },
+											'& input::placeholder': { color: '#ccc', opacity: 1 },
+											'&.Mui-focused': {
+												backgroundColor: 'rgba(102, 126, 234, 0.05)',
+												borderColor: '#667eea',
+											},
 										},
 									}}
 								/>
@@ -401,16 +414,48 @@ export default function ChameleonPrefixesPage() {
 											value={data.pairs[pairIndex]?.prefix || ''}
 											onChange={(event) => handlePairChange(pairIndex, 'prefix', event.target.value)}
 											onContextMenu={(event) => openContextMenu(event, 'pair', pairIndex, 'prefix')}
-											sx={{ width: '33%' }}
-											inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+											sx={{
+												width: '33%',
+												'& .MuiInputBase-input': {
+													padding: '8px 0',
+													fontSize: '1.2rem',
+													color: '#333',
+													transition: 'border-color 0.3s ease, background-color 0.3s ease, padding 0.3s ease',
+													backgroundColor: 'transparent',
+												},
+												'& .MuiInput-underline:before': { borderBottom: '2px solid #ddd' },
+												'& .MuiInput-underline:hover:not(.Mui-disabled, .Mui-error):before': { borderBottom: '2px solid #ddd' },
+												'& .MuiInput-underline:after': { borderBottom: '2px solid #667eea' },
+												'& .MuiInputBase-input:focus': {
+													backgroundColor: 'rgba(102, 126, 234, 0.05)',
+													padding: '8px',
+												},
+												'& .MuiInputBase-input::placeholder': { color: '#ccc', opacity: 1 },
+											}}
 										/>
 										<TextField
 											variant="standard"
 											value={data.pairs[pairIndex]?.word || ''}
 											onChange={(event) => handlePairChange(pairIndex, 'word', event.target.value)}
 											onContextMenu={(event) => openContextMenu(event, 'pair', pairIndex, 'word')}
-											sx={{ width: '66%' }}
-											inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+											sx={{
+												width: '66%',
+												'& .MuiInputBase-input': {
+													padding: '8px 0',
+													fontSize: '1.2rem',
+													color: '#333',
+													transition: 'border-color 0.3s ease, background-color 0.3s ease, padding 0.3s ease',
+													backgroundColor: 'transparent',
+												},
+												'& .MuiInput-underline:before': { borderBottom: '2px solid #ddd' },
+												'& .MuiInput-underline:hover:not(.Mui-disabled, .Mui-error):before': { borderBottom: '2px solid #ddd' },
+												'& .MuiInput-underline:after': { borderBottom: '2px solid #667eea' },
+												'& .MuiInputBase-input:focus': {
+													backgroundColor: 'rgba(102, 126, 234, 0.05)',
+													padding: '8px',
+												},
+												'& .MuiInputBase-input::placeholder': { color: '#ccc', opacity: 1 },
+											}}
 										/>
 									</Box>
 								</Box>

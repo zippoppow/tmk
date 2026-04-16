@@ -5,6 +5,8 @@ const AUTH_BYPASS_REQUESTED = AUTH_BYPASS_FLAG === '1' || AUTH_BYPASS_FLAG === '
 const AUTH_BYPASS_ENABLED = process.env.NODE_ENV !== 'production' && AUTH_BYPASS_REQUESTED;
 const ACCESS_TOKEN_COOKIE = 'tmk_teachable_access_token';
 const REFRESH_TOKEN_COOKIE = 'tmk_teachable_refresh_token';
+const OAUTH_CONTEXT_COOKIE = 'tmk_teachable_oauth_ctx';
+const TEACHABLE_SESSION_PARAM = 'teachable_session';
 
 function buildLoginRedirect(request) {
   const loginUrl = new URL('/login', request.url);
@@ -15,6 +17,16 @@ function buildLoginRedirect(request) {
 
 export function middleware(request) {
   if (AUTH_BYPASS_ENABLED) {
+    return NextResponse.next();
+  }
+
+  // Allow OAuth/session handoff requests through so client/server auth checks can complete.
+  if (request.nextUrl.searchParams.has(TEACHABLE_SESSION_PARAM)) {
+    return NextResponse.next();
+  }
+
+  const oauthContext = request.cookies.get(OAUTH_CONTEXT_COOKIE)?.value;
+  if (oauthContext) {
     return NextResponse.next();
   }
 

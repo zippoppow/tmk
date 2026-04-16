@@ -266,7 +266,7 @@ export default function CommonBaseWordPage() {
 									placeholder="List related words..."
 									variant="standard"
 									InputProps={{ disableUnderline: true }}
-									inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+									inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem' } }}
 								/>
 							</Box>
 						</Stack>
