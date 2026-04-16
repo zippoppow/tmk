@@ -104,16 +104,19 @@ export async function GET(request) {
     console.log('[OAuth Callback] State param received:', requestUrl.searchParams.get('state'));
     console.log('[OAuth Callback] State decoded payload:', statePayload);
 
-    const stateAgeMs = Date.now() - Number(statePayload?.ts || 0);
-    const stateExpired = !statePayload?.ts || stateAgeMs > config.stateMaxAgeSeconds * 1000;
-    console.log('[OAuth Callback] State age:', stateAgeMs, 'ms, max:', config.stateMaxAgeSeconds * 1000, 'ms, expired:', stateExpired);
-      console.log('[OAuth Callback] State secret (first 20 chars):', config.stateSecret?.slice(0, 20));
-      console.log('[OAuth Callback] Decoded redirectTo from state:', statePayload?.redirectTo);
+    const rawStateTs = Number(statePayload?.ts || 0);
+    const issuedAtMs = rawStateTs > 0 && rawStateTs < 1e12 ? rawStateTs * 1000 : rawStateTs;
+    const stateAgeMs = issuedAtMs > 0 ? Date.now() - issuedAtMs : Number.POSITIVE_INFINITY;
+    const maxStateAgeMs = Math.max(300, Number(config.stateMaxAgeSeconds) || 900) * 1000;
+    const stateExpired = stateAgeMs > maxStateAgeMs;
+    console.log('[OAuth Callback] State age:', stateAgeMs, 'ms, max:', maxStateAgeMs, 'ms, expired:', stateExpired);
+    console.log('[OAuth Callback] State secret (first 20 chars):', config.stateSecret?.slice(0, 20));
+    console.log('[OAuth Callback] Decoded redirectTo from state:', statePayload?.redirectTo);
 
-    const canRecoverWithoutValidState = Boolean(code && recoveredRedirect);
+    const canProceedWithoutFreshState = Boolean(code);
     if (!statePayload || stateExpired) {
-      console.log('[OAuth Callback] State invalid/expired. recoveredRedirect:', recoveredRedirect, 'canRecoverWithoutValidState:', canRecoverWithoutValidState);
-      if (!canRecoverWithoutValidState) {
+      console.log('[OAuth Callback] State invalid/expired. recoveredRedirect:', recoveredRedirect, 'canProceedWithoutFreshState:', canProceedWithoutFreshState);
+      if (!canProceedWithoutFreshState) {
         const response = redirectWithAuthFlag(
           requestUrl,
           loginPathWithNext(recoveredRedirect),
