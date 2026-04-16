@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Box, Button, Grid, Stack, TextField, Typography, Menu, MenuItem } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
+import { openPrintWindow } from '../components/openPrintWindow';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
 
 const FORM_NAME = 'common-base-word';
@@ -146,8 +147,9 @@ export default function CommonBaseWordPage() {
 			? `<div class="license-footer">Licensed for use by: ${authUser.email.replace(/</g, '&lt;')}</div>`
 			: '';
 
-		const printWindow = window.open('', '', 'width=960,height=1200');
-		printWindow.document.write(`<!DOCTYPE html>
+		openPrintWindow({
+			features: 'width=960,height=1200',
+			html: `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -189,9 +191,9 @@ export default function CommonBaseWordPage() {
   <div class="groups">${groupBoxes}</div>
   ${licenseFooter}
 </body>
-</html>`);
-		printWindow.document.close();
-		printWindow.onload = () => setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
+</html>`,
+			onPopupBlocked: () => setNotice({ type: 'error', message: 'Allow pop-ups to print this activity.' }),
+		});
 	};
 
 	return (

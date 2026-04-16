@@ -2,6 +2,7 @@
 
 import { Box, Button, Menu, MenuItem, TextField, Typography } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
+import { openPrintWindow } from '../components/openPrintWindow';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
 import { useContextActionMenu } from '../components/interactionUtils';
 
@@ -167,13 +168,10 @@ export default function IntroPage() {
 			.map((word) => `<div class="word-cell">${escapeHtml(word)}</div>`)
 			.join('');
 
-		const printWindow = window.open('', '', 'width=1400,height=900');
-		if (!printWindow) {
-			showNotice('error', 'Unable to open print window. Please allow popups and try again.');
-			return;
-		}
-
-		printWindow.document.write(`<!DOCTYPE html>
+		openPrintWindow({
+			features: 'width=1400,height=900',
+			printDelay: 200,
+			html: `<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
@@ -284,15 +282,9 @@ export default function IntroPage() {
 		${authUser?.email ? `<footer class="license">Licensed for use by: ${escapeHtml(authUser.email)}</footer>` : ''}
 	</main>
 </body>
-</html>`);
-
-		printWindow.document.close();
-		printWindow.onload = () => {
-			setTimeout(() => {
-				printWindow.print();
-				printWindow.close();
-			}, 200);
-		};
+</html>`,
+			onPopupBlocked: () => showNotice('error', 'Unable to open print window. Please allow popups and try again.'),
+		});
 	};
 
 	return (

@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import { Box, Button, Menu, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
+import { openPrintWindow } from '../components/openPrintWindow';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
 import { useContextActionMenu } from '../components/interactionUtils';
 
@@ -174,13 +175,9 @@ export default function ChameleonPrefixesPage() {
 			))
 			.join('');
 
-		const printWindow = window.open('', '', 'width=1100,height=1400');
-		if (!printWindow) {
-			showNotice('error', 'Unable to open print window. Please allow popups and try again.');
-			return;
-		}
-
-		printWindow.document.write(`<!DOCTYPE html>
+		openPrintWindow({
+			features: 'width=1100,height=1400',
+			html: `<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
@@ -302,10 +299,9 @@ export default function ChameleonPrefixesPage() {
 		${authUser?.email ? `<footer class="license">Licensed for use by: ${escapeHtml(authUser.email)}</footer>` : ''}
 	</main>
 </body>
-</html>`);
-
-		printWindow.document.close();
-		printWindow.onload = () => setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
+</html>`,
+			onPopupBlocked: () => showNotice('error', 'Unable to open print window. Please allow popups and try again.'),
+		});
 	};
 
 	return (

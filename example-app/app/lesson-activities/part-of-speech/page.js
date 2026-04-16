@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Box, Button, Grid, IconButton, TextField, Typography } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
+import { openPrintWindow } from '../components/openPrintWindow';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
 
 const FORM_NAME = 'part-of-speech';
@@ -207,8 +208,9 @@ export default function PartOfSpeechPage() {
 			? `<div class="license-footer">Licensed for use by: ${authUser.email.replace(/</g, '&lt;')}</div>`
 			: '';
 
-		const printWindow = window.open('', '', 'width=1100,height=1400');
-		printWindow.document.write(`<!DOCTYPE html>
+		openPrintWindow({
+			features: 'width=1100,height=1400',
+			html: `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -249,9 +251,9 @@ export default function PartOfSpeechPage() {
   <div class="sort-boxes">${boxSections}</div>
   ${licenseFooter}
 </body>
-</html>`);
-		printWindow.document.close();
-		printWindow.onload = () => setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
+</html>`,
+			onPopupBlocked: () => setNotice({ type: 'error', message: 'Allow pop-ups to print this activity.' }),
+		});
 	};
 
 	return (
