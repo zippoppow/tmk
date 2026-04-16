@@ -9,7 +9,6 @@ import { useContextActionMenu } from '../components/interactionUtils';
 
 const FORM_NAME = 'morph-morph-match';
 const DEFAULT_ACTIVITY_NAME = 'Morph Morph Match Activity';
-const GRID_LABELS = ['Column 1', 'Column 2', 'Column 3', 'Column 4', 'Column 5', 'Column 6'];
 
 function emptyPair() {
 	return { left: '', right: '' };
@@ -147,37 +146,39 @@ export default function MorphMorphMatchPage() {
 			: '';
 
 		openPrintWindow({
-			features: 'width=1100,height=1400',
-			html: `<!DOCTYPE html>
+			features: 'width=900,height=1200',
+ 			html: `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>${(activityName || DEFAULT_ACTIVITY_NAME).replace(/</g, '&lt;')}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.4; }
-    .header { border-bottom: 3px solid #4020A7; padding-bottom: 8px; display: grid; grid-template-columns: 3fr 1fr; gap: 10px; margin-bottom: 20px; }
+		body { font-family: 'Trebuchet MS', sans-serif; padding: 12px; line-height: 1.2; color: #000; }
+		.header { border-bottom: 3px solid #4020A7; padding-bottom: 6px; display: grid; grid-template-columns: 3fr 1fr; gap: 8px; margin-bottom: 10px; break-inside: avoid; page-break-inside: avoid; }
     .header-column { display: flex; flex-direction: column; gap: 4px; }
-    .header-column img { max-width: 180px; height: auto; }
-    .title { font-size: 1.5em; font-weight: bold; letter-spacing: 1px; }
-    .subtitle { font-size: 1.1em; font-style: italic; }
+		.header-column img { max-width: 120px; height: auto; }
+		.title { font-size: 1.22em; font-weight: 700; letter-spacing: 0.4px; line-height: 1.15; }
+		.subtitle { font-size: 0.95em; font-style: italic; line-height: 1.15; }
     .morpheme-value { font-family: 'Courier New', monospace; color: #4020A7; }
-    .instructions { font-size: 0.95em; color: #555; margin-top: 4px; }
-    .col-labels { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 6px; }
-    .col-label { text-align: center; font-weight: 700; font-size: 0.8em; color: #555; }
-    .top-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 16px; }
-    .grid-cell { border: 2px solid #4020A7; border-radius: 3px; padding: 6px; text-align: center; font-family: 'Courier New', monospace; min-height: 34px; font-size: 0.9em; }
-    .section-divider { border-top: 2px solid #eee; margin: 12px 0; padding-top: 12px; }
-    .section-headers { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 12px; }
+		.instructions { font-size: 0.78em; color: #555; margin-top: 2px; }
+		.top-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 10px; break-inside: avoid; page-break-inside: avoid; }
+		.grid-cell { border: 2px solid #4020A7; border-radius: 3px; padding: 4px; text-align: center; font-family: 'Trebuchet MS', sans-serif; min-height: 40px; font-size: 1em; }
+		.section-divider { border-top: 2px solid #eee; margin: 8px 0; padding-top: 8px; }
+		.section-headers { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 8px; }
     .sh-col { display: flex; flex-direction: column; gap: 3px; }
-    .sh-title { font-weight: 700; font-size: 1em; }
-    .sh-sub { font-size: 0.85em; color: #555; }
-    .pairs { display: flex; flex-direction: column; gap: 6px; }
-    .pair-row { display: grid; grid-template-columns: 24px 1fr 1fr; gap: 10px; align-items: center; border-bottom: 1px solid #eee; padding: 5px 0; }
-    .pair-num { font-weight: 700; text-align: right; color: #555; font-size: 0.9em; }
-    .pair-left, .pair-right { font-family: 'Courier New', monospace; padding: 4px; min-height: 28px; border-bottom: 1px solid #ddd; }
-    .license-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e5e7eb; text-align: right; font-size: 0.8em; color: #4b5563; font-style: italic; }
-    @media print { @page { size: letter landscape; margin: 0.4in; } body { padding: 0; } }
+		.sh-title { font-weight: 700; font-size: 0.92em; text-align: center; }
+		.sh-subs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center; }
+		.sh-sub { font-size: 0.78em; color: #555; text-align: center; }
+		.pairs { display: flex; flex-direction: column; gap: 2px; break-inside: avoid; page-break-inside: avoid; }
+		.pair-row { display: grid; grid-template-columns: 20px 1fr 1fr; gap: 8px; align-items: center; border-bottom: 1px solid #eee; padding: 3px 0; }
+    .pair-num { font-weight: 700; text-align: right; color: #555; font-size: 0.85em; }
+		.pair-left, .pair-right { font-family: 'Trebuchet MS', sans-serif; padding: 2px 4px; min-height: 22px; border-bottom: 1px solid #ddd; font-size: 0.86em; }
+		.license-footer { margin-top: 12px; padding-top: 8px; border-top: 1px solid #e5e7eb; text-align: right; font-size: 0.72em; color: #4b5563; font-style: italic; }
+		@media print {
+			@page { size: letter portrait; margin: 0.25in; }
+			body { padding: 0; }
+		}
   </style>
 </head>
 <body>
@@ -191,21 +192,22 @@ export default function MorphMorphMatchPage() {
       <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
     </div>
   </div>
-  <div class="col-labels">
-    ${['Column 1','Column 2','Column 3','Column 4','Column 5','Column 6'].map((l) => `<div class="col-label">${l}</div>`).join('')}
-  </div>
   <div class="top-grid">${gridCells}</div>
   <div class="section-divider">
     <div class="section-headers">
       <div class="sh-col">
         <div class="sh-title">${(sh.leftTitle || '').replace(/</g, '&lt;')}</div>
-        <div class="sh-sub">${(sh.leftSub1 || '').replace(/</g, '&lt;')}</div>
-        <div class="sh-sub">${(sh.leftSub2 || '').replace(/</g, '&lt;')}</div>
+				<div class="sh-subs">
+					<div class="sh-sub">${(sh.leftSub1 || '').replace(/</g, '&lt;')}</div>
+					<div class="sh-sub">${(sh.leftSub2 || '').replace(/</g, '&lt;')}</div>
+				</div>
       </div>
       <div class="sh-col">
         <div class="sh-title">${(sh.rightTitle || '').replace(/</g, '&lt;')}</div>
-        <div class="sh-sub">${(sh.rightSub1 || '').replace(/</g, '&lt;')}</div>
-        <div class="sh-sub">${(sh.rightSub2 || '').replace(/</g, '&lt;')}</div>
+				<div class="sh-subs">
+					<div class="sh-sub">${(sh.rightSub1 || '').replace(/</g, '&lt;')}</div>
+					<div class="sh-sub">${(sh.rightSub2 || '').replace(/</g, '&lt;')}</div>
+				</div>
       </div>
     </div>
     <div class="pairs">${pairRows}</div>
@@ -244,11 +246,6 @@ export default function MorphMorphMatchPage() {
 			setNotice={setNotice}
 		>
 			<Box sx={{ my: 3 }}>
-				<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 1.25, mb: 1 }}>
-					{GRID_LABELS.map((label) => (
-						<Typography key={label} sx={{ textAlign: 'center', fontWeight: 700, color: '#555', fontSize: '0.9rem' }}>{label}</Typography>
-					))}
-				</Box>
 				{Array.from({ length: 4 }, (_, rowIndex) => (
 					<Box key={rowIndex} sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 1.25, mb: 1.25 }}>
 						{Array.from({ length: 6 }, (_, colIndex) => {
@@ -288,7 +285,7 @@ export default function MorphMorphMatchPage() {
 							placeholder="Left column title"
 							value={data.sectionHeaders.leftTitle}
 							onChange={(e) => setSectionHeader('leftTitle', e.target.value)}
-							inputProps={{ style: { fontFamily: 'Courier New, monospace', fontWeight: 700 } }}
+							inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontWeight: 700, fontSize: '1.2rem', color: '#000000' } }}
 							sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #4020A7' } }}
 						/>
 						<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
@@ -297,7 +294,7 @@ export default function MorphMorphMatchPage() {
 								placeholder="Sub-header 1"
 								value={data.sectionHeaders.leftSub1}
 								onChange={(e) => setSectionHeader('leftSub1', e.target.value)}
-								inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+								inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 							/>
 							<TextField
@@ -305,7 +302,7 @@ export default function MorphMorphMatchPage() {
 								placeholder="Sub-header 2"
 								value={data.sectionHeaders.leftSub2}
 								onChange={(e) => setSectionHeader('leftSub2', e.target.value)}
-								inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+								inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 							/>
 						</Box>
@@ -316,7 +313,7 @@ export default function MorphMorphMatchPage() {
 							placeholder="Right column title"
 							value={data.sectionHeaders.rightTitle}
 							onChange={(e) => setSectionHeader('rightTitle', e.target.value)}
-							inputProps={{ style: { fontFamily: 'Courier New, monospace', fontWeight: 700 } }}
+							inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontWeight: 700, fontSize: '1.2rem', color: '#000000' } }}
 							sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #4020A7' } }}
 						/>
 						<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
@@ -325,7 +322,7 @@ export default function MorphMorphMatchPage() {
 								placeholder="Sub-header 1"
 								value={data.sectionHeaders.rightSub1}
 								onChange={(e) => setSectionHeader('rightSub1', e.target.value)}
-								inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+								inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 							/>
 							<TextField
@@ -333,7 +330,7 @@ export default function MorphMorphMatchPage() {
 								placeholder="Sub-header 2"
 								value={data.sectionHeaders.rightSub2}
 								onChange={(e) => setSectionHeader('rightSub2', e.target.value)}
-								inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+								inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 							/>
 						</Box>
