@@ -162,12 +162,22 @@ export default function ActivityShell({
 
 				{projectId && (
 					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea', }}>
-						<Typography sx={{ fontSize: '1.5rem', mb: 1.5, color: '#000000', fontWeight: 700 }}>
-							PROJECT: {projectName}
-						</Typography>
-						<Typography sx={{ fontSize: '1.2rem', mb: 1.2, color: '#000000', fontWeight: 700 }}>
-							Activity Type: {title}
-						</Typography>
+						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+							<Typography sx={{ fontSize: '2rem', color: '#011436', fontWeight: 700 }}>
+								PROJECT:
+							</Typography>
+							<Typography sx={{ fontSize: '2rem', mb: 0, color: '#000000', fontWeight: 700, fontStyle: 'italic' }}>
+								{projectName}
+							</Typography>
+						</Box>
+						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+							<Typography sx={{ fontSize: '1.2rem', color: '#011436', fontWeight: 700 }}>
+								Activity Type:
+							</Typography>
+							<Typography sx={{ fontSize: '1.2rem', mb: 0, color: '#000000', fontWeight: 400, fontStyle: 'italic' }}>
+								{title}
+							</Typography>
+						</Box>
 						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
 							<Typography sx={{ fontSize: '1.2rem', color: '#011436', fontWeight: 700 }}>
 								Activity Name:
@@ -185,9 +195,14 @@ export default function ActivityShell({
 
 				{!projectId && (
 					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
-						<Typography sx={{ fontSize: '1rem', color: '#4a5568', textTransform: 'uppercase', fontWeight: 700 }}>
-							Standalone Activity: {title}
-						</Typography>
+						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+							<Typography sx={{ fontSize: '1.2rem', color: '#011436', fontWeight: 700 }}>
+								Activity Type:
+							</Typography>
+							<Typography sx={{ fontSize: '1.2rem', mb: .5, color: '#000000', fontWeight: 400, fontStyle: 'italic' }}>
+								{title}
+							</Typography>
+						</Box>
 						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
 							<Typography sx={{ fontSize: '1.2rem', color: '#011436', fontWeight: 700 }}>
 								Activity Name:
@@ -202,7 +217,7 @@ export default function ActivityShell({
 					</Box>
 				)}
 
-				<Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', gap: 1, mb: 2, flexWrap: 'wrap' }}>
 					{!projectId && (
 						<>
 							<Button
@@ -276,12 +291,13 @@ export default function ActivityShell({
 										value={morpheme}
 										onChange={(event) => onMorphemeChange(event.target.value)}
 										onContextMenu={onMorphemeContextMenu}
-										sx={{ minWidth: 180 }}
+										sx={{ minWidth: 180, pb: 0.5 }}
 										inputProps={{
 											style: {
 												fontFamily: 'Trebuchet MS, sans-serif',
 												fontSize: '2rem',
 												color: '#4020A7',
+												paddingBottom: '16px',
 											},
 										}}
 									/>

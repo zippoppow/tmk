@@ -17,9 +17,9 @@ export {
 } from './sharedHelperConstants';
 
 const AUTH_BYPASS_USER = {
-	id: 'dev-user',
-	name: 'Development User',
-	email: 'dev@example.com',
+	id: String(process.env.NEXT_PUBLIC_DEV_USER_ID || 'dev-user').trim() || 'dev-user',
+	name: String(process.env.NEXT_PUBLIC_DEV_USER_NAME || 'Development User').trim() || 'Development User',
+	email: String(process.env.NEXT_PUBLIC_DEV_USER_EMAIL || 'dev@example.com').trim() || 'dev@example.com',
 };
 
 function trimOrigin(value) {
@@ -38,6 +38,26 @@ function isLocalOrigin(origin) {
 		origin.includes('127.0.0.1') ||
 		origin.startsWith('file:')
 	);
+}
+
+function isLocalDevHost(hostname) {
+	if (!hostname) {
+		return false;
+	}
+
+	return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.local');
+}
+
+export function isAuthBypassMode() {
+	if (!AUTH_BYPASS_ENABLED) {
+		return false;
+	}
+
+	if (typeof window === 'undefined') {
+		return process.env.NODE_ENV !== 'production';
+	}
+
+	return isLocalDevHost(window.location.hostname);
 }
 
 function getConfiguredApiOrigins(defaultOrigins) {
@@ -175,6 +195,10 @@ export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
 }
 
 export function buildTeachableStartUrl(apiOrigin, redirectTo) {
+	if (isAuthBypassMode()) {
+		return redirectTo || (typeof window !== 'undefined' ? window.location.href : '/');
+	}
+
 	const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
 	const authUrl = new URL(OAUTH_ENDPOINTS.start, origin);
 	authUrl.searchParams.set('redirectTo', redirectTo || window.location.href);
@@ -183,6 +207,18 @@ export function buildTeachableStartUrl(apiOrigin, redirectTo) {
 }
 
 export function buildTeachableLogoutUrl(redirectTo, apiOrigin) {
+	if (isAuthBypassMode()) {
+		if (typeof window === 'undefined') {
+			return redirectTo || '/';
+		}
+
+		if (redirectTo && redirectTo.startsWith('/')) {
+			return `${window.location.origin}${redirectTo}`;
+		}
+
+		return redirectTo || window.location.href;
+	}
+
 	const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
 	const logoutUrl = new URL(OAUTH_ENDPOINTS.logout, origin);
 	logoutUrl.searchParams.set('redirectTo', redirectTo || window.location.href);
@@ -213,6 +249,11 @@ function getAccessTokenFromPayload(payload) {
 }
 
 export async function exchangeUserAccessToken(apiOrigin) {
+	if (isAuthBypassMode()) {
+		userAccessToken = 'dev-bypass-token';
+		return userAccessToken;
+	}
+
 	try {
 		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
 		const tokenPath = addTeachableSessionToPath(USER_AUTH_ENDPOINTS.token);
@@ -238,6 +279,11 @@ export async function exchangeUserAccessToken(apiOrigin) {
 }
 
 export async function refreshUserAccessToken(apiOrigin) {
+	if (isAuthBypassMode()) {
+		userAccessToken = 'dev-bypass-token';
+		return userAccessToken;
+	}
+
 	try {
 		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
 		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.refresh}`, {
@@ -275,6 +321,15 @@ export async function getUserAccessToken(apiOrigin, forceRefresh = false) {
 export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 	try {
 		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+
+		if (isAuthBypassMode()) {
+			const endpointPath = addTeachableSessionToPath(endpoint);
+			return fetch(`${origin}${endpointPath}`, {
+				...init,
+				credentials: 'include',
+			});
+		}
+
 		const token = await getUserAccessToken(apiOrigin);
 		if (!token) {
 			return new Response(null, { status: 401, statusText: 'Unauthorized' });
@@ -356,7 +411,7 @@ export function extractAuthenticatedUser(data) {
 }
 
 export async function fetchAuthenticatedUser(apiOrigin) {
-	if (AUTH_BYPASS_ENABLED) {
+	if (isAuthBypassMode()) {
 		return AUTH_BYPASS_USER;
 	}
 

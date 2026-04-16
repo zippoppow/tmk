@@ -253,7 +253,33 @@ export function useLessonActivityProject({
 			project.lessonActivities = activities;
 			project.modifiedAtMs = Date.now();
 
-			if (authUser) {
+			let resolvedAuthUser = authUser;
+			if (!resolvedAuthUser) {
+				resolvedAuthUser = await fetchAuthenticatedUser(projectApiOrigin);
+				if (resolvedAuthUser) {
+					setAuthUser(resolvedAuthUser);
+				}
+			}
+
+			if (resolvedAuthUser) {
+				const persistedActivity = activities[activityIndex] || {};
+				const createdAtSource = persistedActivity['created-at'] || Date.now();
+
+				const activityResponse = await upsertLessonActivity(
+					projectApiOrigin,
+					buildLessonActivityUpsertPayload({
+						id: activityId,
+						template: formName,
+						lessonName: activityName || persistedActivity['lesson-name'] || defaultActivityName,
+						lessonInputData: normalizedInput,
+						createdAt: createdAtSource,
+						modifiedAt: Date.now(),
+						extra: {
+							formName,
+						},
+					})
+				);
+
 				project.syncedAt = null;
 				saveStoredProjects(projects);
 
@@ -269,7 +295,7 @@ export function useLessonActivityProject({
 					body: JSON.stringify(payload),
 				});
 
-				if (response.ok) {
+				if (response.ok && activityResponse.ok) {
 					const result = await response.json();
 					const updated = getAllStoredProjects();
 					const updatedProject = updated.find((item) => item.id === projectId);
@@ -280,11 +306,23 @@ export function useLessonActivityProject({
 						}
 						saveStoredProjects(updated);
 					}
-					showNotice('success', 'Lesson activity saved.');
+					showNotice('success', 'Lesson activity saved to database.');
 					return true;
-				} else {
+				}
+
+				if (!activityResponse.ok && response.ok) {
+					showNotice('warning', 'Project synced, but activity record save failed.');
+					return false;
+				}
+
+				if (activityResponse.ok && !response.ok) {
+					showNotice('warning', 'Activity saved to database, but project sync failed.');
+					return false;
+				}
+
+				{
 					saveStoredProjects(projects);
-					showNotice('warning', 'Saved locally. Cloud sync failed.');
+					showNotice('warning', 'Saved locally. Cloud save failed.');
 					return false;
 				}
 			} else {
@@ -309,7 +347,15 @@ export function useLessonActivityProject({
 	};
 
 	const handleSaveStandalone = async () => {
-		if (!authUser) {
+		let resolvedAuthUser = authUser;
+		if (!resolvedAuthUser) {
+			resolvedAuthUser = await fetchAuthenticatedUser(projectApiOrigin);
+			if (resolvedAuthUser) {
+				setAuthUser(resolvedAuthUser);
+			}
+		}
+
+		if (!resolvedAuthUser) {
 			showNotice('error', 'Please login with Teachable to save standalone activities.');
 			return;
 		}

@@ -119,7 +119,7 @@ export default function MorphMatchDefinitionsPage() {
   <title>${activityTitle}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.4; }
+		body { font-family: 'Lato', 'Segoe UI', Arial, sans-serif; padding: 20px; line-height: 1.4; }
     .header {
       border-bottom: 3px solid #4020A7;
       padding-bottom: 8px;
@@ -129,15 +129,15 @@ export default function MorphMatchDefinitionsPage() {
       margin-bottom: 16px;
     }
     .header-column { display: flex; flex-direction: column; gap: 4px; }
-    .header-column img { max-width: 180px; height: auto; }
-    .title { font-size: 1.5em; font-weight: bold; letter-spacing: 1px; }
-    .subtitle { font-size: 1.1em; font-style: italic; }
+		.header-column img { max-width: 200px; height: auto; }
+		.title { font-size: 1.6em; font-weight: 800; letter-spacing: 0.08em; }
+		.subtitle { font-size: 1.1em; font-style: italic; color: #000; }
     .morpheme-value { font-family: 'Courier New', monospace; color: #4020A7; font-size: 1.1em; }
     .instructions { font-size: 0.95em; color: #555; margin-top: 4px; }
     .content {
       display: grid;
       grid-template-columns: 4fr 8fr;
-      gap: 32px;
+			gap: 8px;
       margin-top: 12px;
     }
     .column { display: flex; flex-direction: column; gap: 12px; }
@@ -146,9 +146,10 @@ export default function MorphMatchDefinitionsPage() {
     .morph-word-input {
       border: none;
       border-bottom: 2px solid #ddd;
-      padding: 4px 0;
-      font-size: 1em;
-      font-family: 'Courier New', monospace;
+			padding: 0 0 16px 0;
+			font-size: 1.2rem;
+			font-family: 'Trebuchet MS', sans-serif;
+			color: #000;
       background: transparent;
       width: 78%;
     }
@@ -156,24 +157,35 @@ export default function MorphMatchDefinitionsPage() {
       border: 1px solid #ddd;
       padding: 4px;
       font-weight: bold;
-      font-size: 1em;
-      font-family: 'Courier New', monospace;
+			font-size: 1.2rem;
+			font-family: 'Trebuchet MS', sans-serif;
+			color: #000;
       background: transparent;
       width: 20%;
       text-align: center;
     }
-    .definitions-item { display: flex; align-items: flex-start; gap: 8px; }
-    .definitions-number { min-width: 24px; font-weight: bold; font-size: 1em; flex-shrink: 0; padding-top: 4px; }
+		.definitions-item {
+			display: grid;
+			grid-template-columns: 32px minmax(0, 1fr);
+			align-items: end;
+			gap: 8px;
+		}
+		.definitions-number { font-weight: 700; font-size: 1em; color: #000; padding-bottom: 8px; }
     .definitions-input {
       border: none;
       border-bottom: 2px solid #ddd;
-      padding: 4px 0;
+			padding: 8px 0;
       font-size: 1em;
-      font-family: 'Courier New', monospace;
+			font-family: 'Trebuchet MS', sans-serif;
+			color: #333;
+			transition: border-color 0.3s ease;
       background: transparent;
       width: 100%;
+			min-height: 1.5em;
+			box-sizing: border-box;
       resize: none;
-      height: 2.4em;
+			height: 2.5em;
+			vertical-align: middle;
     }
     .license-footer {
       margin-top: 24px;
@@ -266,13 +278,13 @@ export default function MorphMatchDefinitionsPage() {
 									variant="standard"
 									value={word}
 									onChange={(event) => setListValue('words', index, event.target.value)}
-									inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+									inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000', paddingBottom: '16px' } }}
 									sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 								/>
 								<TextField
 									value={data.numbers[index] || ''}
 									onChange={(event) => setListValue('numbers', index, event.target.value)}
-									inputProps={{ style: { textAlign: 'center', fontWeight: 700, fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000'  } }}
+									inputProps={{ style: { textAlign: 'center', fontWeight: 700, fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000', paddingBottom: '16px'  } }}
 									sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#ddd', borderWidth: '1px' } }}
 								/>
 								<Box sx={{ display: 'grid', gridTemplateColumns: '32px 1fr', gap: 1, alignItems: 'end' }}>
@@ -280,12 +292,31 @@ export default function MorphMatchDefinitionsPage() {
 									<TextField
 										variant="standard"
 										multiline
-										minRows={2}
-										maxRows={2}
+										minRows={1}
+										maxRows={1}
 										value={data.definitions[index] || ''}
 										onChange={(event) => setListValue('definitions', index, event.target.value)}
-										inputProps={{ style: { minHeight: '1em', maxHeight: '2.5em', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
-										sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+										inputProps={{
+											style: {
+												minHeight: '0.375em',
+												height: '0.5625em',
+												fontFamily: 'Trebuchet MS, sans-serif',
+												fontSize: '1em',
+												color: '#333',
+												transition: 'border-color 0.3s ease',
+												background: 'transparent',
+												padding: '3px 0',
+												boxSizing: 'border-box',
+												resize: 'none',
+												verticalAlign: 'middle',
+											},
+										}}
+										sx={{
+											'& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' },
+											'& .MuiInputBase-root::after': { borderBottom: '2px solid #667eea' },
+											'& .MuiInputBase-root:hover:not(.Mui-disabled, .Mui-error)::before': { borderBottom: '2px solid #ddd' },
+											'& .MuiInputBase-root.Mui-focused': { backgroundColor: 'rgba(102, 126, 234, 0.05)' },
+										}}
 									/>
 								</Box>
 							</Box>
@@ -293,16 +324,26 @@ export default function MorphMatchDefinitionsPage() {
 					</Stack>
 				</Grid>
 				<Grid item xs={12}>
-					<Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' }, gap: 1.25, flexWrap: 'wrap', pt: 1 }}>
-						<Button variant="outlined" onClick={handleClearWords} sx={{ minWidth: 140 }}>
+					<Box
+						sx={{
+							display: 'grid',
+							gridTemplateColumns: { xs: '1fr', md: '3fr 1.2fr 7fr' },
+							gap: 1,
+							pt: 1,
+						}}
+					>
+						<Button variant="outlined" onClick={handleClearWords} sx={{ justifySelf: { xs: 'stretch', md: 'start' } }}>
 							Clear Words
 						</Button>
-						<Button variant="outlined" onClick={handleClearNumbers} sx={{ minWidth: 150 }}>
+						<Button variant="outlined" onClick={handleClearNumbers} sx={{ justifySelf: { xs: 'stretch', md: 'start' } }}>
 							Clear Numbers
 						</Button>
-						<Button variant="outlined" onClick={handleClearDefinitions} sx={{ minWidth: 170 }}>
-							Clear Definitions
-						</Button>
+						<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '32px 1fr' }, gap: 1 }}>
+							<Box sx={{ display: { xs: 'none', md: 'block' } }} />
+							<Button variant="outlined" onClick={handleClearDefinitions} sx={{ justifySelf: { xs: 'stretch', md: 'start' } }}>
+								Clear Definitions
+							</Button>
+						</Box>
 					</Box>
 				</Grid>
 			</Grid>
