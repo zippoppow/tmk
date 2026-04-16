@@ -70,17 +70,6 @@ function getConfiguredApiOrigins(defaultOrigins) {
 	};
 }
 
-function resolveBrowserSameOriginFallback(apiOrigin) {
-	if (typeof window !== 'undefined') {
-		const browserOrigin = trimOrigin(window.location.origin);
-		if (browserOrigin) {
-			return browserOrigin;
-		}
-	}
-
-	return trimOrigin(apiOrigin) || resolveTmkApiOrigin();
-}
-
 let userAccessToken = '';
 let teachableSessionHandoff = '';
 
@@ -210,7 +199,7 @@ export function buildTeachableStartUrl(apiOrigin, redirectTo) {
 		return redirectTo || (typeof window !== 'undefined' ? window.location.href : '/');
 	}
 
-	const origin = resolveBrowserSameOriginFallback(apiOrigin);
+	const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
 	const authUrl = new URL(OAUTH_ENDPOINTS.start, origin);
 	authUrl.searchParams.set('redirectTo', redirectTo || window.location.href);
 	console.log('[TMK auth] start URL:', authUrl.toString());
@@ -230,7 +219,7 @@ export function buildTeachableLogoutUrl(redirectTo, apiOrigin) {
 		return redirectTo || window.location.href;
 	}
 
-	const origin = resolveBrowserSameOriginFallback(apiOrigin);
+	const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
 	const logoutUrl = new URL(OAUTH_ENDPOINTS.logout, origin);
 	logoutUrl.searchParams.set('redirectTo', redirectTo || window.location.href);
 	const session = getTeachableSessionHandoff();
@@ -266,7 +255,7 @@ export async function exchangeUserAccessToken(apiOrigin) {
 	}
 
 	try {
-		const origin = resolveBrowserSameOriginFallback(apiOrigin);
+		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
 		const tokenPath = addTeachableSessionToPath(USER_AUTH_ENDPOINTS.token);
 		const response = await fetch(`${origin}${tokenPath}`, {
 			method: 'POST',
@@ -296,7 +285,7 @@ export async function refreshUserAccessToken(apiOrigin) {
 	}
 
 	try {
-		const origin = resolveBrowserSameOriginFallback(apiOrigin);
+		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
 		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.refresh}`, {
 			method: 'POST',
 			credentials: 'include',
@@ -427,7 +416,7 @@ export async function fetchAuthenticatedUser(apiOrigin) {
 	}
 
 	try {
-		const origin = resolveBrowserSameOriginFallback(apiOrigin);
+		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
 		const mePath = addTeachableSessionToPath(OAUTH_ENDPOINTS.me);
 		const response = await fetch(`${origin}${mePath}`, {
 			method: 'GET',
