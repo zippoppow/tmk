@@ -162,18 +162,21 @@ export default function ActivityShell({
 
 				{projectId && (
 					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea', }}>
-						<Typography sx={{ mb: 1.5, color: '#000000', fontWeight: 700 }}>
+						<Typography sx={{ fontSize: '1.5rem', mb: 1.5, color: '#000000', fontWeight: 700 }}>
 							PROJECT: {projectName}
 						</Typography>
+						<Typography sx={{ fontSize: '1.2rem', mb: 1.2, color: '#000000', fontWeight: 700 }}>
+							Activity Type: {title}
+						</Typography>
 						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-							<Typography sx={{ mb: 0.8, color: '#011436', fontWeight: 700 }}>
-								{`${title} Activity Name: `}
+							<Typography sx={{ fontSize: '1.2rem', color: '#011436', fontWeight: 700 }}>
+								Activity Name:
 							</Typography>
 							<TextField
 								size="small"
 								value={activityName}
 								onChange={(event) => setActivityName(event.target.value)}
-								sx={{ minWidth: 180 }}
+								sx={{ minWidth: 360 }}
 							/>
 						</Box>
 						
@@ -183,15 +186,19 @@ export default function ActivityShell({
 				{!projectId && (
 					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
 						<Typography sx={{ fontSize: '1rem', color: '#4a5568', textTransform: 'uppercase', fontWeight: 700 }}>
-							Standalone  Activity: {title}
+							Standalone Activity: {title}
 						</Typography>
-						<TextField
-							size="small"
-							label="Activity Name"
-							value={activityName}
-							onChange={(event) => setActivityName(event.target.value)}
-							fullWidth
-						/>
+						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+							<Typography sx={{ fontSize: '1.2rem', color: '#011436', fontWeight: 700 }}>
+								Activity Name:
+							</Typography>
+							<TextField
+								size="small"
+								value={activityName}
+								onChange={(event) => setActivityName(event.target.value)}
+								sx={{ minWidth: 360 }}
+							/>
+						</Box>
 					</Box>
 				)}
 
