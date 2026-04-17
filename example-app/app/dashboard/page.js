@@ -281,7 +281,7 @@ export default function DashboardPage() {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                 <TmkLogo sx={{ mb: 2 }} priority />
                 <Typography variant="h4" component="h1">
-                   DIY Dashboard
+                   DASHBOARD
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                     <Typography variant="body1">
@@ -293,37 +293,26 @@ export default function DashboardPage() {
                 </Box>
             </Box>
 
-            <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-                    Projects
-                </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                    Create and manage projects of lesson sequences and activities.
-                </Typography>
-                <Button variant="contained" onClick={() => router.push('/lesson-projects')}>
-                    Go to Projects
-                </Button>
-            </Box>
+            <Grid container spacing={{ xs: 2, md: 3 }} alignItems="flex-start" sx={{ mb: 4 }}>
+                {/* Left column: Lesson Activities + Standalone */}
+                <Grid item xs={12} md={8} sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #224c88' }}>
+                        <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                            Lesson Activities
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                            Create and manage single, standalone lesson activities.
+                        </Typography>
+                        <LessonActivitySelector
+                            activities={lessonActivities}
+                            onOpen={handleCreateNewActivity}
+                        />
+                    </Paper>
 
-            <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-                    Lesson Activities
-                </Typography>
-                <Grid container spacing={{ xs: 2, md: 3 }} alignItems="stretch">
-                    <Grid item xs={12} md={6} sx={{ minWidth: 0, display: 'flex' }}>
-                        <Box sx={{ width: '100%', minWidth: 0 }}>
-                            <LessonActivitySelector
-                                activities={lessonActivities}
-                                onOpen={handleCreateNewActivity}
-                            />
-                        </Box>
-                    </Grid>
-
-                    <Grid item xs={12} md={6} sx={{ minWidth: 0, display: 'flex' }}>
-                        <Box sx={{ width: '100%', minWidth: 0 }}>
-                            <Typography variant="subtitle1" sx={{ mb: 1.5 }}>
-                                Your Standalone Lesson Activities
-                            </Typography>
+                    <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #224c88' }}>
+                        <Typography variant="subtitle1" sx={{ mb: 1.5 }}>
+                            Your Standalone Lesson Activities
+                        </Typography>
                             {standaloneLoading ? (
                                 <Typography variant="body2" color="textSecondary">Loading lesson activities...</Typography>
                             ) : standaloneActivities.length === 0 ? (
@@ -382,10 +371,24 @@ export default function DashboardPage() {
                                     })}
                                 </Stack>
                             )}
-                        </Box>
-                    </Grid>
+                    </Paper>
                 </Grid>
-            </Box>
+
+                {/* Right column: Projects */}
+                <Grid item xs={12} md={4}>
+                    <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #224c88' }}>
+                        <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                            Projects
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                            Create and manage sequences of lesson activities.
+                        </Typography>
+                        <Button variant="contained" onClick={() => router.push('/lesson-projects')}>
+                            Go to Projects
+                        </Button>
+                    </Paper>
+                </Grid>
+            </Grid>
 
         </Container>
 
