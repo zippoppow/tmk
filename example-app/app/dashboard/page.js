@@ -265,7 +265,17 @@ export default function DashboardPage() {
     };
 
     return (
-        <>
+        <Box
+            sx={{
+                minHeight: '100vh',
+                backgroundImage:
+                    "linear-gradient(rgba(255,255,255,0.80), rgba(255,255,255,0.86)), url('/branding/tmk_diy_cat.png')",
+                backgroundSize: '65% auto',
+                backgroundPosition: 'center calc(10%)',
+                backgroundRepeat: 'no-repeat',
+                backgroundAttachment: { xs: 'scroll', md: 'fixed' },
+            }}
+        >
         <Container maxWidth="lg" sx={{ py: 4 }}>
             <AuthDebugPanel />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
@@ -392,6 +402,6 @@ export default function DashboardPage() {
                 {notice.message}
             </Alert>
         </Snackbar>
-        </>
+        </Box>
     );
 }
