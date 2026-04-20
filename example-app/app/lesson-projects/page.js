@@ -431,7 +431,7 @@ export default function LessonProjectsPage() {
 		});
 	}, [localProjects]);
 
-	const handleCreateProject = () => {
+	const handleCreateProject = async () => {
 		const trimmedName = projectNameInput.trim();
 		if (!trimmedName) {
 			return;
@@ -454,6 +454,15 @@ export default function LessonProjectsPage() {
 		setProjectNameInput('');
 		setNewActivityTypeByProjectId((prev) => ({ ...prev, [created.id]: defaultActivityType }));
 		loadLocalProjects();
+
+		if (isAuthenticated) {
+			const result = await syncProjectToApi(created);
+			if (result) {
+				showNotice('success', `"${trimmedName}" created and synced to cloud.`);
+			} else {
+				showNotice('warning', `"${trimmedName}" saved locally but could not sync to cloud.`);
+			}
+		}
 	};
 
 	const handleDeleteProject = async (projectId) => {
@@ -709,35 +718,65 @@ export default function LessonProjectsPage() {
 				</Stack>
 
 				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
-					<TmkLogo sx={{ mb: 2 }} />
-					<Typography sx={{ fontSize: '2rem', fontWeight: 800, mb: 0.5 }}>DIY Projects</Typography>
-					<Typography sx={{ color: '#5a6472', fontSize: '0.95rem', mb: 2 }}>
-						Create a project first. Then choose a Lesson Activity type and add activities under that project.
-					</Typography>
+					<Box sx={{ display: 'grid', gridTemplateColumns: '75% 25%', gap: 2 }}>
+						{/* Left Column */}
+						<Box>
+							<Typography sx={{ fontSize: '1.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>Create a Project</Typography>
+							<Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 2 }}>
+								Clicking "Create Project" will add a new project to the "SAVED PROJECTS" section below.
+							</Typography>
+							<Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 2 }}>
+								You can create as many projects as you want, and they will be saved for you to access later.
+							</Typography>
+							<Stack direction="row" spacing={1} sx={{ mb: 1.2, width: 500, minWidth: 500, maxWidth: 800, backgroundColor: '#fff' }}>
+								<TextField
+									placeholder="Lesson Activities Project name..."
+									sx={{
+										mb: 1.2,
+										width: 500,
+										minWidth: 500,
+										maxWidth: 800,
+										'& .MuiOutlinedInput-root': {
+											backgroundColor: '#ABC3F7',
+										},
+										'& .MuiOutlinedInput-input': {
+											backgroundColor: '#ABC3F7',
+											fontSize: '1.25rem',
+											textAlign: 'center',
+										},
+									}}
+									value={projectNameInput}
+									onChange={(event) => setProjectNameInput(event.target.value)}
+									onKeyDown={(event) => {
+										if (event.key === 'Enter') {
+											event.preventDefault();
+											handleCreateProject();
+										}
+									}}
+								/>
+								<Button variant="contained" color="success" onClick={handleCreateProject} sx={{ textTransform: 'none', width: 180, minWidth: 180, maxWidth: 180 }}>
+									Create Project
+								</Button>
+							</Stack>
+						</Box>
 
-					<Stack direction="row" spacing={1} sx={{ mb: 1.2 }}>
-						<TextField
-							size="small"
-							fullWidth
-							placeholder="Lesson Activities Project name..."
-							value={projectNameInput}
-							onChange={(event) => setProjectNameInput(event.target.value)}
-							onKeyDown={(event) => {
-								if (event.key === 'Enter') {
-									event.preventDefault();
-									handleCreateProject();
-								}
-							}}
-						/>
-						<Button variant="contained" color="success" onClick={handleCreateProject} sx={{ textTransform: 'none' }}>
-							Create Project
-						</Button>
-					</Stack>
-
-					<Divider sx={{ mb: 1.5 }} />
-
-					<Typography sx={{ fontSize: '2rem', textTransform: 'uppercase', color: '#777', fontWeight: 700, mb: 1 }}>
+						{/* Right Column */}
+						<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', mr: 5 }}>
+							<Stack direction="column" alignItems="center" spacing={0.5} sx={{ mb: 1 }}>
+								<TmkLogo sx={{ mb: 2 }} />
+								<Typography sx={{ fontSize: '3rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 1 }}>
+									Projects
+								</Typography>
+							</Stack>
+						</Box>
+					</Box>
+				</Paper>
+				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
+					<Typography sx={{ fontSize: '2rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 1 }}>
 						Saved Projects
+					</Typography>
+					<Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 2 }}>
+						Now that you've created a project, add one or more lesson activities to that project.
 					</Typography>
 					{displayProjects.length === 0 && (
 						<Typography sx={{ color: '#bbb', fontSize: '1.2rem', textAlign: 'center', py: 2 }}>
@@ -944,7 +983,7 @@ export default function LessonProjectsPage() {
 							</Stack>
 
 					{isLoadingCloudProjects && (
-						<Typography sx={{ color: '#999', fontSize: '0.83rem', mt: 1 }}>Loading cloud projects...</Typography>
+						<Typography sx={{ color: '#999', fontSize: '0.83rem', mt: 1 }}>Loading projects from cloud...</Typography>
 					)}
 
 					{cloudMessage && (
