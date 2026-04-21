@@ -20,7 +20,55 @@ const AUTH_BYPASS_USER = {
 	id: String(process.env.NEXT_PUBLIC_DEV_USER_ID || 'dev-user').trim() || 'dev-user',
 	name: String(process.env.NEXT_PUBLIC_DEV_USER_NAME || 'Development User').trim() || 'Development User',
 	email: String(process.env.NEXT_PUBLIC_DEV_USER_EMAIL || 'dev@example.com').trim() || 'dev@example.com',
+	access: {
+		diyCourseId: String(process.env.NEXT_PUBLIC_TEACHABLE_DIY_COURSE_ID || process.env.TEACHABLE_DIY_COURSE_ID || '').trim(),
+		diyCourseActiveEnrollment: true,
+		enrollmentChecked: true,
+		lessonActivities: true,
+		lessonProjects: true,
+	},
 };
+
+const DIY_COURSE_ID = String(process.env.NEXT_PUBLIC_TEACHABLE_DIY_COURSE_ID || process.env.TEACHABLE_DIY_COURSE_ID || '').trim();
+
+function toIdString(value) {
+	if (value === null || value === undefined) {
+		return '';
+	}
+	return String(value).trim();
+}
+
+function getUserCourses(user) {
+	if (Array.isArray(user?.teachableProfile?.courses)) {
+		return user.teachableProfile.courses;
+	}
+	if (Array.isArray(user?.courses)) {
+		return user.courses;
+	}
+	return [];
+}
+
+export function hasActiveDiyEnrollment(user) {
+	if (!user || typeof user !== 'object') {
+		return false;
+	}
+
+	if (typeof user?.access?.lessonActivities === 'boolean') {
+		return user.access.lessonActivities;
+	}
+
+	if (typeof user?.access?.diyCourseActiveEnrollment === 'boolean') {
+		return user.access.diyCourseActiveEnrollment;
+	}
+
+	if (!DIY_COURSE_ID) {
+		return true;
+	}
+
+	const courses = getUserCourses(user);
+	const enrollment = courses.find((course) => toIdString(course?.course_id) === DIY_COURSE_ID);
+	return Boolean(enrollment?.is_active_enrollment);
+}
 
 function trimOrigin(value) {
 	if (typeof value !== 'string') {

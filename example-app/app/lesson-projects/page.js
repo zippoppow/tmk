@@ -37,6 +37,7 @@ import {
 	buildTeachableLogoutUrl,
 	fetchAuthenticatedUser,
 	fetchWithUserToken,
+	hasActiveDiyEnrollment,
 	resolveTmkApiOrigin,
 } from '../components/authHelpers';
 import {
@@ -101,6 +102,7 @@ export default function LessonProjectsPage() {
 
 	const apiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
 	const isAuthenticated = Boolean(authUser);
+	const hasDiyAccess = hasActiveDiyEnrollment(authUser);
 
 	const showNotice = (severity, message) => {
 		setNotice({ open: true, severity, message });
@@ -256,7 +258,7 @@ export default function LessonProjectsPage() {
 	};
 
 	const loadCloudProjects = async () => {
-		if (!isAuthenticated) {
+		if (!isAuthenticated || !hasDiyAccess) {
 			setCloudStatus('');
 			return;
 		}
@@ -343,7 +345,7 @@ export default function LessonProjectsPage() {
 	};
 
 	const syncProjectToApi = async (project) => {
-		if (!isAuthenticated) {
+		if (!isAuthenticated || !hasDiyAccess) {
 			return null;
 		}
 
@@ -432,6 +434,11 @@ export default function LessonProjectsPage() {
 	}, [localProjects]);
 
 	const handleCreateProject = async () => {
+		if (!hasDiyAccess) {
+			showNotice('warning', 'Active DIY course enrollment is required to create lesson projects.');
+			return;
+		}
+
 		const trimmedName = projectNameInput.trim();
 		if (!trimmedName) {
 			return;
@@ -466,6 +473,11 @@ export default function LessonProjectsPage() {
 	};
 
 	const handleDeleteProject = async (projectId) => {
+		if (!hasDiyAccess) {
+			showNotice('warning', 'Active DIY course enrollment is required to manage lesson projects.');
+			return;
+		}
+
 		const project = getLocalProjectById(projectId);
 		if (!project) {
 			return;
@@ -532,6 +544,11 @@ export default function LessonProjectsPage() {
 	};
 
 	const handleNewActivity = (projectId) => {
+		if (!hasDiyAccess) {
+			showNotice('warning', 'Active DIY course enrollment is required to add lesson activities.');
+			return;
+		}
+
 		const projects = getAllStoredProjects();
 		const project = projects.find((item) => item.id === projectId);
 		if (!project) {
@@ -566,6 +583,11 @@ export default function LessonProjectsPage() {
 	};
 
 	const handleOpenActivity = (project, activity, activityIndex) => {
+		if (!hasDiyAccess) {
+			showNotice('warning', 'Active DIY course enrollment is required to open lesson activities.');
+			return;
+		}
+
 		const activityType = String(activity['tmk-template'] || '');
 		const route = getLessonActivityRoute(activityType);
 		if (!route) {
@@ -585,6 +607,11 @@ export default function LessonProjectsPage() {
 	};
 
 	const handleLaunchSlideshow = (projectId) => {
+		if (!hasDiyAccess) {
+			showNotice('warning', 'Active DIY course enrollment is required to present lesson activities.');
+			return;
+		}
+
 		const selected = Array.isArray(selectedForSlideshowByProjectId[projectId])
 			? selectedForSlideshowByProjectId[projectId]
 			: [];
@@ -607,6 +634,11 @@ export default function LessonProjectsPage() {
 
 
 	const handleDeleteActivity = async (projectId, activityIndex) => {
+		if (!hasDiyAccess) {
+			showNotice('warning', 'Active DIY course enrollment is required to manage lesson activities.');
+			return;
+		}
+
 		const projects = getAllStoredProjects();
 		const projectIndex = projects.findIndex((item) => item.id === projectId);
 		if (projectIndex === -1) {
@@ -644,6 +676,11 @@ export default function LessonProjectsPage() {
 	};
 
 	const handleSyncProject = async (projectId) => {
+		if (!hasDiyAccess) {
+			showNotice('warning', 'Active DIY course enrollment is required to sync projects.');
+			return;
+		}
+
 		if (!isAuthenticated) {
 			showNotice('error', 'Login with Teachable to sync this project.');
 			return;
@@ -671,17 +708,34 @@ export default function LessonProjectsPage() {
 	}, []);
 
 	useEffect(() => {
-		if (isAuthenticated) {
+		if (isAuthenticated && hasDiyAccess) {
 			loadCloudProjects();
 		} else {
 			setCloudStatus('');
 		}
-	}, [isAuthenticated]);
+	}, [isAuthenticated, hasDiyAccess]);
 
 	if (authLoading) {
 		return (
 			<Container maxWidth="md" sx={{ py: 6 }}>
 				<Typography>Checking login...</Typography>
+			</Container>
+		);
+	}
+
+	if (isAuthenticated && !hasDiyAccess) {
+		return (
+			<Container maxWidth="md" sx={{ py: 6 }}>
+				<Stack spacing={2}>
+					<TmkLogo sx={{ maxWidth: 280 }} />
+					<Typography variant="h5">Lesson Projects</Typography>
+					<Alert severity="warning">
+						Active enrollment in the DIY course is required to access Lesson Projects.
+					</Alert>
+					<Button variant="outlined" onClick={() => router.push('/dashboard')} sx={{ textTransform: 'none', width: 'fit-content' }}>
+						Back to Dashboard
+					</Button>
+				</Stack>
 			</Container>
 		);
 	}

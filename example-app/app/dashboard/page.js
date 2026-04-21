@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { buildTeachableLogoutUrl, fetchAuthenticatedUser, fetchWithUserToken, resolveTmkApiOrigin } from '../components/authHelpers';
+import {
+    buildTeachableLogoutUrl,
+    fetchAuthenticatedUser,
+    fetchWithUserToken,
+    hasActiveDiyEnrollment,
+    resolveTmkApiOrigin,
+} from '../components/authHelpers';
 import {
     Alert,
     Container,
@@ -35,6 +41,7 @@ export default function DashboardPage() {
     const [standaloneActivities, setStandaloneActivities] = useState([]);
     const [standaloneLoading, setStandaloneLoading] = useState(false);
     const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
+    const [hasDiyAccess, setHasDiyAccess] = useState(false);
 
     const showNotice = (severity, message) => {
         setNotice({ open: true, severity, message });
@@ -50,6 +57,7 @@ export default function DashboardPage() {
                     return;
                 }
                 setUser(userData);
+                setHasDiyAccess(hasActiveDiyEnrollment(userData));
             } catch (error) {
                 console.error('Auth check failed:', error);
                 router.push('/login?next=/dashboard');
@@ -62,7 +70,8 @@ export default function DashboardPage() {
     }, [router]);
 
     const loadStandaloneActivities = async () => {
-        if (!user) {
+        if (!user || !hasDiyAccess) {
+            setStandaloneActivities([]);
             return;
         }
 
@@ -168,7 +177,7 @@ export default function DashboardPage() {
 
     useEffect(() => {
         loadStandaloneActivities();
-    }, [user]);
+    }, [user, hasDiyAccess]);
 
     const handleLogout = () => {
         window.location.href = buildTeachableLogoutUrl('/login?next=/dashboard', resolveTmkApiOrigin());
@@ -215,6 +224,11 @@ export default function DashboardPage() {
     };
 
     const handleManageStandalone = (activityRecord) => {
+        if (!hasDiyAccess) {
+            showNotice('warning', 'Active DIY course enrollment is required to access lesson activities.');
+            return;
+        }
+
         const path = getActivityPath(activityRecord);
         if (!path) {
             showNotice('error', 'No page is implemented yet for this activity type.');
@@ -257,6 +271,11 @@ export default function DashboardPage() {
     };
 
     const handleCreateNewActivity = (activity) => {
+        if (!hasDiyAccess) {
+            showNotice('warning', 'Active DIY course enrollment is required to access lesson activities.');
+            return;
+        }
+
         const formName = String(activity?.path || '').split('/').filter(Boolean).pop();
         if (formName) {
             clearFormSessionData(formName);
@@ -296,24 +315,40 @@ export default function DashboardPage() {
             <Grid container spacing={{ xs: 2, md: 3 }} alignItems="flex-start" sx={{ mb: 4 }}>
                 {/* Left column: Lesson Activities + Standalone */}
                 <Grid item xs={12} md={8} sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {!hasDiyAccess && (
+                        <Alert severity="warning" sx={{ mb: 1 }}>
+                            Active enrollment in the DIY course is required to access Lesson Activities and Lesson Projects.
+                        </Alert>
+                    )}
+
                     <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #224c88' }}>
                         <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
                             Lesson Activities
                         </Typography>
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                            Create and manage single, standalone lesson activities.
+                            {hasDiyAccess
+                                ? 'Create and manage single, standalone lesson activities.'
+                                : 'Available after active DIY course enrollment is verified.'}
                         </Typography>
-                        <LessonActivitySelector
-                            activities={lessonActivities}
-                            onOpen={handleCreateNewActivity}
-                        />
+                        {hasDiyAccess ? (
+                            <LessonActivitySelector
+                                activities={lessonActivities}
+                                onOpen={handleCreateNewActivity}
+                            />
+                        ) : (
+                            <Button variant="contained" disabled>
+                                Enrollment Required
+                            </Button>
+                        )}
                     </Paper>
 
                     <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #224c88' }}>
                         <Typography variant="subtitle1" sx={{ mb: 1.5 }}>
                             Your Standalone Lesson Activities
                         </Typography>
-                            {standaloneLoading ? (
+                            {!hasDiyAccess ? (
+                                <Typography variant="body2" color="textSecondary">Active DIY enrollment required.</Typography>
+                            ) : standaloneLoading ? (
                                 <Typography variant="body2" color="textSecondary">Loading lesson activities...</Typography>
                             ) : standaloneActivities.length === 0 ? (
                                 <Typography variant="body2" color="textSecondary">No standalone lesson activities found.</Typography>
@@ -381,9 +416,11 @@ export default function DashboardPage() {
                             Projects
                         </Typography>
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                            Create and manage sequences of lesson activities.
+                            {hasDiyAccess
+                                ? 'Create and manage sequences of lesson activities.'
+                                : 'Available after active DIY course enrollment is verified.'}
                         </Typography>
-                        <Button variant="contained" onClick={() => router.push('/lesson-projects')}>
+                        <Button variant="contained" onClick={() => router.push('/lesson-projects')} disabled={!hasDiyAccess}>
                             Go to Projects
                         </Button>
                     </Paper>
