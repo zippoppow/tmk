@@ -387,6 +387,18 @@ export default function DashboardPage() {
                             Go to Projects
                         </Button>
                     </Paper>
+
+                    <Paper elevation={0} sx={{ mt:5,p: 3, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #224c88' }}>
+                        <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                            Assessment
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                            Create and manage assessments to evaluate student understanding and progress.
+                        </Typography>
+                        <Button variant="contained" onClick={() => router.push('/assessment')}>
+                            Go to Assessment
+                        </Button>
+                    </Paper>
                 </Grid>
             </Grid>
 

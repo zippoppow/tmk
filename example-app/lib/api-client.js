@@ -12,6 +12,222 @@ import { TMK_API_BASE_URL } from './tmkApiOrigin.js';
  */
 
 const API_BASE_URL = TMK_API_BASE_URL;
+const AUTH_TOKEN_ENDPOINT = '/api/auth/token';
+const AUTH_GRANT_TYPE = process.env.NEXT_PUBLIC_TMK_API_AUTH_GRANT_TYPE || 'client_credentials';
+const STATIC_ACCESS_TOKEN = (process.env.NEXT_PUBLIC_TMK_API_ACCESS_TOKEN || '').trim();
+const API_KEY_FALLBACK = (process.env.NEXT_PUBLIC_TMK_API_KEY || process.env.NEXT_PUBLIC_API_AUTH_KEY || '').trim();
+const AUTH_CLIENT_ID = (process.env.NEXT_PUBLIC_TMK_API_AUTH_CLIENT_ID || '').trim();
+const AUTH_CLIENT_SECRET = (process.env.NEXT_PUBLIC_TMK_API_AUTH_CLIENT_SECRET || '').trim();
+
+let cachedAccessToken = '';
+let cachedAccessTokenExpiresAt = 0;
+let pendingTokenRequest = null;
+const authDebugState = {
+  authGrantType: AUTH_GRANT_TYPE,
+  hasApiKeyFallback: Boolean(API_KEY_FALLBACK),
+  usingStaticAccessToken: Boolean(STATIC_ACCESS_TOKEN),
+  hasCachedToken: false,
+  cacheExpiresAt: 0,
+  lastAuthMode: 'none',
+  lastTokenError: '',
+  lastRequestEndpoint: '',
+  lastRequestAt: '',
+  lastResponseStatus: null,
+};
+
+function updateAuthCacheDebugState() {
+  authDebugState.hasCachedToken = Boolean(cachedAccessToken);
+  authDebugState.cacheExpiresAt = cachedAccessTokenExpiresAt;
+}
+
+function markAuthDebugState(partial) {
+  Object.assign(authDebugState, partial);
+  updateAuthCacheDebugState();
+}
+
+function clearAccessTokenCache() {
+  cachedAccessToken = '';
+  cachedAccessTokenExpiresAt = 0;
+  updateAuthCacheDebugState();
+}
+
+function getAccessTokenFromPayload(payload) {
+  if (!payload || typeof payload !== 'object') {
+    return '';
+  }
+
+  if (typeof payload.access_token === 'string' && payload.access_token.trim()) {
+    return payload.access_token.trim();
+  }
+
+  if (payload.data && typeof payload.data === 'object') {
+    const nested = payload.data;
+    if (typeof nested.access_token === 'string' && nested.access_token.trim()) {
+      return nested.access_token.trim();
+    }
+  }
+
+  return '';
+}
+
+function getExpiresInSecondsFromPayload(payload) {
+  if (!payload || typeof payload !== 'object') {
+    return 0;
+  }
+
+  const candidates = [
+    payload.expires_in,
+    payload.expiresIn,
+    payload?.data?.expires_in,
+    payload?.data?.expiresIn,
+  ];
+
+  for (const value of candidates) {
+    const seconds = Number(value);
+    if (Number.isFinite(seconds) && seconds > 0) {
+      return seconds;
+    }
+  }
+
+  return 0;
+}
+
+async function requestAccessToken(forceRefresh = false) {
+  if (STATIC_ACCESS_TOKEN) {
+    return STATIC_ACCESS_TOKEN;
+  }
+
+  const now = Date.now();
+  const tokenStillValid = cachedAccessToken && now < cachedAccessTokenExpiresAt - 30000;
+  if (!forceRefresh && tokenStillValid) {
+    return cachedAccessToken;
+  }
+
+  if (!forceRefresh && pendingTokenRequest) {
+    return pendingTokenRequest;
+  }
+
+  pendingTokenRequest = (async () => {
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+
+    if (API_KEY_FALLBACK) {
+      headers['x-api-key'] = API_KEY_FALLBACK;
+    }
+
+    const body = {
+      grant_type: AUTH_GRANT_TYPE,
+    };
+
+    if (AUTH_CLIENT_ID) {
+      body.client_id = AUTH_CLIENT_ID;
+    }
+
+    if (AUTH_CLIENT_SECRET) {
+      body.client_secret = AUTH_CLIENT_SECRET;
+    }
+
+    const response = await fetch(`${API_BASE_URL}${AUTH_TOKEN_ENDPOINT}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => '');
+      throw new Error(
+        `Token request failed: ${response.status} ${response.statusText}${errorBody ? ` - ${errorBody}` : ''}`
+      );
+    }
+
+    const payload = await response.json().catch(() => ({}));
+    const accessToken = getAccessTokenFromPayload(payload);
+    if (!accessToken) {
+      throw new Error('Token request succeeded but no access_token was returned');
+    }
+
+    const expiresIn = getExpiresInSecondsFromPayload(payload);
+    cachedAccessToken = accessToken;
+    cachedAccessTokenExpiresAt = expiresIn > 0 ? Date.now() + expiresIn * 1000 : Date.now() + 5 * 60 * 1000;
+
+    return accessToken;
+  })();
+
+  try {
+    return await pendingTokenRequest;
+  } finally {
+    pendingTokenRequest = null;
+  }
+}
+
+async function authenticatedFetch(endpoint, init = {}) {
+  const headers = new Headers(init.headers || {});
+  let token = '';
+
+  markAuthDebugState({
+    lastRequestEndpoint: endpoint,
+    lastRequestAt: new Date().toISOString(),
+    lastResponseStatus: null,
+  });
+
+  try {
+    token = await requestAccessToken();
+    markAuthDebugState({ lastTokenError: '' });
+  } catch (error) {
+    markAuthDebugState({ lastTokenError: error?.message || 'Unknown token exchange error' });
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('TMK token exchange failed; falling back to x-api-key when available.', error);
+    }
+  }
+
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+    markAuthDebugState({
+      lastAuthMode: STATIC_ACCESS_TOKEN ? 'bearer-static' : 'bearer-token-endpoint',
+    });
+  } else if (API_KEY_FALLBACK) {
+    headers.set('x-api-key', API_KEY_FALLBACK);
+    markAuthDebugState({ lastAuthMode: 'x-api-key' });
+  } else {
+    markAuthDebugState({ lastAuthMode: 'none' });
+  }
+
+  let response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...init,
+    headers,
+  });
+  markAuthDebugState({ lastResponseStatus: response.status });
+
+  if (response.status === 401 && token) {
+    clearAccessTokenCache();
+    const refreshedToken = await requestAccessToken(true).catch((error) => {
+      markAuthDebugState({ lastTokenError: error?.message || 'Token refresh failed' });
+      return '';
+    });
+    if (refreshedToken) {
+      headers.set('Authorization', `Bearer ${refreshedToken}`);
+      markAuthDebugState({
+        lastAuthMode: 'bearer-token-refreshed',
+        lastTokenError: '',
+      });
+      response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...init,
+        headers,
+      });
+      markAuthDebugState({ lastResponseStatus: response.status });
+    }
+  }
+
+  return response;
+}
+
+export function getApiAuthDebugInfo() {
+  updateAuthCacheDebugState();
+  return {
+    ...authDebugState,
+  };
+}
 
 
 /**
@@ -19,10 +235,11 @@ const API_BASE_URL = TMK_API_BASE_URL;
  */
 async function fetchFromAPI(endpoint) {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    const response = await authenticatedFetch(endpoint);
     
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      const errorBody = await response.text().catch(() => '');
+      throw new Error(`API Error: ${response.status} ${response.statusText}${errorBody ? ` - ${errorBody}` : ''}`);
     }
     
     return await response.json();
@@ -37,7 +254,7 @@ async function fetchFromAPI(endpoint) {
  */
 async function postToAPI(endpoint, data) {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await authenticatedFetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,7 +265,7 @@ async function postToAPI(endpoint, data) {
     if (!response.ok) {
       const errorBody = await response.text();
       console.error(`API Error Body: ${errorBody}`);
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      throw new Error(`API Error: ${response.status} ${response.statusText}${errorBody ? ` - ${errorBody}` : ''}`);
     }
 
     return await response.json();

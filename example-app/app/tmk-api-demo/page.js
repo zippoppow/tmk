@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { tmkAPI } from '@/lib/api-client';
+import { getApiAuthDebugInfo, tmkAPI } from '@/lib/api-client';
 import {
   Box,
   Card,
@@ -49,6 +49,7 @@ function TabPanel(props) {
 
 export default function TMKAPIPage() {
   const [activeTab, setActiveTab] = useState(0);
+  const [authDebug, setAuthDebug] = useState(() => getApiAuthDebugInfo());
   
   // Morphemes state
   const [morphemes, setMorphemes] = useState([]);
@@ -87,6 +88,7 @@ export default function TMKAPIPage() {
       setMorphemes([]);
     } finally {
       setMorphemesLoading(false);
+      setAuthDebug(getApiAuthDebugInfo());
     }
   };
 
@@ -102,6 +104,7 @@ export default function TMKAPIPage() {
       setWords([]);
     } finally {
       setWordsLoading(false);
+      setAuthDebug(getApiAuthDebugInfo());
     }
   };
 
@@ -117,6 +120,7 @@ export default function TMKAPIPage() {
       setWordlists([]);
     } finally {
       setWordlistsLoading(false);
+      setAuthDebug(getApiAuthDebugInfo());
     }
   };
 
@@ -132,6 +136,7 @@ export default function TMKAPIPage() {
       setWordfamilies([]);
     } finally {
       setWordfamiliesLoading(false);
+      setAuthDebug(getApiAuthDebugInfo());
     }
   };
 
@@ -147,8 +152,17 @@ export default function TMKAPIPage() {
       setPartsOfSpeech([]);
     } finally {
       setPartsOfSpeechLoading(false);
+      setAuthDebug(getApiAuthDebugInfo());
     }
   };
+
+  useEffect(() => {
+    setAuthDebug(getApiAuthDebugInfo());
+  }, []);
+
+  const tokenExpiryText = authDebug.cacheExpiresAt
+    ? new Date(authDebug.cacheExpiresAt).toLocaleString()
+    : 'N/A';
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -162,8 +176,36 @@ export default function TMKAPIPage() {
 
         <Alert severity="info" sx={{ marginBottom: '2rem' }}>
           This page demonstrates integration with the tmk-api running at{' '}
-          <strong>http://localhost:3000</strong>. Make sure the API is running before testing.
+          <strong>http://localhost:3000</strong>. Make sure the API is running with auth configured
+          (client credentials for <code>/api/auth/token</code>, or a transitional API key) before testing.
         </Alert>
+
+        <Card sx={{ marginBottom: '2rem' }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+              <Typography variant="h6">Auth Diagnostics</Typography>
+              <Button variant="outlined" onClick={() => setAuthDebug(getApiAuthDebugInfo())}>
+                Refresh Diagnostics
+              </Button>
+            </Box>
+            <Box sx={{ marginTop: '1rem', display: 'grid', gap: '0.5rem' }}>
+              <Typography variant="body2"><strong>Grant Type:</strong> {authDebug.authGrantType}</Typography>
+              <Typography variant="body2"><strong>Last Auth Mode:</strong> {authDebug.lastAuthMode}</Typography>
+              <Typography variant="body2"><strong>Last Endpoint:</strong> {authDebug.lastRequestEndpoint || 'N/A'}</Typography>
+              <Typography variant="body2"><strong>Last Response Status:</strong> {authDebug.lastResponseStatus ?? 'N/A'}</Typography>
+              <Typography variant="body2"><strong>Last Request Time:</strong> {authDebug.lastRequestAt || 'N/A'}</Typography>
+              <Typography variant="body2"><strong>Cached Token:</strong> {authDebug.hasCachedToken ? 'Yes' : 'No'}</Typography>
+              <Typography variant="body2"><strong>Token Expiry:</strong> {tokenExpiryText}</Typography>
+              <Typography variant="body2"><strong>Static Access Token Configured:</strong> {authDebug.usingStaticAccessToken ? 'Yes' : 'No'}</Typography>
+              <Typography variant="body2"><strong>API Key Fallback Configured:</strong> {authDebug.hasApiKeyFallback ? 'Yes' : 'No'}</Typography>
+            </Box>
+            {authDebug.lastTokenError && (
+              <Alert severity="warning" sx={{ marginTop: '1rem' }}>
+                {authDebug.lastTokenError}
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
 
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={activeTab} onChange={handleTabChange}>
