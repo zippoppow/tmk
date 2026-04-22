@@ -76,8 +76,11 @@ export async function middleware(request) {
   }
 
   const { pathname } = request.nextUrl;
+  const isDashboardRoute = pathname.startsWith('/dashboard');
   const isLessonActivitiesRoute = pathname.startsWith('/lesson-activities');
-  if (!isLessonActivitiesRoute) {
+  const isLessonProjectsRoute = pathname.startsWith('/lesson-projects');
+
+  if (!isDashboardRoute && !isLessonActivitiesRoute && !isLessonProjectsRoute) {
     return NextResponse.next();
   }
 
@@ -86,7 +89,7 @@ export async function middleware(request) {
     return buildLoginRedirect(request);
   }
 
-  if (!hasLessonActivitiesAccess(authPayload)) {
+  if ((isLessonActivitiesRoute || isLessonProjectsRoute) && !hasLessonActivitiesAccess(authPayload)) {
     return buildEnrollmentRedirect(request);
   }
 
@@ -94,5 +97,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/lesson-activities/:path*', '/dashboard/:path*'],
+  matcher: ['/lesson-activities/:path*', '/lesson-projects/:path*', '/dashboard/:path*'],
 };

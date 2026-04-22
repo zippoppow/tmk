@@ -21,9 +21,6 @@ export async function GET(request) {
       requestUrl.origin,
       '/'
     );
-    console.log('[OAuth Start] Query params:', Object.fromEntries(requestUrl.searchParams));
-    console.log('[OAuth Start] Raw redirectTo param:', requestUrl.searchParams.get('redirectTo'));
-    console.log('[OAuth Start] Sanitized redirectTo:', redirectTo);
 
     const state = encodeSignedState(
       {
@@ -32,13 +29,9 @@ export async function GET(request) {
       },
       config.stateSecret
     );
-      console.log('[OAuth Start] State secret (first 20 chars):', config.stateSecret?.slice(0, 20));
-      console.log('[OAuth Start] State max age seconds:', config.stateMaxAgeSeconds);
-      console.log('[OAuth Start] Generated state:', state);
 
     const authorizationUrl = buildTeachableAuthorizeUrl(config, state);
     const response = NextResponse.redirect(authorizationUrl);
-    console.log('[OAuth Start] Setting context cookie with redirectTo:', redirectTo);
     setOAuthContextCookie(
       response,
       {
@@ -47,8 +40,6 @@ export async function GET(request) {
       },
       config.stateMaxAgeSeconds
     );
-    console.log('[OAuth Start] Redirecting to:', authorizationUrl);
-    console.log('[OAuth Start] Response cookies:', response.cookies.getSetCookieHeader?.());
     return response;
   } catch (error) {
     return NextResponse.json(

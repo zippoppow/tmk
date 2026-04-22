@@ -405,7 +405,7 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 				return response;
 			}
 			headers.set('Authorization', `Bearer ${exchanged}`);
-			response = await fetch(`${origin}${endpoint}`, {
+			response = await fetch(`${origin}${endpointPath}`, {
 				...requestInit,
 				headers,
 			});
@@ -482,15 +482,16 @@ export async function fetchAuthenticatedUser(apiOrigin) {
 		const user = extractAuthenticatedUser(data);
 		if (user) {
 			await exchangeUserAccessToken(origin);
+			return user;
 		}
-		//if (!user && process.env.NODE_ENV !== 'production') {
+		if (process.env.NODE_ENV !== 'production') {
 			console.warn('[TMK auth] /me returned 200 but could not extract user. Raw response:', data);
-		//}
-		return user;
+		}
+		return null;
 	} catch (err) {
-		//if (process.env.NODE_ENV !== 'production') {
+		if (process.env.NODE_ENV !== 'production') {
 			console.error('[TMK auth] /me fetch failed (possible CORS or network error):', err?.message || err);
-		//}
+		}
 		return null;
 	}
 }

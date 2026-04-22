@@ -79,13 +79,9 @@ export async function GET(request) {
       rawStateRedirect,
       queryRedirect
     );
-    console.log('[OAuth Callback] Received cookie context:', cookieContext);
-    console.log('[OAuth Callback] Request cookies:', request.cookies.getSetCookie?.());
-    console.log('[OAuth Callback] All cookies:', Object.fromEntries(request.cookies));
 
     const oauthError = requestUrl.searchParams.get('error_description') || requestUrl.searchParams.get('error');
     if (oauthError) {
-      console.log('[OAuth Callback] oauthError redirect path:', recoveredRedirect);
       const response = redirectWithAuthFlag(
         requestUrl,
         loginPathWithNext(recoveredRedirect),
@@ -101,21 +97,15 @@ export async function GET(request) {
       config.stateSecret
     );
     const code = requestUrl.searchParams.get('code');
-    console.log('[OAuth Callback] State param received:', requestUrl.searchParams.get('state'));
-    console.log('[OAuth Callback] State decoded payload:', statePayload);
 
     const rawStateTs = Number(statePayload?.ts || 0);
     const issuedAtMs = rawStateTs > 0 && rawStateTs < 1e12 ? rawStateTs * 1000 : rawStateTs;
     const stateAgeMs = issuedAtMs > 0 ? Date.now() - issuedAtMs : Number.POSITIVE_INFINITY;
     const maxStateAgeMs = Math.max(300, Number(config.stateMaxAgeSeconds) || 900) * 1000;
     const stateExpired = stateAgeMs > maxStateAgeMs;
-    console.log('[OAuth Callback] State age:', stateAgeMs, 'ms, max:', maxStateAgeMs, 'ms, expired:', stateExpired);
-    console.log('[OAuth Callback] State secret (first 20 chars):', config.stateSecret?.slice(0, 20));
-    console.log('[OAuth Callback] Decoded redirectTo from state:', statePayload?.redirectTo);
 
     const canProceedWithoutFreshState = Boolean(code);
     if (!statePayload || stateExpired) {
-      console.log('[OAuth Callback] State invalid/expired. recoveredRedirect:', recoveredRedirect, 'canProceedWithoutFreshState:', canProceedWithoutFreshState);
       if (!canProceedWithoutFreshState) {
         const response = redirectWithAuthFlag(
           requestUrl,
@@ -162,7 +152,6 @@ export async function GET(request) {
       rawStateRedirect,
       requestUrl.searchParams.get('redirectTo')
     );
-    console.log('[OAuth Callback] Catch fallback redirect path:', fallbackRedirect);
     const response = redirectWithAuthFlag(
       requestUrl,
       loginPathWithNext(fallbackRedirect),
