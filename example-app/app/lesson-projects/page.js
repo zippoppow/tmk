@@ -398,7 +398,7 @@ export default function LessonProjectsPage() {
 	const runAuthCheck = async () => {
 		setAuthLoading(true);
 		try {
-			const user = await fetchAuthenticatedUser(apiOrigin);
+			const user = await fetchAuthenticatedUser();
 			setAuthUser(user);
 		} catch {
 			setAuthUser(null);

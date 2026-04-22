@@ -51,7 +51,7 @@ export default function DashboardPage() {
         // Check authentication status
         const checkAuth = async () => {
             try {
-                const userData = await fetchAuthenticatedUser(resolveTmkApiOrigin());
+                const userData = await fetchAuthenticatedUser();
                 if (!userData) {
                     router.push('/login?next=/dashboard');
                     return;
@@ -180,7 +180,7 @@ export default function DashboardPage() {
     }, [user, hasDiyAccess]);
 
     const handleLogout = () => {
-        window.location.href = buildTeachableLogoutUrl('/login?next=/dashboard', resolveTmkApiOrigin());
+        window.location.href = buildTeachableLogoutUrl('/login?next=/dashboard');
     };
 
     if (loading) {

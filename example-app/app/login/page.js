@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { buildTeachableStartUrl, fetchAuthenticatedUser, resolveTmkApiOrigin } from '../components/authHelpers';
+import { buildTeachableStartUrl, fetchAuthenticatedUser } from '../components/authHelpers';
 
 const DEFAULT_NEXT_PATH = '/';
 
@@ -49,7 +49,7 @@ function LoginPageContent() {
     let isMounted = true;
 
     async function checkSession() {
-      const user = await fetchAuthenticatedUser(resolveTmkApiOrigin());
+      const user = await fetchAuthenticatedUser();
       if (!isMounted) {
         return;
       }
@@ -84,8 +84,7 @@ function LoginPageContent() {
   }, [nextPath, searchParams]);
 
   function handleLogin() {
-    const apiOrigin = resolveTmkApiOrigin();
-    window.location.href = buildTeachableStartUrl(apiOrigin, window.location.origin + nextPath);
+    window.location.href = buildTeachableStartUrl(window.location.origin + nextPath);
   }
 
   if (isChecking) {

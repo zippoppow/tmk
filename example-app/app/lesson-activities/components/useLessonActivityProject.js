@@ -181,7 +181,7 @@ export function useLessonActivityProject({
 	const runAuthCheck = async () => {
 		setAuthLoading(true);
 		try {
-			const user = await fetchAuthenticatedUser(projectApiOrigin);
+			const user = await fetchAuthenticatedUser();
 			setAuthUser(user);
 		} catch {
 			setAuthUser(null);
@@ -212,10 +212,10 @@ export function useLessonActivityProject({
 
 	const handleLoginLogout = () => {
 		if (authUser) {
-			window.location.href = buildTeachableLogoutUrl(window.location.href, projectApiOrigin);
+			window.location.href = buildTeachableLogoutUrl(window.location.href);
 			return;
 		}
-		window.location.href = buildTeachableStartUrl(projectApiOrigin, window.location.href);
+		window.location.href = buildTeachableStartUrl(window.location.href);
 	};
 
 	const handleSave = async () => {
@@ -255,7 +255,7 @@ export function useLessonActivityProject({
 
 			let resolvedAuthUser = authUser;
 			if (!resolvedAuthUser) {
-				resolvedAuthUser = await fetchAuthenticatedUser(projectApiOrigin);
+				resolvedAuthUser = await fetchAuthenticatedUser();
 				if (resolvedAuthUser) {
 					setAuthUser(resolvedAuthUser);
 				}
@@ -349,7 +349,7 @@ export function useLessonActivityProject({
 	const handleSaveStandalone = async () => {
 		let resolvedAuthUser = authUser;
 		if (!resolvedAuthUser) {
-			resolvedAuthUser = await fetchAuthenticatedUser(projectApiOrigin);
+			resolvedAuthUser = await fetchAuthenticatedUser();
 			if (resolvedAuthUser) {
 				setAuthUser(resolvedAuthUser);
 			}

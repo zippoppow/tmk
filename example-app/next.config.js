@@ -27,11 +27,15 @@ const nextConfig = {
     return config;
   },
 
-  // Proxy API routes that have no local implementation to the Railway API.
-  // This runs server-to-server so there is no CORS issue on localhost.
-  // On production the client calls Railway directly, so these rewrites are unused.
+  // Proxy TMK API routes through Next during local development.
+  // Auth is owned by TMK API, so these rewrites preserve the same authority even
+  // after removing the legacy local Next route handlers.
   async rewrites() {
     return [
+      {
+        source: '/api/auth/teachable/:path*',
+        destination: `${RAILWAY_API}/api/auth/teachable/:path*`,
+      },
       {
         source: '/api/auth/user/:path*',
         destination: `${RAILWAY_API}/api/auth/user/:path*`,
