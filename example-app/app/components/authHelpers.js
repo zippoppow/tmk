@@ -1,3 +1,5 @@
+// API endpoint for DIY projects access check
+export const DIY_PROJECTS_ENDPOINT = '/api/teachable-enrollment';
 import {
 	AUTH_BYPASS_ENABLED,
 	DEFAULT_API_ORIGINS,

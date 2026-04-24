@@ -1,6 +1,7 @@
 'use client';
 
 import { Box, Button, Menu, MenuItem, TextField, Typography } from '@mui/material';
+import { useEffect } from 'react';
 import ActivityShell from '../components/ActivityShell';
 import { openPrintWindow } from '../components/openPrintWindow';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
@@ -15,13 +16,15 @@ function emptyWordList() {
 	return Array.from({ length: 9 }, () => '');
 }
 
-function normalizeInputData(rawData) {
-	const source = rawData && typeof rawData === 'object' ? rawData : {};
-	const incomingWords = Array.isArray(source.words) ? source.words : emptyWordList();
-	const words = incomingWords
-		.slice(0, 9)
-		.concat(Array.from({ length: Math.max(0, 9 - incomingWords.length) }, () => ''))
-		.map((value) => String(value || ''));
+export default function IntroPage() {
+	function normalizeInputData(rawData) {
+		const source = rawData && typeof rawData === 'object' ? rawData : {};
+		const incomingWords = Array.isArray(source.words) ? source.words : emptyWordList();
+		const words = incomingWords
+			.slice(0, 9)
+			.concat(Array.from({ length: Math.max(0, 9 - incomingWords.length) }, () => ''))
+			.map((value) => String(value || ''));
+
 
 	return {
 		morpheme: String(source.morpheme || ''),
@@ -33,7 +36,6 @@ function normalizeInputData(rawData) {
 	const router = useRouter();
 	const { hasDiyAccess, loading: diyLoading } = useDiyAccess();
 
-	// Redirect to dashboard if no DIY access
 	useEffect(() => {
 		if (!diyLoading && !hasDiyAccess) {
 			router.replace('/dashboard');
