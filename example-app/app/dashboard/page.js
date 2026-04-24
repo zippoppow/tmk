@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useDiyAccess } from '../components/useDiyAccess';
 import { useRouter } from 'next/navigation';
 import {
     buildTeachableLogoutUrl,
@@ -37,55 +38,26 @@ import TmkLogo from '../components/TmkLogo';
 export default function DashboardPage() {
     const router = useRouter();
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [standaloneActivities, setStandaloneActivities] = useState([]);
     const [standaloneLoading, setStandaloneLoading] = useState(false);
     const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
-    const [hasDiyAccess, setHasDiyAccess] = useState(false);
+    const { hasDiyAccess, loading: diyLoading, authUser } = useDiyAccess();
 
     const showNotice = (severity, message) => {
         setNotice({ open: true, severity, message });
     };
 
     useEffect(() => {
-        // Check authentication status and DIY enrollment
-        const checkAuth = async () => {
-            try {
-                const userData = await fetchAuthenticatedUser();
-                if (!userData) {
-                    router.push('/login?next=/dashboard');
-                    return;
-                }
-                setUser(userData);
+        if (authUser) {
+            setUser(authUser);
+        }
+    }, [authUser]);
 
-                // Only use teachable-enrollment endpoint for DIY access
-                let diyAccess = false;
-                try {
-                    const apiOrigin = resolveTmkApiOrigin();
-                    const email = encodeURIComponent(userData.email || '');
-                    const courseNumber = '2944218';
-                    const url = `${apiOrigin}/api/teachable-enrollment?email=${email}&courseNumber=${courseNumber}`;
-                    const resp = await fetch(url, { credentials: 'include' });
-                    if (resp.ok) {
-                        const data = await resp.json();
-                        if (data && data.enrolled === true) {
-                            diyAccess = true;
-                        }
-                    }
-                } catch (err) {
-                    console.warn('teachable-enrollment check failed:', err);
-                }
-                setHasDiyAccess(diyAccess);
-            } catch (error) {
-                console.error('Auth check failed:', error);
-                router.push('/login?next=/dashboard');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkAuth();
-    }, [router]);
+    useEffect(() => {
+        if (!diyLoading && !hasDiyAccess) {
+            router.replace('/login?next=/dashboard');
+        }
+    }, [diyLoading, hasDiyAccess, router]);
 
     const loadStandaloneActivities = async () => {
         if (!user || !hasDiyAccess) {
@@ -201,7 +173,7 @@ export default function DashboardPage() {
         window.location.href = buildTeachableLogoutUrl('/login?next=/dashboard');
     };
 
-    if (loading) {
+    if (diyLoading) {
         return (
             <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
                 <CircularProgress />
