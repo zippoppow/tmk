@@ -53,28 +53,6 @@ function getUserCourses(user) {
 	return [];
 }
 
-export function hasActiveDiyEnrollment(user) {
-	if (!user || typeof user !== 'object') {
-		return false;
-	}
-
-	if (typeof user?.access?.lessonActivities === 'boolean') {
-		return user.access.lessonActivities;
-	}
-
-	if (typeof user?.access?.diyCourseActiveEnrollment === 'boolean') {
-		return user.access.diyCourseActiveEnrollment;
-	}
-
-	if (!DIY_COURSE_ID) {
-		return true;
-	}
-
-	const courses = getUserCourses(user);
-	const enrollment = courses.find((course) => toIdString(course?.course_id) === DIY_COURSE_ID);
-	return Boolean(enrollment?.is_active_enrollment);
-}
-
 function trimOrigin(value) {
 	if (typeof value !== 'string') {
 		return '';
@@ -157,7 +135,6 @@ export function syncAuthStateHints(user) {
 	}
 
 	writeBrowserCookie(AUTH_HINT_COOKIE, '1');
-	writeBrowserCookie(DIY_ACCESS_HINT_COOKIE, hasActiveDiyEnrollment(user) ? '1' : '0');
 }
 
 let userAccessToken = '';
@@ -350,7 +327,7 @@ export async function exchangeUserAccessToken() {
 		const origin = resolveTmkAuthOrigin();
 		const tokenPath = addTeachableSessionToPath(USER_AUTH_ENDPOINTS.token);
 		const response = await fetch(`${origin}${tokenPath}`, {
-			method: 'GET',
+			method: 'POST',
 			credentials: 'include',
 		});
 
@@ -379,7 +356,7 @@ export async function refreshUserAccessToken() {
 	try {
 		const origin = resolveTmkAuthOrigin();
 		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.refresh}`, {
-			method: 'GET',
+			method: 'POST',
 			credentials: 'include',
 		});
 
