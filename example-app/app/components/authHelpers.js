@@ -350,7 +350,7 @@ export async function exchangeUserAccessToken() {
 		const origin = resolveTmkAuthOrigin();
 		const tokenPath = addTeachableSessionToPath(USER_AUTH_ENDPOINTS.token);
 		const response = await fetch(`${origin}${tokenPath}`, {
-			method: 'POST',
+			method: 'GET',
 			credentials: 'include',
 		});
 
@@ -379,7 +379,7 @@ export async function refreshUserAccessToken() {
 	try {
 		const origin = resolveTmkAuthOrigin();
 		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.refresh}`, {
-			method: 'POST',
+			method: 'GET',
 			credentials: 'include',
 		});
 
