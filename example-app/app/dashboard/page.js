@@ -53,11 +53,7 @@ export default function DashboardPage() {
         }
     }, [authUser]);
 
-    useEffect(() => {
-        if (!diyLoading && !hasDiyAccess) {
-            router.replace('/login?next=/dashboard');
-        }
-    }, [diyLoading, hasDiyAccess, router]);
+    // No redirect for lack of DIY access; dashboard always renders
 
     const loadStandaloneActivities = async () => {
         if (!user || !hasDiyAccess) {
