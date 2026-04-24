@@ -48,7 +48,7 @@ export default function DashboardPage() {
     };
 
     useEffect(() => {
-        // Check authentication status
+        // Check authentication status and DIY enrollment
         const checkAuth = async () => {
             try {
                 const userData = await fetchAuthenticatedUser();
@@ -57,7 +57,25 @@ export default function DashboardPage() {
                     return;
                 }
                 setUser(userData);
-                setHasDiyAccess(hasActiveDiyEnrollment(userData));
+
+                // Only use teachable-enrollment endpoint for DIY access
+                let diyAccess = false;
+                try {
+                    const apiOrigin = resolveTmkApiOrigin();
+                    const email = encodeURIComponent(userData.email || '');
+                    const courseNumber = '2944218';
+                    const url = `${apiOrigin}/api/teachable-enrollment?email=${email}&courseNumber=${courseNumber}`;
+                    const resp = await fetch(url, { credentials: 'include' });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data && data.enrolled === true) {
+                            diyAccess = true;
+                        }
+                    }
+                } catch (err) {
+                    console.warn('teachable-enrollment check failed:', err);
+                }
+                setHasDiyAccess(diyAccess);
             } catch (error) {
                 console.error('Auth check failed:', error);
                 router.push('/login?next=/dashboard');

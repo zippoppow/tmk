@@ -4,6 +4,8 @@ import { Box, Button, Menu, MenuItem, TextField, Typography } from '@mui/materia
 import ActivityShell from '../components/ActivityShell';
 import { openPrintWindow } from '../components/openPrintWindow';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
+import { useDiyAccess } from '../../components/useDiyAccess';
+import { useRouter } from 'next/navigation';
 import { useContextActionMenu } from '../components/interactionUtils';
 
 const FORM_NAME = 'intro';
@@ -28,7 +30,20 @@ function normalizeInputData(rawData) {
 	};
 }
 
-export default function IntroPage() {
+	const router = useRouter();
+	const { hasDiyAccess, loading: diyLoading } = useDiyAccess();
+
+	// Redirect to dashboard if no DIY access
+	useEffect(() => {
+		if (!diyLoading && !hasDiyAccess) {
+			router.replace('/dashboard');
+		}
+	}, [diyLoading, hasDiyAccess, router]);
+
+	if (diyLoading) {
+		return null;
+	}
+
 	const {
 		data,
 		setData,
