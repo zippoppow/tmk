@@ -9,6 +9,7 @@ export function useDiyAccess() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+     console.log('just in useDiyAccess');
     let cancelled = false;
     async function checkAccess() {
       setLoading(true);
