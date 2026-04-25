@@ -34,6 +34,12 @@ import LessonActivitySelector from '../components/LessonActivitySelector';
 import TmkLogo from '../components/TmkLogo';
 
 export default function DashboardPage() {
+
+        // Confirm component render
+        if (typeof window !== 'undefined') {
+            // eslint-disable-next-line no-console
+            console.log('[Dashboard] DashboardPage rendered');
+        }
     
     const router = useRouter();
     const [user, setUser] = useState(null);
@@ -45,13 +51,6 @@ export default function DashboardPage() {
     const showNotice = (severity, message) => {
         setNotice({ open: true, severity, message });
     };
-    // Debug: log useDiyAccess state on every render
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            // eslint-disable-next-line no-console
-            console.log('[Dashboard] useDiyAccess:', { hasDiyAccess, diyLoading, authUser });
-        }
-    });
 
     useEffect(() => {
         if (authUser) {
