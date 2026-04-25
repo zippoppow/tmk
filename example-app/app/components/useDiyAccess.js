@@ -29,6 +29,7 @@ export function useDiyAccess() {
           if (resp.ok) {
             const data = await resp.json();
             if (data && data.enrolled === true) {
+              console.log('User has DIY access');
               diyAccess = true;
             }
           }
