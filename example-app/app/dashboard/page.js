@@ -46,10 +46,12 @@ export default function DashboardPage() {
         setNotice({ open: true, severity, message });
     };
     // Debug: log useDiyAccess state on every render
-    if (typeof window !== 'undefined') {
-        // eslint-disable-next-line no-console
-        console.log('[Dashboard] useDiyAccess:', { hasDiyAccess, diyLoading, authUser });
-    }
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            // eslint-disable-next-line no-console
+            console.log('[Dashboard] useDiyAccess:', { hasDiyAccess, diyLoading, authUser });
+        }
+    });
 
     useEffect(() => {
         if (authUser) {
