@@ -1,5 +1,3 @@
-'use client';
-
 import { Lato } from 'next/font/google';
 import Providers from './providers';
 
