@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Box, Button, Chip, Paper, Stack, Typography } from '@mui/material';
 import {
+  applyTmkApiAuthKeyHeader,
   captureTeachableSessionFromUrl,
   DIY_PROJECTS_ENDPOINT,
   OAUTH_ENDPOINTS,
@@ -65,6 +66,7 @@ export default function AuthDebugPanel() {
       captureTeachableSessionFromUrl();
       const response = await fetch(`${authOrigin}${OAUTH_ENDPOINTS.me}`, {
         method: 'GET',
+        headers: applyTmkApiAuthKeyHeader(),
         credentials: 'include',
       });
 

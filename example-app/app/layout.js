@@ -9,7 +9,7 @@ const lato = Lato({
 
 export const metadata = {
   title: 'The Morphology Kit® Admin',
-  description: 'NextJS app consuming Pegasus Design System',
+  description: 'Tools and resources for teaching morphology.',
 };
 
 export default function RootLayout({ children }) {

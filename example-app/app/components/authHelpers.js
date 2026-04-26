@@ -35,6 +35,7 @@ const DIY_COURSE_ID = String(process.env.NEXT_PUBLIC_TEACHABLE_DIY_COURSE_ID || 
 const AUTH_HINT_COOKIE = 'tmk_auth_hint';
 const DIY_ACCESS_HINT_COOKIE = 'tmk_diy_access_hint';
 const AUTH_HINT_MAX_AGE_SECONDS = 60 * 60 * 12;
+const TMK_API_AUTH_HEADER = 'x-api-key';
 
 function toIdString(value) {
 	if (value === null || value === undefined) {
@@ -79,6 +80,23 @@ function isLocalDevHost(hostname) {
 	return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.local');
 }
 
+function getTmkApiAuthKey() {
+	if (typeof window === 'undefined') {
+		return String(process.env.TMK_API_AUTH_KEY || '').trim();
+	}
+
+	return '';
+}
+
+export function applyTmkApiAuthKeyHeader(headersLike) {
+	const headers = new Headers(headersLike || {});
+	const apiAuthKey = getTmkApiAuthKey();
+	if (apiAuthKey && !headers.has(TMK_API_AUTH_HEADER)) {
+		headers.set(TMK_API_AUTH_HEADER, apiAuthKey);
+	}
+	return headers;
+}
+
 export function isAuthBypassMode() {
 	if (!AUTH_BYPASS_ENABLED) {
 		return false;
@@ -102,6 +120,10 @@ function getConfiguredApiOrigins(defaultOrigins) {
 }
 
 export function resolveTmkAuthOrigin(origins = DEFAULT_API_ORIGINS) {
+	if (typeof window !== 'undefined') {
+		return trimOrigin(window.location.origin);
+	}
+
 	const resolvedOrigins = getConfiguredApiOrigins(origins);
 	return resolvedOrigins.production;
 }
@@ -225,6 +247,11 @@ export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
 
 	const { protocol, hostname, origin } = window.location;
 	const browserOrigin = trimOrigin(origin);
+
+	if (browserOrigin) {
+		return browserOrigin;
+	}
+
 	const isLocalHost =
 		protocol === 'file:' ||
 		!hostname ||
@@ -328,6 +355,7 @@ export async function exchangeUserAccessToken() {
 		const tokenPath = addTeachableSessionToPath(USER_AUTH_ENDPOINTS.token);
 		const response = await fetch(`${origin}${tokenPath}`, {
 			method: 'POST',
+			headers: applyTmkApiAuthKeyHeader(),
 			credentials: 'include',
 		});
 
@@ -357,6 +385,7 @@ export async function refreshUserAccessToken() {
 		const origin = resolveTmkAuthOrigin();
 		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.refresh}`, {
 			method: 'POST',
+			headers: applyTmkApiAuthKeyHeader(),
 			credentials: 'include',
 		});
 
@@ -393,8 +422,10 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 
 		if (isAuthBypassMode()) {
 			const endpointPath = addTeachableSessionToPath(endpoint);
+			const headers = applyTmkApiAuthKeyHeader(init.headers);
 			return fetch(`${origin}${endpointPath}`, {
 				...init,
+				headers,
 				credentials: 'include',
 			});
 		}
@@ -404,7 +435,7 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 			return new Response(null, { status: 401, statusText: 'Unauthorized' });
 		}
 
-		const headers = new Headers(init.headers || {});
+		const headers = applyTmkApiAuthKeyHeader(init.headers);
 		headers.set('Authorization', `Bearer ${token}`);
 
 		const requestInit = {
@@ -490,6 +521,7 @@ export async function fetchAuthenticatedUser() {
 		const mePath = addTeachableSessionToPath(OAUTH_ENDPOINTS.me);
 		const response = await fetch(`${origin}${mePath}`, {
 			method: 'GET',
+			headers: applyTmkApiAuthKeyHeader(),
 			credentials: 'include',
 		});
 

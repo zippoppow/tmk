@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchAuthenticatedUser, resolveTmkApiOrigin } from './authHelpers';
+import { applyTmkApiAuthKeyHeader, fetchAuthenticatedUser, resolveTmkApiOrigin } from './authHelpers';
 
 const DIY_COURSE_ID = '2944218';
 
@@ -26,7 +26,10 @@ export function useDiyAccess() {
           const apiOrigin = resolveTmkApiOrigin();
           const email = encodeURIComponent(userData.email || '');
           const url = `${apiOrigin}/api/teachable-enrollment?email=${email}&courseNumber=${DIY_COURSE_ID}`;
-          const resp = await fetch(url, { credentials: 'include' });
+          const resp = await fetch(url, {
+            credentials: 'include',
+            headers: applyTmkApiAuthKeyHeader(),
+          });
           if (resp.ok) {
             const data = await resp.json();
             if (data && data.enrolled === true) {

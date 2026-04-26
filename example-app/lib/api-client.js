@@ -1,4 +1,4 @@
-import { TMK_API_BASE_URL } from './tmkApiOrigin.js';
+import { TMK_API_BASE_URL, withTmkApiAuthHeader } from './tmkApiOrigin.js';
 
 /**
  * TMK API Client
@@ -19,7 +19,9 @@ const API_BASE_URL = TMK_API_BASE_URL;
  */
 async function fetchFromAPI(endpoint) {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      headers: withTmkApiAuthHeader(),
+    });
     
     if (!response.ok) {
       throw new Error(`API Error: ${response.status} ${response.statusText}`);
@@ -39,9 +41,9 @@ async function postToAPI(endpoint, data) {
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
-      headers: {
+      headers: withTmkApiAuthHeader({
         'Content-Type': 'application/json',
-      },
+      }),
       body: JSON.stringify(data),
     });
 

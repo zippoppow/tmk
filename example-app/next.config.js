@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const path = require('path');
 
-const RAILWAY_API = process.env.NEXT_PUBLIC_TMK_API_URL_PRODUCTION || 'https://tmk-api.up.railway.app';
-
 const nextConfig = {
   // We import shared files from ../theme, ../tokens, and ../icons.
   // Allow transpiling and resolving external workspace files.
@@ -27,28 +25,9 @@ const nextConfig = {
     return config;
   },
 
-  // Proxy TMK API routes through Next during local development.
-  // Auth is owned by TMK API, so these rewrites preserve the same authority even
-  // after removing the legacy local Next route handlers.
+  // TMK API proxying is handled by app route handlers under app/api/**.
   async rewrites() {
-    return [
-      {
-        source: '/api/auth/teachable/:path*',
-        destination: `${RAILWAY_API}/api/auth/teachable/:path*`,
-      },
-      {
-        source: '/api/auth/user/:path*',
-        destination: `${RAILWAY_API}/api/auth/user/:path*`,
-      },
-      {
-        source: '/api/lesson-activities/:path*',
-        destination: `${RAILWAY_API}/api/lesson-activities/:path*`,
-      },
-      {
-        source: '/api/diy-projects/:path*',
-        destination: `${RAILWAY_API}/api/diy-projects/:path*`,
-      },
-    ];
+    return [];
   },
 };
 
