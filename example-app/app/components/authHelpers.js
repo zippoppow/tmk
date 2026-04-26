@@ -388,47 +388,41 @@ export async function exchangeUserAccessToken() {
 		const origin = resolveTmkAuthOrigin();
 		const tokenPath = addTeachableSessionToPath(USER_AUTH_ENDPOINTS.token);
 		const headers = applyTmkApiAuthKeyHeader();
-		const methods = ['GET', 'POST'];
+		authDebug('exchangeUserAccessToken -> request', {
+			url: `${origin}${tokenPath}`,
+			method: 'GET',
+			headers: summarizeHeaders(headers),
+		});
 
-		for (const method of methods) {
-			authDebug('exchangeUserAccessToken -> request', {
-				url: `${origin}${tokenPath}`,
-				method,
-				headers: summarizeHeaders(headers),
-			});
+		const response = await fetch(`${origin}${tokenPath}`, {
+			method: 'GET',
+			headers,
+			credentials: 'include',
+		});
 
-			const response = await fetch(`${origin}${tokenPath}`, {
-				method,
-				headers,
-				credentials: 'include',
-			});
+		authDebug('exchangeUserAccessToken <- response', {
+			method: 'GET',
+			status: response.status,
+			ok: response.ok,
+			statusText: response.statusText,
+		});
 
-			authDebug('exchangeUserAccessToken <- response', {
-				method,
-				status: response.status,
-				ok: response.ok,
-				statusText: response.statusText,
-			});
-
-			if (!response.ok) {
-				continue;
-			}
-
-			const payload = await response.json().catch(() => ({}));
-			const token = getAccessTokenFromPayload(payload);
-			authDebug('exchangeUserAccessToken parsed payload', {
-				method,
-				hasToken: Boolean(token),
-				payloadKeys: Object.keys(payload || {}),
-			});
-			if (token) {
-				userAccessToken = token;
-			}
-
-			return token;
+		if (!response.ok) {
+			return '';
 		}
 
-		return '';
+		const payload = await response.json().catch(() => ({}));
+		const token = getAccessTokenFromPayload(payload);
+		authDebug('exchangeUserAccessToken parsed payload', {
+			method: 'GET',
+			hasToken: Boolean(token),
+			payloadKeys: Object.keys(payload || {}),
+		});
+		if (token) {
+			userAccessToken = token;
+		}
+
+		return token;
 	} catch {
 		authDebug('exchangeUserAccessToken failed');
 		return '';
