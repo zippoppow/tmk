@@ -36,6 +36,40 @@ const AUTH_HINT_COOKIE = 'tmk_auth_hint';
 const DIY_ACCESS_HINT_COOKIE = 'tmk_diy_access_hint';
 const AUTH_HINT_MAX_AGE_SECONDS = 60 * 60 * 12;
 const TMK_API_AUTH_HEADER = 'x-api-key';
+const AUTH_DEBUG_ENABLED = process.env.NODE_ENV !== 'production';
+
+function authDebug(label, payload) {
+	if (!AUTH_DEBUG_ENABLED) {
+		return;
+	}
+
+	if (payload === undefined) {
+		// eslint-disable-next-line no-console
+		console.log(`[TMK auth debug] ${label}`);
+		return;
+	}
+
+	// eslint-disable-next-line no-console
+	console.log(`[TMK auth debug] ${label}`, payload);
+}
+
+function summarizeHeaders(headersLike) {
+	const headers = new Headers(headersLike || {});
+	const summary = {};
+	headers.forEach((value, key) => {
+		const normalized = key.toLowerCase();
+		if (normalized === 'authorization') {
+			summary[normalized] = value ? `Bearer ${String(value).slice(0, 16)}...` : '';
+			return;
+		}
+		if (normalized === TMK_API_AUTH_HEADER) {
+			summary[normalized] = value ? `${String(value).slice(0, 8)}...` : '';
+			return;
+		}
+		summary[normalized] = value;
+	});
+	return summary;
+}
 
 function toIdString(value) {
 	if (value === null || value === undefined) {
@@ -353,10 +387,20 @@ export async function exchangeUserAccessToken() {
 	try {
 		const origin = resolveTmkAuthOrigin();
 		const tokenPath = addTeachableSessionToPath(USER_AUTH_ENDPOINTS.token);
+		authDebug('exchangeUserAccessToken -> request', {
+			url: `${origin}${tokenPath}`,
+			method: 'POST',
+			headers: summarizeHeaders(applyTmkApiAuthKeyHeader()),
+		});
 		const response = await fetch(`${origin}${tokenPath}`, {
 			method: 'POST',
 			headers: applyTmkApiAuthKeyHeader(),
 			credentials: 'include',
+		});
+		authDebug('exchangeUserAccessToken <- response', {
+			status: response.status,
+			ok: response.ok,
+			statusText: response.statusText,
 		});
 
 		if (!response.ok) {
@@ -365,12 +409,17 @@ export async function exchangeUserAccessToken() {
 
 		const payload = await response.json().catch(() => ({}));
 		const token = getAccessTokenFromPayload(payload);
+		authDebug('exchangeUserAccessToken parsed payload', {
+			hasToken: Boolean(token),
+			payloadKeys: Object.keys(payload || {}),
+		});
 		if (token) {
 			userAccessToken = token;
 		}
 
 		return token;
 	} catch {
+		authDebug('exchangeUserAccessToken failed');
 		return '';
 	}
 }
@@ -383,10 +432,20 @@ export async function refreshUserAccessToken() {
 
 	try {
 		const origin = resolveTmkAuthOrigin();
+		authDebug('refreshUserAccessToken -> request', {
+			url: `${origin}${USER_AUTH_ENDPOINTS.refresh}`,
+			method: 'POST',
+			headers: summarizeHeaders(applyTmkApiAuthKeyHeader()),
+		});
 		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.refresh}`, {
 			method: 'POST',
 			headers: applyTmkApiAuthKeyHeader(),
 			credentials: 'include',
+		});
+		authDebug('refreshUserAccessToken <- response', {
+			status: response.status,
+			ok: response.ok,
+			statusText: response.statusText,
 		});
 
 		if (!response.ok) {
@@ -396,9 +455,14 @@ export async function refreshUserAccessToken() {
 
 		const payload = await response.json().catch(() => ({}));
 		const token = getAccessTokenFromPayload(payload);
+		authDebug('refreshUserAccessToken parsed payload', {
+			hasToken: Boolean(token),
+			payloadKeys: Object.keys(payload || {}),
+		});
 		userAccessToken = token || '';
 		return userAccessToken;
 	} catch {
+		authDebug('refreshUserAccessToken failed');
 		userAccessToken = '';
 		return '';
 	}
@@ -419,10 +483,20 @@ export async function getUserAccessToken(apiOrigin, forceRefresh = false) {
 export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 	try {
 		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+		authDebug('fetchWithUserToken start', {
+			origin,
+			endpoint,
+			method: init.method || 'GET',
+		});
 
 		if (isAuthBypassMode()) {
 			const endpointPath = addTeachableSessionToPath(endpoint);
 			const headers = applyTmkApiAuthKeyHeader(init.headers);
+			authDebug('fetchWithUserToken bypass -> request', {
+				url: `${origin}${endpointPath}`,
+				method: init.method || 'GET',
+				headers: summarizeHeaders(headers),
+			});
 			return fetch(`${origin}${endpointPath}`, {
 				...init,
 				headers,
@@ -445,7 +519,17 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 		};
 
 		const endpointPath = addTeachableSessionToPath(endpoint);
+		authDebug('fetchWithUserToken -> request', {
+			url: `${origin}${endpointPath}`,
+			method: requestInit.method || 'GET',
+			headers: summarizeHeaders(requestInit.headers),
+		});
 		let response = await fetch(`${origin}${endpointPath}`, requestInit);
+		authDebug('fetchWithUserToken <- response', {
+			status: response.status,
+			ok: response.ok,
+			statusText: response.statusText,
+		});
 		if (response.status !== 401) {
 			return response;
 		}
@@ -457,21 +541,42 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 				return response;
 			}
 			headers.set('Authorization', `Bearer ${exchanged}`);
+			authDebug('fetchWithUserToken retry after exchange -> request', {
+				url: `${origin}${endpointPath}`,
+				method: requestInit.method || 'GET',
+				headers: summarizeHeaders(headers),
+			});
 			response = await fetch(`${origin}${endpointPath}`, {
 				...requestInit,
 				headers,
+			});
+			authDebug('fetchWithUserToken retry after exchange <- response', {
+				status: response.status,
+				ok: response.ok,
+				statusText: response.statusText,
 			});
 			return response;
 		}
 
 		headers.set('Authorization', `Bearer ${refreshed}`);
+		authDebug('fetchWithUserToken retry after refresh -> request', {
+			url: `${origin}${endpointPath}`,
+			method: requestInit.method || 'GET',
+			headers: summarizeHeaders(headers),
+		});
 		response = await fetch(`${origin}${endpointPath}`, {
 			...requestInit,
 			headers,
 		});
+		authDebug('fetchWithUserToken retry after refresh <- response', {
+			status: response.status,
+			ok: response.ok,
+			statusText: response.statusText,
+		});
 
 		return response;
-	} catch {
+	} catch (error) {
+		authDebug('fetchWithUserToken failed', error?.message || error);
 		return new Response(null, { status: 503, statusText: 'Service unavailable' });
 	}
 }
@@ -519,10 +624,20 @@ export async function fetchAuthenticatedUser() {
 	try {
 		const origin = resolveTmkAuthOrigin();
 		const mePath = addTeachableSessionToPath(OAUTH_ENDPOINTS.me);
+		authDebug('fetchAuthenticatedUser -> request', {
+			url: `${origin}${mePath}`,
+			method: 'GET',
+			headers: summarizeHeaders(applyTmkApiAuthKeyHeader()),
+		});
 		const response = await fetch(`${origin}${mePath}`, {
 			method: 'GET',
 			headers: applyTmkApiAuthKeyHeader(),
 			credentials: 'include',
+		});
+		authDebug('fetchAuthenticatedUser <- response', {
+			status: response.status,
+			ok: response.ok,
+			statusText: response.statusText,
 		});
 
 		if (!response.ok) {
@@ -534,6 +649,10 @@ export async function fetchAuthenticatedUser() {
 		}
 
 		const data = await response.json();
+		authDebug('fetchAuthenticatedUser payload', {
+			payloadKeys: Object.keys(data || {}),
+			hasUserCandidate: Boolean(data?.user || data?.data || data?.result || data?.email),
+		});
 		const user = extractAuthenticatedUser(data);
 		if (user) {
 			syncAuthStateHints(user);
