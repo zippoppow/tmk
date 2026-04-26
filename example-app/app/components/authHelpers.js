@@ -387,37 +387,48 @@ export async function exchangeUserAccessToken() {
 	try {
 		const origin = resolveTmkAuthOrigin();
 		const tokenPath = addTeachableSessionToPath(USER_AUTH_ENDPOINTS.token);
-		authDebug('exchangeUserAccessToken -> request', {
-			url: `${origin}${tokenPath}`,
-			method: 'POST',
-			headers: summarizeHeaders(applyTmkApiAuthKeyHeader()),
-		});
-		const response = await fetch(`${origin}${tokenPath}`, {
-			method: 'POST',
-			headers: applyTmkApiAuthKeyHeader(),
-			credentials: 'include',
-		});
-		authDebug('exchangeUserAccessToken <- response', {
-			status: response.status,
-			ok: response.ok,
-			statusText: response.statusText,
-		});
+		const headers = applyTmkApiAuthKeyHeader();
+		const methods = ['GET', 'POST'];
 
-		if (!response.ok) {
-			return '';
+		for (const method of methods) {
+			authDebug('exchangeUserAccessToken -> request', {
+				url: `${origin}${tokenPath}`,
+				method,
+				headers: summarizeHeaders(headers),
+			});
+
+			const response = await fetch(`${origin}${tokenPath}`, {
+				method,
+				headers,
+				credentials: 'include',
+			});
+
+			authDebug('exchangeUserAccessToken <- response', {
+				method,
+				status: response.status,
+				ok: response.ok,
+				statusText: response.statusText,
+			});
+
+			if (!response.ok) {
+				continue;
+			}
+
+			const payload = await response.json().catch(() => ({}));
+			const token = getAccessTokenFromPayload(payload);
+			authDebug('exchangeUserAccessToken parsed payload', {
+				method,
+				hasToken: Boolean(token),
+				payloadKeys: Object.keys(payload || {}),
+			});
+			if (token) {
+				userAccessToken = token;
+			}
+
+			return token;
 		}
 
-		const payload = await response.json().catch(() => ({}));
-		const token = getAccessTokenFromPayload(payload);
-		authDebug('exchangeUserAccessToken parsed payload', {
-			hasToken: Boolean(token),
-			payloadKeys: Object.keys(payload || {}),
-		});
-		if (token) {
-			userAccessToken = token;
-		}
-
-		return token;
+		return '';
 	} catch {
 		authDebug('exchangeUserAccessToken failed');
 		return '';
