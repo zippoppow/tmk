@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchAuthenticatedUser, resolveTmkApiOrigin } from './authHelpers';
+import { fetchAuthenticatedUser } from './authHelpers';
 
 const DIY_COURSE_ID = '2944218';
 
@@ -27,12 +27,13 @@ export function useDiyAccess() {
 
         if (!cancelled) setUser(userData);
 
-        // Step 2: check DIY course enrollment directly against TMK API
-        const apiOrigin = resolveTmkApiOrigin();
+        // Step 2: check DIY course enrollment via server-side route
+        // The route at /api/teachable-enrollment calls the Teachable Admin API
+        // with TEACHABLE_DEVELOPERS_API_KEY — the key stays server-side.
         const email = encodeURIComponent(
           String(userData.email || userData?.profile?.email || '').trim()
         );
-        const url = `${apiOrigin}/api/teachable-enrollment?email=${email}&courseNumber=${DIY_COURSE_ID}`;
+        const url = `/api/teachable-enrollment?email=${email}&courseNumber=${DIY_COURSE_ID}`;
 
         let diyAccess = false;
         try {
