@@ -614,7 +614,6 @@ export async function fetchAuthenticatedUser() {
 		const user = extractAuthenticatedUser(data);
 		if (user) {
 			syncAuthStateHints(user);
-			await exchangeUserAccessToken(origin);
 			return user;
 		}
 		clearAuthStateHints();
