@@ -379,11 +379,11 @@ export async function refreshUserAccessToken() {
 		const origin = resolveTmkAuthOrigin();
 		authDebug('refreshUserAccessToken -> request', {
 			url: `${origin}${USER_AUTH_ENDPOINTS.refresh}`,
-			method: 'POST',
+			method: 'GET',
 			headers: summarizeHeaders(applyTmkApiAuthKeyHeader()),
 		});
 		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.refresh}`, {
-			method: 'POST',
+			method: 'GET',
 			headers: applyTmkApiAuthKeyHeader(),
 			credentials: 'include',
 		});
