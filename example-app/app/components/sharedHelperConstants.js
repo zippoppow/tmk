@@ -10,7 +10,7 @@ export const OAUTH_ENDPOINTS = {
 };
 
 export const USER_AUTH_ENDPOINTS = {
-	token: '/api/auth/user/token',
+	token: '/api/auth/token',
 	refresh: '/api/auth/user/refresh',
 };
 
