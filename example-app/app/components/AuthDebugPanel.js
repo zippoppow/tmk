@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Box, Button, Chip, Paper, Stack, Typography } from '@mui/material';
 import {
+  applyTmkApiAuthKeyHeader,
   captureTeachableSessionFromUrl,
   DIY_PROJECTS_ENDPOINT,
   OAUTH_ENDPOINTS,
@@ -11,6 +12,7 @@ import {
   getTeachableSessionDebugInfo,
   getUserAccessTokenDebugInfo,
   refreshUserAccessToken,
+  resolveTmkAuthOrigin,
   resolveTmkApiOrigin,
 } from './authHelpers';
 
@@ -26,6 +28,7 @@ function summarizeJson(payload) {
 
 export default function AuthDebugPanel() {
   const apiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
+  const authOrigin = useMemo(() => resolveTmkAuthOrigin(), []);
   const appOrigin = useMemo(() => (typeof window === 'undefined' ? '' : window.location.origin), []);
   const [status, setStatus] = useState('Idle');
   const [details, setDetails] = useState('');
@@ -61,8 +64,9 @@ export default function AuthDebugPanel() {
   const handleCheckSession = () =>
     runAction('Session check', async () => {
       captureTeachableSessionFromUrl();
-      const response = await fetch(`${apiOrigin}${OAUTH_ENDPOINTS.me}`, {
+      const response = await fetch(`${authOrigin}${OAUTH_ENDPOINTS.me}`, {
         method: 'GET',
+        headers: applyTmkApiAuthKeyHeader(),
         credentials: 'include',
       });
 
@@ -81,7 +85,7 @@ export default function AuthDebugPanel() {
   const handleExchangeToken = () =>
     runAction('Token exchange', async () => {
       captureTeachableSessionFromUrl();
-      const token = await exchangeUserAccessToken(apiOrigin);
+      const token = await exchangeUserAccessToken();
       setStatus(token ? 'Token exchange: success' : 'Token exchange: no token returned');
       setDetails(token ? `access_token preview: ${token.slice(0, 16)}...` : 'Verify Teachable session exists first.');
     });
@@ -89,7 +93,7 @@ export default function AuthDebugPanel() {
   const handleRefreshToken = () =>
     runAction('Token refresh', async () => {
       captureTeachableSessionFromUrl();
-      const token = await refreshUserAccessToken(apiOrigin);
+      const token = await refreshUserAccessToken();
       setStatus(token ? 'Token refresh: success' : 'Token refresh: failed');
       setDetails(token ? `access_token preview: ${token.slice(0, 16)}...` : 'Refresh cookie may be missing or expired.');
     });
@@ -127,6 +131,7 @@ export default function AuthDebugPanel() {
         <Chip size="small" label={tokenInfo.hasToken ? 'Token cached' : 'No token cached'} color={tokenInfo.hasToken ? 'success' : 'default'} />
         <Chip size="small" label={sessionInfo.hasSession ? 'Session handoff cached' : 'No session handoff'} color={sessionInfo.hasSession ? 'success' : 'default'} />
         <Chip size="small" label={`App: ${appOrigin || 'unknown'}`} variant="outlined" />
+        <Chip size="small" label={`Auth: ${authOrigin}`} variant="outlined" />
         <Chip size="small" label={`API: ${apiOrigin}`} variant="outlined" />
       </Stack>
 

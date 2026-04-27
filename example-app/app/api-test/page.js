@@ -20,7 +20,7 @@ export default function ApiTestPage() {
     <div style={{ fontFamily: 'sans-serif', padding: '20px' }}>
       <h1>TMK API Integration Tests</h1>
       <p>
-        Teachable OAuth debug: <a href="/api-test/teachable-auth">/api-test/teachable-auth</a>
+        TMK API Teachable auth debug: <a href="/api-test/teachable-auth">/api-test/teachable-auth</a>
       </p>
       <p>
         Open the browser's developer console to see detailed logs.

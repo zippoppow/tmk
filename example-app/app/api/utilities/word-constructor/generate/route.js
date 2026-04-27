@@ -24,7 +24,7 @@
  * }
  */
 
-import { TMK_API_BASE_URL } from '@/lib/tmkApiOrigin.js';
+import { TMK_API_BASE_URL, withTmkApiAuthHeader } from '@/lib/tmkApiOrigin.js';
 
 const TMK_API_URL = TMK_API_BASE_URL;
 
@@ -33,7 +33,9 @@ const TMK_API_URL = TMK_API_BASE_URL;
  */
 async function fetchAllMorphemes() {
   try {
-    const response = await fetch(`${TMK_API_URL}/api/morphemes?limit=10000`);
+    const response = await fetch(`${TMK_API_URL}/api/morphemes?limit=10000`, {
+      headers: withTmkApiAuthHeader(),
+    });
     if (!response.ok) {
       throw new Error(`Failed to fetch morphemes: ${response.statusText}`);
     }

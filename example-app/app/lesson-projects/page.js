@@ -35,11 +35,10 @@ import {
 } from '../components/lessonActivityHelpers';
 import {
 	buildTeachableLogoutUrl,
-	fetchAuthenticatedUser,
 	fetchWithUserToken,
-	hasActiveDiyEnrollment,
 	resolveTmkApiOrigin,
 } from '../components/authHelpers';
+import { useDiyAccess } from '../components/useDiyAccess';
 import {
 	buildDiyProjectsPayload,
 	createLessonActivitySnapshot,
@@ -86,8 +85,7 @@ function isValidLessonActivityType(activityType) {
 
 export default function LessonProjectsPage() {
 	const router = useRouter();
-	const [authLoading, setAuthLoading] = useState(true);
-	const [authUser, setAuthUser] = useState(null);
+	const { user: authUser, hasDiyAccess, loading: authLoading } = useDiyAccess();
 	const [localProjects, setLocalProjects] = useState([]);
 	const [isLoadingCloudProjects, setIsLoadingCloudProjects] = useState(false);
 	const [cloudMessage, setCloudMessage] = useState('');
@@ -102,7 +100,6 @@ export default function LessonProjectsPage() {
 
 	const apiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
 	const isAuthenticated = Boolean(authUser);
-	const hasDiyAccess = hasActiveDiyEnrollment(authUser);
 
 	const showNotice = (severity, message) => {
 		setNotice({ open: true, severity, message });
@@ -395,17 +392,7 @@ export default function LessonProjectsPage() {
 		});
 	}, [localProjects]);
 
-	const runAuthCheck = async () => {
-		setAuthLoading(true);
-		try {
-			const user = await fetchAuthenticatedUser(apiOrigin);
-			setAuthUser(user);
-		} catch {
-			setAuthUser(null);
-		} finally {
-			setAuthLoading(false);
-		}
-	};
+
 
 	useEffect(() => {
 		if (typeof window === 'undefined') {
@@ -704,7 +691,6 @@ export default function LessonProjectsPage() {
 
 	useEffect(() => {
 		loadLocalProjects();
-		runAuthCheck();
 	}, []);
 
 	useEffect(() => {
@@ -715,27 +701,16 @@ export default function LessonProjectsPage() {
 		}
 	}, [isAuthenticated, hasDiyAccess]);
 
+	useEffect(() => {
+		if (!authLoading && isAuthenticated && !hasDiyAccess) {
+			router.replace('/dashboard');
+		}
+	}, [authLoading, isAuthenticated, hasDiyAccess, router]);
+
 	if (authLoading) {
 		return (
 			<Container maxWidth="md" sx={{ py: 6 }}>
 				<Typography>Checking login...</Typography>
-			</Container>
-		);
-	}
-
-	if (isAuthenticated && !hasDiyAccess) {
-		return (
-			<Container maxWidth="md" sx={{ py: 6 }}>
-				<Stack spacing={2}>
-					<TmkLogo sx={{ maxWidth: 280 }} />
-					<Typography variant="h5">Lesson Projects</Typography>
-					<Alert severity="warning">
-						Active enrollment in the DIY course is required to access Lesson Projects.
-					</Alert>
-					<Button variant="outlined" onClick={() => router.push('/dashboard')} sx={{ textTransform: 'none', width: 'fit-content' }}>
-						Back to Dashboard
-					</Button>
-				</Stack>
 			</Container>
 		);
 	}

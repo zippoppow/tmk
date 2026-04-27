@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { resolveTmkAuthOrigin } from '../../components/authHelpers';
 
 const AUTH_ENDPOINTS = {
   start: '/api/auth/teachable/start',
@@ -20,6 +21,7 @@ export default function TeachableAuthDebugPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState('Ready');
   const [result, setResult] = useState(null);
+  const authOrigin = useMemo(() => resolveTmkAuthOrigin(), []);
 
   const redirectTarget = useMemo(() => {
     if (typeof window === 'undefined') {
@@ -33,7 +35,7 @@ export default function TeachableAuthDebugPage() {
     setStatus('Checking /me...');
 
     try {
-      const response = await fetch(AUTH_ENDPOINTS.me, {
+      const response = await fetch(`${authOrigin}${AUTH_ENDPOINTS.me}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -57,13 +59,13 @@ export default function TeachableAuthDebugPage() {
   };
 
   const startLogin = () => {
-    const url = new URL(AUTH_ENDPOINTS.start, window.location.origin);
+    const url = new URL(AUTH_ENDPOINTS.start, authOrigin);
     url.searchParams.set('redirectTo', redirectTarget);
     window.location.href = url.toString();
   };
 
   const runLogout = () => {
-    const url = new URL(AUTH_ENDPOINTS.logout, window.location.origin);
+    const url = new URL(AUTH_ENDPOINTS.logout, authOrigin);
     url.searchParams.set('redirectTo', redirectTarget);
     window.location.href = url.toString();
   };
@@ -71,9 +73,10 @@ export default function TeachableAuthDebugPage() {
   return (
     <div style={{ fontFamily: 'sans-serif', padding: '20px', maxWidth: '900px' }}>
       <h1>Teachable OAuth Debug</h1>
-      <p>Use this page to verify the local auth routes and current session state.</p>
+      <p>Use this page to verify the TMK API auth routes and current session state.</p>
 
       <div style={{ marginBottom: '12px', padding: '10px', background: '#f4f6f8', borderRadius: '6px' }}>
+        <div><strong>Auth origin:</strong> {authOrigin}</div>
         <div><strong>Start:</strong> {AUTH_ENDPOINTS.start}</div>
         <div><strong>Me:</strong> {AUTH_ENDPOINTS.me}</div>
         <div><strong>Logout:</strong> {AUTH_ENDPOINTS.logout}</div>

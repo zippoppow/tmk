@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useDiyAccess } from '../components/useDiyAccess';
 import { useRouter } from 'next/navigation';
 import {
     buildTeachableLogoutUrl,
-    fetchAuthenticatedUser,
     fetchWithUserToken,
-    hasActiveDiyEnrollment,
     resolveTmkApiOrigin,
 } from '../components/authHelpers';
 import {
@@ -35,41 +34,37 @@ import LessonActivitySelector from '../components/LessonActivitySelector';
 import TmkLogo from '../components/TmkLogo';
 
 export default function DashboardPage() {
+
+        // Confirm component render
+        if (typeof window !== 'undefined') {
+            // eslint-disable-next-line no-console
+            console.log('[Dashboard] DashboardPage rendered');
+        }
+    
     const router = useRouter();
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [standaloneActivities, setStandaloneActivities] = useState([]);
     const [standaloneLoading, setStandaloneLoading] = useState(false);
     const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
-    const [hasDiyAccess, setHasDiyAccess] = useState(false);
+    const { hasDiyAccess, loading: diyLoading, authUser } = useDiyAccess();
 
     const showNotice = (severity, message) => {
         setNotice({ open: true, severity, message });
     };
 
     useEffect(() => {
-        // Check authentication status
-        const checkAuth = async () => {
-            try {
-                const userData = await fetchAuthenticatedUser(resolveTmkApiOrigin());
-                if (!userData) {
-                    router.push('/login?next=/dashboard');
-                    return;
-                }
-                setUser(userData);
-                setHasDiyAccess(hasActiveDiyEnrollment(userData));
-            } catch (error) {
-                console.error('Auth check failed:', error);
-                router.push('/login?next=/dashboard');
-            } finally {
-                setLoading(false);
-            }
-        };
+        if (authUser) {
+            // eslint-disable-next-line no-console
+            console.log('[Dashboard] Setting user from authUser:', authUser);
+            setUser(authUser);
+        }
+    }, [authUser]);
 
-        checkAuth();
-    }, [router]);
+    // No redirect for lack of DIY access; dashboard always renders
 
     const loadStandaloneActivities = async () => {
+        // eslint-disable-next-line no-console
+        console.log('[Dashboard] loadStandaloneActivities called. user:', user, 'hasDiyAccess:', hasDiyAccess);
         if (!user || !hasDiyAccess) {
             setStandaloneActivities([]);
             return;
@@ -77,6 +72,8 @@ export default function DashboardPage() {
 
         setStandaloneLoading(true);
         try {
+            // eslint-disable-next-line no-console
+            console.log('[Dashboard] Fetching lesson activities from API...');
             const apiOrigin = resolveTmkApiOrigin();
             const records = await listLessonActivities(apiOrigin);
 
@@ -102,6 +99,8 @@ export default function DashboardPage() {
                 });
             });
             try {
+                // eslint-disable-next-line no-console
+                console.log('[Dashboard] Fetching DIY projects for association check...');
                 const projectResponse = await fetchWithUserToken(apiOrigin, DIY_PROJECTS_ENDPOINT, { method: 'GET' });
                 if (projectResponse.ok) {
                     const projectPayload = await projectResponse.json().catch(() => ({}));
@@ -129,6 +128,7 @@ export default function DashboardPage() {
                     projectActivityKeys = new Set([...projectActivityKeys, ...keys]);
                 }
             } catch (projectError) {
+                // eslint-disable-next-line no-console
                 console.error('Failed to load diy-project associations for standalone filter:', projectError);
             }
 
@@ -168,6 +168,7 @@ export default function DashboardPage() {
             }
             setStandaloneActivities(nonProjectRecords);
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Failed to load standalone lesson activities:', error);
             setStandaloneActivities([]);
         } finally {
@@ -180,10 +181,10 @@ export default function DashboardPage() {
     }, [user, hasDiyAccess]);
 
     const handleLogout = () => {
-        window.location.href = buildTeachableLogoutUrl('/login?next=/dashboard', resolveTmkApiOrigin());
+        window.location.href = buildTeachableLogoutUrl('/login?next=/dashboard');
     };
 
-    if (loading) {
+    if (diyLoading) {
         return (
             <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
                 <CircularProgress />

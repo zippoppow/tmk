@@ -1,3 +1,5 @@
+// API endpoint for DIY projects access check
+export const DIY_PROJECTS_ENDPOINT = '/api/teachable-enrollment';
 import {
 	AUTH_BYPASS_ENABLED,
 	DEFAULT_API_ORIGINS,
@@ -30,6 +32,44 @@ const AUTH_BYPASS_USER = {
 };
 
 const DIY_COURSE_ID = String(process.env.NEXT_PUBLIC_TEACHABLE_DIY_COURSE_ID || process.env.TEACHABLE_DIY_COURSE_ID || '').trim();
+const AUTH_HINT_COOKIE = 'tmk_auth_hint';
+const DIY_ACCESS_HINT_COOKIE = 'tmk_diy_access_hint';
+const AUTH_HINT_MAX_AGE_SECONDS = 60 * 60 * 12;
+const TMK_API_AUTH_HEADER = 'x-api-key';
+const AUTH_DEBUG_ENABLED = process.env.NODE_ENV !== 'production';
+
+function authDebug(label, payload) {
+	if (!AUTH_DEBUG_ENABLED) {
+		return;
+	}
+
+	if (payload === undefined) {
+		// eslint-disable-next-line no-console
+		console.log(`[TMK auth debug] ${label}`);
+		return;
+	}
+
+	// eslint-disable-next-line no-console
+	console.log(`[TMK auth debug] ${label}`, payload);
+}
+
+function summarizeHeaders(headersLike) {
+	const headers = new Headers(headersLike || {});
+	const summary = {};
+	headers.forEach((value, key) => {
+		const normalized = key.toLowerCase();
+		if (normalized === 'authorization') {
+			summary[normalized] = value ? `Bearer ${String(value).slice(0, 16)}...` : '';
+			return;
+		}
+		if (normalized === TMK_API_AUTH_HEADER) {
+			summary[normalized] = value ? `${String(value).slice(0, 8)}...` : '';
+			return;
+		}
+		summary[normalized] = value;
+	});
+	return summary;
+}
 
 function toIdString(value) {
 	if (value === null || value === undefined) {
@@ -46,28 +86,6 @@ function getUserCourses(user) {
 		return user.courses;
 	}
 	return [];
-}
-
-export function hasActiveDiyEnrollment(user) {
-	if (!user || typeof user !== 'object') {
-		return false;
-	}
-
-	if (typeof user?.access?.lessonActivities === 'boolean') {
-		return user.access.lessonActivities;
-	}
-
-	if (typeof user?.access?.diyCourseActiveEnrollment === 'boolean') {
-		return user.access.diyCourseActiveEnrollment;
-	}
-
-	if (!DIY_COURSE_ID) {
-		return true;
-	}
-
-	const courses = getUserCourses(user);
-	const enrollment = courses.find((course) => toIdString(course?.course_id) === DIY_COURSE_ID);
-	return Boolean(enrollment?.is_active_enrollment);
 }
 
 function trimOrigin(value) {
@@ -96,6 +114,23 @@ function isLocalDevHost(hostname) {
 	return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.local');
 }
 
+function getTmkApiAuthKey() {
+	if (typeof window === 'undefined') {
+		return String(process.env.TMK_API_AUTH_KEY || '').trim();
+	}
+
+	return '';
+}
+
+export function applyTmkApiAuthKeyHeader(headersLike) {
+	const headers = new Headers(headersLike || {});
+	const apiAuthKey = getTmkApiAuthKey();
+	if (apiAuthKey && !headers.has(TMK_API_AUTH_HEADER)) {
+		headers.set(TMK_API_AUTH_HEADER, apiAuthKey);
+	}
+	return headers;
+}
+
 export function isAuthBypassMode() {
 	if (!AUTH_BYPASS_ENABLED) {
 		return false;
@@ -116,6 +151,46 @@ function getConfiguredApiOrigins(defaultOrigins) {
 		staging: configuredDefault || defaultOrigins.staging,
 		production: configuredProduction || configuredDefault || defaultOrigins.production,
 	};
+}
+
+export function resolveTmkAuthOrigin(origins = DEFAULT_API_ORIGINS) {
+	if (typeof window !== 'undefined') {
+		return trimOrigin(window.location.origin);
+	}
+
+	const resolvedOrigins = getConfiguredApiOrigins(origins);
+	return resolvedOrigins.production;
+}
+
+function writeBrowserCookie(name, value, maxAgeSeconds = AUTH_HINT_MAX_AGE_SECONDS) {
+	if (typeof document === 'undefined' || !name) {
+		return;
+	}
+
+	const secureAttribute = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
+	document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${Math.max(0, Number(maxAgeSeconds) || 0)}; SameSite=Lax${secureAttribute}`;
+}
+
+export function clearAuthStateHints() {
+	if (typeof document === 'undefined') {
+		return;
+	}
+
+	writeBrowserCookie(AUTH_HINT_COOKIE, '', 0);
+	writeBrowserCookie(DIY_ACCESS_HINT_COOKIE, '', 0);
+}
+
+export function syncAuthStateHints(user) {
+	if (typeof document === 'undefined') {
+		return;
+	}
+
+	if (!user || typeof user !== 'object') {
+		clearAuthStateHints();
+		return;
+	}
+
+	writeBrowserCookie(AUTH_HINT_COOKIE, '1');
 }
 
 let userAccessToken = '';
@@ -206,6 +281,11 @@ export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
 
 	const { protocol, hostname, origin } = window.location;
 	const browserOrigin = trimOrigin(origin);
+
+	if (browserOrigin) {
+		return browserOrigin;
+	}
+
 	const isLocalHost =
 		protocol === 'file:' ||
 		!hostname ||
@@ -242,19 +322,21 @@ export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
 	return resolvedOrigins.production;
 }
 
-export function buildTeachableStartUrl(apiOrigin, redirectTo) {
+export function buildTeachableStartUrl(apiOriginOrRedirectTo, redirectTo) {
 	if (isAuthBypassMode()) {
-		return redirectTo || (typeof window !== 'undefined' ? window.location.href : '/');
+		return (redirectTo || apiOriginOrRedirectTo) || (typeof window !== 'undefined' ? window.location.href : '/');
 	}
 
-	const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+	const resolvedRedirectTo = redirectTo || apiOriginOrRedirectTo;
+	const origin = resolveTmkAuthOrigin();
 	const authUrl = new URL(OAUTH_ENDPOINTS.start, origin);
-	authUrl.searchParams.set('redirectTo', redirectTo || window.location.href);
-	console.log('[TMK auth] start URL:', authUrl.toString());
+	authUrl.searchParams.set('redirectTo', resolvedRedirectTo || window.location.href);
 	return authUrl.toString();
 }
 
-export function buildTeachableLogoutUrl(redirectTo, apiOrigin) {
+export function buildTeachableLogoutUrl(redirectTo) {
+	clearAuthStateHints();
+
 	if (isAuthBypassMode()) {
 		if (typeof window === 'undefined') {
 			return redirectTo || '/';
@@ -267,7 +349,7 @@ export function buildTeachableLogoutUrl(redirectTo, apiOrigin) {
 		return redirectTo || window.location.href;
 	}
 
-	const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+	const origin = resolveTmkAuthOrigin();
 	const logoutUrl = new URL(OAUTH_ENDPOINTS.logout, origin);
 	logoutUrl.searchParams.set('redirectTo', redirectTo || window.location.href);
 	const session = getTeachableSessionHandoff();
@@ -296,18 +378,33 @@ function getAccessTokenFromPayload(payload) {
 	return '';
 }
 
-export async function exchangeUserAccessToken(apiOrigin) {
+export async function exchangeUserAccessToken() {
 	if (isAuthBypassMode()) {
 		userAccessToken = 'dev-bypass-token';
 		return userAccessToken;
 	}
 
 	try {
-		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+		const origin = resolveTmkAuthOrigin();
 		const tokenPath = addTeachableSessionToPath(USER_AUTH_ENDPOINTS.token);
+		const headers = applyTmkApiAuthKeyHeader();
+		authDebug('exchangeUserAccessToken -> request', {
+			url: `${origin}${tokenPath}`,
+			method: 'GET',
+			headers: summarizeHeaders(headers),
+		});
+
 		const response = await fetch(`${origin}${tokenPath}`, {
-			method: 'POST',
+			method: 'GET',
+			headers,
 			credentials: 'include',
+		});
+
+		authDebug('exchangeUserAccessToken <- response', {
+			method: 'GET',
+			status: response.status,
+			ok: response.ok,
+			statusText: response.statusText,
 		});
 
 		if (!response.ok) {
@@ -316,27 +413,44 @@ export async function exchangeUserAccessToken(apiOrigin) {
 
 		const payload = await response.json().catch(() => ({}));
 		const token = getAccessTokenFromPayload(payload);
+		authDebug('exchangeUserAccessToken parsed payload', {
+			method: 'GET',
+			hasToken: Boolean(token),
+			payloadKeys: Object.keys(payload || {}),
+		});
 		if (token) {
 			userAccessToken = token;
 		}
 
 		return token;
 	} catch {
+		authDebug('exchangeUserAccessToken failed');
 		return '';
 	}
 }
 
-export async function refreshUserAccessToken(apiOrigin) {
+export async function refreshUserAccessToken() {
 	if (isAuthBypassMode()) {
 		userAccessToken = 'dev-bypass-token';
 		return userAccessToken;
 	}
 
 	try {
-		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+		const origin = resolveTmkAuthOrigin();
+		authDebug('refreshUserAccessToken -> request', {
+			url: `${origin}${USER_AUTH_ENDPOINTS.refresh}`,
+			method: 'POST',
+			headers: summarizeHeaders(applyTmkApiAuthKeyHeader()),
+		});
 		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.refresh}`, {
 			method: 'POST',
+			headers: applyTmkApiAuthKeyHeader(),
 			credentials: 'include',
+		});
+		authDebug('refreshUserAccessToken <- response', {
+			status: response.status,
+			ok: response.ok,
+			statusText: response.statusText,
 		});
 
 		if (!response.ok) {
@@ -346,9 +460,14 @@ export async function refreshUserAccessToken(apiOrigin) {
 
 		const payload = await response.json().catch(() => ({}));
 		const token = getAccessTokenFromPayload(payload);
+		authDebug('refreshUserAccessToken parsed payload', {
+			hasToken: Boolean(token),
+			payloadKeys: Object.keys(payload || {}),
+		});
 		userAccessToken = token || '';
 		return userAccessToken;
 	} catch {
+		authDebug('refreshUserAccessToken failed');
 		userAccessToken = '';
 		return '';
 	}
@@ -360,20 +479,32 @@ export async function getUserAccessToken(apiOrigin, forceRefresh = false) {
 	}
 
 	if (forceRefresh) {
-		return refreshUserAccessToken(apiOrigin);
+		return refreshUserAccessToken();
 	}
 
-	return exchangeUserAccessToken(apiOrigin);
+	return exchangeUserAccessToken();
 }
 
 export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 	try {
 		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+		authDebug('fetchWithUserToken start', {
+			origin,
+			endpoint,
+			method: init.method || 'GET',
+		});
 
 		if (isAuthBypassMode()) {
 			const endpointPath = addTeachableSessionToPath(endpoint);
+			const headers = applyTmkApiAuthKeyHeader(init.headers);
+			authDebug('fetchWithUserToken bypass -> request', {
+				url: `${origin}${endpointPath}`,
+				method: init.method || 'GET',
+				headers: summarizeHeaders(headers),
+			});
 			return fetch(`${origin}${endpointPath}`, {
 				...init,
+				headers,
 				credentials: 'include',
 			});
 		}
@@ -383,7 +514,7 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 			return new Response(null, { status: 401, statusText: 'Unauthorized' });
 		}
 
-		const headers = new Headers(init.headers || {});
+		const headers = applyTmkApiAuthKeyHeader(init.headers);
 		headers.set('Authorization', `Bearer ${token}`);
 
 		const requestInit = {
@@ -393,33 +524,64 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 		};
 
 		const endpointPath = addTeachableSessionToPath(endpoint);
+		authDebug('fetchWithUserToken -> request', {
+			url: `${origin}${endpointPath}`,
+			method: requestInit.method || 'GET',
+			headers: summarizeHeaders(requestInit.headers),
+		});
 		let response = await fetch(`${origin}${endpointPath}`, requestInit);
+		authDebug('fetchWithUserToken <- response', {
+			status: response.status,
+			ok: response.ok,
+			statusText: response.statusText,
+		});
 		if (response.status !== 401) {
 			return response;
 		}
 
-		const refreshed = await refreshUserAccessToken(apiOrigin);
+		const refreshed = await refreshUserAccessToken();
 		if (!refreshed) {
-			const exchanged = await exchangeUserAccessToken(apiOrigin);
+			const exchanged = await exchangeUserAccessToken();
 			if (!exchanged) {
 				return response;
 			}
 			headers.set('Authorization', `Bearer ${exchanged}`);
-			response = await fetch(`${origin}${endpoint}`, {
+			authDebug('fetchWithUserToken retry after exchange -> request', {
+				url: `${origin}${endpointPath}`,
+				method: requestInit.method || 'GET',
+				headers: summarizeHeaders(headers),
+			});
+			response = await fetch(`${origin}${endpointPath}`, {
 				...requestInit,
 				headers,
+			});
+			authDebug('fetchWithUserToken retry after exchange <- response', {
+				status: response.status,
+				ok: response.ok,
+				statusText: response.statusText,
 			});
 			return response;
 		}
 
 		headers.set('Authorization', `Bearer ${refreshed}`);
+		authDebug('fetchWithUserToken retry after refresh -> request', {
+			url: `${origin}${endpointPath}`,
+			method: requestInit.method || 'GET',
+			headers: summarizeHeaders(headers),
+		});
 		response = await fetch(`${origin}${endpointPath}`, {
 			...requestInit,
 			headers,
 		});
+		authDebug('fetchWithUserToken retry after refresh <- response', {
+			status: response.status,
+			ok: response.ok,
+			statusText: response.statusText,
+		});
 
 		return response;
-	} catch {
+	} catch (error) {
+		authDebug('fetchWithUserToken failed', error?.message || error);
 		return new Response(null, { status: 503, statusText: 'Service unavailable' });
 	}
 }
@@ -458,20 +620,33 @@ export function extractAuthenticatedUser(data) {
 	return inferredUser;
 }
 
-export async function fetchAuthenticatedUser(apiOrigin) {
+export async function fetchAuthenticatedUser() {
 	if (isAuthBypassMode()) {
+		syncAuthStateHints(AUTH_BYPASS_USER);
 		return AUTH_BYPASS_USER;
 	}
 
 	try {
-		const origin = trimOrigin(apiOrigin) || resolveTmkApiOrigin();
+		const origin = resolveTmkAuthOrigin();
 		const mePath = addTeachableSessionToPath(OAUTH_ENDPOINTS.me);
+		authDebug('fetchAuthenticatedUser -> request', {
+			url: `${origin}${mePath}`,
+			method: 'GET',
+			headers: summarizeHeaders(applyTmkApiAuthKeyHeader()),
+		});
 		const response = await fetch(`${origin}${mePath}`, {
 			method: 'GET',
+			headers: applyTmkApiAuthKeyHeader(),
 			credentials: 'include',
+		});
+		authDebug('fetchAuthenticatedUser <- response', {
+			status: response.status,
+			ok: response.ok,
+			statusText: response.statusText,
 		});
 
 		if (!response.ok) {
+			clearAuthStateHints();
 		//	if (process.env.NODE_ENV !== 'production') {
 				console.warn('[TMK auth] /me returned', response.status, response.statusText);
 		//	}
@@ -479,18 +654,26 @@ export async function fetchAuthenticatedUser(apiOrigin) {
 		}
 
 		const data = await response.json();
+		authDebug('fetchAuthenticatedUser payload', {
+			payloadKeys: Object.keys(data || {}),
+			hasUserCandidate: Boolean(data?.user || data?.data || data?.result || data?.email),
+		});
 		const user = extractAuthenticatedUser(data);
 		if (user) {
+			syncAuthStateHints(user);
 			await exchangeUserAccessToken(origin);
+			return user;
 		}
-		//if (!user && process.env.NODE_ENV !== 'production') {
+		clearAuthStateHints();
+		if (process.env.NODE_ENV !== 'production') {
 			console.warn('[TMK auth] /me returned 200 but could not extract user. Raw response:', data);
-		//}
-		return user;
+		}
+		return null;
 	} catch (err) {
-		//if (process.env.NODE_ENV !== 'production') {
+		clearAuthStateHints();
+		if (process.env.NODE_ENV !== 'production') {
 			console.error('[TMK auth] /me fetch failed (possible CORS or network error):', err?.message || err);
-		//}
+		}
 		return null;
 	}
 }

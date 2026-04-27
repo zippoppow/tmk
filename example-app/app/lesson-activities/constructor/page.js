@@ -105,7 +105,7 @@ export default function ConstructorPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const user = await fetchAuthenticatedUser(apiOrigin);
+      const user = await fetchAuthenticatedUser();
       setAuthUser(user);
     };
 
@@ -182,12 +182,12 @@ export default function ConstructorPage() {
   };
 
   const initiateOAuthLogin = () => {
-    window.location.href = buildTeachableStartUrl(apiOrigin, window.location.href);
+    window.location.href = buildTeachableStartUrl(window.location.href);
   };
 
   const handleLoginLogout = () => {
     if (authUser) {
-      window.location.href = buildTeachableLogoutUrl(window.location.href, apiOrigin);
+      window.location.href = buildTeachableLogoutUrl(window.location.href);
       return;
     }
 

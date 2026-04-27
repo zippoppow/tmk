@@ -6,7 +6,7 @@
     <meta name="description" content="Morphology Kit - INTRO">
     <title>INTRO</title>
     
-    <!-- OAuth Configuration -->
+    <!-- TMK API-auth configuration -->
     <script>
         const TMK_API_ORIGINS = {
             production: 'https://tmk-api.up.railway.app',
@@ -41,6 +41,10 @@
             ME_ENDPOINT: '/api/auth/teachable/me',
             LOGOUT_ENDPOINT: '/api/auth/teachable/logout'
         };
+
+        // These endpoints are owned by TMK API. In local development, the Next app
+        // can proxy the same paths through rewrites so the browser still uses a
+        // same-origin URL while TMK API remains the single auth authority.
 
         const AUTH_QUERY_PARAM = 'auth';
         const AUTH_SUCCESS_VALUE = 'success';

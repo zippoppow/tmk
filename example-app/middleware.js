@@ -3,58 +3,23 @@ import { NextResponse } from 'next/server';
 const AUTH_BYPASS_FLAG = String(process.env.NEXT_PUBLIC_AUTH_BYPASS || '').trim().toLowerCase();
 const AUTH_BYPASS_REQUESTED = AUTH_BYPASS_FLAG === '1' || AUTH_BYPASS_FLAG === 'true' || AUTH_BYPASS_FLAG === 'yes' || AUTH_BYPASS_FLAG === 'on';
 const AUTH_BYPASS_ENABLED = process.env.NODE_ENV !== 'production' && AUTH_BYPASS_REQUESTED;
+const AUTH_HINT_COOKIE = 'tmk_auth_hint';
+const DIY_ACCESS_HINT_COOKIE = 'tmk_diy_access_hint';
+const TEACHABLE_SESSION_PARAM = 'teachable_session';
+const AUTH_STATUS_PARAM = 'auth';
 
-function hasLessonActivitiesAccess(authPayload) {
-  if (!authPayload || typeof authPayload !== 'object') {
-    return false;
-  }
-
-  if (authPayload.authenticated !== true) {
-    return false;
-  }
-
-  const user = authPayload.user;
-  if (!user || typeof user !== 'object') {
-    return false;
-  }
-
-  const access = user.access;
-  if (access && typeof access === 'object') {
-    if (typeof access.lessonActivities === 'boolean') {
-      return access.lessonActivities;
-    }
-    if (typeof access.diyCourseActiveEnrollment === 'boolean') {
-      return access.diyCourseActiveEnrollment;
-    }
-  }
-
-  return false;
+function hasAuthHint(request) {
+  return request.cookies.get(AUTH_HINT_COOKIE)?.value === '1';
 }
 
-async function fetchAuthStatus(request) {
-  try {
-    const meUrl = new URL('/api/auth/teachable/me', request.url);
-    const cookieHeader = request.headers.get('cookie') || '';
+function hasDiyAccessHint(request) {
+  return request.cookies.get(DIY_ACCESS_HINT_COOKIE)?.value === '1';
+}
 
-    const response = await fetch(meUrl, {
-      method: 'GET',
-      headers: cookieHeader ? { cookie: cookieHeader } : {},
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      return { authenticated: false, user: null };
-    }
-
-    const payload = await response.json().catch(() => ({}));
-    if (!payload || typeof payload !== 'object') {
-      return { authenticated: false, user: null };
-    }
-
-    return payload;
-  } catch {
-    return { authenticated: false, user: null };
-  }
+function isReturningFromAuth(request) {
+  const session = (request.nextUrl.searchParams.get(TEACHABLE_SESSION_PARAM) || '').trim();
+  const authStatus = (request.nextUrl.searchParams.get(AUTH_STATUS_PARAM) || '').trim().toLowerCase();
+  return Boolean(session) || authStatus === 'success';
 }
 
 function buildLoginRedirect(request) {
@@ -76,17 +41,23 @@ export async function middleware(request) {
   }
 
   const { pathname } = request.nextUrl;
+  const isDashboardRoute = pathname.startsWith('/dashboard');
   const isLessonActivitiesRoute = pathname.startsWith('/lesson-activities');
-  if (!isLessonActivitiesRoute) {
+  const isLessonProjectsRoute = pathname.startsWith('/lesson-projects');
+
+  if (!isDashboardRoute && !isLessonActivitiesRoute && !isLessonProjectsRoute) {
     return NextResponse.next();
   }
 
-  const authPayload = await fetchAuthStatus(request);
-  if (authPayload?.authenticated !== true) {
+  if (isReturningFromAuth(request)) {
+    return NextResponse.next();
+  }
+
+  if (!hasAuthHint(request)) {
     return buildLoginRedirect(request);
   }
 
-  if (!hasLessonActivitiesAccess(authPayload)) {
+  if ((isLessonActivitiesRoute || isLessonProjectsRoute) && !hasDiyAccessHint(request)) {
     return buildEnrollmentRedirect(request);
   }
 
@@ -94,5 +65,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/lesson-activities/:path*', '/dashboard/:path*'],
+  matcher: ['/lesson-activities/:path*', '/lesson-projects/:path*', '/dashboard/:path*'],
 };

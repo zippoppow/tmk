@@ -76,13 +76,15 @@ import { AppleMusicIcon } from '../../icons/filled/brands/index.jsx';
 
 ## Teachable OAuth Setup
 
-Lesson activity login now runs through local Next.js routes and calls Teachable OAuth/API directly.
+Lesson activity login is owned by TMK API, which handles the Teachable OAuth flow and Teachable API calls.
+
+In local development, the example app can proxy `/api/auth/teachable/*` through Next.js rewrites, but TMK API is still the auth authority. The callback URL configured in Teachable must resolve to a path that ultimately reaches the TMK API auth callback.
 
 Set these server env vars in `example-app/.env.local`:
 
 ```bash
 TEACHABLE_OAUTH_AUTHORIZE_URL=https://sso.teachable.com/secure/<school_id>/identity/oauth_provider/authorize
-TEACHABLE_OAUTH_CALLBACK_URL=http://localhost:3000/api/auth/teachable/callback
+TEACHABLE_OAUTH_CALLBACK_URL=https://tmk-api.up.railway.app/api/auth/teachable/callback
 TEACHABLE_OAUTH_CLIENT_ID=your_client_id
 TEACHABLE_OAUTH_CLIENT_SECRET=your_client_secret
 TEACHABLE_OAUTH_STATE_SECRET=replace_with_random_secret
@@ -99,4 +101,14 @@ TEACHABLE_OPTIONAL_SCOPES="courses:read"
 TEACHABLE_POST_LOGOUT_REDIRECT=/
 ```
 
-The Redirect URL configured in Teachable must exactly match `TEACHABLE_OAUTH_CALLBACK_URL` (or `TEACHABLE_REDIRECT_URI` if using legacy naming).
+Example local-dev callback patterns:
+
+```bash
+# Direct TMK API callback
+TEACHABLE_OAUTH_CALLBACK_URL=https://tmk-api.up.railway.app/api/auth/teachable/callback
+
+# Or a public app URL that rewrites /api/auth/teachable/* to TMK API
+TEACHABLE_OAUTH_CALLBACK_URL=https://your-dev-app-host/api/auth/teachable/callback
+```
+
+The Redirect URL configured in Teachable must exactly match the TMK API callback URL in `TEACHABLE_OAUTH_CALLBACK_URL` (or `TEACHABLE_REDIRECT_URI` if using legacy naming).
