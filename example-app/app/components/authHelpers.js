@@ -142,9 +142,23 @@ function getConfiguredApiOrigins(defaultOrigins) {
 	};
 }
 
+function resolveProductionApiOrigin(origins = DEFAULT_API_ORIGINS) {
+	const configured = getConfiguredApiOrigins(origins);
+	const fallback = trimOrigin(origins?.production) || DEFAULT_API_ORIGINS.production;
+	const candidate = trimOrigin(configured.production) || fallback;
+
+	if (typeof window !== 'undefined') {
+		const browserOrigin = trimOrigin(window.location.origin);
+		if (candidate && browserOrigin && candidate === browserOrigin) {
+			return fallback;
+		}
+	}
+
+	return candidate;
+}
+
 export function resolveTmkAuthOrigin(origins = DEFAULT_API_ORIGINS) {
-	const resolvedOrigins = getConfiguredApiOrigins(origins);
-	return resolvedOrigins.production;
+	return resolveProductionApiOrigin(origins);
 }
 
 function writeBrowserCookie(name, value, maxAgeSeconds = AUTH_HINT_MAX_AGE_SECONDS) {
@@ -258,8 +272,7 @@ function addTeachableSessionToPath(path) {
 }
 
 export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
-	const resolvedOrigins = getConfiguredApiOrigins(origins);
-	return resolvedOrigins.production;
+	return resolveProductionApiOrigin(origins);
 }
 
 export function buildTeachableStartUrl(apiOriginOrRedirectTo, redirectTo) {

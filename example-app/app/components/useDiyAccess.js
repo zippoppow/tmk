@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchAuthenticatedUser } from './authHelpers';
+import { fetchAuthenticatedUser, resolveTmkApiOrigin } from './authHelpers';
 
 const DIY_COURSE_ID = '2944218';
 
@@ -27,12 +27,12 @@ export function useDiyAccess() {
 
         if (!cancelled) setUser(userData);
 
-        // Step 2: check DIY course enrollment via same-origin proxy
-        // The Next.js route handler at /api/teachable-enrollment injects x-api-key server-side
+        // Step 2: check DIY course enrollment directly against TMK API
+        const apiOrigin = resolveTmkApiOrigin();
         const email = encodeURIComponent(
           String(userData.email || userData?.profile?.email || '').trim()
         );
-        const url = `/api/teachable-enrollment?email=${email}&courseNumber=${DIY_COURSE_ID}`;
+        const url = `${apiOrigin}/api/teachable-enrollment?email=${email}&courseNumber=${DIY_COURSE_ID}`;
 
         let diyAccess = false;
         try {
