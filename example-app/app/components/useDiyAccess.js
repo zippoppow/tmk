@@ -1,36 +1,7 @@
 import { useEffect, useState } from 'react';
-import { applyTmkApiAuthKeyHeader, fetchAuthenticatedUser, resolveTmkApiOrigin } from './authHelpers';
+import { fetchAuthenticatedUser } from './authHelpers';
 
 const DIY_COURSE_ID = '2944218';
-const DIY_DEBUG_ENABLED = process.env.NODE_ENV !== 'production';
-
-function diyDebug(label, payload) {
-  if (!DIY_DEBUG_ENABLED || typeof window === 'undefined') {
-    return;
-  }
-
-  if (payload === undefined) {
-    // eslint-disable-next-line no-console
-    console.log(`[useDiyAccess] ${label}`);
-    return;
-  }
-
-  // eslint-disable-next-line no-console
-  console.log(`[useDiyAccess] ${label}`, payload);
-}
-
-function summarizeUser(userData) {
-  if (!userData || typeof userData !== 'object') {
-    return { hasUser: false };
-  }
-
-  return {
-    hasUser: true,
-    id: String(userData.id || userData.user_id || '').trim() || null,
-    email: String(userData.email || userData?.profile?.email || '').trim() || null,
-    keys: Object.keys(userData),
-  };
-}
 
 export function useDiyAccess() {
   const [user, setUser] = useState(null);
@@ -39,82 +10,48 @@ export function useDiyAccess() {
 
   useEffect(() => {
     let cancelled = false;
-    const traceId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    diyDebug('checkAccess mount', { traceId, diyCourseId: DIY_COURSE_ID });
 
     async function checkAccess() {
       setLoading(true);
-      diyDebug('checkAccess start', { traceId });
       try {
+        // Step 1: get the authenticated user's email from the Teachable OAuth /me endpoint
         const userData = await fetchAuthenticatedUser();
-        diyDebug('fetchAuthenticatedUser result', { traceId, summary: summarizeUser(userData) });
 
         if (!userData) {
-          diyDebug('no authenticated user; forcing hasDiyAccess=false', { traceId });
-          setUser(null);
-          setHasDiyAccess(false);
+          if (!cancelled) {
+            setUser(null);
+            setHasDiyAccess(false);
+          }
           return;
         }
 
-        setUser(userData);
+        if (!cancelled) setUser(userData);
+
+        // Step 2: check DIY course enrollment via same-origin proxy
+        // The Next.js route handler at /api/teachable-enrollment injects x-api-key server-side
+        const email = encodeURIComponent(
+          String(userData.email || userData?.profile?.email || '').trim()
+        );
+        const url = `/api/teachable-enrollment?email=${email}&courseNumber=${DIY_COURSE_ID}`;
+
         let diyAccess = false;
-
         try {
-          const apiOrigin = resolveTmkApiOrigin();
-          const rawEmail = String(userData.email || userData?.profile?.email || '').trim();
-          const email = encodeURIComponent(rawEmail);
-          const url = `${apiOrigin}/api/teachable-enrollment?email=${email}&courseNumber=${DIY_COURSE_ID}`;
-          const headers = applyTmkApiAuthKeyHeader();
-
-          diyDebug('enrollment request ->', {
-            traceId,
-            url,
-            method: 'GET',
-            hasEmail: Boolean(rawEmail),
-            emailPreview: rawEmail ? `${rawEmail.slice(0, 3)}***` : '',
-            headerKeys: [...headers.keys()],
-          });
-
-          const resp = await fetch(url, {
-            credentials: 'include',
-            headers,
-          });
-
-          const responseText = await resp.clone().text().catch(() => '');
-          diyDebug('enrollment response <-', {
-            traceId,
-            status: resp.status,
-            ok: resp.ok,
-            statusText: resp.statusText,
-            bodyPreview: responseText.slice(0, 400),
-          });
-
+          const resp = await fetch(url, { credentials: 'include' });
           if (resp.ok) {
             const data = await resp.json();
-            diyDebug('enrollment parsed JSON', {
-              traceId,
-              keys: Object.keys(data || {}),
-              enrolled: data?.enrolled,
-            });
-            if (data && data.enrolled === true) {
-              diyAccess = true;
-            }
+            diyAccess = data?.enrolled === true;
           }
         } catch (err) {
-          diyDebug('enrollment request failed', {
-            traceId,
-            message: err?.message || String(err),
-          });
-          diyAccess = false;
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('[useDiyAccess] enrollment check failed:', err?.message || err);
+          }
         }
 
         if (!cancelled) {
-          diyDebug('final decision', { traceId, diyAccess });
           setHasDiyAccess(diyAccess);
         }
       } finally {
         if (!cancelled) {
-          diyDebug('checkAccess done', { traceId });
           setLoading(false);
         }
       }
@@ -122,7 +59,6 @@ export function useDiyAccess() {
 
     checkAccess();
     return () => {
-      diyDebug('checkAccess unmount/cancel', { traceId });
       cancelled = true;
     };
   }, []);
