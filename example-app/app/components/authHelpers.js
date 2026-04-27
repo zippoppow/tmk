@@ -95,17 +95,6 @@ function trimOrigin(value) {
 	return value.trim().replace(/\/$/, '');
 }
 
-function isLocalOrigin(origin) {
-	if (!origin) {
-		return false;
-	}
-	return (
-		origin.includes('localhost') ||
-		origin.includes('127.0.0.1') ||
-		origin.startsWith('file:')
-	);
-}
-
 function isLocalDevHost(hostname) {
 	if (!hostname) {
 		return false;
@@ -154,10 +143,6 @@ function getConfiguredApiOrigins(defaultOrigins) {
 }
 
 export function resolveTmkAuthOrigin(origins = DEFAULT_API_ORIGINS) {
-	if (typeof window !== 'undefined') {
-		return trimOrigin(window.location.origin);
-	}
-
 	const resolvedOrigins = getConfiguredApiOrigins(origins);
 	return resolvedOrigins.production;
 }
@@ -274,51 +259,6 @@ function addTeachableSessionToPath(path) {
 
 export function resolveTmkApiOrigin(origins = DEFAULT_API_ORIGINS) {
 	const resolvedOrigins = getConfiguredApiOrigins(origins);
-
-	if (typeof window === 'undefined') {
-		return resolvedOrigins.production;
-	}
-
-	const { protocol, hostname, origin } = window.location;
-	const browserOrigin = trimOrigin(origin);
-
-	if (browserOrigin) {
-		return browserOrigin;
-	}
-
-	const isLocalHost =
-		protocol === 'file:' ||
-		!hostname ||
-		hostname === 'localhost' ||
-		hostname === '127.0.0.1' ||
-		hostname.endsWith('.local');
-
-	const isTunnelHost =
-		hostname.endsWith('.ngrok-free.app') ||
-		hostname.endsWith('.ngrok.io') ||
-		hostname.endsWith('.loca.lt');
-
-	if ((isLocalHost || isTunnelHost) && browserOrigin) {
-		return browserOrigin;
-	}
-
-	const isStagingLikeHost =
-		hostname.includes('railway.app') ||
-		hostname.includes('staging');
-
-	if (isStagingLikeHost) {
-		return resolvedOrigins.staging;
-	}
-
-	// Safety: never use localhost API origins on production hosts.
-	if (isLocalOrigin(resolvedOrigins.production)) {
-		return origins.production;
-	}
-
-	if (hostname === 'tmk.themorphologykit.com' || hostname.endsWith('.themorphologykit.com')) {
-		return resolvedOrigins.production;
-	}
-
 	return resolvedOrigins.production;
 }
 
