@@ -35,6 +35,7 @@ import TmkLogo from '../components/TmkLogo';
 export default function DashboardPage() {
 
     const router = useRouter();
+    const [isMounted, setIsMounted] = useState(false);
     const [standaloneActivities, setStandaloneActivities] = useState([]);
     const [standaloneLoading, setStandaloneLoading] = useState(false);
     const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
@@ -43,6 +44,10 @@ export default function DashboardPage() {
     const showNotice = (severity, message) => {
         setNotice({ open: true, severity, message });
     };
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // No redirect for lack of DIY access; dashboard always renders
 
@@ -152,7 +157,7 @@ export default function DashboardPage() {
         window.location.href = buildTeachableLogoutUrl('/login?next=/dashboard');
     };
 
-    if (!user) {
+    if (!isMounted || !user) {
         return null;
     }
 
