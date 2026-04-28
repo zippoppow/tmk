@@ -30,6 +30,12 @@ export async function middleware(request) {
   }
 
   const { pathname } = request.nextUrl;
+  const isLessonActivityStaticAsset = pathname.startsWith('/lesson-activities/preview-images/');
+
+  if (isLessonActivityStaticAsset) {
+    return NextResponse.next();
+  }
+
   const isDashboardRoute = pathname.startsWith('/dashboard');
   const isLessonActivitiesRoute = pathname.startsWith('/lesson-activities');
   const isLessonProjectsRoute = pathname.startsWith('/lesson-projects');
