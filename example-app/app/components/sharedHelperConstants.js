@@ -10,8 +10,8 @@ export const OAUTH_ENDPOINTS = {
 };
 
 export const USER_AUTH_ENDPOINTS = {
-	token: '/api/auth/user/token',
-	refresh: '/api/auth/user/refresh',
+	token: '/api/auth/token',
+	refresh: '/api/auth/refresh',
 };
 
 export const TEACHABLE_SESSION_PARAM = 'teachable_session';

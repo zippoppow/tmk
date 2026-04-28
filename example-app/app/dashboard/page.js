@@ -18,7 +18,6 @@ import {
     Paper,
     Snackbar,
     Stack,
-    CircularProgress,
 } from '@mui/material';
 import {
     clearFormSessionData,
@@ -36,21 +35,14 @@ import TmkLogo from '../components/TmkLogo';
 export default function DashboardPage() {
 
     const router = useRouter();
-    const [user, setUser] = useState(null);
     const [standaloneActivities, setStandaloneActivities] = useState([]);
     const [standaloneLoading, setStandaloneLoading] = useState(false);
     const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
-    const { hasDiyAccess, loading: diyLoading, authUser } = useDiyAccess();
+    const { hasDiyAccess, authUser: user } = useDiyAccess();
 
     const showNotice = (severity, message) => {
         setNotice({ open: true, severity, message });
     };
-
-    useEffect(() => {
-        if (authUser) {
-            setUser(authUser);
-        }
-    }, [authUser]);
 
     // No redirect for lack of DIY access; dashboard always renders
 
@@ -159,14 +151,6 @@ export default function DashboardPage() {
     const handleLogout = () => {
         window.location.href = buildTeachableLogoutUrl('/login?next=/dashboard');
     };
-
-    if (diyLoading) {
-        return (
-            <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-                <CircularProgress />
-            </Container>
-        );
-    }
 
     if (!user) {
         return null;
