@@ -4,16 +4,11 @@ const AUTH_BYPASS_FLAG = String(process.env.NEXT_PUBLIC_AUTH_BYPASS || '').trim(
 const AUTH_BYPASS_REQUESTED = AUTH_BYPASS_FLAG === '1' || AUTH_BYPASS_FLAG === 'true' || AUTH_BYPASS_FLAG === 'yes' || AUTH_BYPASS_FLAG === 'on';
 const AUTH_BYPASS_ENABLED = process.env.NODE_ENV !== 'production' && AUTH_BYPASS_REQUESTED;
 const AUTH_HINT_COOKIE = 'tmk_auth_hint';
-const DIY_ACCESS_HINT_COOKIE = 'tmk_diy_access_hint';
 const TEACHABLE_SESSION_PARAM = 'teachable_session';
 const AUTH_STATUS_PARAM = 'auth';
 
 function hasAuthHint(request) {
   return request.cookies.get(AUTH_HINT_COOKIE)?.value === '1';
-}
-
-function hasDiyAccessHint(request) {
-  return request.cookies.get(DIY_ACCESS_HINT_COOKIE)?.value === '1';
 }
 
 function isReturningFromAuth(request) {
@@ -27,12 +22,6 @@ function buildLoginRedirect(request) {
   const loginUrl = new URL('/login', request.url);
   loginUrl.searchParams.set('next', nextPath);
   return NextResponse.redirect(loginUrl);
-}
-
-function buildEnrollmentRedirect(request) {
-  const dashboardUrl = new URL('/dashboard', request.url);
-  dashboardUrl.searchParams.set('enrollment', 'required');
-  return NextResponse.redirect(dashboardUrl);
 }
 
 export async function middleware(request) {
@@ -55,10 +44,6 @@ export async function middleware(request) {
 
   if (!hasAuthHint(request)) {
     return buildLoginRedirect(request);
-  }
-
-  if ((isLessonActivitiesRoute || isLessonProjectsRoute) && !hasDiyAccessHint(request)) {
-    return buildEnrollmentRedirect(request);
   }
 
   return NextResponse.next();
