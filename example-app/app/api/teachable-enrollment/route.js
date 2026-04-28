@@ -2,6 +2,45 @@ export const runtime = 'nodejs';
 
 const TEACHABLE_API_BASE = 'https://developers.teachable.com';
 
+function asArray(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (Array.isArray(value?.data)) {
+    return value.data;
+  }
+
+  if (Array.isArray(value?.users)) {
+    return value.users;
+  }
+
+  if (Array.isArray(value?.enrollments)) {
+    return value.enrollments;
+  }
+
+  if (Array.isArray(value?.items)) {
+    return value.items;
+  }
+
+  return [];
+}
+
+function getUserIdFromRecord(record) {
+  if (!record || typeof record !== 'object') {
+    return '';
+  }
+
+  return String(
+    record.user?.id ??
+    record.user_id ??
+    record.userId ??
+    record.owner_id ??
+    record.id ??
+    ''
+  ).trim();
+}
+
 /**
  * GET /api/teachable-enrollment?email={email}&courseNumber={courseNumber}
  *
@@ -45,14 +84,17 @@ export async function GET(request) {
       return Response.json({ enrolled: false });
     }
     const usersData = await usersResp.json();
-    const users = Array.isArray(usersData?.users) ? usersData.users : [];
+    const users = asArray(usersData);
     const match = users.find(
       (u) => String(u.email || '').toLowerCase() === email.toLowerCase()
     );
     if (!match) {
       return Response.json({ enrolled: false });
     }
-    userId = match.id;
+    userId = getUserIdFromRecord(match);
+    if (!userId) {
+      return Response.json({ enrolled: false });
+    }
   } catch {
     return Response.json({ enrolled: false });
   }
@@ -67,9 +109,9 @@ export async function GET(request) {
       return Response.json({ enrolled: false });
     }
     const enrollData = await enrollResp.json();
-    const enrollments = Array.isArray(enrollData?.enrollments) ? enrollData.enrollments : [];
+    const enrollments = asArray(enrollData);
     const enrolled = enrollments.some(
-      (e) => (e.user?.id ?? e.user_id) === userId
+      (record) => getUserIdFromRecord(record) === userId
     );
     return Response.json({ enrolled });
   } catch {

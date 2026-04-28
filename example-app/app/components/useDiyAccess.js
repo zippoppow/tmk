@@ -150,12 +150,14 @@ export function useDiyAccess() {
         );
         const url = `/api/teachable-enrollment?email=${email}&courseNumber=${DIY_COURSE_ID}`;
 
-        let diyAccess = false;
+        let diyAccess = storedAccess !== null ? storedAccess : false;
+        let verifiedEnrollment = false;
         try {
           const resp = await fetch(url, { credentials: 'include' });
           if (resp.ok) {
             const data = await resp.json();
             diyAccess = data?.enrolled === true;
+            verifiedEnrollment = true;
           }
         } catch (err) {
           if (process.env.NODE_ENV !== 'production') {
@@ -167,7 +169,9 @@ export function useDiyAccess() {
           setHasDiyAccess(diyAccess);
         }
 
-        writeStoredDiyAccess(rawEmail, diyAccess);
+        if (verifiedEnrollment) {
+          writeStoredDiyAccess(rawEmail, diyAccess);
+        }
       } finally {
         if (!cancelled) {
           setLoading(false);

@@ -104,20 +104,26 @@ export default function LessonActivitySelector({
                 <Box
                     sx={{
                         width: '100%',
-                        height: 'auto',
+                        minHeight: 220,
                         position: 'relative',
                         borderRadius: 1,
                         overflow: 'hidden',
                         backgroundColor: '#f0f0f0',
                         aspectRatio: '16 / 9',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                     }}
                 >
                     <Image
                         src="/lesson-activities/preview-images/lesson-activity-sample.png"
                         alt="Lesson Activity Preview"
-                        fill
+                        width={1280}
+                        height={720}
                         style={{
                             objectFit: 'cover',
+                            width: '100%',
+                            height: '100%',
                         }}
                         priority
                     />
