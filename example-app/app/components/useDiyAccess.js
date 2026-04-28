@@ -92,21 +92,35 @@ function writeStoredAuthUser(userData) {
   }
 }
 
+function getInitialStoredState() {
+  const storedUser = readStoredAuthUser();
+  const storedEmail = String(storedUser?.email || storedUser?.profile?.email || '').trim();
+  const storedAccess = readStoredDiyAccess(storedEmail);
+
+  return {
+    storedUser,
+    storedAccess,
+    hasCachedState: Boolean(storedUser) && storedAccess !== null,
+  };
+}
+
 export function useDiyAccess() {
-  const [user, setUser] = useState(null);
-  const [hasDiyAccess, setHasDiyAccess] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => getInitialStoredState().storedUser);
+  const [hasDiyAccess, setHasDiyAccess] = useState(() => {
+    const { storedAccess } = getInitialStoredState();
+    return storedAccess !== null ? storedAccess : false;
+  });
+  const [loading, setLoading] = useState(() => !getInitialStoredState().hasCachedState);
 
   useEffect(() => {
     let cancelled = false;
 
     async function checkAccess() {
-      setLoading(true);
+      const { storedUser: cachedUser, storedAccess: cachedAccess, hasCachedState } = getInitialStoredState();
+      if (!hasCachedState) {
+        setLoading(true);
+      }
       try {
-        const cachedUser = readStoredAuthUser();
-        const cachedEmail = String(cachedUser?.email || cachedUser?.profile?.email || '').trim();
-        const cachedAccess = readStoredDiyAccess(cachedEmail);
-
         if (!cancelled && cachedUser) {
           setUser(cachedUser);
         }
