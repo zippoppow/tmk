@@ -35,12 +35,6 @@ import TmkLogo from '../components/TmkLogo';
 
 export default function DashboardPage() {
 
-        // Confirm component render
-        if (typeof window !== 'undefined') {
-            // eslint-disable-next-line no-console
-            console.log('[Dashboard] DashboardPage rendered');
-        }
-    
     const router = useRouter();
     const [user, setUser] = useState(null);
     const [standaloneActivities, setStandaloneActivities] = useState([]);
@@ -54,8 +48,6 @@ export default function DashboardPage() {
 
     useEffect(() => {
         if (authUser) {
-            // eslint-disable-next-line no-console
-            console.log('[Dashboard] Setting user from authUser:', authUser);
             setUser(authUser);
         }
     }, [authUser]);
@@ -63,8 +55,6 @@ export default function DashboardPage() {
     // No redirect for lack of DIY access; dashboard always renders
 
     const loadStandaloneActivities = async () => {
-        // eslint-disable-next-line no-console
-        console.log('[Dashboard] loadStandaloneActivities called. user:', user, 'hasDiyAccess:', hasDiyAccess);
         if (!user || !hasDiyAccess) {
             setStandaloneActivities([]);
             return;
@@ -72,8 +62,6 @@ export default function DashboardPage() {
 
         setStandaloneLoading(true);
         try {
-            // eslint-disable-next-line no-console
-            console.log('[Dashboard] Fetching lesson activities from API...');
             const apiOrigin = resolveTmkApiOrigin();
             const records = await listLessonActivities(apiOrigin);
 
@@ -99,8 +87,6 @@ export default function DashboardPage() {
                 });
             });
             try {
-                // eslint-disable-next-line no-console
-                console.log('[Dashboard] Fetching DIY projects for association check...');
                 const projectResponse = await fetchWithUserToken(apiOrigin, DIY_PROJECTS_ENDPOINT, { method: 'GET' });
                 if (projectResponse.ok) {
                     const projectPayload = await projectResponse.json().catch(() => ({}));
@@ -156,16 +142,6 @@ export default function DashboardPage() {
 
                 return true;
             });
-
-            if (process.env.NODE_ENV !== 'production') {
-                console.log('[Dashboard] Lesson activity association summary', {
-                    total: records.length,
-                    standalone: nonProjectRecords.length,
-                    associated: records.length - nonProjectRecords.length,
-                    projectActivityIds: projectActivityIds.size,
-                    projectActivityKeys: projectActivityKeys.size,
-                });
-            }
             setStandaloneActivities(nonProjectRecords);
         } catch (error) {
             // eslint-disable-next-line no-console

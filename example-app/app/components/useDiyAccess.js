@@ -3,6 +3,7 @@ import { fetchAuthenticatedUser } from './authHelpers';
 
 const DIY_COURSE_ID = '2944218';
 const DIY_ACCESS_STORAGE_KEY = 'tmk-diy-access-by-email';
+const DIY_LAST_AUTH_USER_KEY = 'tmk-diy-last-auth-user';
 
 function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
@@ -51,6 +52,46 @@ function writeStoredDiyAccess(email, hasAccess) {
   }
 }
 
+function readStoredAuthUser() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(DIY_LAST_AUTH_USER_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return null;
+    }
+
+    const email = String(parsed.email || parsed?.profile?.email || '').trim();
+    if (!email) {
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredAuthUser(userData) {
+  if (typeof window === 'undefined' || !userData || typeof userData !== 'object') {
+    return;
+  }
+
+  const email = String(userData.email || userData?.profile?.email || '').trim();
+  if (!email) {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(DIY_LAST_AUTH_USER_KEY, JSON.stringify(userData));
+  } catch {
+    // Ignore storage failures (private mode/quota) and continue.
+  }
+}
+
 export function useDiyAccess() {
   const [user, setUser] = useState(null);
   const [hasDiyAccess, setHasDiyAccess] = useState(false);
@@ -62,18 +103,37 @@ export function useDiyAccess() {
     async function checkAccess() {
       setLoading(true);
       try {
+        const cachedUser = readStoredAuthUser();
+        const cachedEmail = String(cachedUser?.email || cachedUser?.profile?.email || '').trim();
+        const cachedAccess = readStoredDiyAccess(cachedEmail);
+
+        if (!cancelled && cachedUser) {
+          setUser(cachedUser);
+        }
+        if (!cancelled && cachedAccess !== null) {
+          // Keep access while we perform a fresh enrollment check.
+          setHasDiyAccess(cachedAccess);
+        }
+
         // Step 1: get the authenticated user's email from the Teachable OAuth /me endpoint
         const userData = await fetchAuthenticatedUser();
 
         if (!userData) {
           if (!cancelled) {
-            setUser(null);
-            setHasDiyAccess(false);
+            // If we have no live session but do have cached access from a prior
+            // successful login, keep the cached state so navigation still works.
+            if (!cachedUser) {
+              setUser(null);
+            }
+            if (cachedAccess === null) {
+              setHasDiyAccess(false);
+            }
           }
           return;
         }
 
         if (!cancelled) setUser(userData);
+        writeStoredAuthUser(userData);
 
         const rawEmail = String(userData.email || userData?.profile?.email || '').trim();
         const storedAccess = readStoredDiyAccess(rawEmail);
