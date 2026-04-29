@@ -7,7 +7,6 @@ import {
   captureTeachableSessionFromUrl,
   DIY_PROJECTS_ENDPOINT,
   OAUTH_ENDPOINTS,
-  fetchWithUserToken,
   getTeachableSessionDebugInfo,
   getUserAccessTokenDebugInfo,
   refreshUserAccessToken,
@@ -92,7 +91,7 @@ export default function AuthDebugPanel() {
   const handleDiyProbe = () =>
     runAction('DIY probe', async () => {
       captureTeachableSessionFromUrl();
-      const response = await fetchWithUserToken(apiOrigin, DIY_PROJECTS_ENDPOINT, {
+      const response = await fetch(DIY_PROJECTS_ENDPOINT, {
         method: 'GET',
       });
 

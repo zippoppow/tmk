@@ -84,7 +84,7 @@ export default function DashboardPage() {
                 });
             });
             try {
-                const projectResponse = await fetchWithUserToken(apiOrigin, DIY_PROJECTS_ENDPOINT, { method: 'GET' });
+                const projectResponse = await fetch(DIY_PROJECTS_ENDPOINT, { method: 'GET' });
                 if (projectResponse.ok) {
                     const projectPayload = await projectResponse.json().catch(() => ({}));
                     const projects = extractDiyProjectsFromResponse(projectPayload);
