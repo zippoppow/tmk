@@ -293,27 +293,26 @@ export function useLessonActivityProject({
 					normalizeLessonInputData: (input) => input || {},
 				});
 
-				const response = await fetchWithUserToken(projectApiOrigin, DIY_PROJECTS_ENDPOINT, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(payload),
-				});
+			const response = await fetch(DIY_PROJECTS_ENDPOINT, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload),
+		});
 
-				if (response.ok && activityResponse.ok) {
-					const result = await response.json();
-					const updated = getAllStoredProjects();
-					const updatedProject = updated.find((item) => item.id === projectId);
-					if (updatedProject) {
-						updatedProject.syncedAt = new Date().toISOString();
-						if (result?.id) {
-							updatedProject.remoteId = result.id;
-						}
-						saveStoredProjects(updated);
-					}
-					showNotice('success', 'Lesson activity saved to database.');
-					return true;
+		if (response.ok && activityResponse.ok) {
+			const result = await response.json();
+			const updated = getAllStoredProjects();
+			const updatedProject = updated.find((item) => item.id === projectId);
+			if (updatedProject) {
+				updatedProject.syncedAt = new Date().toISOString();
+				if (result?.id) {
+					updatedProject.remoteId = result.id;
 				}
-
+				saveStoredProjects(updated);
+			}
+			showNotice('success', 'Lesson activity saved to database.');
+			return true;
+		}
 				if (!activityResponse.ok && response.ok) {
 					showNotice('warning', 'Project synced, but activity record save failed.');
 					return false;

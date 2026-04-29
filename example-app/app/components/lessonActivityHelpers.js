@@ -417,7 +417,7 @@ function normalizeSingleLessonActivityPayload(payload) {
 }
 
 export async function upsertLessonActivity(apiOrigin, record) {
-	return fetchWithUserToken(apiOrigin, LESSON_ACTIVITIES_ENDPOINT, {
+	return fetch(LESSON_ACTIVITIES_ENDPOINT, {
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(record),
@@ -425,7 +425,7 @@ export async function upsertLessonActivity(apiOrigin, record) {
 }
 
 export async function listLessonActivities(apiOrigin) {
-	const response = await fetchWithUserToken(apiOrigin, LESSON_ACTIVITIES_ENDPOINT, {
+	const response = await fetch(LESSON_ACTIVITIES_ENDPOINT, {
 		method: 'GET',
 	});
 
@@ -442,8 +442,7 @@ export async function fetchLessonActivityById(apiOrigin, id) {
 		return null;
 	}
 
-	const response = await fetchWithUserToken(
-		apiOrigin,
+	const response = await fetch(
 		`${LESSON_ACTIVITIES_ENDPOINT}/${encodeURIComponent(String(id))}`,
 		{ method: 'GET' }
 	);
@@ -461,7 +460,7 @@ export async function deleteLessonActivityById(apiOrigin, id) {
 		return new Response(null, { status: 400, statusText: 'Missing lesson activity id' });
 	}
 
-	return fetchWithUserToken(apiOrigin, LESSON_ACTIVITIES_ENDPOINT, {
+	return fetch(LESSON_ACTIVITIES_ENDPOINT, {
 		method: 'DELETE',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ id }),
