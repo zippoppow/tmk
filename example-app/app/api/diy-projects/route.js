@@ -2,11 +2,17 @@ import { forwardToTmkApi } from '../_proxy/forwardToTmk';
 
 export const runtime = 'nodejs';
 
-async function handle(request) {
+function handle(request) {
   return forwardToTmkApi(request, {
     routePrefix: 'diy-projects',
     pathSegments: [],
   });
 }
 
-export { handle as GET, handle as POST, handle as PUT, handle as PATCH, handle as DELETE, handle as OPTIONS, handle as HEAD };
+export const GET = handle;
+export const POST = handle;
+export const PUT = handle;
+export const PATCH = handle;
+export const DELETE = handle;
+export const OPTIONS = handle;
+export const HEAD = handle;
