@@ -14,7 +14,7 @@ function cloneRequestHeaders(sourceHeaders) {
 }
 
 function buildTargetUrl(request, routePrefix, pathSegments = []) {
-  const baseUrl = resolveServerTmkApiBaseUrl();
+  const baseUrl = String(resolveServerTmkApiBaseUrl() || '').replace(/\/+$/, ''); // remove trailing slashes
   const prefix = String(routePrefix || '').replace(/^\/+/, '').replace(/\/+$/, '');
   const path = (Array.isArray(pathSegments) ? pathSegments : [])
     .map((segment) => encodeURIComponent(String(segment || '')))
@@ -22,7 +22,11 @@ function buildTargetUrl(request, routePrefix, pathSegments = []) {
     .join('/');
   const suffix = path ? `/${path}` : '';
   const query = request?.nextUrl?.search || '';
-  return `${baseUrl}/api/${prefix}${suffix}${query}`;
+  const targetUrl = `${baseUrl}/api/${prefix}${suffix}${query}`;
+  
+  console.log(`[buildTargetUrl] baseUrl=${baseUrl}, prefix=${prefix}, suffix=${suffix}, query=${query} → ${targetUrl}`);
+  
+  return targetUrl;
 }
 
 function buildProxyRequestInit(request, apiAuthKey) {
@@ -49,6 +53,7 @@ export async function forwardToTmkApi(request, { routePrefix, pathSegments = [] 
   }
 
   const targetUrl = buildTargetUrl(request, routePrefix, pathSegments);
+  console.log(`[forwardToTmkApi] Forwarding ${request?.method || 'GET'} ${request?.nextUrl?.pathname || '/'} → ${targetUrl}`);
 
   try {
     const upstreamResponse = await fetch(targetUrl, buildProxyRequestInit(request, apiAuthKey));
@@ -59,6 +64,7 @@ export async function forwardToTmkApi(request, { routePrefix, pathSegments = [] 
       headers: upstreamResponse.headers,
     });
   } catch (error) {
+    console.error(`[forwardToTmkApi] Error forwarding to ${targetUrl}:`, error);
     return Response.json(
       {
         error: 'Failed to reach TMK API.',
