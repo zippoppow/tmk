@@ -11,7 +11,7 @@ export const OAUTH_ENDPOINTS = {
 
 export const USER_AUTH_ENDPOINTS = {
 	token: '/api/auth/token',
-	refresh: '/api/auth/refresh',
+	refresh: '/api/auth/user/refresh',
 };
 
 export const TEACHABLE_SESSION_PARAM = 'teachable_session';
