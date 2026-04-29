@@ -7,7 +7,6 @@ import {
   captureTeachableSessionFromUrl,
   DIY_PROJECTS_ENDPOINT,
   OAUTH_ENDPOINTS,
-  exchangeUserAccessToken,
   fetchWithUserToken,
   getTeachableSessionDebugInfo,
   getUserAccessTokenDebugInfo,
@@ -82,14 +81,6 @@ export default function AuthDebugPanel() {
       setDetails(summarizeJson(payload));
     });
 
-  const handleExchangeToken = () =>
-    runAction('Token exchange', async () => {
-      captureTeachableSessionFromUrl();
-      const token = await exchangeUserAccessToken();
-      setStatus(token ? 'Token exchange: success' : 'Token exchange: no token returned');
-      setDetails(token ? `access_token preview: ${token.slice(0, 16)}...` : 'Verify Teachable session exists first.');
-    });
-
   const handleRefreshToken = () =>
     runAction('Token refresh', async () => {
       captureTeachableSessionFromUrl();
@@ -142,7 +133,6 @@ export default function AuthDebugPanel() {
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ mt: 1 }}>
         <Button size="small" variant="outlined" onClick={handleCaptureSession} disabled={isBusy}>Capture Session Handoff</Button>
         <Button size="small" variant="outlined" onClick={handleCheckSession} disabled={isBusy}>Check Session</Button>
-        <Button size="small" variant="outlined" onClick={handleExchangeToken} disabled={isBusy}>Exchange Token</Button>
         <Button size="small" variant="outlined" onClick={handleRefreshToken} disabled={isBusy}>Refresh Token</Button>
         <Button size="small" variant="contained" onClick={handleDiyProbe} disabled={isBusy}>Probe DIY GET</Button>
       </Stack>

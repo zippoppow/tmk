@@ -337,49 +337,8 @@ export async function exchangeUserAccessToken() {
 		return userAccessToken;
 	}
 
-	try {
-		const origin = resolveTmkAuthOrigin();
-		const tokenPath = addTeachableSessionToPath(USER_AUTH_ENDPOINTS.token);
-		const headers = applyTmkApiAuthKeyHeader();
-		authDebug('exchangeUserAccessToken -> request', {
-			url: `${origin}${tokenPath}`,
-			method: 'GET',
-			headers: summarizeHeaders(headers),
-		});
-
-		const response = await fetch(`${origin}${tokenPath}`, {
-			method: 'GET',
-			headers,
-			credentials: 'include',
-		});
-
-		authDebug('exchangeUserAccessToken <- response', {
-			method: 'GET',
-			status: response.status,
-			ok: response.ok,
-			statusText: response.statusText,
-		});
-
-		if (!response.ok) {
-			return '';
-		}
-
-		const payload = await response.json().catch(() => ({}));
-		const token = getAccessTokenFromPayload(payload);
-		authDebug('exchangeUserAccessToken parsed payload', {
-			method: 'GET',
-			hasToken: Boolean(token),
-			payloadKeys: Object.keys(payload || {}),
-		});
-		if (token) {
-			userAccessToken = token;
-		}
-
-		return token;
-	} catch {
-		authDebug('exchangeUserAccessToken failed');
-		return '';
-	}
+	authDebug('exchangeUserAccessToken skipped: /api/auth/token is disabled');
+	return '';
 }
 
 export async function refreshUserAccessToken() {
@@ -431,11 +390,7 @@ export async function getUserAccessToken(apiOrigin, forceRefresh = false) {
 		return userAccessToken;
 	}
 
-	if (forceRefresh) {
-		return refreshUserAccessToken();
-	}
-
-	return exchangeUserAccessToken();
+	return refreshUserAccessToken();
 }
 
 export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
@@ -462,13 +417,11 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 			});
 		}
 
-		const token = await getUserAccessToken(apiOrigin);
-		if (!token) {
-			return new Response(null, { status: 401, statusText: 'Unauthorized' });
-		}
-
 		const headers = applyTmkApiAuthKeyHeader(init.headers);
-		headers.set('Authorization', `Bearer ${token}`);
+		const token = await getUserAccessToken(apiOrigin);
+		if (token) {
+			headers.set('Authorization', `Bearer ${token}`);
+		}
 
 		const requestInit = {
 			...init,
@@ -494,25 +447,23 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 
 		const refreshed = await refreshUserAccessToken();
 		if (!refreshed) {
-			const exchanged = await exchangeUserAccessToken();
-			if (!exchanged) {
-				return response;
+			if (headers.has('Authorization')) {
+				headers.delete('Authorization');
+				authDebug('fetchWithUserToken retry without bearer -> request', {
+					url: `${origin}${endpointPath}`,
+					method: requestInit.method || 'GET',
+					headers: summarizeHeaders(headers),
+				});
+				response = await fetch(`${origin}${endpointPath}`, {
+					...requestInit,
+					headers,
+				});
+				authDebug('fetchWithUserToken retry without bearer <- response', {
+					status: response.status,
+					ok: response.ok,
+					statusText: response.statusText,
+				});
 			}
-			headers.set('Authorization', `Bearer ${exchanged}`);
-			authDebug('fetchWithUserToken retry after exchange -> request', {
-				url: `${origin}${endpointPath}`,
-				method: requestInit.method || 'GET',
-				headers: summarizeHeaders(headers),
-			});
-			response = await fetch(`${origin}${endpointPath}`, {
-				...requestInit,
-				headers,
-			});
-			authDebug('fetchWithUserToken retry after exchange <- response', {
-				status: response.status,
-				ok: response.ok,
-				statusText: response.statusText,
-			});
 			return response;
 		}
 
