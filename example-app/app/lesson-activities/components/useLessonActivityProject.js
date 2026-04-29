@@ -17,6 +17,7 @@ import {
 import {
 	buildTeachableLogoutUrl,
 	buildTeachableStartUrl,
+	captureTeachableSessionFromUrl,
 	fetchAuthenticatedUser,
 	fetchWithUserToken,
 	resolveTmkApiOrigin,
@@ -192,6 +193,9 @@ export function useLessonActivityProject({
 
 	useEffect(() => {
 		if (typeof window !== 'undefined') {
+			// Capture teachable_session BEFORE cleaning URL params so token exchange has it available
+			captureTeachableSessionFromUrl();
+
 			const url = new URL(window.location.href);
 			if (url.searchParams.get('auth') === 'success') {
 				setAuthFromSuccessRedirect(true);
