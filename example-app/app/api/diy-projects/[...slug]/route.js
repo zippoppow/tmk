@@ -1,11 +1,11 @@
-import { forwardToTmkApi } from '../_proxy/forwardToTmk';
+import { forwardToTmkApi } from '../../_proxy/forwardToTmk';
 
 export const runtime = 'nodejs';
 
-function handle(request) {
+function handle(request, { params }) {
   return forwardToTmkApi(request, {
     routePrefix: 'diy-projects',
-    pathSegments: [],
+    pathSegments: params.slug || [],
   });
 }
 
