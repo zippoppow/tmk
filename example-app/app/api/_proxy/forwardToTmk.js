@@ -7,6 +7,9 @@ const HOP_BY_HOP_REQUEST_HEADERS = new Set([
   'transfer-encoding',
 ]);
 
+const TEACHABLE_SESSION_PARAM = 'teachable_session';
+const TEACHABLE_SESSION_COOKIE = 'tmk_teachable_session';
+
 function cloneRequestHeaders(sourceHeaders) {
   const headers = new Headers(sourceHeaders || {});
   HOP_BY_HOP_REQUEST_HEADERS.forEach((header) => headers.delete(header));
@@ -82,6 +85,17 @@ function buildTargetUrl(request, routePrefix, pathSegments = []) {
 
 function buildProxyRequestInit(request, apiAuthKey) {
   const headers = cloneRequestHeaders(request?.headers);
+  const teachableSession = String(request?.nextUrl?.searchParams?.get(TEACHABLE_SESSION_PARAM) || '').trim();
+  const existingCookieHeader = String(headers.get('cookie') || '');
+
+  if (teachableSession && !existingCookieHeader.includes(`${TEACHABLE_SESSION_COOKIE}=`)) {
+    const cookieParts = existingCookieHeader
+      .split(';')
+      .map((part) => part.trim())
+      .filter(Boolean);
+    cookieParts.push(`${TEACHABLE_SESSION_COOKIE}=${encodeURIComponent(teachableSession)}`);
+    headers.set('cookie', cookieParts.join('; '));
+  }
   
   // Forward user's Authorization header if present (preferred for user-scoped routes)
   // Otherwise use the server's API key as fallback

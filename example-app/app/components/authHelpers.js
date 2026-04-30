@@ -388,12 +388,13 @@ export async function exchangeTeachableSessionForTmkToken() {
 	}
 
 	try {
+		const exchangePath = addTeachableSessionToPath('/api/auth/teachable/exchange');
 		authDebug('exchangeTeachableSessionForTmkToken -> request', {
-			url: '/api/auth/teachable/exchange',
+			url: exchangePath,
 			method: 'POST',
 		});
 
-		const response = await fetch('/api/auth/teachable/exchange', {
+		const response = await fetch(exchangePath, {
 			method: 'POST',
 			credentials: 'include', // Send and receive cookies
 		});
