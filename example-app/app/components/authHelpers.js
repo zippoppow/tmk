@@ -580,3 +580,79 @@ export async function fetchAuthenticatedUser() {
 		return null;
 	}
 }
+
+/**
+ * Fetch from a Vercel proxy endpoint with the user's access token.
+ * The server-side proxy will forward this token to the TMK API.
+ * @param {string} endpoint - Path like '/api/diy-projects' or '/api/lesson-activities/123'
+ * @param {object} init - Fetch init options (method, body, etc.)
+ * @returns {Promise<Response>}
+ */
+export async function fetchProxyWithUserToken(endpoint, init = {}) {
+	try {
+		if (isAuthBypassMode()) {
+			const headers = applyTmkApiAuthKeyHeader(init.headers);
+			authDebug('fetchProxyWithUserToken (bypass mode)', {
+				endpoint,
+				method: init.method || 'GET',
+				headers: summarizeHeaders(headers),
+			});
+			return fetch(endpoint, {
+				...init,
+				headers,
+			});
+		}
+
+		const headers = applyTmkApiAuthKeyHeader(init.headers);
+		const token = await getUserAccessToken();
+		if (token) {
+			headers.set('Authorization', `Bearer ${token}`);
+		}
+
+		const requestInit = {
+			...init,
+			headers,
+		};
+
+		authDebug('fetchProxyWithUserToken -> request', {
+			endpoint,
+			method: requestInit.method || 'GET',
+			headers: summarizeHeaders(headers),
+			hasToken: Boolean(token),
+		});
+
+		let response = await fetch(endpoint, requestInit);
+		authDebug('fetchProxyWithUserToken <- response', {
+			status: response.status,
+			ok: response.ok,
+		});
+
+		if (response.status !== 401) {
+			return response;
+		}
+
+		// Token expired, refresh and retry
+		const refreshed = await refreshUserAccessToken();
+		if (!refreshed) {
+			if (headers.has('Authorization')) {
+				headers.delete('Authorization');
+			}
+			return fetch(endpoint, {
+				...init,
+				headers,
+			});
+		}
+
+		headers.set('Authorization', `Bearer ${refreshed}`);
+		return fetch(endpoint, {
+			...init,
+			headers,
+		});
+	} catch (error) {
+		authDebug('fetchProxyWithUserToken error', {
+			endpoint,
+			message: error?.message || String(error),
+		});
+		throw error;
+	}
+}
