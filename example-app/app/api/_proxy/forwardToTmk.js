@@ -13,6 +13,49 @@ function cloneRequestHeaders(sourceHeaders) {
   return headers;
 }
 
+function splitSetCookieHeader(value) {
+  if (!value) {
+    return [];
+  }
+
+  return String(value)
+    .split(/,(?=\s*[^;=\s]+=[^;]+)/g)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function getSetCookieHeaders(headers) {
+  if (!headers) {
+    return [];
+  }
+
+  if (typeof headers.getSetCookie === 'function') {
+    return headers.getSetCookie().filter(Boolean);
+  }
+
+  return splitSetCookieHeader(headers.get('set-cookie'));
+}
+
+function rewriteSetCookieForProxy(cookieValue) {
+  return String(cookieValue || '')
+    .replace(/;\s*Domain=[^;]*/gi, '')
+    .replace(/;\s*Partitioned/gi, '');
+}
+
+function buildProxyResponseHeaders(upstreamHeaders) {
+  const headers = new Headers(upstreamHeaders || {});
+  const setCookies = getSetCookieHeaders(upstreamHeaders);
+
+  if (setCookies.length > 0) {
+    headers.delete('set-cookie');
+    for (const cookieValue of setCookies) {
+      headers.append('set-cookie', rewriteSetCookieForProxy(cookieValue));
+    }
+  }
+
+  return headers;
+}
+
 function getFallbackPathFromRequest(request) {
   const pathname = String(request?.nextUrl?.pathname || '').replace(/\/+$/, '');
   const match = pathname.match(/^\/api\/(.+)$/);
@@ -57,8 +100,6 @@ function buildProxyRequestInit(request, apiAuthKey) {
 }
 
 export async function forwardToTmkApi(request, { routePrefix, pathSegments = [] }) {
-  const requestHeaders = cloneRequestHeaders(request?.headers);
-  const hasBearer = requestHeaders.has('Authorization');
   const apiAuthKey = String(process.env.TMK_API_AUTH_KEY || '').trim();
 
   const targetUrl = buildTargetUrl(request, routePrefix, pathSegments);
@@ -77,11 +118,16 @@ export async function forwardToTmkApi(request, { routePrefix, pathSegments = [] 
 
   try {
     const upstreamResponse = await fetch(targetUrl, buildProxyRequestInit(request, apiAuthKey));
+    const responseHeaders = buildProxyResponseHeaders(upstreamResponse.headers);
+
+    if (responseHeaders.has('set-cookie')) {
+      console.log(`[forwardToTmkApi] Rewrote proxied Set-Cookie header(s) for ${request?.nextUrl?.pathname || '/'}`);
+    }
 
     return new Response(upstreamResponse.body, {
       status: upstreamResponse.status,
       statusText: upstreamResponse.statusText,
-      headers: upstreamResponse.headers,
+      headers: responseHeaders,
     });
   } catch (error) {
     console.error(`[forwardToTmkApi] Error forwarding to ${targetUrl}:`, error);
