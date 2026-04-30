@@ -104,13 +104,20 @@ function buildProxyRequestInit(request, apiAuthKey) {
   }
 
   const method = request?.method || 'GET';
-  return {
+  const hasBody = method !== 'GET' && method !== 'HEAD' && request?.body != null;
+  const requestInit = {
     method,
     headers,
     redirect: 'manual',
-    body: method === 'GET' || method === 'HEAD' ? undefined : request.body,
-    duplex: method === 'GET' || method === 'HEAD' ? undefined : 'half',
   };
+
+  // In Vercel Node runtime, setting duplex/body for bodyless POSTs can throw and surface as 502.
+  if (hasBody) {
+    requestInit.body = request.body;
+    requestInit.duplex = 'half';
+  }
+
+  return requestInit;
 }
 
 export async function forwardToTmkApi(request, { routePrefix, pathSegments = [] }) {
