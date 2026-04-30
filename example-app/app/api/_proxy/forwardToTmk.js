@@ -31,7 +31,12 @@ function buildTargetUrl(request, routePrefix, pathSegments = []) {
 
 function buildProxyRequestInit(request, apiAuthKey) {
   const headers = cloneRequestHeaders(request?.headers);
-  headers.set('x-api-key', apiAuthKey);
+  
+  // Forward user's Authorization header if present (preferred for user-scoped routes)
+  // Otherwise use the server's API key as fallback
+  if (!headers.has('Authorization')) {
+    headers.set('x-api-key', apiAuthKey);
+  }
 
   const method = request?.method || 'GET';
   return {

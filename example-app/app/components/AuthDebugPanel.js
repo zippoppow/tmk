@@ -6,7 +6,6 @@ import {
   applyTmkApiAuthKeyHeader,
   captureTeachableSessionFromUrl,
   DIY_PROJECTS_ENDPOINT,
-  fetchProxyWithUserToken,
   OAUTH_ENDPOINTS,
   getTeachableSessionDebugInfo,
   getUserAccessTokenDebugInfo,
@@ -92,7 +91,7 @@ export default function AuthDebugPanel() {
   const handleDiyProbe = () =>
     runAction('DIY probe', async () => {
       captureTeachableSessionFromUrl();
-      const response = await fetchProxyWithUserToken(DIY_PROJECTS_ENDPOINT, {
+      const response = await fetch(DIY_PROJECTS_ENDPOINT, {
         method: 'GET',
       });
 

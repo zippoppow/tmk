@@ -19,7 +19,6 @@ import {
 	buildTeachableStartUrl,
 	captureTeachableSessionFromUrl,
 	fetchAuthenticatedUser,
-	fetchProxyWithUserToken,
 	fetchWithUserToken,
 	resolveTmkApiOrigin,
 } from '../../components/authHelpers';
@@ -294,7 +293,7 @@ export function useLessonActivityProject({
 					normalizeLessonInputData: (input) => input || {},
 				});
 
-			const response = await fetchProxyWithUserToken(DIY_PROJECTS_ENDPOINT, {
+			const response = await fetch(DIY_PROJECTS_ENDPOINT, {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload),

@@ -604,9 +604,22 @@ export async function fetchProxyWithUserToken(endpoint, init = {}) {
 		}
 
 		const headers = applyTmkApiAuthKeyHeader(init.headers);
-		const token = await getUserAccessToken();
+		let token = userAccessToken; // Check cached token first
+		
+		// If no cached token, try to refresh
+		if (!token) {
+			authDebug('fetchProxyWithUserToken: no cached token, attempting refresh', {
+				endpoint,
+			});
+			token = await refreshUserAccessToken();
+		}
+
 		if (token) {
 			headers.set('Authorization', `Bearer ${token}`);
+		} else {
+			authDebug('fetchProxyWithUserToken: token refresh failed or no token available', {
+				endpoint,
+			});
 		}
 
 		const requestInit = {
@@ -623,6 +636,7 @@ export async function fetchProxyWithUserToken(endpoint, init = {}) {
 
 		let response = await fetch(endpoint, requestInit);
 		authDebug('fetchProxyWithUserToken <- response', {
+			endpoint,
 			status: response.status,
 			ok: response.ok,
 		});
@@ -631,9 +645,15 @@ export async function fetchProxyWithUserToken(endpoint, init = {}) {
 			return response;
 		}
 
-		// Token expired, refresh and retry
+		// Token expired, force refresh and retry
+		authDebug('fetchProxyWithUserToken: got 401, attempting forced token refresh', {
+			endpoint,
+		});
 		const refreshed = await refreshUserAccessToken();
 		if (!refreshed) {
+			authDebug('fetchProxyWithUserToken: forced refresh failed', {
+				endpoint,
+			});
 			if (headers.has('Authorization')) {
 				headers.delete('Authorization');
 			}
@@ -644,6 +664,9 @@ export async function fetchProxyWithUserToken(endpoint, init = {}) {
 		}
 
 		headers.set('Authorization', `Bearer ${refreshed}`);
+		authDebug('fetchProxyWithUserToken: retrying with refreshed token', {
+			endpoint,
+		});
 		return fetch(endpoint, {
 			...init,
 			headers,
