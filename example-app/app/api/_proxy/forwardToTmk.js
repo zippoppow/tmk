@@ -42,7 +42,7 @@ function buildProxyRequestInit(request, apiAuthKey) {
   
   // Forward user's Authorization header if present (preferred for user-scoped routes)
   // Otherwise use the server's API key as fallback
-  if (!headers.has('Authorization')) {
+  if (!headers.has('Authorization') && apiAuthKey) {
     headers.set('x-api-key', apiAuthKey);
   }
 
@@ -60,12 +60,6 @@ export async function forwardToTmkApi(request, { routePrefix, pathSegments = [] 
   const requestHeaders = cloneRequestHeaders(request?.headers);
   const hasBearer = requestHeaders.has('Authorization');
   const apiAuthKey = String(process.env.TMK_API_AUTH_KEY || '').trim();
-  if (!hasBearer && !apiAuthKey) {
-    return Response.json(
-      { error: 'TMK_API_AUTH_KEY is not configured and no Authorization header was provided.' },
-      { status: 500 }
-    );
-  }
 
   const targetUrl = buildTargetUrl(request, routePrefix, pathSegments);
   if (/\/api\/?(?:\?.*)?$/.test(targetUrl)) {
