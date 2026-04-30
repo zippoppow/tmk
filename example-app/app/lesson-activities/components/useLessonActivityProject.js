@@ -300,6 +300,14 @@ export function useLessonActivityProject({
 			body: JSON.stringify(payload),
 		});
 
+			if (!response.ok) {
+				const errorText = await response.text().catch(() => '');
+				console.warn('DIY project sync failed from lesson activity save', {
+					status: response.status,
+					body: errorText.slice(0, 500),
+				});
+			}
+
 		if (response.ok && activityResponse.ok) {
 			const result = await response.json();
 			const updated = getAllStoredProjects();

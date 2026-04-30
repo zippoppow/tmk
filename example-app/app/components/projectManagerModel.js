@@ -172,19 +172,19 @@ export function buildDiyProjectsPayload({ project, formName, normalizeLessonInpu
 	const now = Date.now();
 	const createdAtMs = Number.isFinite(project.createdAtMs) ? project.createdAtMs : now;
 	const modifiedAtMs = Number.isFinite(project.modifiedAtMs) ? project.modifiedAtMs : now;
+	const projectName = String(project?.name || '').trim() || 'Untitled Project';
 	const sourceActivities = getProjectLessonActivities(project, formName, normalizeLessonInputData);
 	const normalizedActivities = sourceActivities;
 
 	return {
 		'diy-projects': [
 			{
-				'project-name': String(project.name || ''),
+				'project-name': projectName,
 				'created-at': createdAtMs,
 				'modified-at': modifiedAtMs,
 				'lesson-activities': normalizedActivities.map((activity) => ({
-					id: String(activity.id || createLessonActivityId()),
 					'tmk-template': String(activity['tmk-template'] || formName),
-					'lesson-name': String(activity['lesson-name'] || project.name || ''),
+					'lesson-name': String(activity['lesson-name'] || projectName),
 					'created-at': Number.isFinite(Number(activity['created-at']))
 						? Number(activity['created-at'])
 						: createdAtMs,

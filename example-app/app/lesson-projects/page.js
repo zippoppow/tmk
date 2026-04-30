@@ -270,6 +270,11 @@ export default function LessonProjectsPage() {
 			});
 
 			if (!response.ok) {
+				if (response.status === 404) {
+					syncCloudProjectsToLocal([]);
+					setCloudStatus('No cloud projects yet.');
+					return;
+				}
 				setCloudStatus('Cloud load failed. Please try Refresh Cloud.');
 				return;
 			}
@@ -360,6 +365,11 @@ export default function LessonProjectsPage() {
 			});
 
 			if (!response.ok) {
+				const errorText = await response.text().catch(() => '');
+				console.warn('DIY project sync failed', {
+					status: response.status,
+					body: errorText.slice(0, 500),
+				});
 				return null;
 			}
 
