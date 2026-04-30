@@ -311,9 +311,9 @@ export function buildTeachableStartUrl(apiOriginOrRedirectTo, redirectTo) {
 	}
 
 	const resolvedRedirectTo = redirectTo || apiOriginOrRedirectTo;
-	// Use local proxy endpoint to preserve cookies and path
-	const authUrl = new URL(OAUTH_ENDPOINTS.start, typeof window !== 'undefined' ? window.location.origin : '');
-	authUrl.searchParams.set('redirectTo', resolvedRedirectTo || (typeof window !== 'undefined' ? window.location.href : '/'));
+	const origin = resolveTmkAuthOrigin();
+	const authUrl = new URL(OAUTH_ENDPOINTS.start, origin);
+	authUrl.searchParams.set('redirectTo', resolvedRedirectTo || window.location.href);
 	return authUrl.toString();
 }
 
@@ -332,9 +332,9 @@ export function buildTeachableLogoutUrl(redirectTo) {
 		return redirectTo || window.location.href;
 	}
 
-	// Use local proxy endpoint to preserve cookies and path
-	const logoutUrl = new URL(OAUTH_ENDPOINTS.logout, typeof window !== 'undefined' ? window.location.origin : '');
-	logoutUrl.searchParams.set('redirectTo', redirectTo || (typeof window !== 'undefined' ? window.location.href : '/'));
+	const origin = resolveTmkAuthOrigin();
+	const logoutUrl = new URL(OAUTH_ENDPOINTS.logout, origin);
+	logoutUrl.searchParams.set('redirectTo', redirectTo || window.location.href);
 	const session = getTeachableSessionHandoff();
 	if (session) {
 		logoutUrl.searchParams.set(TEACHABLE_SESSION_PARAM, session);
@@ -384,13 +384,14 @@ export async function exchangeTeachableSessionForTmkToken() {
 	}
 
 	try {
+		const origin = resolveTmkAuthOrigin();
+		const exchangeUrl = `${origin}/api/auth/teachable/exchange`;
 		authDebug('exchangeTeachableSessionForTmkToken -> request', {
-			url: '/api/auth/teachable/exchange',
+			url: exchangeUrl,
 			method: 'POST',
 		});
 
-		// Call local proxy to preserve cookies and path
-		const response = await fetch('/api/auth/teachable/exchange', {
+		const response = await fetch(exchangeUrl, {
 			method: 'POST',
 			credentials: 'include', // Send and receive cookies
 		});
@@ -434,13 +435,13 @@ export async function refreshUserAccessToken() {
 	}
 
 	try {
+		const origin = resolveTmkAuthOrigin();
 		authDebug('refreshUserAccessToken -> request', {
-			url: USER_AUTH_ENDPOINTS.refresh,
+			url: `${origin}${USER_AUTH_ENDPOINTS.refresh}`,
 			method: 'POST',
   			credentials: 'include',
 		});
-		// Call local proxy to preserve cookies and path forwarding
-		const response = await fetch(USER_AUTH_ENDPOINTS.refresh, {
+		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.refresh}`, {
 			method: 'POST',
 			credentials: 'include',
 		});
@@ -701,13 +702,13 @@ export async function fetchAuthenticatedUser() {
 	}
 
 	try {
+		const origin = resolveTmkAuthOrigin();
 		const mePath = addTeachableSessionToPath(OAUTH_ENDPOINTS.me);
 		authDebug('fetchAuthenticatedUser -> request', {
-			url: mePath,
+			url: `${origin}${mePath}`,
 			method: 'GET',
 		});
-		// Call local proxy to preserve cookies and path
-		const response = await fetch(mePath, {
+		const response = await fetch(`${origin}${mePath}`, {
 			method: 'GET',
 			credentials: 'include',
 		});
