@@ -13,6 +13,12 @@ function cloneRequestHeaders(sourceHeaders) {
   return headers;
 }
 
+function getFallbackPathFromRequest(request) {
+  const pathname = String(request?.nextUrl?.pathname || '').replace(/\/+$/, '');
+  const match = pathname.match(/^\/api\/(.+)$/);
+  return match ? match[1] : '';
+}
+
 function buildTargetUrl(request, routePrefix, pathSegments = []) {
   const baseUrl = String(resolveServerTmkApiBaseUrl() || '').replace(/\/+$/, ''); // remove trailing slashes
   const prefix = String(routePrefix || '').replace(/^\/+/, '').replace(/\/+$/, '');
@@ -20,11 +26,13 @@ function buildTargetUrl(request, routePrefix, pathSegments = []) {
     .map((segment) => encodeURIComponent(String(segment || '')))
     .filter(Boolean)
     .join('/');
-  const suffix = path ? `/${path}` : '';
+  const fallbackPath = getFallbackPathFromRequest(request);
+  const baseApiPath = prefix ? `/api/${prefix}` : fallbackPath ? `/api/${fallbackPath}` : '/api';
+  const suffix = prefix && path ? `/${path}` : '';
   const query = request?.nextUrl?.search || '';
-  const targetUrl = `${baseUrl}/api/${prefix}${suffix}${query}`;
+  const targetUrl = `${baseUrl}${baseApiPath}${suffix}${query}`;
   
-  console.log(`[buildTargetUrl] baseUrl=${baseUrl}, prefix=${prefix}, suffix=${suffix}, query=${query} → ${targetUrl}`);
+  console.log(`[buildTargetUrl] baseUrl=${baseUrl}, prefix=${prefix || '(derived)'}, fallbackPath=${fallbackPath || '(none)'}, suffix=${suffix}, query=${query} → ${targetUrl}`);
   
   return targetUrl;
 }
@@ -49,15 +57,28 @@ function buildProxyRequestInit(request, apiAuthKey) {
 }
 
 export async function forwardToTmkApi(request, { routePrefix, pathSegments = [] }) {
+  const requestHeaders = cloneRequestHeaders(request?.headers);
+  const hasBearer = requestHeaders.has('Authorization');
   const apiAuthKey = String(process.env.TMK_API_AUTH_KEY || '').trim();
-  if (!apiAuthKey) {
+  if (!hasBearer && !apiAuthKey) {
     return Response.json(
-      { error: 'TMK_API_AUTH_KEY is not configured on the server.' },
+      { error: 'TMK_API_AUTH_KEY is not configured and no Authorization header was provided.' },
       { status: 500 }
     );
   }
 
   const targetUrl = buildTargetUrl(request, routePrefix, pathSegments);
+  if (/\/api\/?(?:\?.*)?$/.test(targetUrl)) {
+    console.error(`[forwardToTmkApi] Refusing to forward root-like API path: ${targetUrl}`);
+    return Response.json(
+      {
+        error: 'Proxy path resolution failed.',
+        details: 'Refusing to forward to API root. Expected a specific API endpoint path.',
+      },
+      { status: 500 }
+    );
+  }
+
   console.log(`[forwardToTmkApi] Forwarding ${request?.method || 'GET'} ${request?.nextUrl?.pathname || '/'} → ${targetUrl}`);
 
   try {
