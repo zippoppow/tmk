@@ -311,9 +311,9 @@ export function buildTeachableStartUrl(apiOriginOrRedirectTo, redirectTo) {
 	}
 
 	const resolvedRedirectTo = redirectTo || apiOriginOrRedirectTo;
-	const origin = resolveTmkAuthOrigin();
-	const authUrl = new URL(OAUTH_ENDPOINTS.start, origin);
-	authUrl.searchParams.set('redirectTo', resolvedRedirectTo || window.location.href);
+	// Use local proxy endpoint to preserve cookies and path
+	const authUrl = new URL(OAUTH_ENDPOINTS.start, typeof window !== 'undefined' ? window.location.origin : '');
+	authUrl.searchParams.set('redirectTo', resolvedRedirectTo || (typeof window !== 'undefined' ? window.location.href : '/'));
 	return authUrl.toString();
 }
 
@@ -332,9 +332,9 @@ export function buildTeachableLogoutUrl(redirectTo) {
 		return redirectTo || window.location.href;
 	}
 
-	const origin = resolveTmkAuthOrigin();
-	const logoutUrl = new URL(OAUTH_ENDPOINTS.logout, origin);
-	logoutUrl.searchParams.set('redirectTo', redirectTo || window.location.href);
+	// Use local proxy endpoint to preserve cookies and path
+	const logoutUrl = new URL(OAUTH_ENDPOINTS.logout, typeof window !== 'undefined' ? window.location.origin : '');
+	logoutUrl.searchParams.set('redirectTo', redirectTo || (typeof window !== 'undefined' ? window.location.href : '/'));
 	const session = getTeachableSessionHandoff();
 	if (session) {
 		logoutUrl.searchParams.set(TEACHABLE_SESSION_PARAM, session);
@@ -384,17 +384,14 @@ export async function exchangeTeachableSessionForTmkToken() {
 	}
 
 	try {
-		const origin = resolveTmkAuthOrigin();
-		const exchangeUrl = `${origin}/api/auth/teachable/exchange`;
-		
 		authDebug('exchangeTeachableSessionForTmkToken -> request', {
-			url: exchangeUrl,
+			url: '/api/auth/teachable/exchange',
 			method: 'POST',
 		});
 
-		const response = await fetch(exchangeUrl, {
+		// Call local proxy to preserve cookies and path
+		const response = await fetch('/api/auth/teachable/exchange', {
 			method: 'POST',
-			headers: applyTmkApiAuthKeyHeader(),
 			credentials: 'include', // Send and receive cookies
 		});
 
@@ -437,18 +434,15 @@ export async function refreshUserAccessToken() {
 	}
 
 	try {
-		const origin = resolveTmkAuthOrigin();
 		authDebug('refreshUserAccessToken -> request', {
-			url: `${origin}${USER_AUTH_ENDPOINTS.refresh}`,
+			url: USER_AUTH_ENDPOINTS.refresh,
 			method: 'POST',
   			credentials: 'include',
-			headers: summarizeHeaders(applyTmkApiAuthKeyHeader()),
 		});
-		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.refresh}`, {
+		// Call local proxy to preserve cookies and path forwarding
+		const response = await fetch(USER_AUTH_ENDPOINTS.refresh, {
 			method: 'POST',
 			credentials: 'include',
-			headers: applyTmkApiAuthKeyHeader(),
-			
 		});
 		authDebug('refreshUserAccessToken <- response', {
 			status: response.status,
@@ -707,16 +701,14 @@ export async function fetchAuthenticatedUser() {
 	}
 
 	try {
-		const origin = resolveTmkAuthOrigin();
 		const mePath = addTeachableSessionToPath(OAUTH_ENDPOINTS.me);
 		authDebug('fetchAuthenticatedUser -> request', {
-			url: `${origin}${mePath}`,
+			url: mePath,
 			method: 'GET',
-			headers: summarizeHeaders(applyTmkApiAuthKeyHeader()),
 		});
-		const response = await fetch(`${origin}${mePath}`, {
+		// Call local proxy to preserve cookies and path
+		const response = await fetch(mePath, {
 			method: 'GET',
-			headers: applyTmkApiAuthKeyHeader(),
 			credentials: 'include',
 		});
 		authDebug('fetchAuthenticatedUser <- response', {
