@@ -5,6 +5,7 @@ import { useDiyAccess } from '../components/useDiyAccess';
 import { useRouter } from 'next/navigation';
 import {
     buildTeachableLogoutUrl,
+    fetchWithTmkToken,
     fetchWithUserToken,
     resolveTmkApiOrigin,
 } from '../components/authHelpers';
@@ -84,7 +85,7 @@ export default function DashboardPage() {
                 });
             });
             try {
-                const projectResponse = await fetch(DIY_PROJECTS_ENDPOINT, { method: 'GET' });
+                const projectResponse = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, { method: 'GET' });
                 if (projectResponse.ok) {
                     const projectPayload = await projectResponse.json().catch(() => ({}));
                     const projects = extractDiyProjectsFromResponse(projectPayload);

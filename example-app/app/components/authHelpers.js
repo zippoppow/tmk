@@ -195,6 +195,36 @@ export function syncAuthStateHints(user) {
 let userAccessToken = '';
 let teachableSessionHandoff = '';
 
+const TMK_API_ACCESS_TOKEN_STORAGE_KEY = 'tmk-api-access-token';
+
+function getStoredTmkApiAccessToken() {
+	if (typeof window === 'undefined') {
+		return '';
+	}
+
+	try {
+		return window.localStorage.getItem(TMK_API_ACCESS_TOKEN_STORAGE_KEY) || '';
+	} catch {
+		return '';
+	}
+}
+
+function setStoredTmkApiAccessToken(token) {
+	if (typeof window === 'undefined') {
+		return;
+	}
+
+	try {
+		if (token) {
+			window.localStorage.setItem(TMK_API_ACCESS_TOKEN_STORAGE_KEY, token);
+		} else {
+			window.localStorage.removeItem(TMK_API_ACCESS_TOKEN_STORAGE_KEY);
+		}
+	} catch {
+		// Ignore storage failures (private mode, quota exceeded)
+	}
+}
+
 export function getUserAccessTokenDebugInfo() {
 	const hasToken = Boolean(userAccessToken);
 	return {
@@ -341,9 +371,68 @@ export async function exchangeUserAccessToken() {
 	return '';
 }
 
+/**
+ * Exchange Teachable session for TMK API access token.
+ * Calls POST /api/auth/teachable/exchange on tmk-api.
+ * Sets tmk_api_refresh cookie and returns access token.
+ */
+export async function exchangeTeachableSessionForTmkToken() {
+	if (isAuthBypassMode()) {
+		userAccessToken = 'dev-bypass-token';
+		setStoredTmkApiAccessToken(userAccessToken);
+		return userAccessToken;
+	}
+
+	try {
+		const origin = resolveTmkAuthOrigin();
+		const exchangeUrl = `${origin}/api/auth/teachable/exchange`;
+		
+		authDebug('exchangeTeachableSessionForTmkToken -> request', {
+			url: exchangeUrl,
+			method: 'POST',
+		});
+
+		const response = await fetch(exchangeUrl, {
+			method: 'POST',
+			headers: applyTmkApiAuthKeyHeader(),
+			credentials: 'include', // Send and receive cookies
+		});
+
+		authDebug('exchangeTeachableSessionForTmkToken <- response', {
+			status: response.status,
+			ok: response.ok,
+		});
+
+		if (!response.ok) {
+			userAccessToken = '';
+			setStoredTmkApiAccessToken('');
+			return '';
+		}
+
+		const payload = await response.json().catch(() => ({}));
+		const token = getAccessTokenFromPayload(payload);
+		
+		authDebug('exchangeTeachableSessionForTmkToken parsed payload', {
+			hasToken: Boolean(token),
+		});
+
+		userAccessToken = token || '';
+		setStoredTmkApiAccessToken(userAccessToken);
+		return userAccessToken;
+	} catch (error) {
+		authDebug('exchangeTeachableSessionForTmkToken error', {
+			message: error?.message || String(error),
+		});
+		userAccessToken = '';
+		setStoredTmkApiAccessToken('');
+		return '';
+	}
+}
+
 export async function refreshUserAccessToken() {
 	if (isAuthBypassMode()) {
 		userAccessToken = 'dev-bypass-token';
+		setStoredTmkApiAccessToken(userAccessToken);
 		return userAccessToken;
 	}
 
@@ -367,6 +456,7 @@ export async function refreshUserAccessToken() {
 
 		if (!response.ok) {
 			userAccessToken = '';
+			setStoredTmkApiAccessToken('');
 			return '';
 		}
 
@@ -377,20 +467,104 @@ export async function refreshUserAccessToken() {
 			payloadKeys: Object.keys(payload || {}),
 		});
 		userAccessToken = token || '';
+		setStoredTmkApiAccessToken(userAccessToken);
 		return userAccessToken;
 	} catch {
 		authDebug('refreshUserAccessToken failed');
 		userAccessToken = '';
+		setStoredTmkApiAccessToken('');
 		return '';
 	}
 }
 
 export async function getUserAccessToken(apiOrigin, forceRefresh = false) {
+	// Check in-memory token first
 	if (!forceRefresh && userAccessToken) {
 		return userAccessToken;
 	}
 
+	// Check localStorage as fallback (e.g., page reload)
+	if (!forceRefresh && !userAccessToken) {
+		const stored = getStoredTmkApiAccessToken();
+		if (stored) {
+			userAccessToken = stored;
+			return userAccessToken;
+		}
+	}
+
+	// If no cached token, try to refresh
 	return refreshUserAccessToken();
+}
+
+/**
+ * Fetch from a Vercel proxy endpoint with the user's TMK API access token.
+ * @param {string} endpoint - Path like '/api/diy-projects' or '/api/lesson-activities/123'
+ * @param {object} init - Fetch init options (method, body, etc.)
+ * @returns {Promise<Response>}
+ */
+export async function fetchWithTmkToken(endpoint, init = {}) {
+	try {
+		const headers = applyTmkApiAuthKeyHeader(init.headers);
+		const token = await getUserAccessToken();
+		if (token) {
+			headers.set('Authorization', `Bearer ${token}`);
+		}
+
+		const requestInit = {
+			...init,
+			headers,
+		};
+
+		authDebug('fetchWithTmkToken -> request', {
+			endpoint,
+			method: requestInit.method || 'GET',
+			hasToken: Boolean(token),
+		});
+
+		let response = await fetch(endpoint, requestInit);
+		authDebug('fetchWithTmkToken <- response', {
+			endpoint,
+			status: response.status,
+			ok: response.ok,
+		});
+
+		if (response.status !== 401) {
+			return response;
+		}
+
+		// Token expired, force refresh and retry
+		authDebug('fetchWithTmkToken: got 401, attempting token refresh', {
+			endpoint,
+		});
+		const refreshed = await refreshUserAccessToken();
+		if (!refreshed) {
+			authDebug('fetchWithTmkToken: refresh failed', {
+				endpoint,
+			});
+			if (headers.has('Authorization')) {
+				headers.delete('Authorization');
+			}
+			return fetch(endpoint, {
+				...init,
+				headers,
+			});
+		}
+
+		headers.set('Authorization', `Bearer ${refreshed}`);
+		authDebug('fetchWithTmkToken: retrying with refreshed token', {
+			endpoint,
+		});
+		return fetch(endpoint, {
+			...init,
+			headers,
+		});
+	} catch (error) {
+		authDebug('fetchWithTmkToken error', {
+			endpoint,
+			message: error?.message || String(error),
+		});
+		throw error;
+	}
 }
 
 export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {

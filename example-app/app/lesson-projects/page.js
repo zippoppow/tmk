@@ -35,6 +35,7 @@ import {
 } from '../components/lessonActivityHelpers';
 import {
 	buildTeachableLogoutUrl,
+	fetchWithTmkToken,
 	fetchWithUserToken,
 	resolveTmkApiOrigin,
 } from '../components/authHelpers';
@@ -264,7 +265,7 @@ export default function LessonProjectsPage() {
 		setCloudStatus('');
 
 		try {
-			const response = await fetch(DIY_PROJECTS_ENDPOINT, {
+			const response = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, {
 				method: 'GET',
 			});
 
@@ -352,7 +353,7 @@ export default function LessonProjectsPage() {
 				formName: PROJECT_FORM_NAME,
 				normalizeLessonInputData,
 			});
-			const response = await fetch(DIY_PROJECTS_ENDPOINT, {
+			const response = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(payload),

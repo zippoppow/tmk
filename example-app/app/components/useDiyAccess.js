@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchAuthenticatedUser } from './authHelpers';
+import { exchangeTeachableSessionForTmkToken, fetchAuthenticatedUser } from './authHelpers';
 
 const DIY_COURSE_ID = '2944218';
 const DIY_ACCESS_STORAGE_KEY = 'tmk-diy-access-by-email';
@@ -148,6 +148,9 @@ export function useDiyAccess() {
 
         if (!cancelled) setUser(userData);
         writeStoredAuthUser(userData);
+
+        // Exchange Teachable session for TMK API token
+        await exchangeTeachableSessionForTmkToken();
 
         const rawEmail = String(userData.email || userData?.profile?.email || '').trim();
         const storedAccess = readStoredDiyAccess(rawEmail);
