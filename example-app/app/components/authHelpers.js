@@ -441,12 +441,14 @@ export async function refreshUserAccessToken() {
 		authDebug('refreshUserAccessToken -> request', {
 			url: `${origin}${USER_AUTH_ENDPOINTS.refresh}`,
 			method: 'POST',
+  			credentials: 'include',
 			headers: summarizeHeaders(applyTmkApiAuthKeyHeader()),
 		});
 		const response = await fetch(`${origin}${USER_AUTH_ENDPOINTS.refresh}`, {
 			method: 'POST',
-			headers: applyTmkApiAuthKeyHeader(),
 			credentials: 'include',
+			headers: applyTmkApiAuthKeyHeader(),
+			
 		});
 		authDebug('refreshUserAccessToken <- response', {
 			status: response.status,
