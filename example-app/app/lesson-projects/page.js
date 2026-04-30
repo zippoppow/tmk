@@ -846,6 +846,22 @@ export default function LessonProjectsPage() {
 		showNotice('info', 'Using local projects without updating cloud.');
 	};
 
+	const handleApplyCloudToLocal = () => {
+		if (initialCloudProjects.length > 0) {
+			syncCloudProjectsToLocal(initialCloudProjects);
+			setCloudStatus('Local storage updated to match cloud projects.', 'success');
+			showNotice('success', 'Local browser projects updated from cloud.');
+		} else {
+			const allProjects = getAllStoredProjects();
+			const nonLesson = allProjects.filter((p) => p.formName !== PROJECT_FORM_NAME);
+			saveStoredProjects(nonLesson);
+			loadLocalProjects();
+			setCloudStatus('Local lesson projects cleared to match empty cloud.', 'success');
+			showNotice('success', 'Local lesson projects cleared to match cloud.');
+		}
+		setReconcileDialogOpen(false);
+	};
+
 	const runLocalCloudCompare = async ({ forcePromptWhenSame = false } = {}) => {
 		if (!isAuthenticated || !hasDiyAccess) {
 			return;
@@ -1323,14 +1339,22 @@ export default function LessonProjectsPage() {
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={handleKeepLocalOnly} disabled={isApplyingInitialSync}>
-						No, keep local only
+						Keep local only
+					</Button>
+					<Button
+						onClick={handleApplyCloudToLocal}
+						variant="outlined"
+						color="warning"
+						disabled={isApplyingInitialSync}
+					>
+						Sync cloud to local
 					</Button>
 					<Button
 						onClick={handleApplyLocalToCloud}
 						variant="contained"
 						disabled={isApplyingInitialSync}
 					>
-						{isApplyingInitialSync ? 'Syncing...' : 'Yes, sync local to cloud'}
+						{isApplyingInitialSync ? 'Syncing...' : 'Sync local to cloud'}
 					</Button>
 				</DialogActions>
 			</Dialog>
