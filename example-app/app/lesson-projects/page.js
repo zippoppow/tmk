@@ -9,6 +9,10 @@ import {
 	Checkbox,
 	Chip,
 	Container,
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogTitle,
 	Divider,
 	MenuItem,
 	Paper,
@@ -92,12 +96,17 @@ export default function LessonProjectsPage() {
 	const [cloudMessage, setCloudMessage] = useState('');
 	const [cloudMessageSeverity, setCloudMessageSeverity] = useState('error');
 	const [projectNameInput, setProjectNameInput] = useState('');
+	const [reconcileDialogOpen, setReconcileDialogOpen] = useState(false);
+	const [initialLocalProjects, setInitialLocalProjects] = useState([]);
+	const [initialCloudProjects, setInitialCloudProjects] = useState([]);
+	const [isApplyingInitialSync, setIsApplyingInitialSync] = useState(false);
 
 	const [newActivityTypeByProjectId, setNewActivityTypeByProjectId] = useState({});
 	const [defaultActivityType, setDefaultActivityType] = useState(LESSON_ACTIVITY_TYPES[0].value);
 	const [selectedForSlideshowByProjectId, setSelectedForSlideshowByProjectId] = useState({});
 	const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
 	const hasAppliedRequestedActivityType = useRef(false);
+	const hasCheckedInitialReconcile = useRef(false);
 
 	const apiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
 	const isAuthenticated = Boolean(authUser);
@@ -120,6 +129,86 @@ export default function LessonProjectsPage() {
 
 	const getLocalProjectById = (projectId) => {
 		return getAllStoredProjects().find((project) => project.id === projectId && project.formName === PROJECT_FORM_NAME) || null;
+	};
+
+	const getStoredLessonProjects = () => {
+		return getAllStoredProjects().filter((project) => project.formName === PROJECT_FORM_NAME);
+	};
+
+	const projectToDiffKey = (project) => {
+		const projectName = String(project?.name || project?.['project-name'] || '').trim().toLowerCase();
+		const activities = Array.isArray(project?.lessonActivities)
+			? project.lessonActivities
+			: Array.isArray(project?.['lesson-activities'])
+				? project['lesson-activities']
+				: [];
+
+		const activityFingerprint = activities
+			.map((activity) => {
+				const activityName = String(activity?.['lesson-name'] || '').trim().toLowerCase();
+				const template = String(activity?.['tmk-template'] || '').trim().toLowerCase();
+				const inputData = JSON.stringify(normalizeLessonInputData(activity?.['lesson-input-data'] || {}));
+				return `${template}|${activityName}|${inputData}`;
+			})
+			.sort()
+			.join('||');
+
+		return `${projectName}::${activityFingerprint}`;
+	};
+
+	const hasLocalCloudDifference = (local, cloud) => {
+		const localKeys = local.map(projectToDiffKey).sort();
+		const cloudKeys = cloud.map(projectToDiffKey).sort();
+		if (localKeys.length !== cloudKeys.length) {
+			return true;
+		}
+		return localKeys.some((key, index) => key !== cloudKeys[index]);
+	};
+
+	const buildDiyProjectsCollectionPayload = (projects) => {
+		return {
+			'diy-projects': projects.map((project) => {
+				const now = Date.now();
+				const createdAtMs = Number.isFinite(project?.createdAtMs) ? project.createdAtMs : now;
+				const modifiedAtMs = Number.isFinite(project?.modifiedAtMs) ? project.modifiedAtMs : now;
+				const projectName = String(project?.name || '').trim() || 'Untitled Project';
+				const lessonActivities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
+
+				return {
+					'project-name': projectName,
+					'created-at': createdAtMs,
+					'modified-at': modifiedAtMs,
+					'lesson-activities': lessonActivities.map((activity) => ({
+						'tmk-template': String(activity?.['tmk-template'] || PROJECT_FORM_NAME),
+						'lesson-name': String(activity?.['lesson-name'] || projectName),
+						'created-at': Number.isFinite(Number(activity?.['created-at']))
+							? Number(activity['created-at'])
+							: createdAtMs,
+						'modified-at': Number.isFinite(Number(activity?.['modified-at']))
+							? Number(activity['modified-at'])
+							: modifiedAtMs,
+						'lesson-input-data': normalizeLessonInputData(activity?.['lesson-input-data'] || {}),
+					})),
+				};
+			}),
+		};
+	};
+
+	const fetchCloudLessonProjects = async () => {
+		const response = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, {
+			method: 'GET',
+		});
+
+		if (response.status === 404) {
+			return [];
+		}
+
+		if (!response.ok) {
+			throw new Error(`Cloud fetch failed: ${response.status}`);
+		}
+
+		const payload = await response.json().catch(() => ({}));
+		return normalizeCloudProjects(payload, PROJECT_FORM_NAME, normalizeLessonInputData);
 	};
 
 	const syncCloudProjectsToLocal = (projectsFromCloud) => {
@@ -700,13 +789,100 @@ export default function LessonProjectsPage() {
 		showNotice('error', `Could not sync "${project.name}".`);
 	};
 
+	const handleApplyLocalToCloud = async () => {
+		if (!isAuthenticated || !hasDiyAccess) {
+			setReconcileDialogOpen(false);
+			return;
+		}
+
+		setIsApplyingInitialSync(true);
+		try {
+			const localProjects = getStoredLessonProjects();
+
+			if (localProjects.length === 0) {
+				const deleteResponse = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, {
+					method: 'DELETE',
+				});
+				if (!deleteResponse.ok && deleteResponse.status !== 404) {
+					showNotice('error', 'Could not clear cloud projects to match local storage.');
+					return;
+				}
+				setCloudStatus('Cloud projects cleared to match local storage.', 'success');
+			} else {
+				const payload = buildDiyProjectsCollectionPayload(localProjects);
+				const response = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload),
+				});
+
+				if (!response.ok) {
+					const errorText = await response.text().catch(() => '');
+					console.warn('Initial local-to-cloud sync failed', {
+						status: response.status,
+						body: errorText.slice(0, 500),
+					});
+					showNotice('error', 'Could not sync local projects to cloud.');
+					return;
+				}
+
+				setCloudStatus('Cloud updated to match your local browser projects.', 'success');
+			}
+
+			setReconcileDialogOpen(false);
+			await loadCloudProjects();
+			showNotice('success', 'Project sync preference applied.');
+		} catch (error) {
+			console.error('Failed applying local-to-cloud sync:', error);
+			showNotice('error', 'Could not complete initial sync choice.');
+		} finally {
+			setIsApplyingInitialSync(false);
+		}
+	};
+
+	const handleKeepLocalOnly = () => {
+		setReconcileDialogOpen(false);
+		setCloudStatus('Using local browser projects only. Cloud data was left unchanged.', 'success');
+		showNotice('info', 'Using local projects without updating cloud.');
+	};
+
+	const runLocalCloudCompare = async ({ forcePromptWhenSame = false } = {}) => {
+		if (!isAuthenticated || !hasDiyAccess) {
+			return;
+		}
+
+		try {
+			const local = getStoredLessonProjects();
+			const cloud = await fetchCloudLessonProjects();
+
+			setInitialLocalProjects(local);
+			setInitialCloudProjects(cloud);
+
+			const hasDifference = hasLocalCloudDifference(local, cloud);
+			if (hasDifference || forcePromptWhenSame) {
+				setReconcileDialogOpen(true);
+				return;
+			}
+
+			setCloudStatus('Local and cloud projects are already in sync.', 'success');
+			syncCloudProjectsToLocal(cloud);
+		} catch (error) {
+			console.error('Failed project reconciliation:', error);
+			setCloudStatus('Could not compare local and cloud projects. You can still continue with local projects.');
+		}
+	};
+
 	useEffect(() => {
 		loadLocalProjects();
 	}, []);
 
 	useEffect(() => {
 		if (isAuthenticated && hasDiyAccess) {
-			loadCloudProjects();
+			if (hasCheckedInitialReconcile.current) {
+				return;
+			}
+			hasCheckedInitialReconcile.current = true;
+			runLocalCloudCompare();
 		} else {
 			setCloudStatus('');
 		}
@@ -1048,6 +1224,17 @@ export default function LessonProjectsPage() {
 								<Stack direction="row" spacing={0.6}>
 									<Button
 										size="small"
+										variant="outlined"
+										disabled={isLoadingCloudProjects || isApplyingInitialSync}
+										onClick={async () => {
+											await runLocalCloudCompare({ forcePromptWhenSame: true });
+										}}
+										sx={{ textTransform: 'none' }}
+									>
+										Re-run Compare
+									</Button>
+									<Button
+										size="small"
 										variant="contained"
 										color="info"
 										disabled={isLoadingCloudProjects}
@@ -1081,6 +1268,72 @@ export default function LessonProjectsPage() {
 					{notice.message}
 				</Alert>
 			</Snackbar>
+
+			<Dialog
+				open={reconcileDialogOpen}
+				onClose={isApplyingInitialSync ? undefined : handleKeepLocalOnly}
+				fullWidth
+				maxWidth="md"
+			>
+				<DialogTitle>Local vs Cloud Project Differences Found</DialogTitle>
+				<DialogContent dividers>
+					<Typography sx={{ fontSize: '0.95rem', mb: 1.5 }}>
+						We found differences between your browser's local projects and cloud projects.
+						Would you like to sync local projects to cloud now?
+					</Typography>
+
+					<Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+						<Box sx={{ flex: 1, border: '1px solid #dbe2ea', borderRadius: 1.5, p: 1.25, backgroundColor: '#f8fbff' }}>
+							<Typography sx={{ fontWeight: 700, mb: 1 }}>Local Browser Storage ({initialLocalProjects.length})</Typography>
+							{initialLocalProjects.length === 0 ? (
+								<Typography sx={{ color: '#6b7280', fontSize: '0.9rem' }}>No local projects.</Typography>
+							) : (
+								<Stack spacing={0.6}>
+									{initialLocalProjects.map((project, projectIndex) => {
+										const activities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
+										return (
+											<Typography key={`local-${project.id || projectIndex}`} sx={{ fontSize: '0.88rem', color: '#1f2937' }}>
+												- {project.name || 'Untitled Project'} ({activities.length} activities)
+											</Typography>
+										);
+									})}
+								</Stack>
+							)}
+						</Box>
+
+						<Box sx={{ flex: 1, border: '1px solid #dbe2ea', borderRadius: 1.5, p: 1.25, backgroundColor: '#fffaf3' }}>
+							<Typography sx={{ fontWeight: 700, mb: 1 }}>Cloud Server ({initialCloudProjects.length})</Typography>
+							{initialCloudProjects.length === 0 ? (
+								<Typography sx={{ color: '#6b7280', fontSize: '0.9rem' }}>No cloud projects.</Typography>
+							) : (
+								<Stack spacing={0.6}>
+									{initialCloudProjects.map((project, projectIndex) => {
+										const activities = Array.isArray(project.lessonActivities) ? project.lessonActivities : [];
+										const projectKey = String(project.remoteId || project.id || project.name || projectIndex);
+										return (
+											<Typography key={`cloud-${projectKey}`} sx={{ fontSize: '0.88rem', color: '#1f2937' }}>
+												- {project.name || 'Untitled Project'} ({activities.length} activities)
+											</Typography>
+										);
+									})}
+								</Stack>
+							)}
+						</Box>
+					</Stack>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={handleKeepLocalOnly} disabled={isApplyingInitialSync}>
+						No, keep local only
+					</Button>
+					<Button
+						onClick={handleApplyLocalToCloud}
+						variant="contained"
+						disabled={isApplyingInitialSync}
+					>
+						{isApplyingInitialSync ? 'Syncing...' : 'Yes, sync local to cloud'}
+					</Button>
+				</DialogActions>
+			</Dialog>
 		</Box>
 	);
 }
