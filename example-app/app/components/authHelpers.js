@@ -365,6 +365,42 @@ function getAccessTokenFromPayload(payload) {
 	return '';
 }
 
+function parseJwtExp(token) {
+	const raw = String(token || '').trim();
+	if (!raw) {
+		return null;
+	}
+
+	const parts = raw.split('.');
+	if (parts.length < 2) {
+		return null;
+	}
+
+	try {
+		const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+		const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+		const decoded =
+			typeof window !== 'undefined'
+				? window.atob(padded)
+				: Buffer.from(padded, 'base64').toString('utf8');
+		const payload = JSON.parse(decoded);
+		const exp = Number(payload?.exp);
+		return Number.isFinite(exp) ? exp : null;
+	} catch {
+		return null;
+	}
+}
+
+function isJwtExpired(token, clockSkewSeconds = 30) {
+	const exp = parseJwtExp(token);
+	if (!exp) {
+		return false;
+	}
+
+	const now = Math.floor(Date.now() / 1000);
+	return exp <= now + Math.max(0, Number(clockSkewSeconds) || 0);
+}
+
 export async function exchangeUserAccessToken() {
 	if (isAuthBypassMode()) {
 		userAccessToken = 'dev-bypass-token';
@@ -479,20 +515,33 @@ export async function refreshUserAccessToken() {
 export async function getUserAccessToken(apiOrigin, forceRefresh = false) {
 	// Check in-memory token first
 	if (!forceRefresh && userAccessToken) {
-		return userAccessToken;
+		if (!isJwtExpired(userAccessToken)) {
+			return userAccessToken;
+		}
+		userAccessToken = '';
+		setStoredTmkApiAccessToken('');
 	}
 
 	// Check localStorage as fallback (e.g., page reload)
 	if (!forceRefresh && !userAccessToken) {
 		const stored = getStoredTmkApiAccessToken();
 		if (stored) {
+			if (isJwtExpired(stored)) {
+				setStoredTmkApiAccessToken('');
+			} else {
 			userAccessToken = stored;
 			return userAccessToken;
+			}
 		}
 	}
 
-	// If no cached token, try to refresh
-	return refreshUserAccessToken();
+	// If no cached token, try to refresh first, then exchange Teachable session.
+	const refreshed = await refreshUserAccessToken();
+	if (refreshed) {
+		return refreshed;
+	}
+
+	return exchangeTeachableSessionForTmkToken();
 }
 
 /**
@@ -536,20 +585,17 @@ export async function fetchWithTmkToken(endpoint, init = {}) {
 			endpoint,
 		});
 		const refreshed = await refreshUserAccessToken();
-		if (!refreshed) {
+		const recoveredToken = refreshed || (await exchangeTeachableSessionForTmkToken());
+		if (!recoveredToken) {
 			authDebug('fetchWithTmkToken: refresh failed', {
 				endpoint,
 			});
-			if (headers.has('Authorization')) {
-				headers.delete('Authorization');
-			}
-			return fetch(endpoint, {
-				...init,
-				headers,
-			});
+			// Return the original auth failure instead of retrying unauthenticated,
+			// which can surface as misleading 404s on user-scoped routes.
+			return response;
 		}
 
-		headers.set('Authorization', `Bearer ${refreshed}`);
+		headers.set('Authorization', `Bearer ${recoveredToken}`);
 		authDebug('fetchWithTmkToken: retrying with refreshed token', {
 			endpoint,
 		});
