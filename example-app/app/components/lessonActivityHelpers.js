@@ -475,13 +475,12 @@ export async function hardDeleteLessonActivityById(apiOrigin, id, maxAttempts = 
 
 	for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
 		const deleteResponse = await deleteLessonActivityById(apiOrigin, activityId);
-		if (!deleteResponse.ok && deleteResponse.status !== 404) {
-			continue;
+		if (deleteResponse.ok || deleteResponse.status === 404) {
+			return { ok: true, attempts: attempt };
 		}
 
-		const existing = await fetchLessonActivityById(apiOrigin, activityId);
-		if (!existing) {
-			return { ok: true, attempts: attempt };
+		if (!deleteResponse.ok) {
+			continue;
 		}
 	}
 
