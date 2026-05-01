@@ -25,13 +25,12 @@ export default function IntroPage() {
 			.concat(Array.from({ length: Math.max(0, 9 - incomingWords.length) }, () => ''))
 			.map((value) => String(value || ''));
 
-
-	return {
-		morpheme: String(source.morpheme || ''),
-		questionMorpheme: String(source.questionMorpheme || ''),
-		words,
-	};
-}
+		return {
+			morpheme: String(source.morpheme || ''),
+			questionMorpheme: String(source.questionMorpheme || ''),
+			words,
+		};
+	}
 
 	const router = useRouter();
 	const { hasDiyAccess, loading: diyLoading } = useDiyAccess();
