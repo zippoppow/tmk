@@ -357,7 +357,7 @@ export default function PartOfSpeechPage() {
 			notice={notice}
 			setNotice={setNotice}
 		>
-			<Box sx={{ my: 3, display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 1.25 }}>
+			<Box sx={{ my: 3, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 1.25 }}>
 				{data.grid.map((value, index) => {
 					const isDragOver = dragOverTarget?.type === 'grid' && dragOverTarget.index === index;
 
@@ -401,8 +401,8 @@ export default function PartOfSpeechPage() {
 				})}
 			</Box>
 
-			<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '3fr 1fr' }, gap: 2 }}>
-				<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
+			<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '3fr 1fr' }, gap: 2 }}>
+				<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
 					{SORT_GRID_CATEGORIES.map((category) => (
 						<Box key={category}>{renderSortBox(category, 260)}</Box>
 					))}

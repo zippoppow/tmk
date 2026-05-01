@@ -247,7 +247,7 @@ export default function MorphWhichPage() {
 								inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 							/>
-							<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 1 }}>
+							<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 1 }}>
 								{['a', 'b', 'c', 'd'].map((key, keyIndex) => {
 									const isSelected = String(data.selectedChoices?.[index] || '') === key;
 									return (

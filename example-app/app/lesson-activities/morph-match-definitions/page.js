@@ -324,20 +324,20 @@ export default function MorphMatchDefinitionsPage() {
 					<Box
 						sx={{
 							display: 'grid',
-							gridTemplateColumns: { xs: '1fr', md: '3fr 1.2fr 7fr' },
+							gridTemplateColumns: { xs: '1fr', sm: '3fr 1.2fr', md: '3fr 1.2fr 7fr' },
 							gap: 1,
 							pt: 1,
 						}}
 					>
-						<Button variant="outlined" onClick={handleClearWords} sx={{ justifySelf: { xs: 'stretch', md: 'start' } }}>
+						<Button variant="outlined" onClick={handleClearWords} sx={{ justifySelf: { xs: 'stretch', sm: 'start' } }}>
 							Clear Words
 						</Button>
-						<Button variant="outlined" onClick={handleClearNumbers} sx={{ justifySelf: { xs: 'stretch', md: 'start' } }}>
+						<Button variant="outlined" onClick={handleClearNumbers} sx={{ justifySelf: { xs: 'stretch', sm: 'start' } }}>
 							Clear Numbers
 						</Button>
 						<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '32px 1fr' }, gap: 1 }}>
-							<Box sx={{ display: { xs: 'none', md: 'block' } }} />
-							<Button variant="outlined" onClick={handleClearDefinitions} sx={{ justifySelf: { xs: 'stretch', md: 'start' } }}>
+							<Box sx={{ display: { xs: 'none', sm: 'block' } }} />
+							<Button variant="outlined" onClick={handleClearDefinitions} sx={{ justifySelf: { xs: 'stretch', sm: 'start' } }}>
 								Clear Definitions
 							</Button>
 						</Box>

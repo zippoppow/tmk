@@ -389,8 +389,8 @@ export default function ChameleonPrefixesPage() {
 			<Box
 				sx={{
 					display: 'grid',
-					gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-					gap: { xs: 2, md: 5 },
+					gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+					gap: { xs: 2, sm: 5 },
 					mt: 3,
 				}}
 			>
