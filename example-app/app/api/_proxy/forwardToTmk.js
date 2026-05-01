@@ -83,7 +83,7 @@ function buildTargetUrl(request, routePrefix, pathSegments = []) {
   return targetUrl;
 }
 
-function buildProxyRequestInit(request, apiAuthKey) {
+async function buildProxyRequestInit(request, apiAuthKey) {
   const headers = cloneRequestHeaders(request?.headers);
   const teachableSession = String(request?.nextUrl?.searchParams?.get(TEACHABLE_SESSION_PARAM) || '').trim();
   const existingCookieHeader = String(headers.get('cookie') || '');
@@ -105,22 +105,24 @@ function buildProxyRequestInit(request, apiAuthKey) {
 
   const method = request?.method || 'GET';
   const isBodyMethod = method !== 'GET' && method !== 'HEAD';
-  const contentLength = Number(headers.get('content-length'));
-  const hasExplicitZeroLength = Number.isFinite(contentLength) && contentLength === 0;
-  const hasBody = isBodyMethod && !hasExplicitZeroLength && request?.body != null;
   const requestInit = {
     method,
     headers,
     redirect: 'manual',
   };
 
-  // In Vercel Node runtime, setting duplex/body for bodyless POSTs can throw and surface as 502.
-  if (hasBody) {
-    requestInit.body = request.body;
-    requestInit.duplex = 'half';
-  } else if (isBodyMethod) {
-    headers.delete('content-length');
-    headers.delete('content-type');
+  // In Vercel Node runtime, request.body can be null for body methods; read raw bytes from a clone instead.
+  if (isBodyMethod) {
+    try {
+      const bodyBuffer = await request.clone().arrayBuffer();
+      if (bodyBuffer.byteLength > 0) {
+        requestInit.body = bodyBuffer;
+      } else {
+        headers.delete('content-type');
+      }
+    } catch {
+      headers.delete('content-type');
+    }
   }
 
   return requestInit;
@@ -144,7 +146,8 @@ export async function forwardToTmkApi(request, { routePrefix, pathSegments = [] 
   console.log(`[forwardToTmkApi] Forwarding ${request?.method || 'GET'} ${request?.nextUrl?.pathname || '/'} → ${targetUrl}`);
 
   try {
-    const upstreamResponse = await fetch(targetUrl, buildProxyRequestInit(request, apiAuthKey));
+    const requestInit = await buildProxyRequestInit(request, apiAuthKey);
+    const upstreamResponse = await fetch(targetUrl, requestInit);
     const responseHeaders = buildProxyResponseHeaders(upstreamResponse.headers);
 
     if (responseHeaders.has('set-cookie')) {
