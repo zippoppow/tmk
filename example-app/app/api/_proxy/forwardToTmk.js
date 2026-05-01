@@ -104,7 +104,10 @@ function buildProxyRequestInit(request, apiAuthKey) {
   }
 
   const method = request?.method || 'GET';
-  const hasBody = method !== 'GET' && method !== 'HEAD' && request?.body != null;
+  const isBodyMethod = method !== 'GET' && method !== 'HEAD';
+  const contentLength = Number(headers.get('content-length'));
+  const hasExplicitZeroLength = Number.isFinite(contentLength) && contentLength === 0;
+  const hasBody = isBodyMethod && !hasExplicitZeroLength && request?.body != null;
   const requestInit = {
     method,
     headers,
@@ -115,6 +118,9 @@ function buildProxyRequestInit(request, apiAuthKey) {
   if (hasBody) {
     requestInit.body = request.body;
     requestInit.duplex = 'half';
+  } else if (isBodyMethod) {
+    headers.delete('content-length');
+    headers.delete('content-type');
   }
 
   return requestInit;
