@@ -14,16 +14,9 @@ import {
 	DialogContent,
 	DialogTitle,
 	Divider,
-	MenuItem,
 	Paper,
 	Snackbar,
 	Stack,
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableRow,
-	TextField,
 	Typography,
 } from '@mui/material';
 import {
@@ -54,6 +47,15 @@ import {
 } from '../components/projectManagerModel';
 import AuthDebugPanel from '../components/AuthDebugPanel';
 import TmkLogo from '../components/TmkLogo';
+
+
+//Note: TBD - consider implementing pagination or lazy loading if users have many projects/activities, 
+// to avoid UI and performance issues with very large data sets. For now we assume users will have a 
+// manageable number of projects and activities stored locally and in the cloud.
+
+//Note: TBD - consider moving these lesson-activity-types to a JSON or database-driven config 
+// if we expect them to change frequently or if there will be many types. 
+// For now we hardcode them in the component for simplicity.
 
 const PROJECT_FORM_NAME = 'lesson-activities-project';
 const LESSON_ACTIVITY_TYPES = [
@@ -512,11 +514,15 @@ export default function LessonProjectsPage() {
 		hasAppliedRequestedActivityType.current = true;
 		setDefaultActivityType(requestedType);
 		setNewActivityTypeByProjectId((prev) => {
+			let didChange = false;
 			const next = { ...prev };
 			localProjects.forEach((project) => {
-				next[project.id] = requestedType;
+				if (next[project.id] !== requestedType) {
+					next[project.id] = requestedType;
+					didChange = true;
+				}
 			});
-			return next;
+			return didChange ? next : prev;
 		});
 	}, [localProjects]);
 
@@ -950,9 +956,17 @@ export default function LessonProjectsPage() {
 				</Stack>
 
 				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
-					<Box sx={{ display: 'grid', gridTemplateColumns: '75% 25%', gap: 2 }}>
-						{/* Left Column */}
-						<Box>
+					<Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-end' }, alignItems: 'flex-start', pr: { xs: 0, md: 5 } }}>
+							<Stack direction="column" alignItems="center" spacing={0.5} sx={{ mb: 1 }}>
+								<TmkLogo sx={{ mb: 2 }} />
+								<Typography sx={{ fontSize: '3rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 1 }}>
+									Projects
+								</Typography>
+							</Stack>
+					</Box>
+				</Paper>
+				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
+					<Box>
 							<Typography sx={{ fontSize: '1.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>Create a Project</Typography>
 							<Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 2 }}>
 								Clicking "Create Project" will add a new project to the "SAVED PROJECTS" section below.
@@ -960,23 +974,19 @@ export default function LessonProjectsPage() {
 							<Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 2 }}>
 								You can create as many projects as you want, and they will be saved for you to access later.
 							</Typography>
-							<Stack direction="row" spacing={1} sx={{ mb: 1.2, width: 500, minWidth: 500, maxWidth: 800, backgroundColor: '#fff' }}>
-								<TextField
+							<Stack
+								direction={{ xs: 'column', sm: 'row' }}
+								spacing={1}
+								sx={{
+									mb: 1.2,
+									width: '100%',
+									maxWidth: { xs: '100%', md: 800 },
+									backgroundColor: '#fff',
+								}}
+							>
+								<Box
+									component="input"
 									placeholder="Lesson Activities Project name..."
-									sx={{
-										mb: 1.2,
-										width: 500,
-										minWidth: 500,
-										maxWidth: 800,
-										'& .MuiOutlinedInput-root': {
-											backgroundColor: '#ABC3F7',
-										},
-										'& .MuiOutlinedInput-input': {
-											backgroundColor: '#ABC3F7',
-											fontSize: '1.25rem',
-											textAlign: 'center',
-										},
-									}}
 									value={projectNameInput}
 									onChange={(event) => setProjectNameInput(event.target.value)}
 									onKeyDown={(event) => {
@@ -985,22 +995,37 @@ export default function LessonProjectsPage() {
 											handleCreateProject();
 										}
 									}}
+									sx={{
+										mb: 1.2,
+										flex: 1,
+										minWidth: 0,
+										height: 40,
+										border: '1px solid #9aa4b2',
+										borderRadius: 1,
+										backgroundColor: '#ABC3F7',
+										fontSize: '1.25rem',
+										textAlign: 'center',
+										px: 1.2,
+										outline: 'none',
+										'&:focus': {
+											borderColor: '#3f37c9',
+											boxShadow: '0 0 0 2px rgba(63,55,201,0.2)',
+										},
+									}}
 								/>
-								<Button variant="contained" color="success" onClick={handleCreateProject} sx={{ textTransform: 'none', width: 180, minWidth: 180, maxWidth: 180 }}>
+								<Button
+									variant="contained"
+									color="success"
+									onClick={handleCreateProject}
+									sx={{
+										textTransform: 'none',
+										width: { xs: '100%', sm: 180 },
+										minWidth: { xs: '100%', sm: 180 },
+									}}
+								>
 									Create Project
 								</Button>
 							</Stack>
-						</Box>
-
-						{/* Right Column */}
-						<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', mr: 5 }}>
-							<Stack direction="column" alignItems="center" spacing={0.5} sx={{ mb: 1 }}>
-								<TmkLogo sx={{ mb: 2 }} />
-								<Typography sx={{ fontSize: '3rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 1 }}>
-									Projects
-								</Typography>
-							</Stack>
-						</Box>
 					</Box>
 				</Paper>
 				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
@@ -1032,21 +1057,12 @@ export default function LessonProjectsPage() {
 											}}
 										>
 											<Stack direction="row" alignItems="center" spacing={0.8}>
-												<Typography sx={{ fontSize: '1.4rem', fontWeight: 700, flex: 1 }} noWrap title={project.name}>
-													{project.name}
+												
+												<Typography sx={{ fontSize: '1.4rem', fontWeight: 700, fontStyle: 'italic', flex: 1 }} noWrap title={project.name}>
+													PROJECT: {project.name}
 												</Typography>
-												{isAuthenticated && (
-													<Button size="small" variant="contained" color="info" onClick={() => handleSyncProject(project.id)} sx={{ textTransform: 'none' }}>
-														Sync Changes
-													</Button>
-												)}
-												{isAuthenticated && (
-													<Button size="small" variant="contained" color="error" onClick={() => handleDeleteProject(project.id)} sx={{ textTransform: 'none' }}>
-														Delete Project
-													</Button>
-												)}
 												<Chip
-													label={lessonActivities.length}
+													label={`Total Activities: ${lessonActivities.length}`}
 													size="small"
 													sx={{
 														height: 18,
@@ -1055,6 +1071,17 @@ export default function LessonProjectsPage() {
 														color: '#3f37c9',
 													}}
 												/>
+												{isAuthenticated && (
+													<Button size="small" variant="contained" color="info" onClick={() => handleSyncProject(project.id)} sx={{ textTransform: 'none' }}>
+														Sync Project Changes
+													</Button>
+												)}
+												{isAuthenticated && (
+													<Button size="small" variant="contained" color="error" onClick={() => handleDeleteProject(project.id)} sx={{ textTransform: 'none' }}>
+														Delete Project
+													</Button>
+												)}
+												
 											</Stack>
 
 											<Typography sx={{ fontSize: '0.75rem', color: '#888', mt: 0.2 }}>
@@ -1064,150 +1091,138 @@ export default function LessonProjectsPage() {
 											</Typography>
 
 											<Stack direction={{ xs: 'column', md: 'row' }} spacing={0.6} sx={{ mt: 1, mb: lessonActivities.length ? 0.8 : 0 }}>
-											{(
-												<TextField
-													select
-													size="small"
-													label="Type"
-													value={newActivityTypeByProjectId[project.id] || defaultActivityType}
-													onChange={(event) => {
-														const nextType = event.target.value;
-														setNewActivityTypeByProjectId((prev) => ({ ...prev, [project.id]: nextType }));
-													}}
-													sx={{ minWidth: 130 }}
-												>
-													{LESSON_ACTIVITY_TYPES.map((option) => (
-														<MenuItem key={option.value} value={option.value}>
-															{option.label}
-														</MenuItem>
-													))}
-												</TextField>
-											)}
+											<Box
+												component="select"
+												value={newActivityTypeByProjectId[project.id] || defaultActivityType}
+												onChange={(event) => {
+													const nextType = event.target.value;
+													setNewActivityTypeByProjectId((prev) => ({ ...prev, [project.id]: nextType }));
+												}}
+												sx={{
+													minWidth: 160,
+													height: 32,
+													border: '1px solid #9aa4b2',
+													borderRadius: 1,
+													backgroundColor: '#fff',
+													fontSize: '0.9rem',
+													px: 1,
+												}}
+											>
+												{LESSON_ACTIVITY_TYPES.map((option) => (
+													<option key={option.value} value={option.value}>
+														{option.label}
+													</option>
+												))}
+											</Box>
 											{(
 												<Button size="small" variant="contained" color="success" onClick={() => handleNewActivity(project.id)} sx={{ textTransform: 'none' }}>
 													Add Activity
 												</Button>
 											)}
 											{lessonActivities.length > 0 && (
-												<Button size="small" variant="outlined" onClick={() => handleLaunchSlideshow(project.id)} sx={{ textTransform: 'none' }}>
+												<Button
+													size="small"
+													variant="outlined"
+													onClick={() => handleLaunchSlideshow(project.id)}
+													sx={{
+														textTransform: 'none',
+														color: '#3f37c9',
+														borderColor: '#3f37c9',
+														backgroundColor: '#fff',
+														'&:hover': {
+															color: '#fff',
+															borderColor: '#2f2a99',
+															backgroundColor: '#3f37c9',
+														},
+													}}
+												>
 													Present Lesson Activities
 												</Button>
 											)}
 											</Stack>
 
 											{lessonActivities.length > 0 && (
-												<Table
-													size="small"
+												<Box
 													sx={{
-														borderCollapse: 'separate',
-														borderSpacing: '0 6px',
-														tableLayout: 'fixed',
-														'& .MuiTableCell-root': {
-															borderBottom: 'none',
-														},
+														display: 'grid',
+														gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
+														gap: 1,
+														mt: 1,
 													}}
 												>
-													<TableHead>
-														<TableRow sx={{ backgroundColor: '#eef2ff' }}>
-															<TableCell sx={{ width: 290, py: 0.9, pl: 1.2, pr: 1, borderTopLeftRadius: 6, borderBottomLeftRadius: 6 }}>
-																<Typography sx={{ fontSize: '1.05rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
-																	Activity
-																</Typography>
-															</TableCell>
-															<TableCell sx={{ width: 220, py: 0.9, px: 1 }}>
-																<Typography sx={{ fontSize: '1.05rem', fontWeight: 700, color: '#374151', textAlign: 'left' }}>
-																	Activity Template
-																</Typography>
-															</TableCell>
-															<TableCell sx={{ width: '100%', py: 0.9, px: 0 }} />
-															<TableCell sx={{ width: 170, py: 0.9, px: 1, textAlign: 'right' }}>
-																<Typography sx={{ fontSize: '1.05rem', fontWeight: 700, color: '#374151', textAlign: 'left', display: 'inline-block', width: '100%', maxWidth: 170 }}>
-																	Date Synced
-																</Typography>
-															</TableCell>
-															<TableCell sx={{ width: 180, py: 0.9, pl: 1, pr: 1.2, textAlign: 'right', borderTopRightRadius: 6, borderBottomRightRadius: 6 }}>
-																<Typography sx={{ fontSize: '1.05rem', fontWeight: 700, color: '#374151', textAlign: 'left', display: 'inline-block', width: '100%', maxWidth: 180 }}>
-																	Manage
-																</Typography>
-															</TableCell>
-														</TableRow>
-													</TableHead>
-													<TableBody>
-														{lessonActivities.map((activity, activityIndex) => {
-															const draftKey = `${project.id}:${activityIndex}`;
-															const activityType = String(activity['tmk-template'] || 'unknown');
-															const canOpenType = Boolean(getLessonActivityRoute(activityType));
+													{lessonActivities.map((activity, activityIndex) => {
+														const draftKey = `${project.id}:${activityIndex}`;
+														const activityType = String(activity['tmk-template'] || 'unknown');
+														const canOpenType = Boolean(getLessonActivityRoute(activityType));
+														const isSelectedForSlideshow = Array.isArray(selectedForSlideshowByProjectId[project.id]) && selectedForSlideshowByProjectId[project.id].includes(activityIndex);
 
-															return (
-																<TableRow
-																	key={draftKey}
-																	sx={{
-																		backgroundColor: activityIndex % 2 === 0 ? '#ffffff' : '#f8fafc',
-																	}}
-																>
-																	<TableCell sx={{ py: 0.9, pl: 1.2, pr: 1, borderTopLeftRadius: 6, borderBottomLeftRadius: 6 }}>
-																		<Stack direction="row" spacing={0.4} alignItems="center" sx={{ minWidth: 0 }}>
-																			<Checkbox
-																				size="small"
-																				checked={Array.isArray(selectedForSlideshowByProjectId[project.id]) && selectedForSlideshowByProjectId[project.id].includes(activityIndex)}
-																				onChange={(event) => {
-																					setSelectedForSlideshowByProjectId((prev) => {
-																						const current = Array.isArray(prev[project.id]) ? prev[project.id] : [];
-																						const next = event.target.checked
-																							? [...new Set([...current, activityIndex])]
-																							: current.filter((idx) => idx !== activityIndex);
-																						return { ...prev, [project.id]: next };
-																					});
-																				}}
-																				inputProps={{ 'aria-label': `Add ${activity['lesson-name'] || 'activity'} to slideshow` }}
-																			/>
-																			<Typography sx={{ fontSize: '1rem', color: '#555', textAlign: 'left' }} noWrap>
-																				{activity['lesson-name'] || project.name}
-																			</Typography>
-																		</Stack>
-																	</TableCell>
-																	<TableCell sx={{ py: 0.9, px: 1 }}>
-																		<Typography sx={{ fontSize: '0.95rem', color: '#6b7280', textAlign: 'left' }} noWrap>
-																			{activityType}
-																		</Typography>
-																	</TableCell>
-																	<TableCell sx={{ py: 0.9, px: 0 }} />
-																	<TableCell sx={{ py: 0.9, px: 1, textAlign: 'right' }}>
-																		<Typography sx={{ fontSize: '0.95rem', color: '#888', textAlign: 'left', display: 'inline-block', width: '100%', maxWidth: 170 }}>
-																			{formatActivityDate(activity['modified-at']) || '--'}
-																		</Typography>
-																	</TableCell>
-																	<TableCell sx={{ py: 0.9, pl: 1, pr: 1.2, textAlign: 'right', borderTopRightRadius: 6, borderBottomRightRadius: 6 }}>
-																		<Stack direction="row" spacing={0.5} justifyContent="flex-end" sx={{ display: 'inline-flex', width: '100%', maxWidth: 180 }}>
-																			{isAuthenticated && (
-																				<Button
-																					size="small"
-																					variant="contained"
-																					disabled={!canOpenType}
-																					onClick={() => handleOpenActivity(project, activity, activityIndex)}
-																					sx={{ textTransform: 'none', minWidth: 60 }}
-																				>
-																					Open
-																				</Button>
-																			)}
-																			{isAuthenticated && (
-																				<Button
-																					size="small"
-																					variant="contained"
-																					color="error"
-																					onClick={() => handleDeleteActivity(project.id, activityIndex)}
-																					sx={{ textTransform: 'none', minWidth: 52 }}
-																				>
-																					Delete
-																				</Button>
-																			)}
-																		</Stack>
-																	</TableCell>
-																</TableRow>
-															);
-														})}
-													</TableBody>
-												</Table>
+														return (
+															<Paper
+																key={draftKey}
+																variant="outlined"
+																sx={{
+																	p: 1.25,
+																	borderRadius: 1.5,
+																	display: 'flex',
+																	flexDirection: 'column',
+																	gap: 0.5,
+																	backgroundColor: '#fff',
+																}}
+															>
+																<Stack direction="row" alignItems="flex-start" spacing={0.5} sx={{ minWidth: 0 }}>
+																	<Checkbox
+																		size="small"
+																		checked={isSelectedForSlideshow}
+																		onChange={(event) => {
+																			setSelectedForSlideshowByProjectId((prev) => {
+																				const current = Array.isArray(prev[project.id]) ? prev[project.id] : [];
+																				const next = event.target.checked
+																					? [...new Set([...current, activityIndex])]
+																					: current.filter((idx) => idx !== activityIndex);
+																				return { ...prev, [project.id]: next };
+																			});
+																		}}
+																		inputProps={{ 'aria-label': `Add ${activity['lesson-name'] || 'activity'} to slideshow` }}
+																		sx={{ mt: -0.5, ml: -0.5, flexShrink: 0 }}
+																	/>
+																	<Typography sx={{ fontSize: '0.95rem', fontWeight: 600, color: '#1f2937', flex: 1, pt: 0.5 }} noWrap title={activity['lesson-name'] || project.name}>
+																		{activity['lesson-name'] || project.name}
+																	</Typography>
+																</Stack>
+																<Chip
+																	label={activityType}
+																	size="small"
+																	sx={{ alignSelf: 'flex-start', fontSize: '0.75rem', backgroundColor: '#eef2ff', color: '#3f37c9' }}
+																/>
+																<Typography sx={{ fontSize: '0.75rem', color: '#9ca3af', mt: 0.25 }}>
+																	{formatActivityDate(activity['modified-at']) || '--'}
+																</Typography>
+																{isAuthenticated && (
+																	<Stack direction="row" spacing={0.5} sx={{ mt: 'auto', pt: 0.75 }}>
+																		<Button
+																			size="small"
+																			variant="contained"
+																			disabled={!canOpenType}
+																			onClick={() => handleOpenActivity(project, activity, activityIndex)}
+																			sx={{ textTransform: 'none', flex: 1 }}
+																		>
+																			Open
+																		</Button>
+																		<Button
+																			size="small"
+																			variant="contained"
+																			color="error"
+																			onClick={() => handleDeleteActivity(project.id, activityIndex)}
+																			sx={{ textTransform: 'none', flex: 1 }}
+																		>
+																			Delete
+																		</Button>
+																	</Stack>
+																)}
+															</Paper>
+														);
+													})}
+												</Box>
 											)}
 										</Box>
 									);

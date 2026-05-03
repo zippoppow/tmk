@@ -30,28 +30,28 @@ function generateContainedIconButton(color) {
 
 function generateOutlinedIconButton(color) {
   return {
-    color: palette[color][500],
-    border: `2px solid ${palette[color][500]}`,
+    color: palette[color][700],
+    border: `2px solid ${palette[color][700]}`,
 
     "&:hover": {
-      color: palette[color][700],
-      borderColor: palette[color][700],
+      color: palette[color][500],
+      borderColor: palette[color][500],
     },
 
     "&:focus": {
       borderColor: "transparent",
-      boxShadow: `0 0 0 6px ${palette[color][200]}`,
+      boxShadow: `0 0 0 6px ${palette[color][800]}`,
     },
 
     "&:active": {
-      color: palette[color][800],
-      borderColor: palette[color][800],
+      color: palette[color][200],
+      borderColor: palette[color][200],
     },
 
     "&.Mui-disabled": {
       opacity: 0.5,
-      color: palette[color][700],
-      borderColor: palette[color][700],
+      color: palette[color][100],
+      borderColor: palette[color][100],
     },
   };
 }

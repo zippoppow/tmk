@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Button, Menu, MenuItem, TextField, Typography } from '@mui/material';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import ActivityShell from '../components/ActivityShell';
 import { openPrintWindow } from '../components/openPrintWindow';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
@@ -17,7 +17,7 @@ function emptyWordList() {
 }
 
 export default function IntroPage() {
-	function normalizeInputData(rawData) {
+	const normalizeInputData = useCallback((rawData) => {
 		const source = rawData && typeof rawData === 'object' ? rawData : {};
 		const incomingWords = Array.isArray(source.words) ? source.words : emptyWordList();
 		const words = incomingWords
@@ -30,7 +30,7 @@ export default function IntroPage() {
 			questionMorpheme: String(source.questionMorpheme || ''),
 			words,
 		};
-	}
+	}, []);
 
 	const router = useRouter();
 	const { hasDiyAccess, loading: diyLoading } = useDiyAccess();
