@@ -50,27 +50,6 @@ export default function LessonActivitySelector({
             }}
         >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <TextField
-                    select
-                    fullWidth
-                    label="Select Lesson Activity"
-                    value={selectedPath}
-                    onChange={handleActivityChange}
-                    disabled={disabled || activities.length === 0}
-                    size="medium"
-                    sx={{
-                        '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#fff',
-                        },
-                    }}
-                >
-                    {activities.map((activity) => (
-                        <MenuItem key={activity.path} value={activity.path}>
-                            {activity.name}
-                        </MenuItem>
-                    ))}
-                </TextField>
-
                 {selectedActivity && (
                     <Box sx={{ px: 0.5 }}>
                         <Typography
@@ -86,19 +65,53 @@ export default function LessonActivitySelector({
                     </Box>
                 )}
 
-                <Button
-                    variant="contained"
-                    fullWidth
-                    onClick={handleOpen}
-                    disabled={disabled || !selectedActivity}
+                <Box
                     sx={{
-                        textTransform: 'none',
-                        fontSize: '0.95rem',
-                        fontWeight: 600,
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        gap: 1.5,
+                        alignItems: { xs: 'stretch', sm: 'center' },
                     }}
                 >
-                    Create New Activity
-                </Button>
+                    <TextField
+                        select
+                        label="Select Lesson Activity"
+                        value={selectedPath}
+                        onChange={handleActivityChange}
+                        disabled={disabled || activities.length === 0}
+                        size="medium"
+                        sx={{
+                            minWidth: 220,
+                            width: 'auto',
+                            '& .MuiOutlinedInput-root': {
+                                backgroundColor: '#fff',
+                            },
+                        }}
+                    >
+                        {activities.map((activity) => (
+                            <MenuItem key={activity.path} value={activity.path}>
+                                {activity.name}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+
+                    <Button
+                        variant="contained"
+                        onClick={handleOpen}
+                        disabled={disabled || !selectedActivity}
+                        sx={{
+                            textTransform: 'none',
+                            fontSize: '0.95rem',
+                            fontWeight: 600,
+                            width: { xs: '100%', sm: 'auto' },
+                            alignSelf: { xs: 'stretch', sm: 'center' },
+                            whiteSpace: 'nowrap',
+                            px: 2,
+                        }}
+                    >
+                        Create New Activity
+                    </Button>
+                </Box>
 
                 {/* Preview Image */}
                 <Box
