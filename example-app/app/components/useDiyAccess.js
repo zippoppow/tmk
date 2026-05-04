@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { exchangeTeachableSessionForTmkToken, fetchAuthenticatedUser } from './authHelpers';
+import { AUTH_BYPASS_ENABLED, AUTH_BYPASS_USER, exchangeTeachableSessionForTmkToken, fetchAuthenticatedUser } from './authHelpers';
 
 const DIY_COURSE_ID = '2944218';
 const DIY_ACCESS_STORAGE_KEY = 'tmk-diy-access-by-email';
@@ -105,14 +105,23 @@ function getInitialStoredState() {
 }
 
 export function useDiyAccess() {
-  const [user, setUser] = useState(() => getInitialStoredState().storedUser);
-  const [hasDiyAccess, setHasDiyAccess] = useState(() => {
-    const { storedAccess } = getInitialStoredState();
-    return storedAccess !== null ? storedAccess : false;
+  const [user, setUser] = useState(() => {
+    if (AUTH_BYPASS_ENABLED) return AUTH_BYPASS_USER;
+    return null;
   });
-  const [loading, setLoading] = useState(() => !getInitialStoredState().hasCachedState);
+  const [hasDiyAccess, setHasDiyAccess] = useState(() => {
+    if (AUTH_BYPASS_ENABLED) return AUTH_BYPASS_USER?.access?.diyCourseActiveEnrollment === true;
+    return false;
+  });
+  const [loading, setLoading] = useState(() => {
+    if (AUTH_BYPASS_ENABLED) return false;
+    return true;
+  });
 
   useEffect(() => {
+    // In bypass mode the initial state is already correct — no network calls needed.
+    if (AUTH_BYPASS_ENABLED) return;
+
     let cancelled = false;
 
     async function checkAccess() {

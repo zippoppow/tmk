@@ -29,14 +29,14 @@ export const palette = {
     contrastText: Tokens.NeutralWhite,
   },
   success: {
-    main: Tokens.VividCucumber500,
+    main: Tokens.VividCucumber700,
     light: Tokens.VividCucumber300,
-    dark: Tokens.VividCucumber700,
+    dark: Tokens.VividCucumber500,
   },
   error: {
-    main: Tokens.VividRuby500,
+    main: Tokens.VividRuby700,
     light: Tokens.VividRuby300,
-    dark: Tokens.VividRuby700,
+    dark: Tokens.VividRuby500,
   },
   info: {
     main: brandColors.cobalt,
@@ -44,9 +44,9 @@ export const palette = {
     dark: brandColors.indigo,
   },
   warning: {
-    main: Tokens.VividHoney500,
+    main: Tokens.VividHoney700,
     light: Tokens.VividHoney300,
-    dark: Tokens.VividHoney700,
+    dark: Tokens.VividHoney500,
   },
   text: {
     primary: brandColors.midnight,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box, Button, Chip, Paper, Stack, Typography } from '@mui/material';
 import {
   applyTmkApiAuthKeyHeader,
@@ -28,12 +28,16 @@ function summarizeJson(payload) {
 export default function AuthDebugPanel() {
   const apiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
   const authOrigin = useMemo(() => resolveTmkAuthOrigin(), []);
-  const appOrigin = useMemo(() => (typeof window === 'undefined' ? '' : window.location.origin), []);
+  const [appOrigin, setAppOrigin] = useState('');
   const [status, setStatus] = useState('Idle');
   const [details, setDetails] = useState('');
   const [isBusy, setIsBusy] = useState(false);
   const [tokenInfo, setTokenInfo] = useState(getUserAccessTokenDebugInfo());
   const [sessionInfo, setSessionInfo] = useState(getTeachableSessionDebugInfo());
+
+  useEffect(() => {
+    setAppOrigin(window.location.origin || '');
+  }, []);
 
   if (!isDev) {
     return null;

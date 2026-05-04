@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	buildLessonActivityUpsertPayload,
@@ -35,6 +35,7 @@ export function useLessonActivityProject({
 	normalizeInputData,
 }) {
 	const router = useRouter();
+	const normalizeInputDataRef = useRef(normalizeInputData);
 	const [data, setData] = useState(initialData);
 	const [authUser, setAuthUser] = useState(null);
 	const [authLoading, setAuthLoading] = useState(true);
@@ -46,6 +47,12 @@ export function useLessonActivityProject({
 	const [activityName, setActivityName] = useState('');
 	const [standaloneActivityId, setStandaloneActivityId] = useState('');
 	const [isSaving, setIsSaving] = useState(false);
+
+	useEffect(() => {
+		normalizeInputDataRef.current = normalizeInputData;
+	}, [normalizeInputData]);
+
+	const normalizeInput = (raw) => normalizeInputDataRef.current(raw);
 
 	const projectApiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
 
@@ -76,13 +83,13 @@ export function useLessonActivityProject({
 					if (cloudActivity && !cancelled) {
 						setStandaloneActivityId(String(cloudActivity.id || paramActivityId));
 						setActivityName(String(cloudActivity['lesson-name'] || defaultActivityName));
-						setData(normalizeInputData(cloudActivity['lesson-input-data'] || {}));
+						setData(normalizeInput(cloudActivity['lesson-input-data'] || {}));
 						return;
 					}
 				}
 				const stored = readFormSessionData(formName);
 				if (stored && !cancelled) {
-					setData(normalizeInputData(stored));
+					setData(normalizeInput(stored));
 				}
 				return;
 			}
@@ -136,7 +143,7 @@ export function useLessonActivityProject({
 
 			if (!cancelled) {
 				setActivityName(String(resolvedActivity['lesson-name'] || defaultActivityName));
-				setData(normalizeInputData(resolvedActivity['lesson-input-data'] || {}));
+				setData(normalizeInput(resolvedActivity['lesson-input-data'] || {}));
 			}
 		};
 
@@ -145,11 +152,11 @@ export function useLessonActivityProject({
 		return () => {
 			cancelled = true;
 		};
-	}, [defaultActivityName, formName, normalizeInputData, projectApiOrigin]);
+	}, [defaultActivityName, formName, projectApiOrigin]);
 
 	useEffect(() => {
 		const timeout = setTimeout(() => {
-			const normalizedInput = normalizeInputData(data);
+			const normalizedInput = normalizeInput(data);
 			persist(normalizedInput);
 
 			if (projectId && Number.isInteger(activityIndex)) {
@@ -178,7 +185,7 @@ export function useLessonActivityProject({
 		}, 300);
 
 		return () => clearTimeout(timeout);
-	}, [activityIndex, activityName, data, defaultActivityName, normalizeInputData, projectId]);
+	}, [activityIndex, activityName, data, defaultActivityName, projectId]);
 
 	const runAuthCheck = async () => {
 		setAuthLoading(true);
@@ -246,7 +253,7 @@ export function useLessonActivityProject({
 				return false;
 			}
 
-			const normalizedInput = normalizeInputData(data);
+			const normalizedInput = normalizeInput(data);
 			const activityId = String(activities[activityIndex].id || createLessonActivityId());
 			activities[activityIndex] = {
 				...activities[activityIndex],
@@ -374,7 +381,7 @@ export function useLessonActivityProject({
 
 		setIsSaving(true);
 		try {
-			const normalizedInput = normalizeInputData(data);
+			const normalizedInput = normalizeInput(data);
 			const activityId = String(standaloneActivityId || createLessonActivityId());
 
 			const response = await upsertLessonActivity(
@@ -433,7 +440,7 @@ export function useLessonActivityProject({
 
 			setStandaloneActivityId('');
 			setActivityName('');
-			setData(normalizeInputData({}));
+			setData(normalizeInput({}));
 			const url = new URL(window.location.href);
 			url.searchParams.delete('activityId');
 			window.history.replaceState({}, '', url.toString());

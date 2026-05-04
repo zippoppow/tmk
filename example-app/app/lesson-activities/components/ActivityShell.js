@@ -107,7 +107,7 @@ export default function ActivityShell({
 				}
 			`}</style>
 			<Container maxWidth="lg">
-				<Stack spacing={1.5} sx={{ mb: 1.5 }} direction={{ xs: 'column', md: 'row' }}>
+				<Stack spacing={1.5} sx={{ mb: 1.5 }} direction={{ xs: 'column', sm: 'row' }} flexWrap="wrap" useFlexGap>
 					<Button
 						variant="outlined"
 						onClick={() => router.push('/dashboard')}
@@ -163,29 +163,29 @@ export default function ActivityShell({
 				{projectId && (
 					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea', }}>
 						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-							<Typography sx={{ fontSize: '2rem', color: '#011436', fontWeight: 700 }}>
-								PROJECT:
-							</Typography>
-							<Typography sx={{ fontSize: '2rem', mb: 0, color: '#000000', fontWeight: 700, fontStyle: 'italic' }}>
+						<Typography sx={{ fontSize: { xs: '1.3rem', sm: '1.6rem', md: '2rem' }, color: '#011436', fontWeight: 700 }}>
+							PROJECT:
+						</Typography>
+						<Typography sx={{ fontSize: { xs: '1.3rem', sm: '1.6rem', md: '2rem' }, mb: 0, color: '#000000', fontWeight: 700, fontStyle: 'italic' }}>
 								{projectName}
 							</Typography>
 						</Box>
 						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-							<Typography sx={{ fontSize: '1.2rem', color: '#011436', fontWeight: 700 }}>
-								Activity Type:
-							</Typography>
-							<Typography sx={{ fontSize: '1.2rem', mb: 0, color: '#000000', fontWeight: 400, fontStyle: 'italic' }}>
-								{title}
-							</Typography>
-						</Box>
-						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-							<Typography sx={{ fontSize: '1.2rem', color: '#011436', fontWeight: 700 }}>
-								Activity Name:
-							</Typography>
-							<TextField
-								value={activityName}
-								onChange={(event) => setActivityName(event.target.value)}
-								sx={{ minWidth: 360 }}
+						<Typography sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' }, color: '#011436', fontWeight: 700 }}>
+							Activity Type:
+						</Typography>
+						<Typography sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' }, mb: 0, color: '#000000', fontWeight: 400, fontStyle: 'italic' }}>
+							{title}
+						</Typography>
+					</Box>
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+						<Typography sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' }, color: '#011436', fontWeight: 700 }}>
+							Activity Name:
+						</Typography>
+						<TextField
+							value={activityName}
+							onChange={(event) => setActivityName(event.target.value)}
+							sx={{ minWidth: { sm: 360 }, width: { xs: '100%', sm: 'auto' } }}
 								inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.4rem', color: '#000000' } }}
 							/>
 						</Box>
@@ -196,22 +196,22 @@ export default function ActivityShell({
 				{!projectId && (
 					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
 						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-							<Typography sx={{ fontSize: '1.2rem', color: '#011436', fontWeight: 700 }}>
-								Activity Type:
-							</Typography>
-							<Typography sx={{ fontSize: '1.2rem', mb: .5, color: '#000000', fontWeight: 400, fontStyle: 'italic' }}>
-								{title}
-							</Typography>
-						</Box>
-						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-							<Typography sx={{ fontSize: '1.2rem', color: '#011436', fontWeight: 700 }}>
-								Activity Name:
-							</Typography>
-							<TextField
-								size="small"
-								value={activityName}
-								onChange={(event) => setActivityName(event.target.value)}
-								sx={{ minWidth: 360 }}
+						<Typography sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' }, color: '#011436', fontWeight: 700 }}>
+							Activity Type:
+						</Typography>
+						<Typography sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' }, mb: .5, color: '#000000', fontWeight: 400, fontStyle: 'italic' }}>
+							{title}
+						</Typography>
+					</Box>
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+						<Typography sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' }, color: '#011436', fontWeight: 700 }}>
+							Activity Name:
+						</Typography>
+						<TextField
+							size="small"
+							value={activityName}
+							onChange={(event) => setActivityName(event.target.value)}
+							sx={{ minWidth: { sm: 360 }, width: { xs: '100%', sm: 'auto' } }}
 								inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 							/>
 						</Box>
@@ -273,11 +273,11 @@ export default function ActivityShell({
 				</Box>
 
 				<Card id="lesson-activity-print-root" sx={{ borderRadius: 2, boxShadow: 8 }}>
-					<CardContent sx={{ p: { xs: 2, md: 4 } }}>
+					<CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
 						<Box
 							sx={{
 								display: 'grid',
-								gridTemplateColumns: { xs: '1fr', md: '3fr 1fr' },
+								gridTemplateColumns: { xs: '1fr', sm: '3fr 1fr' },
 								gap: 2,
 								borderBottom: '3px solid #4020A7',
 								pb: 1.5,
@@ -305,7 +305,7 @@ export default function ActivityShell({
 								</Box>
 								<Typography color="text.secondary">{instructions}</Typography>
 							</Stack>
-							<Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, alignItems: 'flex-start' }}>
+							<Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', sm: 'flex-end' }, alignItems: 'flex-start' }}>
 								<TmkLogo renderMode="img" sx={{ maxWidth: 200 }} />
 							</Box>
 						</Box>

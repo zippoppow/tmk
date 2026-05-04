@@ -211,7 +211,7 @@ export default function MorphMatchRelatedWordsPage() {
 			notice={notice}
 			setNotice={setNotice}
 		>
-			<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 4, mt: 3 }}>
+			<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 4, mt: 3 }}>
 				<Stack spacing={1.8}>
 					{data.focusWords.map((value, index) => (
 						<TextField

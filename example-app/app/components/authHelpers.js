@@ -18,7 +18,7 @@ export {
 	USER_AUTH_ENDPOINTS,
 } from './sharedHelperConstants';
 
-const AUTH_BYPASS_USER = {
+export const AUTH_BYPASS_USER = {
 	id: String(process.env.NEXT_PUBLIC_DEV_USER_ID || 'dev-user').trim() || 'dev-user',
 	name: String(process.env.NEXT_PUBLIC_DEV_USER_NAME || 'Development User').trim() || 'Development User',
 	email: String(process.env.NEXT_PUBLIC_DEV_USER_EMAIL || 'dev@example.com').trim() || 'dev@example.com',

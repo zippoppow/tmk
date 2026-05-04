@@ -8,7 +8,7 @@ const lato = Lato({
 });
 
 export const metadata = {
-  title: 'The Morphology Kit® Admin',
+  title: 'The Morphology Kit® DIY',
   description: 'Tools and resources for teaching morphology.',
 };
 
