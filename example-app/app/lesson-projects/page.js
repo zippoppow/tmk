@@ -936,43 +936,37 @@ export default function LessonProjectsPage() {
 		>
 			<Container maxWidth="xl">
 				<AuthDebugPanel />
-				<Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} sx={{ mb: 2 }}>
-					<Button variant="outlined" onClick={() => router.push('/dashboard')} sx={{ textTransform: 'none' }}>
-						Back to Dashboard
-					</Button>
-					<Button
-						variant="contained"
-						onClick={() => {
-							if (isAuthenticated) {
-								window.location.href = buildTeachableLogoutUrl('/lesson-projects');
-								return;
-							}
-							window.location.href = '/login?next=/lesson-projects';
-						}}
-						sx={{ textTransform: 'none' }}
-					>
-						{isAuthenticated ? 'Logout from Teachable' : 'Login with Teachable'}
-					</Button>
-				</Stack>
-
-				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
-					<Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-end' }, alignItems: 'flex-start', pr: { xs: 0, md: 5 } }}>
-							<Stack direction="column" alignItems="center" spacing={0.5} sx={{ mb: 1 }}>
-								<TmkLogo sx={{ mb: 2 }} />
-								<Typography sx={{ fontSize: '3rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 1 }}>
-									Projects
-								</Typography>
-							</Stack>
-					</Box>
-				</Paper>
+				<Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' }, alignItems: 'flex-end', pr: { xs: 0, md: 5 } }}>
+					<Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 1 }}>
+						<TmkLogo sx={{ mb: 2 }} />
+						<Typography sx={{ fontSize: '4rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 1, pl: 2 }}>
+							Projects
+						</Typography>
+					</Stack>
+					<Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} sx={{ mb: 1, ml: 'auto' }}>
+						<Button variant="outlined" onClick={() => router.push('/dashboard')} sx={{ textTransform: 'none' }}>
+							Back to Dashboard
+						</Button>
+						<Button
+							variant="contained"
+							onClick={() => {
+								if (isAuthenticated) {
+									window.location.href = buildTeachableLogoutUrl('/lesson-projects');
+									return;
+								}
+								window.location.href = '/login?next=/lesson-projects';
+							}}
+							sx={{ textTransform: 'none' }}
+						>
+							{isAuthenticated ? 'Logout from Teachable' : 'Login with Teachable'}
+						</Button>
+					</Stack>
+				</Box>
 				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
 					<Box>
 							<Typography sx={{ fontSize: '1.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>Create a Project</Typography>
-							<Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 2 }}>
-								Clicking "Create Project" will add a new project to the "SAVED PROJECTS" section below.
-							</Typography>
-							<Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 2 }}>
-								You can create as many projects as you want, and they will be saved for you to access later.
+							<Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 2, maxWidth: 800 }}>
+								First create a project to organize your lesson activities. Each project can contain one or more lesson activities, and you can have multiple projects for different courses or topics.
 							</Typography>
 							<Stack
 								direction={{ xs: 'column', sm: 'row' }}
@@ -1029,19 +1023,19 @@ export default function LessonProjectsPage() {
 					</Box>
 				</Paper>
 				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
-					<Typography sx={{ fontSize: '2rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 1 }}>
-						Saved Projects
+					<Typography sx={{ fontSize: '2rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 0 }}>
+						Lesson Activity Projects
 					</Typography>
-					<Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 2 }}>
+					<Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 4 }}>
 						Now that you've created a project, add one or more lesson activities to that project.
 					</Typography>
 					{displayProjects.length === 0 && (
 						<Typography sx={{ color: '#bbb', fontSize: '1.2rem', textAlign: 'center', py: 2 }}>
-							No saved projects yet.
+							No lesson activity projects yet.
 						</Typography>
 					)}
 
-					<Stack spacing={1}>
+					<Stack spacing={3}>
 								{displayProjects.map((project) => {
 									const lessonActivities = Array.isArray(project.lessonActivities) ? project.lessonActivities : [];
 
@@ -1050,27 +1044,53 @@ export default function LessonProjectsPage() {
 											key={project.id}
 											sx={{
 												border: '1px solid',
-											borderColor: '#e0e0e0',
-												borderRadius: 1,
-												p: 1.2,
-											backgroundColor: '#fafafa',
+												borderColor: '#060279',
+												borderRadius: 2,
+												p: 1.5,
+												backgroundColor: '#eeeff9',
 											}}
 										>
-											<Stack direction="row" alignItems="center" spacing={0.8}>
-												
-												<Typography sx={{ fontSize: '1.4rem', fontWeight: 700, fontStyle: 'italic', flex: 1 }} noWrap title={project.name}>
-													PROJECT: {project.name}
-												</Typography>
-												<Chip
-													label={`Total Activities: ${lessonActivities.length}`}
-													size="small"
-													sx={{
-														height: 18,
-														fontSize: '0.89rem',
-														backgroundColor: '#eef2ff',
-														color: '#3f37c9',
-													}}
-												/>
+											<Stack direction="row" alignItems="center" spacing={0.8}>	
+												<Stack direction="column" spacing={0.2} sx={{ flex: 1, minWidth: 0 }}>
+													<Typography sx={{ fontSize: '1.7rem', fontWeight: 700, fontStyle: 'italic' }} noWrap title={project.name}>
+														PROJECT: {project.name}
+													</Typography>
+													<Stack direction="row" alignItems="center" spacing={1}>
+														<Typography sx={{ fontSize: '0.75rem', color: '#888' }}>
+															Created: {formatProjectDate(project.createdAt)}
+														</Typography>
+														<Chip
+															label={`Total Activities: ${lessonActivities.length}`}
+															size="small"
+															sx={{
+																height: 18,
+																fontSize: '0.89rem',
+																backgroundColor: '#e8e8e8',
+																color: '#3f37c9',
+															}}
+														/>
+													</Stack>
+												</Stack>
+												{lessonActivities.length > 0 && (
+													<Button
+														size="small"
+														variant="outlined"
+														onClick={() => handleLaunchSlideshow(project.id)}
+														sx={{
+															textTransform: 'none',
+															color: '#3f37c9',
+															borderColor: '#3f37c9',
+															backgroundColor: '#fff',
+															'&:hover': {
+																color: '#fff',
+																borderColor: '#2f2a99',
+																backgroundColor: '#3f37c9',
+															},
+														}}
+													>
+														Present Lesson Activities
+													</Button>
+												)}
 												{isAuthenticated && (
 													<Button size="small" variant="contained" color="info" onClick={() => handleSyncProject(project.id)} sx={{ textTransform: 'none' }}>
 														Sync Project Changes
@@ -1083,14 +1103,7 @@ export default function LessonProjectsPage() {
 												)}
 												
 											</Stack>
-
-											<Typography sx={{ fontSize: '0.75rem', color: '#888', mt: 0.2 }}>
-												{formatProjectDate(project.createdAt)}
-												{' · '}
-												{project.syncedAt ? 'Synced' : 'Saved'}
-											</Typography>
-
-											<Stack direction={{ xs: 'column', md: 'row' }} spacing={0.6} sx={{ mt: 1, mb: lessonActivities.length ? 0.8 : 0 }}>
+											<Stack direction="row" spacing={0.6} sx={{ mt: 1, mb: lessonActivities.length ? 0.8 : 0 }}>
 											<Box
 												component="select"
 												value={newActivityTypeByProjectId[project.id] || defaultActivityType}
@@ -1114,31 +1127,11 @@ export default function LessonProjectsPage() {
 													</option>
 												))}
 											</Box>
-											{(
+											<Stack direction="column" spacing={0.6}>
 												<Button size="small" variant="contained" color="success" onClick={() => handleNewActivity(project.id)} sx={{ textTransform: 'none' }}>
 													Add Activity
 												</Button>
-											)}
-											{lessonActivities.length > 0 && (
-												<Button
-													size="small"
-													variant="outlined"
-													onClick={() => handleLaunchSlideshow(project.id)}
-													sx={{
-														textTransform: 'none',
-														color: '#3f37c9',
-														borderColor: '#3f37c9',
-														backgroundColor: '#fff',
-														'&:hover': {
-															color: '#fff',
-															borderColor: '#2f2a99',
-															backgroundColor: '#3f37c9',
-														},
-													}}
-												>
-													Present Lesson Activities
-												</Button>
-											)}
+											</Stack>
 											</Stack>
 
 											{lessonActivities.length > 0 && (
