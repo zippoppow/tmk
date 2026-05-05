@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { Box, Button, Grid, Stack, TextField, Typography, Menu, MenuItem } from '@mui/material';
+import { Box, Button, Grid, IconButton, Stack, TextField, Typography } from '@mui/material';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import ActivityShell from '../components/ActivityShell';
 import { openPrintWindow } from '../components/openPrintWindow';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
+import { ActivityDndProvider, DropZone } from '../components/shared';
 
 const FORM_NAME = 'common-base-word';
 const DEFAULT_ACTIVITY_NAME = 'Common Base Word Activity';
@@ -13,7 +15,7 @@ function emptyData() {
 	return {
 		morpheme: '',
 		grid: Array.from({ length: 9 }, () => ''),
-		groups: Array.from({ length: 3 }, () => ''),
+		groups: Array.from({ length: 3 }, () => []),
 	};
 }
 
@@ -25,13 +27,53 @@ function normalizeInputData(rawData) {
 	return {
 		morpheme: String(source.morpheme || ''),
 		grid: Array.from({ length: 9 }, (_, index) => String(gridSource[index] || '')),
-		groups: Array.from({ length: 3 }, (_, index) => String(groupsSource[index] || '')),
+		groups: Array.from({ length: 3 }, (_, index) => {
+			const g = groupsSource[index];
+			if (Array.isArray(g)) return g.map(String).filter(Boolean);
+			if (typeof g === 'string' && g.trim()) return g.split('\n').filter(Boolean);
+			return [];
+		}),
 	};
 }
 
-export default function CommonBaseWordPage() {
-	const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, gridIndex: -1 });
+function DragHandle({ id, data, label, disabled = false }) {
+	const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id, data, disabled });
 
+	return (
+		<Box
+			ref={setNodeRef}
+			component="button"
+			type="button"
+			aria-label={label}
+			{...attributes}
+			{...listeners}
+			sx={{
+				display: 'inline-flex',
+				alignItems: 'center',
+				justifyContent: 'center',
+				flexShrink: 0,
+				width: 28,
+				height: 28,
+				border: '1px dashed #667eea',
+				borderRadius: 1,
+				backgroundColor: isDragging ? 'rgba(102, 126, 234, 0.10)' : '#f9faff',
+				color: '#4020A7',
+				fontSize: '0.9rem',
+				lineHeight: 1,
+				cursor: disabled ? 'default' : isDragging ? 'grabbing' : 'grab',
+				userSelect: 'none',
+				touchAction: disabled ? 'auto' : 'none',
+				opacity: disabled ? 0.45 : isDragging ? 0.75 : 1,
+				transform: CSS.Translate.toString(transform),
+				transition: 'opacity 120ms ease, transform 120ms ease, background-color 120ms ease',
+			}}
+		>
+			::
+		</Box>
+	);
+}
+
+export default function CommonBaseWordPage() {
 	const {
 		data,
 		setData,
@@ -69,63 +111,72 @@ export default function CommonBaseWordPage() {
 		});
 	};
 
-	const setGroupValue = (index, value) => {
+	const addWordToGroup = (groupIndex, word) => {
+		const trimmed = String(word || '').trim();
+		if (!trimmed) return;
 		setData((prev) => {
-			const next = [...prev.groups];
-			next[index] = value;
-			return { ...prev, groups: next };
+			const nextGroups = prev.groups.map((g) => [...g]);
+			nextGroups[groupIndex] = [...nextGroups[groupIndex], trimmed];
+			return { ...prev, groups: nextGroups };
 		});
 	};
 
-	const openGroupMenu = (event, gridIndex) => {
-		event.stopPropagation();
-		const word = data.grid[gridIndex];
-		if (!word || !word.trim()) return;
-		setContextMenu({
-			open: true,
-			x: event.clientX,
-			y: event.clientY,
-			gridIndex,
+	const removeWordFromGroup = (groupIndex, wordIndex) => {
+		setData((prev) => {
+			const nextGroups = prev.groups.map((g) => [...g]);
+			nextGroups[groupIndex].splice(wordIndex, 1);
+			return { ...prev, groups: nextGroups };
 		});
 	};
 
-	const closeGroupMenu = () => {
-		setContextMenu({ open: false, x: 0, y: 0, gridIndex: -1 });
+	const moveGridWordToGroup = (groupIndex, payload) => {
+		if (!payload?.value || typeof payload.gridIndex !== 'number') return;
+		setData((prev) => {
+			const sourceValue = String(prev.grid[payload.gridIndex] || '').trim();
+			if (!sourceValue) return prev;
+			const nextGrid = [...prev.grid];
+			nextGrid[payload.gridIndex] = '';
+			const nextGroups = prev.groups.map((g) => [...g]);
+			nextGroups[groupIndex] = [...nextGroups[groupIndex], sourceValue];
+			return { ...prev, grid: nextGrid, groups: nextGroups };
+		});
 	};
 
-	const addWordToGroup = (groupIndex) => {
-		if (contextMenu.gridIndex < 0) return;
-		const word = data.grid[contextMenu.gridIndex];
-		if (!word || !word.trim()) {
-			closeGroupMenu();
+	const moveGroupWordToGrid = (gridIndex, payload) => {
+		if (!payload?.value || typeof payload.groupIndex !== 'number' || typeof payload.wordIndex !== 'number') return;
+		setData((prev) => {
+			if (String(prev.grid[gridIndex] || '').trim()) return prev;
+			const sourceValue = String(prev.groups[payload.groupIndex]?.[payload.wordIndex] || '').trim();
+			if (!sourceValue) return prev;
+			const nextGrid = [...prev.grid];
+			nextGrid[gridIndex] = sourceValue;
+			const nextGroups = prev.groups.map((g) => [...g]);
+			nextGroups[payload.groupIndex].splice(payload.wordIndex, 1);
+			return { ...prev, grid: nextGrid, groups: nextGroups };
+		});
+	};
+
+	const handleDragEnd = (event) => {
+		const payload = event?.active?.data?.current;
+		const dropTarget = event?.over?.data?.current;
+		if (!payload || !dropTarget) return;
+
+		if (payload.sourceType === 'grid' && dropTarget.targetType === 'group') {
+			moveGridWordToGroup(dropTarget.groupIndex, payload);
 			return;
 		}
 
-		setData((prev) => {
-			const currentValue = prev.groups[groupIndex].trim();
-			const newValue = currentValue ? `${currentValue}\n${word}` : word;
-			const nextGroups = [...prev.groups];
-			nextGroups[groupIndex] = newValue;
-			return {
-				...prev,
-				groups: nextGroups,
-			};
-		});
-		closeGroupMenu();
+		if (payload.sourceType === 'group-word' && dropTarget.targetType === 'grid-cell') {
+			moveGroupWordToGrid(dropTarget.gridIndex, payload);
+		}
 	};
 
 	const handleClearWordGrid = () => {
-		setData((prev) => ({
-			...prev,
-			grid: Array.from({ length: 9 }, () => ''),
-		}));
+		setData((prev) => ({ ...prev, grid: Array.from({ length: 9 }, () => '') }));
 	};
 
 	const handleClearSortingBoxes = () => {
-		setData((prev) => ({
-			...prev,
-			groups: Array.from({ length: 3 }, () => ''),
-		}));
+		setData((prev) => ({ ...prev, groups: Array.from({ length: 3 }, () => []) }));
 	};
 
 	const handleDownloadPdfCustom = () => {
@@ -138,7 +189,7 @@ export default function CommonBaseWordPage() {
 				(group, i) => `
 			<div class="group-box">
 				<div class="group-label">Group ${i + 1}</div>
-				<div class="group-content">${(group || '').replace(/</g, '&lt;').replace(/\n/g, '<br/>')}</div>
+				<div class="group-content">${(Array.isArray(group) ? group : []).map((w) => (w || '').replace(/</g, '&lt;')).join('<br/>')}</div>
 			</div>`,
 			)
 			.join('');
@@ -170,7 +221,7 @@ export default function CommonBaseWordPage() {
     .groups { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .group-box { border: 2px solid #4a4a4a; border-radius: 4px; padding: 10px; min-height: 180px; }
     .group-label { font-weight: bold; margin-bottom: 8px; }
-    .group-content { font-family: 'Courier New', monospace; font-size: 0.95em; white-space: pre-wrap; }
+    .group-content { font-family: 'Courier New', monospace; font-size: 0.95em; }
     .license-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e5e7eb; text-align: right; font-size: 0.8em; color: #4b5563; font-style: italic; }
     @media print { @page { size: letter portrait; margin: 0.4in; } body { padding: 0; } }
   </style>
@@ -222,78 +273,139 @@ export default function CommonBaseWordPage() {
 			notice={notice}
 			setNotice={setNotice}
 		>
-			<Box sx={{ my: 3 }}>
-				{Array.from({ length: 3 }, (_, rowIndex) => (
-					<Box key={rowIndex} sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5, mb: 1.5 }}>
-						{Array.from({ length: 3 }, (_, colIndex) => {
-							const index = rowIndex * 3 + colIndex;
-							return (
-								<TextField
-									key={index}
-									value={data.grid[index] || ''}
-									onChange={(event) => setGridValue(index, event.target.value)}
-									onContextMenu={(event) => openGroupMenu(event, index)}
-									size="small"
-									inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
-									sx={{
-										'& .MuiOutlinedInput-root': {
-											'& fieldset': { borderColor: '#4020A7', borderWidth: '2px', borderRadius: '4px' },
-											'&:hover fieldset': { borderColor: '#667eea' },
-											'&.Mui-focused fieldset': { borderColor: '#667eea' },
-										},
-									}}
-								/>
-							);
-						})}
-					</Box>
-				))}
-			</Box>
+			<ActivityDndProvider onDragEnd={handleDragEnd}>
+				{/* Top word grid */}
+				<Box sx={{ my: 3 }}>
+					{Array.from({ length: 3 }, (_, rowIndex) => (
+						<Box key={rowIndex} sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5, mb: 1.5 }}>
+							{Array.from({ length: 3 }, (_, colIndex) => {
+								const index = rowIndex * 3 + colIndex;
+								const cellValue = data.grid[index] || '';
+								return (
+									<DropZone
+										key={index}
+										id={`grid-drop-${index}`}
+										data={{ targetType: 'grid-cell', gridIndex: index }}
+										minHeight={56}
+										sx={{ p: 0.5, borderRadius: 1 }}
+										inactiveSx={{ borderColor: 'transparent' }}
+										activeSx={{ borderColor: '#667eea', backgroundColor: 'rgba(102, 126, 234, 0.06)' }}
+									>
+										<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+											<TextField
+												value={cellValue}
+												onChange={(event) => setGridValue(index, event.target.value)}
+												size="small"
+												inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+												sx={{
+													flex: 1,
+													'& .MuiOutlinedInput-root': {
+														'& fieldset': { borderColor: '#4020A7', borderWidth: '2px', borderRadius: '4px' },
+														'&:hover fieldset': { borderColor: '#667eea' },
+														'&.Mui-focused fieldset': { borderColor: '#667eea' },
+													},
+												}}
+											/>
+											{String(cellValue).trim() ? (
+												<DragHandle
+													id={`grid-${index}-${cellValue}`}
+													label={`Drag grid item ${index + 1}`}
+													data={{
+														sourceType: 'grid',
+														gridIndex: index,
+														value: String(cellValue).trim(),
+													}}
+												/>
+											) : null}
+										</Box>
+									</DropZone>
+								);
+							})}
+						</Box>
+					))}
+				</Box>
 
-			<Box sx={{ textAlign: 'center', fontSize: '1.05rem', color: '#555', mb: 3 }}>
-				Sort the words into 3 different columns based on a shared base word.
-			</Box>
+				<Box sx={{ textAlign: 'center', fontSize: '1.05rem', color: '#555', mb: 3 }}>
+					Sort the words into 3 different columns based on a shared base word.
+				</Box>
 
-			<Typography sx={{ fontWeight: 700, mb: 1.5 }}>Common Base Word Groups</Typography>
-			<Grid container spacing={2}>
-				{data.groups.map((group, index) => (
-					<Grid item xs={12} md={4} key={`group-${index}`}>
-						<Stack spacing={1}>
-							<Box sx={{ border: '2px solid #4a4a4a', borderRadius: 1, minHeight: 200, p: 1.25, backgroundColor: '#fafafa' }}>
-								<TextField
-									multiline
-									minRows={8}
-									fullWidth
-									value={group}
-									onChange={(event) => setGroupValue(index, event.target.value)}
-									placeholder="List related words..."
-									variant="standard"
-									InputProps={{ disableUnderline: true }}
-									inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem' } }}
-								/>
-							</Box>
-						</Stack>
-					</Grid>
-				))}
-			</Grid>
-			<Menu
-				open={contextMenu.open}
-				onClose={closeGroupMenu}
-				anchorPosition={{ top: contextMenu.y, left: contextMenu.x }}
-				anchorReference="anchorPosition"
-			>
-				<MenuItem onClick={() => addWordToGroup(0)}>Add to Column 1</MenuItem>
-				<MenuItem onClick={() => addWordToGroup(1)}>Add to Column 2</MenuItem>
-				<MenuItem onClick={() => addWordToGroup(2)}>Add to Column 3</MenuItem>
-			</Menu>
+				{/* Group boxes */}
+				<Typography sx={{ fontWeight: 700, mb: 1.5 }}>Common Base Word Groups</Typography>
+				<Grid container spacing={2}>
+					{data.groups.map((group, groupIndex) => (
+						<Grid item xs={12} md={4} key={`group-${groupIndex}`}>
+							<DropZone
+								id={`group-drop-${groupIndex}`}
+								data={{ targetType: 'group', groupIndex }}
+								minHeight={200}
+								sx={{ p: 1.25, borderRadius: 1, display: 'flex', flexDirection: 'column', gap: 1 }}
+								inactiveSx={{ borderColor: '#4a4a4a', borderStyle: 'solid', backgroundColor: '#fafafa' }}
+								activeSx={{ borderColor: '#667eea', backgroundColor: 'rgba(102, 126, 234, 0.06)' }}
+							>
+								<Typography sx={{ fontWeight: 700, fontSize: '0.95rem', color: '#555', mb: 0.5 }}>
+									Group {groupIndex + 1}
+								</Typography>
 
-			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap', mt: 4 }}>
-				<Button variant="outlined" onClick={handleClearWordGrid} sx={{ minWidth: 180 }}>
-					Clear the Word Grid
-				</Button>
-				<Button variant="outlined" onClick={handleClearSortingBoxes} sx={{ minWidth: 190 }}>
-					Clear the Sorting Boxes
-				</Button>
-			</Box>
+								<Stack spacing={0.75} sx={{ flex: 1 }}>
+									{group.map((word, wordIndex) => (
+										<Box
+											key={`${groupIndex}-${wordIndex}-${word}`}
+											sx={{
+												display: 'flex',
+												alignItems: 'center',
+												gap: 0.75,
+												px: 1,
+												py: 0.5,
+												borderRadius: 1,
+												backgroundColor: '#f0f0f8',
+												border: '1px solid #d5d5e5',
+											}}
+										>
+											<DragHandle
+												id={`group-word-${groupIndex}-${wordIndex}-${word}`}
+												label={`Drag ${word} from group ${groupIndex + 1}`}
+												data={{
+													sourceType: 'group-word',
+													groupIndex,
+													wordIndex,
+													value: String(word).trim(),
+												}}
+											/>
+											<Typography
+												sx={{
+													flex: 1,
+													fontFamily: 'Trebuchet MS, sans-serif',
+													fontSize: '1.1rem',
+													color: '#222',
+												}}
+											>
+												{word}
+											</Typography>
+											<IconButton
+												size="small"
+												onPointerDown={(event) => event.stopPropagation()}
+												onClick={() => removeWordFromGroup(groupIndex, wordIndex)}
+												sx={{ color: '#999', fontSize: '1rem', p: 0.25 }}
+											>
+												×
+											</IconButton>
+										</Box>
+									))}
+								</Stack>
+							</DropZone>
+						</Grid>
+					))}
+				</Grid>
+
+				<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap', mt: 4 }}>
+					<Button variant="outlined" onClick={handleClearWordGrid} sx={{ minWidth: 180 }}>
+						Clear the Word Grid
+					</Button>
+					<Button variant="outlined" onClick={handleClearSortingBoxes} sx={{ minWidth: 190 }}>
+						Clear the Sorting Boxes
+					</Button>
+				</Box>
+			</ActivityDndProvider>
 		</ActivityShell>
 	);
 }

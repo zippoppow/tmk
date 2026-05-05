@@ -2,9 +2,12 @@
 
 import { useState } from 'react';
 import { Box, Button, Grid, IconButton, List, ListItem, ListItemText, Stack, TextField, Typography, Menu, MenuItem } from '@mui/material';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import ActivityShell from '../components/ActivityShell';
 import { openPrintWindow } from '../components/openPrintWindow';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
+import { ActivityDndProvider, DropZone } from '../components/shared';
 
 const FORM_NAME = 'morph-sort';
 const DEFAULT_ACTIVITY_NAME = 'Morph Sort Activity';
@@ -29,8 +32,44 @@ function normalizeInputData(rawData) {
 	};
 }
 
+function DragHandle({ id, data, disabled = false }) {
+	const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id, data, disabled });
+	return (
+		<Box
+			ref={setNodeRef}
+			component="button"
+			type="button"
+			aria-label="Drag word"
+			{...attributes}
+			{...listeners}
+			sx={{
+				display: 'inline-flex',
+				alignItems: 'center',
+				justifyContent: 'center',
+				width: 28,
+				height: 28,
+				border: '1px dashed #667eea',
+				borderRadius: 1,
+				backgroundColor: isDragging ? 'rgba(102, 126, 234, 0.10)' : '#f9faff',
+				color: '#4020A7',
+				fontSize: '0.9rem',
+				lineHeight: 1,
+				cursor: disabled ? 'default' : isDragging ? 'grabbing' : 'grab',
+				userSelect: 'none',
+				touchAction: disabled ? 'auto' : 'none',
+				opacity: disabled ? 0.45 : isDragging ? 0.75 : 1,
+				transform: CSS.Translate.toString(transform),
+				transition: 'opacity 120ms ease, transform 120ms ease, background-color 120ms ease',
+			}}
+		>
+			::
+		</Box>
+	);
+}
+
 export default function MorphSortPage() {
 	const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, wordIndex: -1 });
+	const [selectedWordIndex, setSelectedWordIndex] = useState(null);
 
 	const {
 		data,
@@ -96,6 +135,42 @@ export default function MorphSortPage() {
 		closeSortMenu();
 	};
 
+	const handleSelectWord = (index) => {
+		const word = String(data.words[index] || '').trim();
+		if (!word) return;
+		setSelectedWordIndex((prev) => (prev === index ? null : index));
+	};
+
+	const handleAddSelectedToBox = (column) => {
+		if (selectedWordIndex === null) return;
+		const value = String(data.words[selectedWordIndex] || '').trim();
+		if (!value) { setSelectedWordIndex(null); return; }
+		setData((prev) => {
+			const nextWords = [...prev.words];
+			nextWords[selectedWordIndex] = '';
+			const field = column === 'left' ? 'leftItems' : 'rightItems';
+			return { ...prev, words: nextWords, [field]: [...prev[field], value] };
+		});
+		setSelectedWordIndex(null);
+	};
+
+	const handleMoveBoxItem = (fromColumn, itemIndex, toColumn) => {
+		setData((prev) => {
+			const srcField = fromColumn === 'left' ? 'leftItems' : 'rightItems';
+			const tgtField = toColumn === 'left' ? 'leftItems' : 'rightItems';
+			const nextSrc = [...prev[srcField]];
+			const [moved] = nextSrc.splice(itemIndex, 1);
+			if (toColumn === 'words') {
+				const nextWords = [...prev.words];
+				const emptyIdx = nextWords.findIndex((w) => !String(w || '').trim());
+				if (emptyIdx < 0) return prev;
+				nextWords[emptyIdx] = moved;
+				return { ...prev, [srcField]: nextSrc, words: nextWords };
+			}
+			return { ...prev, [srcField]: nextSrc, [tgtField]: [...prev[tgtField], moved] };
+		});
+	};
+
 	const removeItem = (column, itemIndex) => {
 		setData((prev) => {
 			const field = column === 'left' ? 'leftItems' : 'rightItems';
@@ -103,6 +178,53 @@ export default function MorphSortPage() {
 			next.splice(itemIndex, 1);
 			return { ...prev, [field]: next };
 		});
+	};
+
+	const handleDragEnd = (event) => {
+		const source = event?.active?.data?.current;
+		const target = event?.over?.data?.current;
+		if (!source || !target) return;
+
+		// Middle word → sort box
+		if (source.sourceType === 'word' && target.targetType === 'sort-box') {
+			const value = String(data.words[source.wordIndex] || '').trim();
+			if (!value) return;
+			setData((prev) => {
+				const nextWords = [...prev.words];
+				nextWords[source.wordIndex] = '';
+				const field = target.column === 'left' ? 'leftItems' : 'rightItems';
+				return { ...prev, words: nextWords, [field]: [...prev[field], value] };
+			});
+			return;
+		}
+
+		// Box item → other sort box
+		if (source.sourceType === 'box-item' && target.targetType === 'sort-box') {
+			if (source.column === target.column) return;
+			setData((prev) => {
+				const srcField = source.column === 'left' ? 'leftItems' : 'rightItems';
+				const tgtField = target.column === 'left' ? 'leftItems' : 'rightItems';
+				const nextSrc = [...prev[srcField]];
+				const [moved] = nextSrc.splice(source.itemIndex, 1);
+				return { ...prev, [srcField]: nextSrc, [tgtField]: [...prev[tgtField], moved] };
+			});
+			return;
+		}
+
+		// Box item → words column
+		if (source.sourceType === 'box-item' && target.targetType === 'words-column') {
+			setData((prev) => {
+				const srcField = source.column === 'left' ? 'leftItems' : 'rightItems';
+				const nextSrc = [...prev[srcField]];
+				const nextWords = [...prev.words];
+				const emptyIdx = nextWords.findIndex((w) => !String(w || '').trim());
+				if (emptyIdx < 0) return prev;
+				const [moved] = nextSrc.splice(source.itemIndex, 1);
+				nextWords[emptyIdx] = moved;
+				return { ...prev, [srcField]: nextSrc, words: nextWords };
+			});
+			return;
+		}
 	};
 
 	const handleClearWords = () => {
@@ -205,23 +327,27 @@ export default function MorphSortPage() {
 			notice={notice}
 			setNotice={setNotice}
 		>
-			<Grid container spacing={2} sx={{ mt: 2 }}>
-				<Grid item xs={12} md={4}>
+			<ActivityDndProvider onDragEnd={handleDragEnd}>
+			<Grid container spacing={2} sx={{ mt: 2, alignItems: 'stretch' }}>
+				<Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column' }}>
 					<Typography sx={{ fontWeight: 700, mb: 1 }}>Sort Box A</Typography>
-					<Box
-						sx={{
-							border: '2px solid #4a4a4a',
-							borderRadius: 1,
-							minHeight: '68vh',
-							maxHeight: '68vh',
-							p: 1.5,
-							overflow: 'auto',
-							'@media print': {
-								minHeight: '42vh',
-								maxHeight: '42vh',
-								p: 1,
-							},
-						}}
+					{selectedWordIndex !== null && (
+						<Button
+							size="small"
+							variant="outlined"
+							onClick={() => handleAddSelectedToBox('left')}
+							sx={{ mb: 1, fontSize: '0.75rem' }}
+						>
+							← Add "{String(data.words[selectedWordIndex] || '').trim()}" here
+						</Button>
+					)}
+					<DropZone
+						id="sort-box-left"
+						data={{ targetType: 'sort-box', column: 'left' }}
+						minHeight={0}
+						inactiveSx={{ border: '2px solid #4a4a4a', borderRadius: 1 }}
+						activeSx={{ border: '2px solid #667eea', backgroundColor: 'rgba(102, 126, 234, 0.05)' }}
+						sx={{ flex: 1, p: 1.5, overflow: 'auto' }}
 					>
 						<List dense disablePadding>
 							{data.leftItems.map((item, itemIndex) => (
@@ -229,29 +355,77 @@ export default function MorphSortPage() {
 									key={itemIndex}
 									disableGutters
 									secondaryAction={
-										<IconButton size="small" onClick={() => removeItem('left', itemIndex)} sx={{ fontSize: '1rem', color: '#999' }}>×</IconButton>
+										<Box sx={{ display: 'flex', gap: 0.25 }}>
+											<IconButton size="small" aria-label="Move to Sort Box B" onClick={() => handleMoveBoxItem('left', itemIndex, 'right')} sx={{ fontSize: '0.7rem', color: '#4020A7', px: 0.5 }}>→B</IconButton>
+											<IconButton size="small" aria-label="Return to words" onClick={() => handleMoveBoxItem('left', itemIndex, 'words')} sx={{ fontSize: '0.7rem', color: '#666', px: 0.5 }}>↩</IconButton>
+											<IconButton size="small" aria-label="Remove" onClick={() => removeItem('left', itemIndex)} sx={{ fontSize: '1rem', color: '#999', px: 0.5 }}>×</IconButton>
+										</Box>
 									}
 								>
-									<ListItemText primary={item} primaryTypographyProps={{ fontFamily: 'Courier New, monospace' }} />
+									<DragHandle
+										id={`left-item-handle-${itemIndex}`}
+										data={{ sourceType: 'box-item', column: 'left', itemIndex, value: item }}
+									/>
+									<ListItemText primary={item} primaryTypographyProps={{ fontFamily: 'Courier New, monospace' }} sx={{ ml: 0.5 }} />
 								</ListItem>
 							))}
 						</List>
-					</Box>
+					</DropZone>
 				</Grid>
 				<Grid item xs={12} md={4}>
-					<Stack spacing={1}>
-						{data.words.map((word, index) => (
-							<TextField
-								key={index}
-								variant="standard"
-								value={word}
-								onChange={(event) => setWord(index, event.target.value)}
-								onContextMenu={(event) => openSortMenu(event, index)}
-								inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
-								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
-							/>
-						))}
-					</Stack>
+					<DropZone
+						id="words-column"
+						data={{ targetType: 'words-column' }}
+						minHeight={0}
+						inactiveSx={{ borderColor: 'transparent', p: 0, backgroundColor: 'transparent' }}
+						activeSx={{ border: '2px dashed #667eea', borderRadius: 1, backgroundColor: 'rgba(102, 126, 234, 0.04)' }}
+						sx={{ p: 0 }}
+					>
+						<Stack spacing={1}>
+							{data.words.map((word, index) => {
+								const hasValue = Boolean(String(word || '').trim());
+								const isSelected = selectedWordIndex === index;
+								return (
+									<Box
+										key={index}
+										sx={{
+											display: 'flex',
+											alignItems: 'center',
+											gap: 0.5,
+											borderRadius: 1,
+											outline: isSelected ? '2px solid #667eea' : 'none',
+											backgroundColor: isSelected ? 'rgba(102, 126, 234, 0.07)' : 'transparent',
+										}}
+									>
+										<TextField
+											variant="standard"
+											value={word}
+											onChange={(event) => setWord(index, event.target.value)}
+											onContextMenu={(event) => openSortMenu(event, index)}
+											inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+											sx={{ flex: 1, '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+										/>
+										<Button
+											size="small"
+											variant={isSelected ? 'contained' : 'outlined'}
+											disabled={!hasValue}
+											onClick={() => handleSelectWord(index)}
+											aria-pressed={isSelected}
+											aria-label={isSelected ? 'Deselect word' : 'Select word to sort'}
+											sx={{ minWidth: 0, px: 1, py: 0.25, fontSize: '0.7rem', lineHeight: 1.4 }}
+										>
+											{isSelected ? '✓' : '⊕'}
+										</Button>
+										<DragHandle
+											id={`word-handle-${index}`}
+											data={{ sourceType: 'word', wordIndex: index, value: word }}
+											disabled={!hasValue}
+										/>
+									</Box>
+								);
+							})}
+						</Stack>
+					</DropZone>
 				</Grid>
 				<Menu
 					open={contextMenu.open}
@@ -262,22 +436,25 @@ export default function MorphSortPage() {
 					<MenuItem onClick={() => addWordToColumn('left')}>Add to "Sort Box A"</MenuItem>
 					<MenuItem onClick={() => addWordToColumn('right')}>Add to "Sort Box B"</MenuItem>
 				</Menu>
-				<Grid item xs={12} md={4}>
+				<Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column' }}>
 					<Typography sx={{ fontWeight: 700, mb: 1 }}>Sort Box B</Typography>
-					<Box
-						sx={{
-							border: '2px solid #4a4a4a',
-							borderRadius: 1,
-							minHeight: '68vh',
-							maxHeight: '68vh',
-							p: 1.5,
-							overflow: 'auto',
-							'@media print': {
-								minHeight: '42vh',
-								maxHeight: '42vh',
-								p: 1,
-							},
-						}}
+					{selectedWordIndex !== null && (
+						<Button
+							size="small"
+							variant="outlined"
+							onClick={() => handleAddSelectedToBox('right')}
+							sx={{ mb: 1, fontSize: '0.75rem' }}
+						>
+							→ Add "{String(data.words[selectedWordIndex] || '').trim()}" here
+						</Button>
+					)}
+					<DropZone
+						id="sort-box-right"
+						data={{ targetType: 'sort-box', column: 'right' }}
+						minHeight={0}
+						inactiveSx={{ border: '2px solid #4a4a4a', borderRadius: 1 }}
+						activeSx={{ border: '2px solid #667eea', backgroundColor: 'rgba(102, 126, 234, 0.05)' }}
+						sx={{ flex: 1, p: 1.5, overflow: 'auto' }}
 					>
 						<List dense disablePadding>
 							{data.rightItems.map((item, itemIndex) => (
@@ -285,16 +462,25 @@ export default function MorphSortPage() {
 									key={itemIndex}
 									disableGutters
 									secondaryAction={
-										<IconButton size="small" onClick={() => removeItem('right', itemIndex)} sx={{ fontSize: '1rem', color: '#999' }}>×</IconButton>
+										<Box sx={{ display: 'flex', gap: 0.25 }}>
+											<IconButton size="small" aria-label="Move to Sort Box A" onClick={() => handleMoveBoxItem('right', itemIndex, 'left')} sx={{ fontSize: '0.7rem', color: '#4020A7', px: 0.5 }}>A←</IconButton>
+											<IconButton size="small" aria-label="Return to words" onClick={() => handleMoveBoxItem('right', itemIndex, 'words')} sx={{ fontSize: '0.7rem', color: '#666', px: 0.5 }}>↩</IconButton>
+											<IconButton size="small" aria-label="Remove" onClick={() => removeItem('right', itemIndex)} sx={{ fontSize: '1rem', color: '#999', px: 0.5 }}>×</IconButton>
+										</Box>
 									}
 								>
-									<ListItemText primary={item} primaryTypographyProps={{ fontFamily: 'Courier New, monospace' }} />
+									<DragHandle
+										id={`right-item-handle-${itemIndex}`}
+										data={{ sourceType: 'box-item', column: 'right', itemIndex, value: item }}
+									/>
+									<ListItemText primary={item} primaryTypographyProps={{ fontFamily: 'Courier New, monospace' }} sx={{ ml: 0.5 }} />
 								</ListItem>
 							))}
 						</List>
-					</Box>
+					</DropZone>
 				</Grid>
 			</Grid>
+			</ActivityDndProvider>
 
 			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', mt: 4 }} className="no-print">
 				<Button
