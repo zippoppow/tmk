@@ -1,11 +1,12 @@
 'use client';
 
-import { useRef } from 'react';
-import { Box, Button, Menu, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Stack, TextField, Typography } from '@mui/material';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import ActivityShell from '../components/ActivityShell';
 import { openPrintWindow } from '../components/openPrintWindow';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
-import { useContextActionMenu } from '../components/interactionUtils';
+import { ActivityDndProvider, DropZone } from '../components/shared';
 
 const FORM_NAME = 'morph-morph-match';
 const DEFAULT_ACTIVITY_NAME = 'Morph Morph Match Activity';
@@ -21,9 +22,9 @@ function emptyHeaders() {
 function emptyData() {
 	return {
 		morpheme: '',
-		grid: Array.from({ length: 24 }, () => ''),
+		grid: Array.from({ length: 20 }, () => ''),
 		sectionHeaders: emptyHeaders(),
-		pairs: Array.from({ length: 12 }, () => emptyPair()),
+		pairs: Array.from({ length: 10 }, () => emptyPair()),
 	};
 }
 
@@ -34,7 +35,7 @@ function normalizeInputData(rawData) {
 	const sh = source.sectionHeaders && typeof source.sectionHeaders === 'object' ? source.sectionHeaders : {};
 	return {
 		morpheme: String(source.morpheme || ''),
-		grid: Array.from({ length: 24 }, (_, index) => String(grid[index] || '')),
+		grid: Array.from({ length: 20 }, (_, index) => String(grid[index] || '')),
 		sectionHeaders: {
 			leftTitle: String(sh.leftTitle || ''),
 			leftSub1: String(sh.leftSub1 || ''),
@@ -43,11 +44,51 @@ function normalizeInputData(rawData) {
 			rightSub1: String(sh.rightSub1 || ''),
 			rightSub2: String(sh.rightSub2 || ''),
 		},
-		pairs: Array.from({ length: 12 }, (_, index) => {
+		pairs: Array.from({ length: 10 }, (_, index) => {
 			const pair = pairs[index] || {};
 			return { left: String(pair.left || ''), right: String(pair.right || '') };
 		}),
 	};
+}
+
+function DragHandle({ id, data, disabled = false }) {
+	const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+		id,
+		data,
+		disabled,
+	});
+
+	return (
+		<Box
+			ref={setNodeRef}
+			component="button"
+			type="button"
+			aria-label="Drag value"
+			{...attributes}
+			{...listeners}
+			sx={{
+				display: 'inline-flex',
+				alignItems: 'center',
+				justifyContent: 'center',
+				width: 28,
+				height: 28,
+				border: '1px dashed #667eea',
+				borderRadius: 1,
+				backgroundColor: isDragging ? 'rgba(102, 126, 234, 0.10)' : '#f9faff',
+				color: '#4020A7',
+				fontSize: '0.9rem',
+				lineHeight: 1,
+				cursor: disabled ? 'default' : isDragging ? 'grabbing' : 'grab',
+				userSelect: 'none',
+				touchAction: disabled ? 'auto' : 'none',
+				opacity: disabled ? 0.45 : isDragging ? 0.75 : 1,
+				transform: CSS.Translate.toString(transform),
+				transition: 'opacity 120ms ease, transform 120ms ease, background-color 120ms ease',
+			}}
+		>
+			::
+		</Box>
+	);
 }
 
 export default function MorphMorphMatchPage() {
@@ -100,24 +141,41 @@ export default function MorphMorphMatchPage() {
 		setData((prev) => ({ ...prev, sectionHeaders: { ...prev.sectionHeaders, [field]: value } }));
 	};
 
-	const { menuState: gridMenu, openMenu: openGridMenu, closeMenu: closeGridMenu } = useContextActionMenu();
+	const moveGridValueToPairField = (pairIndex, field, payload) => {
+		if (!payload?.value || typeof payload.gridIndex !== 'number') return;
+		if (field !== 'left' && field !== 'right') return;
 
-	const pairLeftRefs = useRef([]);
+		setData((prev) => {
+			const sourceValue = String(prev.grid[payload.gridIndex] || '').trim();
+			if (!sourceValue) return prev;
 
-	const handleSyncGridToPair = (pairIndex) => {
-		const gridValue = data.grid[gridMenu.index];
-		if (gridValue) {
-			setPairValue(pairIndex, 'left', gridValue);
-		}
-		closeGridMenu();
-		if (pairLeftRefs.current[pairIndex]) {
-			pairLeftRefs.current[pairIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-			pairLeftRefs.current[pairIndex].focus();
-		}
+			const nextGrid = [...prev.grid];
+			const nextPairs = [...prev.pairs];
+			nextGrid[payload.gridIndex] = '';
+			nextPairs[pairIndex] = {
+				...nextPairs[pairIndex],
+				[field]: sourceValue,
+			};
+
+			return {
+				...prev,
+				grid: nextGrid,
+				pairs: nextPairs,
+			};
+		});
+	};
+
+	const handleDragEnd = (event) => {
+		const payload = event?.active?.data?.current;
+		const dropTarget = event?.over?.data?.current;
+		if (!payload || !dropTarget) return;
+		if (payload.sourceType !== 'grid' || dropTarget.targetType !== 'pair-field') return;
+
+		moveGridValueToPairField(dropTarget.pairIndex, dropTarget.field, payload);
 	};
 
 	const handleClearTopSection = () => {
-		setData((prev) => ({ ...prev, grid: Array.from({ length: 24 }, () => '') }));
+		setData((prev) => ({ ...prev, grid: Array.from({ length: 20 }, () => '') }));
 	};
 
 	const handleClearSectionHeaders = () => {
@@ -125,7 +183,7 @@ export default function MorphMorphMatchPage() {
 	};
 
 	const handleClearLowerSection = () => {
-		setData((prev) => ({ ...prev, pairs: Array.from({ length: 12 }, () => emptyPair()) }));
+		setData((prev) => ({ ...prev, pairs: Array.from({ length: 10 }, () => emptyPair()) }));
 	};
 
 	const handleDownloadPdfCustom = () => {
@@ -134,12 +192,16 @@ export default function MorphMorphMatchPage() {
 			.map((v) => `<div class="grid-cell">${(v || '').replace(/</g, '&lt;')}</div>`)
 			.join('');
 
-		const pairRows = data.pairs.map((pair, i) => `
+		const pairRows = data.pairs
+			.map(
+				(pair, i) => `
 			<div class="pair-row">
 				<span class="pair-num">${i + 1}.</span>
 				<div class="pair-left">${(pair.left || '').replace(/</g, '&lt;')}</div>
 				<div class="pair-right">${(pair.right || '').replace(/</g, '&lt;')}</div>
-			</div>`).join('');
+			</div>`
+			)
+			.join('');
 
 		const licenseFooter = authUser?.email
 			? `<div class="license-footer">Licensed for use by: ${authUser.email.replace(/</g, '&lt;')}</div>`
@@ -147,7 +209,7 @@ export default function MorphMorphMatchPage() {
 
 		openPrintWindow({
 			features: 'width=900,height=1200',
- 			html: `<!DOCTYPE html>
+			html: `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -158,22 +220,22 @@ export default function MorphMorphMatchPage() {
 		.header { border-bottom: 3px solid #4020A7; padding-bottom: 6px; display: grid; grid-template-columns: 3fr 1fr; gap: 8px; margin-bottom: 10px; break-inside: avoid; page-break-inside: avoid; }
     .header-column { display: flex; flex-direction: column; gap: 4px; }
 		.header-column img { max-width: 120px; height: auto; }
-		.title { font-size: 1.22em; font-weight: 700; letter-spacing: 0.4px; line-height: 1.15; }
-		.subtitle { font-size: 0.95em; font-style: italic; line-height: 1.15; }
+		.title { font-size: 1.5em; font-weight: 700; letter-spacing: 0.4px; line-height: 1.5; }
+		.subtitle { font-size: 1em; font-style: italic; line-height: 1.5; }
     .morpheme-value { font-family: 'Courier New', monospace; color: #4020A7; }
-		.instructions { font-size: 0.78em; color: #555; margin-top: 2px; }
-		.top-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 10px; break-inside: avoid; page-break-inside: avoid; }
+		.instructions { font-size: 1em; color: #555; margin-top: 2px; }
+		.top-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 10px; break-inside: avoid; page-break-inside: avoid; }
 		.grid-cell { border: 2px solid #4020A7; border-radius: 3px; padding: 4px; text-align: center; font-family: 'Trebuchet MS', sans-serif; min-height: 40px; font-size: 1em; }
 		.section-divider { border-top: 2px solid #eee; margin: 8px 0; padding-top: 8px; }
 		.section-headers { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 8px; }
     .sh-col { display: flex; flex-direction: column; gap: 3px; }
-		.sh-title { font-weight: 700; font-size: 0.92em; text-align: center; }
-		.sh-subs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center; }
-		.sh-sub { font-size: 0.78em; color: #555; text-align: center; }
+		.sh-title { font-weight: 700; font-size: 1.5em; text-align: center; margin-top: 10px; margin-bottom: 10px; }
+		.sh-subs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center; margin-bottom: 10px; }
+		.sh-sub { font-size: 1em; color: #555; text-align: center; }
 		.pairs { display: flex; flex-direction: column; gap: 2px; break-inside: avoid; page-break-inside: avoid; }
-		.pair-row { display: grid; grid-template-columns: 20px 1fr 1fr; gap: 8px; align-items: center; border-bottom: 1px solid #eee; padding: 3px 0; }
+		.pair-row { display: grid; grid-template-columns: 20px 1fr 1fr; gap: 8px; align-items: center; border-bottom: 1px solid #eee; padding: 3.5px 0; }
     .pair-num { font-weight: 700; text-align: right; color: #555; font-size: 0.85em; }
-		.pair-left, .pair-right { font-family: 'Trebuchet MS', sans-serif; padding: 2px 4px; min-height: 22px; border-bottom: 1px solid #ddd; font-size: 0.86em; }
+		.pair-left, .pair-right { font-family: 'Trebuchet MS', sans-serif; padding: 4px; min-height: 32px; border-bottom: 1px solid #ddd; font-size: 0.86em; }
 		.license-footer { margin-top: 12px; padding-top: 8px; border-top: 1px solid #e5e7eb; text-align: right; font-size: 0.72em; color: #4b5563; font-style: italic; }
 		@media print {
 			@page { size: letter portrait; margin: 0.25in; }
@@ -186,7 +248,7 @@ export default function MorphMorphMatchPage() {
     <div class="header-column">
       <div class="title">MORPH, MORPH? MATCH</div>
       <div class="subtitle">Morpheme(s): <span class="morpheme-value">${(data.morpheme || '').replace(/</g, '&lt;')}</span></div>
-      <div class="instructions">Use the top grid to explore morph forms, then pair related morph words below.</div>
+      <div class="instructions">Use the top grid to explore morpheme forms, then pair related morpheme words below.</div>
     </div>
     <div class="header-column">
       <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
@@ -197,17 +259,17 @@ export default function MorphMorphMatchPage() {
     <div class="section-headers">
       <div class="sh-col">
         <div class="sh-title">${(sh.leftTitle || '').replace(/</g, '&lt;')}</div>
-				<div class="sh-subs">
-					<div class="sh-sub">${(sh.leftSub1 || '').replace(/</g, '&lt;')}</div>
-					<div class="sh-sub">${(sh.leftSub2 || '').replace(/</g, '&lt;')}</div>
-				</div>
+			<div class="sh-subs">
+				<div class="sh-sub">${(sh.leftSub1 || '').replace(/</g, '&lt;')}</div>
+				<div class="sh-sub">${(sh.leftSub2 || '').replace(/</g, '&lt;')}</div>
+			</div>
       </div>
       <div class="sh-col">
         <div class="sh-title">${(sh.rightTitle || '').replace(/</g, '&lt;')}</div>
-				<div class="sh-subs">
-					<div class="sh-sub">${(sh.rightSub1 || '').replace(/</g, '&lt;')}</div>
-					<div class="sh-sub">${(sh.rightSub2 || '').replace(/</g, '&lt;')}</div>
-				</div>
+			<div class="sh-subs">
+				<div class="sh-sub">${(sh.rightSub1 || '').replace(/</g, '&lt;')}</div>
+				<div class="sh-sub">${(sh.rightSub2 || '').replace(/</g, '&lt;')}</div>
+			</div>
       </div>
     </div>
     <div class="pairs">${pairRows}</div>
@@ -245,142 +307,189 @@ export default function MorphMorphMatchPage() {
 			notice={notice}
 			setNotice={setNotice}
 		>
-			<Box sx={{ my: 3 }}>
-				{Array.from({ length: 4 }, (_, rowIndex) => (
-					<Box key={rowIndex} sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 1.25, mb: 1.25 }}>
-						{Array.from({ length: 6 }, (_, colIndex) => {
-							const index = rowIndex * 6 + colIndex;
-							return (
+			<ActivityDndProvider onDragEnd={handleDragEnd}>
+				<Box sx={{ mt: 2, mb: 1, fontSize: '0.95rem', color: '#243b53' }}>
+					Drag from the top grid into either left or right numbered input below.
+				</Box>
+				<Box sx={{ my: 3 }}>
+					{Array.from({ length: 4 }, (_, rowIndex) => (
+					<Box key={rowIndex} sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 1.25, mb: 1.25 }}>
+						{Array.from({ length: 5 }, (_, colIndex) => {
+							const index = rowIndex * 5 + colIndex;
+								return (
+									<Box
+										key={index}
+										sx={{
+											display: 'flex',
+											alignItems: 'center',
+											gap: 0.5,
+											border: '2px solid #4020A7',
+											borderRadius: 1,
+											px: 0.5,
+											backgroundColor: '#fff',
+										}}
+									>
+										<TextField
+											value={data.grid[index] || ''}
+											onChange={(event) => setGridValue(index, event.target.value)}
+											size="small"
+											inputProps={{
+												style: {
+													textAlign: 'center',
+													fontFamily: 'Trebuchet MS, sans-serif',
+													fontSize: '1.2rem',
+													color: '#000000',
+												},
+											}}
+											sx={{
+												flex: 1,
+												'& .MuiOutlinedInput-root': {
+													'& fieldset': { border: 'none' },
+													'&:hover fieldset': { border: 'none' },
+													'&.Mui-focused fieldset': { border: 'none' },
+												},
+											}}
+										/>
+										<DragHandle
+											id={`grid-handle-${index}`}
+											data={{ sourceType: 'grid', gridIndex: index, value: data.grid[index] || '' }}
+											disabled={!String(data.grid[index] || '').trim()}
+										/>
+									</Box>
+								);
+							})}
+						</Box>
+					))}
+					<Box sx={{ pt: 1 }}>
+						<Button variant="outlined" size="small" onClick={handleClearTopSection}>
+							Clear Top Section
+						</Button>
+					</Box>
+				</Box>
+
+				<Box sx={{ borderTop: '2px solid #eee', pt: 3, mt: 2 }}>
+					<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, mb: 2 }}>
+						<Stack spacing={1}>
+							<TextField
+								variant="standard"
+								placeholder="Left column title"
+								value={data.sectionHeaders.leftTitle}
+								onChange={(e) => setSectionHeader('leftTitle', e.target.value)}
+								inputProps={{
+									style: {
+										textAlign: 'center',
+										fontFamily: 'Trebuchet MS, sans-serif',
+										fontWeight: 700,
+										fontSize: '1.2rem',
+										color: '#000000',
+									},
+								}}
+								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #4020A7' } }}
+							/>
+							<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
 								<TextField
-									key={index}
-									value={data.grid[index] || ''}
-									onChange={(event) => setGridValue(index, event.target.value)}
-									onContextMenu={(event) => openGridMenu(event, { targetType: 'grid', index })}
-									size="small"
-								inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
-									sx={{
-										'& .MuiOutlinedInput-root': {
-											'& fieldset': { borderColor: '#4020A7', borderWidth: '2px' },
-											'&:hover fieldset': { borderColor: '#667eea' },
-											'&.Mui-focused fieldset': { borderColor: '#667eea' },
-										},
-									}}
+									variant="standard"
+									placeholder="Sub-header 1"
+									value={data.sectionHeaders.leftSub1}
+									onChange={(e) => setSectionHeader('leftSub1', e.target.value)}
+									inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+									sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 								/>
-							);
-						})}
+								<TextField
+									variant="standard"
+									placeholder="Sub-header 2"
+									value={data.sectionHeaders.leftSub2}
+									onChange={(e) => setSectionHeader('leftSub2', e.target.value)}
+									inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+									sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+								/>
+							</Box>
+						</Stack>
+						<Stack spacing={1}>
+							<TextField
+								variant="standard"
+								placeholder="Right column title"
+								value={data.sectionHeaders.rightTitle}
+								onChange={(e) => setSectionHeader('rightTitle', e.target.value)}
+								inputProps={{
+									style: {
+										textAlign: 'center',
+										fontFamily: 'Trebuchet MS, sans-serif',
+										fontWeight: 700,
+										fontSize: '1.2rem',
+										color: '#000000',
+									},
+								}}
+								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #4020A7' } }}
+							/>
+							<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+								<TextField
+									variant="standard"
+									placeholder="Sub-header 1"
+									value={data.sectionHeaders.rightSub1}
+									onChange={(e) => setSectionHeader('rightSub1', e.target.value)}
+									inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+									sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+								/>
+								<TextField
+									variant="standard"
+									placeholder="Sub-header 2"
+									value={data.sectionHeaders.rightSub2}
+									onChange={(e) => setSectionHeader('rightSub2', e.target.value)}
+									inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+									sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+								/>
+							</Box>
+						</Stack>
 					</Box>
-				))}
-				<Box sx={{ pt: 1 }}>
-					<Button variant="outlined" size="small" onClick={handleClearTopSection}>
-						Clear Top Section
-					</Button>
-				</Box>
-			</Box>
 
-			<Box sx={{ borderTop: '2px solid #eee', pt: 3, mt: 2 }}>
-				<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, mb: 2 }}>
-					<Stack spacing={1}>
-						<TextField
-							variant="standard"
-							placeholder="Left column title"
-							value={data.sectionHeaders.leftTitle}
-							onChange={(e) => setSectionHeader('leftTitle', e.target.value)}
-							inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontWeight: 700, fontSize: '1.2rem', color: '#000000' } }}
-							sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #4020A7' } }}
-						/>
-						<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-							<TextField
-								variant="standard"
-								placeholder="Sub-header 1"
-								value={data.sectionHeaders.leftSub1}
-								onChange={(e) => setSectionHeader('leftSub1', e.target.value)}
-								inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
-								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
-							/>
-							<TextField
-								variant="standard"
-								placeholder="Sub-header 2"
-								value={data.sectionHeaders.leftSub2}
-								onChange={(e) => setSectionHeader('leftSub2', e.target.value)}
-								inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
-								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
-							/>
-						</Box>
+					<Stack spacing={1.25}>
+						{data.pairs.map((pair, index) => (
+							<Box key={index} sx={{ display: 'grid', gridTemplateColumns: '32px 1fr 1fr', gap: 1.5, alignItems: 'center' }}>
+								<Typography sx={{ fontWeight: 700 }}>{index + 1}.</Typography>
+								<DropZone
+									id={`pair-left-${index}`}
+									data={{ targetType: 'pair-field', pairIndex: index, field: 'left' }}
+									minHeight={0}
+									inactiveSx={{ borderColor: 'transparent', p: 0, backgroundColor: 'transparent' }}
+									sx={{ p: 0 }}
+								>
+									<TextField
+										variant="standard"
+										value={pair.left}
+										onChange={(event) => setPairValue(index, 'left', event.target.value)}
+										inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+										sx={{ width: '100%', '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+									/>
+								</DropZone>
+								<DropZone
+									id={`pair-right-${index}`}
+									data={{ targetType: 'pair-field', pairIndex: index, field: 'right' }}
+									minHeight={0}
+									inactiveSx={{ borderColor: 'transparent', p: 0, backgroundColor: 'transparent' }}
+									sx={{ p: 0 }}
+								>
+									<TextField
+										variant="standard"
+										value={pair.right}
+										onChange={(event) => setPairValue(index, 'right', event.target.value)}
+										inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+										sx={{ width: '100%', '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+									/>
+								</DropZone>
+							</Box>
+						))}
 					</Stack>
-					<Stack spacing={1}>
-						<TextField
-							variant="standard"
-							placeholder="Right column title"
-							value={data.sectionHeaders.rightTitle}
-							onChange={(e) => setSectionHeader('rightTitle', e.target.value)}
-							inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontWeight: 700, fontSize: '1.2rem', color: '#000000' } }}
-							sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #4020A7' } }}
-						/>
-						<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-							<TextField
-								variant="standard"
-								placeholder="Sub-header 1"
-								value={data.sectionHeaders.rightSub1}
-								onChange={(e) => setSectionHeader('rightSub1', e.target.value)}
-								inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
-								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
-							/>
-							<TextField
-								variant="standard"
-								placeholder="Sub-header 2"
-								value={data.sectionHeaders.rightSub2}
-								onChange={(e) => setSectionHeader('rightSub2', e.target.value)}
-								inputProps={{ style: { textAlign: 'center', fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
-								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
-							/>
-						</Box>
-					</Stack>
-				</Box>
-
-			<Stack spacing={1.25}>
-				{data.pairs.map((pair, index) => (
-					<Box key={index} sx={{ display: 'grid', gridTemplateColumns: '32px 1fr 1fr', gap: 1.5, alignItems: 'center' }}>
-						<Typography sx={{ fontWeight: 700 }}>{index + 1}.</Typography>
-						<TextField
-							variant="standard"
-							value={pair.left}
-							onChange={(event) => setPairValue(index, 'left', event.target.value)}
-							inputRef={(el) => { pairLeftRefs.current[index] = el; }}
-							inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
-							sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
-						/>
-						<TextField
-							variant="standard"
-							value={pair.right}
-							onChange={(event) => setPairValue(index, 'right', event.target.value)}
-							inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
-							sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
-						/>
+					<Box sx={{ display: 'flex', gap: 2, pt: 2 }}>
+						<Button variant="outlined" size="small" onClick={handleClearSectionHeaders}>
+							Clear Section Headers
+						</Button>
+						<Button variant="outlined" size="small" onClick={handleClearLowerSection}>
+							Clear Lower Section
+						</Button>
 					</Box>
-				))}
-			</Stack>
-				<Box sx={{ display: 'flex', gap: 2, pt: 2 }}>
-					<Button variant="outlined" size="small" onClick={handleClearSectionHeaders}>
-						Clear Section Headers
-					</Button>
-					<Button variant="outlined" size="small" onClick={handleClearLowerSection}>
-						Clear Lower Section
-					</Button>
 				</Box>
-			</Box>
-
-			<Menu
-				open={gridMenu.open}
-				onClose={closeGridMenu}
-				anchorReference="anchorPosition"
-				anchorPosition={gridMenu.open ? { top: gridMenu.y, left: gridMenu.x } : undefined}
-			>
-				{data.pairs.map((_, pairIndex) => (
-					<MenuItem key={pairIndex} onClick={() => handleSyncGridToPair(pairIndex)}>
-						Item {pairIndex + 1}
-					</MenuItem>
-				))}
-			</Menu>
+			</ActivityDndProvider>
 		</ActivityShell>
 	);
 }

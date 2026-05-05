@@ -1,10 +1,13 @@
 'use client';
 
-import { Box, Button, Menu, MenuItem, Stack, TextField } from '@mui/material';
+import { useState } from 'react';
+import { Box, Button, Stack, TextField } from '@mui/material';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import ActivityShell from '../components/ActivityShell';
 import { openPrintWindow } from '../components/openPrintWindow';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
-import { useContextActionMenu } from '../components/interactionUtils';
+import { ActivityDndProvider, DropZone } from '../components/shared';
 
 const FORM_NAME = 'morph-match-related-words';
 const DEFAULT_ACTIVITY_NAME = 'Morph Match Related Words Activity';
@@ -21,6 +24,32 @@ function emptyData() {
 	};
 }
 
+function DragHandle({ id, data }) {
+	const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id, data });
+	return (
+		<Box
+			component="span"
+			ref={setNodeRef}
+			{...attributes}
+			{...listeners}
+			title="Drag to match color"
+			sx={{
+				cursor: isDragging ? 'grabbing' : 'grab',
+				color: 'rgba(0,0,0,0.4)',
+				fontSize: '1.1rem',
+				px: 0.75,
+				userSelect: 'none',
+				touchAction: 'none',
+				transform: CSS.Translate.toString(transform),
+				flexShrink: 0,
+				lineHeight: 1,
+			}}
+		>
+			⠿
+		</Box>
+	);
+}
+
 function normalizeInputData(rawData) {
 	const source = rawData && typeof rawData === 'object' ? rawData : {};
 	const focusWords = Array.isArray(source.focusWords) ? source.focusWords : [];
@@ -35,6 +64,8 @@ function normalizeInputData(rawData) {
 }
 
 export default function MorphMatchRelatedWordsPage() {
+	const [selectedFocusIndex, setSelectedFocusIndex] = useState(null);
+
 	const {
 		data,
 		setData,
@@ -72,15 +103,14 @@ export default function MorphMatchRelatedWordsPage() {
 		});
 	};
 
-	const { menuState: focusMenu, openMenu: openFocusMenu, closeMenu: closeFocusMenu } = useContextActionMenu();
-
-	const handleSetRelatedColor = (relatedIndex) => {
-		setData((prev) => {
-			const next = [...prev.relatedWordColors];
-			next[relatedIndex] = FOCUS_COLORS[focusMenu.index];
-			return { ...prev, relatedWordColors: next };
-		});
-		closeFocusMenu();
+	const handleDragEnd = (event) => {
+		const { active, over } = event;
+		if (!active || !over) return;
+		const payload = active.data.current;
+		const dropTarget = over.data.current;
+		if (payload?.sourceType === 'focus' && dropTarget?.targetType === 'related') {
+			setListValue('relatedWordColors', dropTarget.index, FOCUS_COLORS[payload.index]);
+		}
 	};
 
 	const handleClearRelatedColor = (relatedIndex) => {
@@ -89,6 +119,11 @@ export default function MorphMatchRelatedWordsPage() {
 			next[relatedIndex] = '';
 			return { ...prev, relatedWordColors: next };
 		});
+	};
+
+	const handleApplySelectedColor = (relatedIndex) => {
+		if (selectedFocusIndex === null) return;
+		setListValue('relatedWordColors', relatedIndex, FOCUS_COLORS[selectedFocusIndex]);
 	};
 
 	const handleClearFocusWords = () => {
@@ -211,57 +246,81 @@ export default function MorphMatchRelatedWordsPage() {
 			notice={notice}
 			setNotice={setNotice}
 		>
-			<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 4, mt: 3 }}>
-				<Stack spacing={1.8}>
-					{data.focusWords.map((value, index) => (
-						<TextField
-							key={`focus-${index}`}
-							variant="standard"
-							value={value}
-							onChange={(event) => setListValue('focusWords', index, event.target.value)}
-							onContextMenu={(event) => openFocusMenu(event, { targetType: 'focusWord', index })}
-							inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000', width: '90%' } }}
-							sx={{ backgroundColor: FOCUS_COLORS[index], borderRadius: 0.5, px: 1, '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
-						/>
-					))}
-					<Box sx={{ pt: 1 }}>
-						<Button variant="outlined" size="small" onClick={handleClearFocusWords}>
-							Clear Focus Words
-						</Button>
-					</Box>
-				</Stack>
-				<Stack spacing={1.8}>
-					{data.relatedWords.map((value, index) => (
-						<TextField
-							key={`related-${index}`}
-							variant="standard"
-							value={value}
-							onChange={(event) => setListValue('relatedWords', index, event.target.value)}
-							onDoubleClick={() => handleClearRelatedColor(index)}
-							inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000', width: '90%' } }}
-							sx={{ backgroundColor: data.relatedWordColors[index] || 'transparent', borderRadius: 0.5, px: 1, '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
-						/>
-					))}
-					<Box sx={{ pt: 1 }}>
-						<Button variant="outlined" size="small" onClick={handleClearRelatedWords}>
-							Clear Related Words
-						</Button>
-					</Box>
-				</Stack>
-			</Box>
-
-			<Menu
-				open={focusMenu.open}
-				onClose={closeFocusMenu}
-				anchorReference="anchorPosition"
-				anchorPosition={focusMenu.open ? { top: focusMenu.y, left: focusMenu.x } : undefined}
-			>
-				{data.relatedWords.map((_, relatedIndex) => (
-					<MenuItem key={relatedIndex} onClick={() => handleSetRelatedColor(relatedIndex)}>
-						Set color for Related Word {relatedIndex + 1}
-					</MenuItem>
-				))}
-			</Menu>
+			<ActivityDndProvider onDragEnd={handleDragEnd}>
+				<Box sx={{ mt: 2, mb: 1.5, fontSize: '0.95rem', color: '#243b53' }}>
+					Drag a handle to match color, or use Select on the left and Apply on the right. Double-click a related word to clear its color.
+				</Box>
+				<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 4, mt: 3 }}>
+					<Stack spacing={1.8}>
+						{data.focusWords.map((value, index) => (
+							<Box
+								key={`focus-${index}`}
+								sx={{ display: 'flex', alignItems: 'center', backgroundColor: FOCUS_COLORS[index], borderRadius: 0.5, px: 1 }}
+							>
+								<DragHandle id={`focus-handle-${index}`} data={{ sourceType: 'focus', index }} />
+								<TextField
+									variant="standard"
+									value={value}
+									onChange={(event) => setListValue('focusWords', index, event.target.value)}
+									inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000', width: '90%' } }}
+									sx={{ flex: 1, '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+								/>
+								<Button
+									variant={selectedFocusIndex === index ? 'contained' : 'outlined'}
+									size="small"
+									onClick={() => setSelectedFocusIndex(index)}
+									aria-pressed={selectedFocusIndex === index}
+									sx={{ minWidth: 74, ml: 1, whiteSpace: 'nowrap' }}
+								>
+									Select
+								</Button>
+							</Box>
+						))}
+						<Box sx={{ pt: 1 }}>
+							<Button variant="outlined" size="small" onClick={handleClearFocusWords}>
+								Clear Focus Words
+							</Button>
+						</Box>
+					</Stack>
+					<Stack spacing={1.8}>
+						{data.relatedWords.map((value, index) => (
+							<DropZone
+								key={`related-drop-${index}`}
+								id={`related-drop-${index}`}
+								data={{ targetType: 'related', index }}
+								minHeight={0}
+								inactiveSx={{ borderColor: 'transparent', p: 0, backgroundColor: 'transparent' }}
+								sx={{ p: 0 }}
+							>
+								<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+									<TextField
+										variant="standard"
+										value={value}
+										onChange={(event) => setListValue('relatedWords', index, event.target.value)}
+										onDoubleClick={() => handleClearRelatedColor(index)}
+										inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000', width: '90%' } }}
+										sx={{ width: '100%', backgroundColor: data.relatedWordColors[index] || 'transparent', borderRadius: 0.5, px: 1, '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+									/>
+									<Button
+										variant="outlined"
+										size="small"
+										onClick={() => handleApplySelectedColor(index)}
+										disabled={selectedFocusIndex === null}
+										sx={{ minWidth: 72, whiteSpace: 'nowrap' }}
+									>
+										Apply
+									</Button>
+								</Box>
+							</DropZone>
+						))}
+						<Box sx={{ pt: 1 }}>
+							<Button variant="outlined" size="small" onClick={handleClearRelatedWords}>
+								Clear Related Words
+							</Button>
+						</Box>
+					</Stack>
+				</Box>
+			</ActivityDndProvider>
 		</ActivityShell>
 	);
 }

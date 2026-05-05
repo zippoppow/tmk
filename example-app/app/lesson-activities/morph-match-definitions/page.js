@@ -7,13 +7,27 @@ import { useLessonActivityProject } from '../components/useLessonActivityProject
 
 const FORM_NAME = 'morph-match-definitions';
 const DEFAULT_ACTIVITY_NAME = 'Morph Match Definitions Activity';
+const DEFAULT_ROW_COUNT = 8;
+const MIN_ROW_COUNT = 1;
+const MAX_ROW_COUNT = 20;
 
-function emptyData() {
+function clampRowCount(value) {
+	const normalized = Number.isFinite(value) ? Math.floor(value) : DEFAULT_ROW_COUNT;
+	return Math.max(MIN_ROW_COUNT, Math.min(MAX_ROW_COUNT, normalized));
+}
+
+function resizeStringArray(arr, rowCount) {
+	const source = Array.isArray(arr) ? arr : [];
+	return Array.from({ length: rowCount }, (_, index) => String(source[index] || ''));
+}
+
+function emptyData(rowCount = DEFAULT_ROW_COUNT) {
 	return {
 		morpheme: '',
-		words: Array.from({ length: 8 }, () => ''),
-		numbers: Array.from({ length: 8 }, () => ''),
-		definitions: Array.from({ length: 8 }, () => ''),
+		rowCount,
+		words: Array.from({ length: rowCount }, () => ''),
+		numbers: Array.from({ length: rowCount }, () => ''),
+		definitions: Array.from({ length: rowCount }, () => ''),
 	};
 }
 
@@ -22,11 +36,15 @@ function normalizeInputData(rawData) {
 	const words = Array.isArray(source.words) ? source.words : [];
 	const numbers = Array.isArray(source.numbers) ? source.numbers : [];
 	const definitions = Array.isArray(source.definitions) ? source.definitions : [];
+	const computedRowCount = clampRowCount(
+		Number(source.rowCount) || Math.max(words.length, numbers.length, definitions.length) || DEFAULT_ROW_COUNT
+	);
 	return {
 		morpheme: String(source.morpheme || ''),
-		words: Array.from({ length: 8 }, (_, index) => String(words[index] || '')),
-		numbers: Array.from({ length: 8 }, (_, index) => String(numbers[index] || '')),
-		definitions: Array.from({ length: 8 }, (_, index) => String(definitions[index] || '')),
+		rowCount: computedRowCount,
+		words: resizeStringArray(words, computedRowCount),
+		numbers: resizeStringArray(numbers, computedRowCount),
+		definitions: resizeStringArray(definitions, computedRowCount),
 	};
 }
 
@@ -68,25 +86,27 @@ export default function MorphMatchDefinitionsPage() {
 		});
 	};
 
-	const handleClearWords = () => {
+	const handleRowCountChange = (value) => {
+		const nextCount = clampRowCount(Number(value));
 		setData((prev) => ({
 			...prev,
-			words: Array.from({ length: 8 }, () => ''),
+			rowCount: nextCount,
+			words: resizeStringArray(prev.words, nextCount),
+			numbers: resizeStringArray(prev.numbers, nextCount),
+			definitions: resizeStringArray(prev.definitions, nextCount),
 		}));
+	};
+
+	const handleClearWords = () => {
+		setData((prev) => ({ ...prev, words: Array.from({ length: prev.rowCount }, () => '') }));
 	};
 
 	const handleClearNumbers = () => {
-		setData((prev) => ({
-			...prev,
-			numbers: Array.from({ length: 8 }, () => ''),
-		}));
+		setData((prev) => ({ ...prev, numbers: Array.from({ length: prev.rowCount }, () => '') }));
 	};
 
 	const handleClearDefinitions = () => {
-		setData((prev) => ({
-			...prev,
-			definitions: Array.from({ length: 8 }, () => ''),
-		}));
+		setData((prev) => ({ ...prev, definitions: Array.from({ length: prev.rowCount }, () => '') }));
 	};
 
 	const handleDownloadPdfCustom = () => {
@@ -258,6 +278,20 @@ export default function MorphMatchDefinitionsPage() {
 			notice={notice}
 			setNotice={setNotice}
 		>
+			<Box sx={{ mt: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+				<Typography sx={{ fontSize: '1.1rem', color: '#011436', fontWeight: 600, paddingRight: 1 }}>
+					Add/Remove Rows:
+				</Typography>
+				<TextField
+					label="Rows"
+					type="number"
+					value={data.rowCount || DEFAULT_ROW_COUNT}
+					onChange={(event) => handleRowCountChange(event.target.value)}
+					inputProps={{ min: MIN_ROW_COUNT, max: MAX_ROW_COUNT, step: 1, style: { textAlign: 'center' } }}
+					sx={{ width: 140 }}
+				/>
+			</Box>
+
 			<Grid container spacing={2} sx={{ mt: 2 }}>
 				<Grid item xs={12}>
 					<Stack spacing={1.5}>
