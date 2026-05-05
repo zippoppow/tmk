@@ -49,97 +49,131 @@ export default function LessonActivitySelector({
                 border: '1px solid #e0e7ff',
             }}
         >
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {selectedActivity && (
-                    <Box sx={{ px: 0.5 }}>
-                        <Typography
-                            variant="body2"
-                            sx={{
-                                color: '#5a6472',
-                                lineHeight: 1.5,
-                                fontStyle: 'italic',
-                            }}
-                        >
-                            {selectedActivity.description}
-                        </Typography>
-                    </Box>
-                )}
-
-                <Box
-                    sx={{
-                        display: 'flex',
-                        flexDirection: { xs: 'column', sm: 'row' },
-                        gap: 1.5,
-                        alignItems: { xs: 'stretch', sm: 'center' },
-                    }}
-                >
-                    <TextField
-                        select
-                        label="Select Lesson Activity"
-                        value={selectedPath}
-                        onChange={handleActivityChange}
-                        disabled={disabled || activities.length === 0}
-                        size="medium"
-                        sx={{
-                            minWidth: 220,
-                            width: 'auto',
-                            '& .MuiOutlinedInput-root': {
-                                backgroundColor: '#fff',
-                            },
-                        }}
-                    >
-                        {activities.map((activity) => (
-                            <MenuItem key={activity.path} value={activity.path}>
-                                {activity.name}
-                            </MenuItem>
-                        ))}
-                    </TextField>
-
-                    <Button
-                        variant="contained"
-                        onClick={handleOpen}
-                        disabled={disabled || !selectedActivity}
-                        sx={{
-                            textTransform: 'none',
-                            fontSize: '0.95rem',
-                            fontWeight: 600,
-                            width: { xs: '100%', sm: 'auto' },
-                            alignSelf: { xs: 'stretch', sm: 'center' },
-                            whiteSpace: 'nowrap',
-                            px: 2,
-                        }}
-                    >
-                        Create New Activity
-                    </Button>
-                </Box>
-
-                {/* Preview Image */}
+            <Box
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    '@media (orientation: landscape) and (min-width: 600px)': {
+                        flexDirection: 'row',
+                        alignItems: 'stretch',
+                        gap: 2,
+                    },
+                }}
+            >
                 <Box
                     sx={{
                         width: '100%',
-                        minHeight: 220,
-                        position: 'relative',
-                        borderRadius: 1,
-                        overflow: 'hidden',
-                        backgroundColor: '#f0f0f0',
-                        aspectRatio: '16 / 9',
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        flexDirection: 'column',
+                        gap: 2,
+                        '@media (orientation: landscape) and (min-width: 600px)': {
+                            width: '50%',
+                        },
                     }}
                 >
-                    <Image
-                        src="/lesson-activities/preview-images/lesson-activity-sample.png"
-                        alt="Lesson Activity Preview"
-                        width={1280}
-                        height={720}
-                        style={{
-                            objectFit: 'cover',
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: { xs: 'column', sm: 'row' },
+                            gap: 1.5,
+                            alignItems: { xs: 'stretch', sm: 'center' },
                             width: '100%',
-                            height: '100%',
                         }}
-                        priority
-                    />
+                    >
+                        <TextField
+                            select
+                            label="Select Lesson Activity"
+                            value={selectedPath}
+                            onChange={handleActivityChange}
+                            disabled={disabled || activities.length === 0}
+                            size="medium"
+                            sx={{
+                                width: '100%',
+                                flex: { sm: 1 },
+                                minWidth: { sm: 0 },
+                                '& .MuiOutlinedInput-root': {
+                                    backgroundColor: '#fff',
+                                },
+                            }}
+                        >
+                            {activities.map((activity) => (
+                                <MenuItem key={activity.path} value={activity.path}>
+                                    {activity.name}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+
+                        <Button
+                            variant="contained"
+                            onClick={handleOpen}
+                            disabled={disabled || !selectedActivity}
+                            sx={{
+                                textTransform: 'none',
+                                fontSize: '0.95rem',
+                                fontWeight: 600,
+                                width: { xs: '100%', sm: 'auto' },
+                                alignSelf: { xs: 'stretch', sm: 'center' },
+                                whiteSpace: 'nowrap',
+                                px: 2,
+                            }}
+                        >
+                            Create New Activity
+                        </Button>
+                        
+                    </Box>
+                    {selectedActivity && (
+                        <Box sx={{ px: 0.5 }}>
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    color: '#5a6472',
+                                    lineHeight: 1.5,
+                                    fontStyle: 'italic',
+                                }}
+                            >
+                                {selectedActivity.description}
+                            </Typography>
+                        </Box>
+                    )}
+                </Box>
+
+                <Box
+                    sx={{
+                        width: '100%',
+                        '@media (orientation: landscape) and (min-width: 600px)': {
+                            width: '50%',
+                        },
+                    }}
+                >
+                    {/* Preview Image */}
+                    <Box
+                        sx={{
+                            width: '100%',
+                            minHeight: 220,
+                            position: 'relative',
+                            borderRadius: 1,
+                            overflow: 'hidden',
+                            backgroundColor: '#f0f0f0',
+                            aspectRatio: '16 / 9',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <Image
+                            src="/lesson-activities/preview-images/lesson-activity-sample.png"
+                            alt="Lesson Activity Preview"
+                            width={1280}
+                            height={720}
+                            style={{
+                                objectFit: 'cover',
+                                width: '100%',
+                                height: '100%',
+                            }}
+                            priority
+                        />
+                    </Box>
                 </Box>
             </Box>
         </Paper>
