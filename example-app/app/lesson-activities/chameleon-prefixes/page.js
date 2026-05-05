@@ -2,10 +2,13 @@
 
 import { useRef } from 'react';
 import { Box, Button, Menu, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import ActivityShell from '../components/ActivityShell';
 import { openPrintWindow } from '../components/openPrintWindow';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
 import { useContextActionMenu } from '../components/interactionUtils';
+import { ActivityDndProvider, DropZone } from '../components/shared';
 
 const FORM_NAME = 'chameleon-prefixes';
 const DEFAULT_ACTIVITY_NAME = 'Chameleon Prefixes Activity';
@@ -38,6 +41,46 @@ function normalizeChameleonPrefixesLessonInputData(rawData) {
 		grid,
 		pairs,
 	};
+}
+
+function DragHandle({ id, data, label, disabled = false }) {
+	const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+		id,
+		data,
+		disabled,
+	});
+
+	return (
+		<Box
+			ref={setNodeRef}
+			component="button"
+			type="button"
+			aria-label={label}
+			{...attributes}
+			{...listeners}
+			sx={{
+				display: 'inline-flex',
+				alignItems: 'center',
+				justifyContent: 'center',
+				width: 28,
+				height: 28,
+				border: '1px dashed #667eea',
+				borderRadius: 1,
+				backgroundColor: isDragging ? 'rgba(102, 126, 234, 0.10)' : '#f9faff',
+				color: '#4020A7',
+				fontSize: '0.9rem',
+				lineHeight: 1,
+				cursor: disabled ? 'default' : isDragging ? 'grabbing' : 'grab',
+				userSelect: 'none',
+				touchAction: disabled ? 'auto' : 'none',
+				opacity: disabled ? 0.45 : isDragging ? 0.75 : 1,
+				transform: CSS.Translate.toString(transform),
+				transition: 'opacity 120ms ease, transform 120ms ease, background-color 120ms ease',
+			}}
+		>
+			::
+		</Box>
+	);
 }
 
 export default function ChameleonPrefixesPage() {
@@ -92,6 +135,71 @@ export default function ChameleonPrefixesPage() {
 			next[index] = { ...next[index], [field]: value };
 			return { ...prev, pairs: next };
 		});
+	};
+
+	const moveGridValueToPairPrefix = (pairIndex, payload) => {
+		if (!payload?.value || typeof payload.gridIndex !== 'number') return;
+
+		setData((prev) => {
+			const sourceValue = String(prev.grid[payload.gridIndex] || '').trim();
+			if (!sourceValue) return prev;
+
+			const nextGrid = [...prev.grid];
+			const nextPairs = [...prev.pairs];
+			nextGrid[payload.gridIndex] = '';
+			nextPairs[pairIndex] = {
+				...nextPairs[pairIndex],
+				prefix: sourceValue,
+			};
+
+			return {
+				...prev,
+				grid: nextGrid,
+				pairs: nextPairs,
+			};
+		});
+	};
+
+	const movePairPrefixToGrid = (gridIndex, payload) => {
+		if (!payload?.value || typeof payload.pairIndex !== 'number') return;
+
+		setData((prev) => {
+			if (String(prev.grid[gridIndex] || '').trim()) {
+				return prev;
+			}
+
+			const sourceValue = String(prev.pairs[payload.pairIndex]?.prefix || '').trim();
+			if (!sourceValue) return prev;
+
+			const nextGrid = [...prev.grid];
+			const nextPairs = [...prev.pairs];
+			nextGrid[gridIndex] = sourceValue;
+			nextPairs[payload.pairIndex] = {
+				...nextPairs[payload.pairIndex],
+				prefix: '',
+			};
+
+			return {
+				...prev,
+				grid: nextGrid,
+				pairs: nextPairs,
+			};
+		});
+	};
+
+	const handleDragEnd = (event) => {
+		const payload = event?.active?.data?.current;
+		const dropTarget = event?.over?.data?.current;
+		if (!payload || !dropTarget) return;
+
+		if (payload.sourceType === 'grid' && dropTarget.targetType === 'pair-prefix') {
+			moveGridValueToPairPrefix(dropTarget.pairIndex, payload);
+			return;
+		}
+
+		if (payload.sourceType === 'pair-prefix' && dropTarget.targetType === 'grid-cell') {
+			movePairPrefixToGrid(dropTarget.gridIndex, payload);
+		}
 	};
 
 	const handleClearForm = () => {
@@ -169,11 +277,17 @@ export default function ChameleonPrefixesPage() {
 			.map((item) => `<div class="grid-cell">${escapeHtml(item)}</div>`)
 			.join('');
 
-		const pairRowsHtml = data.pairs
-			.map((pair, index) => (
-				`<div class="pair-row"><div class="pair-index">${index + 1}.</div><div class="pair-prefix">${escapeHtml(pair?.prefix)}</div><div class="pair-word">${escapeHtml(pair?.word)}</div></div>`
-			))
-			.join('');
+		const pairRowsHtml = Array.from({ length: 6 }, (_, rowIndex) => {
+			const leftIndex = rowIndex;
+			const rightIndex = rowIndex + 6;
+			const leftPair = data.pairs[leftIndex] || { prefix: '', word: '' };
+			const rightPair = data.pairs[rightIndex] || { prefix: '', word: '' };
+
+			return `<div class="pair-row">
+				<div class="pair-cell"><div class="pair-index">${leftIndex + 1}.</div><div class="pair-prefix">${escapeHtml(leftPair?.prefix)}</div><div class="pair-word">${escapeHtml(leftPair?.word)}</div></div>
+				<div class="pair-cell"><div class="pair-index">${rightIndex + 1}.</div><div class="pair-prefix">${escapeHtml(rightPair?.prefix)}</div><div class="pair-word">${escapeHtml(rightPair?.word)}</div></div>
+			</div>`;
+		}).join('');
 
 		openPrintWindow({
 			features: 'width=1100,height=1400',
@@ -250,12 +364,17 @@ export default function ChameleonPrefixesPage() {
 			white-space: nowrap;
 		}
 		.pairs {
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			gap: 20px 16px;
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
 			margin-top: 13px;
 		}
 		.pair-row {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 20px;
+		}
+		.pair-cell {
 			display: grid;
 			grid-template-columns: 24px 1fr 2fr;
 			align-items: center;
@@ -332,7 +451,8 @@ export default function ChameleonPrefixesPage() {
 			notice={notice}
 			setNotice={setNotice}
 		>
-			<Box sx={{ my: 3 }}>
+			<ActivityDndProvider onDragEnd={handleDragEnd}>
+				<Box sx={{ my: 3 }}>
 				{[0, 1].map((rowIndex) => (
 					<Box
 						key={rowIndex}
@@ -345,48 +465,75 @@ export default function ChameleonPrefixesPage() {
 					>
 						{Array.from({ length: 6 }, (_, colIndex) => {
 							const cellIndex = rowIndex * 6 + colIndex;
+							const cellValue = data.grid[cellIndex] || '';
 							return (
-								<TextField
+								<DropZone
 									key={cellIndex}
-									value={data.grid[cellIndex] || ''}
-									onChange={(event) => handleGridChange(cellIndex, event.target.value)}
-									onContextMenu={(event) => openContextMenu(event, 'grid', cellIndex)}
-									variant="outlined"
-									size="small"
-									inputProps={{
-										style: {
-											textAlign: 'center',
-											fontSize: '1.2rem',
-											color: '#000000',
-										},
-									}}
+									id={`grid-drop-${cellIndex}`}
+									data={{ targetType: 'grid-cell', gridIndex: cellIndex }}
+									minHeight={56}
 									sx={{
-										'& .MuiOutlinedInput-root': {
-											border: '2px solid #4020A7',
-											borderRadius: '4px',
-											overflow: 'hidden',
-											transition: 'border-color 0.3s ease, background-color 0.3s ease',
-											'& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-											'& .MuiOutlinedInput-input': {
-												padding: '12px',
-												textAlign: 'center',
-											},
-											'&:hover': { borderColor: '#667eea' },
-											'& input::placeholder': { color: '#ccc', opacity: 1 },
-											'&.Mui-focused': {
-												backgroundColor: 'rgba(102, 126, 234, 0.05)',
-												borderColor: '#667eea',
-											},
-										},
+										p: 0.5,
+										borderRadius: 1,
 									}}
-								/>
+									inactiveSx={{ borderColor: 'transparent' }}
+									activeSx={{ borderColor: '#667eea', backgroundColor: 'rgba(102, 126, 234, 0.06)' }}
+								>
+									<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+									<TextField
+										value={cellValue}
+										onChange={(event) => handleGridChange(cellIndex, event.target.value)}
+										onContextMenu={(event) => openContextMenu(event, 'grid', cellIndex)}
+										variant="outlined"
+										size="small"
+										inputProps={{
+											style: {
+												textAlign: 'center',
+												fontSize: '1.2rem',
+												color: '#000000',
+											},
+										}}
+										sx={{
+											flex: 1,
+											'& .MuiOutlinedInput-root': {
+												border: '2px solid #4020A7',
+												borderRadius: '4px',
+												overflow: 'hidden',
+												transition: 'border-color 0.3s ease, background-color 0.3s ease',
+												'& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+												'& .MuiOutlinedInput-input': {
+													padding: '12px',
+													textAlign: 'center',
+												},
+												'&:hover': { borderColor: '#667eea' },
+												'& input::placeholder': { color: '#ccc', opacity: 1 },
+												'&.Mui-focused': {
+													backgroundColor: 'rgba(102, 126, 234, 0.05)',
+													borderColor: '#667eea',
+												},
+											},
+										}}
+									/>
+									{String(cellValue).trim() ? (
+										<DragHandle
+											id={`grid-${cellIndex}-${cellValue}`}
+											label={`Drag grid item ${cellIndex + 1}`}
+											data={{
+												sourceType: 'grid',
+												gridIndex: cellIndex,
+												value: String(cellValue).trim(),
+											}}
+										/>
+									) : null}
+									</Box>
+								</DropZone>
 							);
 						})}
 					</Box>
 				))}
-			</Box>
+				</Box>
 
-			<Box
+				<Box
 				sx={{
 					display: 'grid',
 					gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
@@ -398,37 +545,63 @@ export default function ChameleonPrefixesPage() {
 					<Stack key={colIndex} spacing={2.5}>
 						{Array.from({ length: 6 }, (_, rowIndex) => {
 							const pairIndex = colIndex * 6 + rowIndex;
+							const prefixValue = data.pairs[pairIndex]?.prefix || '';
 							return (
 								<Box key={pairIndex} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
 									<Typography sx={{ minWidth: 30, fontWeight: 700, fontSize: '1.1rem', pt: 0.5 }}>
 										{pairIndex + 1}.
 									</Typography>
 									<Box sx={{ display: 'flex', gap: 1.25, flex: 1 }}>
-										<TextField
-											inputRef={(element) => { pairPrefixRefs.current[pairIndex] = element; }}
-											variant="standard"
-											value={data.pairs[pairIndex]?.prefix || ''}
-											onChange={(event) => handlePairChange(pairIndex, 'prefix', event.target.value)}
-											onContextMenu={(event) => openContextMenu(event, 'pair', pairIndex, 'prefix')}
+										<DropZone
+											id={`pair-prefix-${pairIndex}`}
+											data={{ targetType: 'pair-prefix', pairIndex }}
+											minHeight={42}
 											sx={{
 												width: '33%',
-												'& .MuiInputBase-input': {
-													padding: '8px 0',
-													fontSize: '1.2rem',
-													color: '#333',
-													transition: 'border-color 0.3s ease, background-color 0.3s ease, padding 0.3s ease',
-													backgroundColor: 'transparent',
-												},
-												'& .MuiInput-underline:before': { borderBottom: '2px solid #ddd' },
-												'& .MuiInput-underline:hover:not(.Mui-disabled, .Mui-error):before': { borderBottom: '2px solid #ddd' },
-												'& .MuiInput-underline:after': { borderBottom: '2px solid #667eea' },
-												'& .MuiInputBase-input:focus': {
-													backgroundColor: 'rgba(102, 126, 234, 0.05)',
-													padding: '8px',
-												},
-												'& .MuiInputBase-input::placeholder': { color: '#ccc', opacity: 1 },
+												p: 0.5,
+												borderRadius: 1,
 											}}
-										/>
+											inactiveSx={{ borderColor: 'transparent' }}
+											activeSx={{ borderColor: '#667eea', backgroundColor: 'rgba(102, 126, 234, 0.06)' }}
+										>
+											<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+												{String(prefixValue).trim() ? (
+													<DragHandle
+														id={`pair-prefix-${pairIndex}-${prefixValue}`}
+														label={`Drag prefix item ${pairIndex + 1}`}
+														data={{
+															sourceType: 'pair-prefix',
+															pairIndex,
+															value: String(prefixValue).trim(),
+														}}
+													/>
+												) : null}
+												<TextField
+													inputRef={(element) => { pairPrefixRefs.current[pairIndex] = element; }}
+													variant="standard"
+													value={prefixValue}
+													onChange={(event) => handlePairChange(pairIndex, 'prefix', event.target.value)}
+													onContextMenu={(event) => openContextMenu(event, 'pair', pairIndex, 'prefix')}
+													sx={{
+														width: '100%',
+														'& .MuiInputBase-input': {
+															padding: '8px',
+															fontSize: '1.2rem',
+															color: '#333',
+															transition: 'border-color 0.3s ease, background-color 0.3s ease, padding 0.3s ease',
+															backgroundColor: 'transparent',
+														},
+														'& .MuiInput-underline:before': { borderBottom: '2px solid #ddd' },
+														'& .MuiInput-underline:hover:not(.Mui-disabled, .Mui-error):before': { borderBottom: '2px solid #ddd' },
+														'& .MuiInput-underline:after': { borderBottom: '2px solid #667eea' },
+														'& .MuiInputBase-input:focus': {
+															backgroundColor: 'rgba(102, 126, 234, 0.05)',
+														},
+														'& .MuiInputBase-input::placeholder': { color: '#ccc', opacity: 1 },
+													}}
+												/>
+											</Box>
+										</DropZone>
 										<TextField
 											variant="standard"
 											value={data.pairs[pairIndex]?.word || ''}
@@ -459,9 +632,9 @@ export default function ChameleonPrefixesPage() {
 						})}
 					</Stack>
 				))}
-			</Box>
+				</Box>
 
-			<Box
+				<Box
 				sx={{
 					borderTop: '2px solid #eee',
 					pt: 2.5,
@@ -473,7 +646,8 @@ export default function ChameleonPrefixesPage() {
 				<Button variant="outlined" onClick={handleClearForm} sx={{ minWidth: 150 }}>
 					Clear All
 				</Button>
-			</Box>
+				</Box>
+			</ActivityDndProvider>
 
 			<Menu
 				open={contextMenu.open}
