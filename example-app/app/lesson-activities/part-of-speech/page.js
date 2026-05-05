@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import { Box, Button, IconButton, TextField, Typography } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
 import { openPrintWindow } from '../components/openPrintWindow';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
+import { ActivityDndProvider, DraggableTile, DropZone } from '../components/shared';
 
 const FORM_NAME = 'part-of-speech';
 const DEFAULT_ACTIVITY_NAME = 'Part Of Speech Activity';
@@ -58,8 +58,6 @@ function cloneSortBoxes(sortBoxes) {
 }
 
 export default function PartOfSpeechPage() {
-	const [dragOverTarget, setDragOverTarget] = useState(null);
-
 	const {
 		data,
 		setData,
@@ -103,39 +101,6 @@ export default function PartOfSpeechPage() {
 			nextSortBoxes[category].splice(itemIndex, 1);
 			return { ...prev, sortBoxes: nextSortBoxes };
 		});
-	};
-
-	const parseDragPayload = (event) => {
-		const raw = event.dataTransfer.getData('text/plain');
-		if (!raw) return null;
-
-		try {
-			return JSON.parse(raw);
-		} catch {
-			return null;
-		}
-	};
-
-	const handleGridDragStart = (event, gridIndex) => {
-		const value = String(data.grid[gridIndex] || '').trim();
-		if (!value) {
-			event.preventDefault();
-			return;
-		}
-
-		event.dataTransfer.effectAllowed = 'move';
-		event.dataTransfer.setData('text/plain', JSON.stringify({ sourceType: 'grid', gridIndex, value }));
-	};
-
-	const handleSortItemDragStart = (event, category, itemIndex) => {
-		const value = String(data.sortBoxes[category][itemIndex] || '').trim();
-		if (!value) {
-			event.preventDefault();
-			return;
-		}
-
-		event.dataTransfer.effectAllowed = 'move';
-		event.dataTransfer.setData('text/plain', JSON.stringify({ sourceType: 'sort', category, itemIndex, value }));
 	};
 
 	const moveToSortBox = (targetCategory, payload) => {
@@ -187,66 +152,61 @@ export default function PartOfSpeechPage() {
 		});
 	};
 
+	const handleDragEnd = (event) => {
+		const payload = event?.active?.data?.current;
+		const dropTarget = event?.over?.data?.current;
+		if (!payload?.value || !dropTarget?.targetType) return;
+
+		if (dropTarget.targetType === 'box') {
+			moveToSortBox(dropTarget.category, payload);
+			return;
+		}
+
+		if (dropTarget.targetType === 'grid') {
+			moveToGrid(dropTarget.index, payload);
+		}
+	};
+
 	const handleClearWordGrid = () => {
 		setData((prev) => ({ ...prev, grid: Array.from({ length: 12 }, () => '') }));
 	};
 
 	const renderSortBox = (category, minHeight = 260) => {
-		const isDragOver = dragOverTarget?.type === 'box' && dragOverTarget.category === category;
-
 		return (
 			<Box>
 				<Typography sx={{ fontWeight: 700, mb: 1 }}>{CATEGORY_LABELS[category]}</Typography>
-				<Box
-					onDragOver={(event) => {
-						event.preventDefault();
-						setDragOverTarget({ type: 'box', category });
-					}}
-					onDragLeave={() => setDragOverTarget((prev) => (prev?.type === 'box' && prev.category === category ? null : prev))}
-					onDrop={(event) => {
-						event.preventDefault();
-						setDragOverTarget(null);
-						moveToSortBox(category, parseDragPayload(event));
-					}}
-					sx={{
-						border: '2px solid #4020A7',
-						borderColor: isDragOver ? '#667eea' : '#4020A7',
-						borderRadius: 1,
-						minHeight,
-						p: 1.25,
-						display: 'flex',
-						flexDirection: 'column',
-						gap: 1,
-						backgroundColor: isDragOver ? 'rgba(102, 126, 234, 0.08)' : '#fff',
-					}}
-				>
+				<DropZone id={`box-drop-${category}`} data={{ targetType: 'box', category }} minHeight={minHeight} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 					{data.sortBoxes[category].length === 0 ? <Box sx={{ minHeight: 32 }} /> : null}
 
 					{data.sortBoxes[category].map((item, itemIndex) => (
-						<Box
+						<DraggableTile
 							key={`${category}-${itemIndex}-${item}`}
-							draggable
-							onDragStart={(event) => handleSortItemDragStart(event, category, itemIndex)}
+							id={`sort-${category}-${itemIndex}-${item}`}
+							data={{
+								sourceType: 'sort',
+								category,
+								itemIndex,
+								value: String(item || '').trim(),
+							}}
 							sx={{
 								display: 'flex',
 								alignItems: 'center',
 								justifyContent: 'space-between',
 								gap: 1,
-								px: 1.25,
-								py: 0.75,
-								borderRadius: 1,
-								background: 'linear-gradient(180deg, #ffffff, #f5f5fb)',
-								border: '1px solid #d5d5e5',
-								cursor: 'grab',
 							}}
 						>
 							<Typography sx={{ fontFamily: 'Courier New, monospace' }}>{item}</Typography>
-							<IconButton size="small" onClick={() => removeSortItem(category, itemIndex)} sx={{ color: '#777', fontSize: '1rem' }}>
+							<IconButton
+								size="small"
+								onPointerDown={(event) => event.stopPropagation()}
+								onClick={() => removeSortItem(category, itemIndex)}
+								sx={{ color: '#777', fontSize: '1rem' }}
+							>
 								×
 							</IconButton>
-						</Box>
+						</DraggableTile>
 					))}
-				</Box>
+				</DropZone>
 			</Box>
 		);
 	};
@@ -357,58 +317,101 @@ export default function PartOfSpeechPage() {
 			notice={notice}
 			setNotice={setNotice}
 		>
-			<Box sx={{ my: 3, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 1.25 }}>
-				{data.grid.map((value, index) => {
-					const isDragOver = dragOverTarget?.type === 'grid' && dragOverTarget.index === index;
+			<ActivityDndProvider
+				onDragEnd={handleDragEnd}
+				overlay={(activeItem) => {
+					const value = String(activeItem?.data?.current?.value || '').trim();
+					if (!value) return null;
 
 					return (
-						<TextField
-							key={index}
-							value={value || ''}
-							onChange={(event) => setGridValue(index, event.target.value)}
-							onDragStart={(event) => handleGridDragStart(event, index)}
-							onDragOver={(event) => {
-								event.preventDefault();
-								setDragOverTarget({ type: 'grid', index });
-							}}
-							onDragLeave={() => setDragOverTarget((prev) => (prev?.type === 'grid' && prev.index === index ? null : prev))}
-							onDrop={(event) => {
-								event.preventDefault();
-								setDragOverTarget(null);
-								moveToGrid(index, parseDragPayload(event));
-							}}
-							inputProps={{
-								style: {
-									textAlign: 'center',
-									fontFamily: 'Trebuchet MS, sans-serif',
-									fontSize: '1.2rem',
-									color: '#000000',
-									cursor: String(value || '').trim() ? 'grab' : 'text',
-								},
-								draggable: Boolean(String(value || '').trim()),
-							}}
+						<Box
 							sx={{
-								'& .MuiOutlinedInput-root': {
-									backgroundColor: isDragOver ? 'rgba(102, 126, 234, 0.08)' : '#fff',
-									'& fieldset': {
-										borderColor: isDragOver ? '#667eea' : '#4020A7',
-										borderWidth: isDragOver ? '3px' : '2px',
-									},
-								},
+								px: 1.25,
+								py: 0.75,
+								borderRadius: 1,
+								background: 'linear-gradient(180deg, #ffffff, #f5f5fb)',
+								border: '1px solid #d5d5e5',
+								boxShadow: 4,
 							}}
-						/>
+						>
+							<Typography sx={{ fontFamily: 'Courier New, monospace' }}>{value}</Typography>
+						</Box>
 					);
-				})}
-			</Box>
+				}}
+			>
+				<Box sx={{ my: 3, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 1.25 }}>
+					{data.grid.map((value, index) => {
+						const hasValue = Boolean(String(value || '').trim());
 
-			<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '3fr 1fr' }, gap: 2 }}>
-				<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
-					{SORT_GRID_CATEGORIES.map((category) => (
-						<Box key={category}>{renderSortBox(category, 260)}</Box>
-					))}
+						return (
+							<DropZone
+								key={index}
+								id={`grid-drop-${index}`}
+								data={{ targetType: 'grid', index }}
+								minHeight={0}
+								sx={{
+									p: 0,
+									border: 'none',
+									borderRadius: 0,
+									backgroundColor: 'transparent',
+								}}
+								activeSx={{
+									backgroundColor: 'transparent',
+								}}
+							>
+								<Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+									<TextField
+										value={value || ''}
+										onChange={(event) => setGridValue(index, event.target.value)}
+										inputProps={{
+											style: {
+												textAlign: 'center',
+												fontFamily: 'Trebuchet MS, sans-serif',
+												fontSize: '1.2rem',
+												color: '#000000',
+											},
+										}}
+										sx={{
+											'& .MuiOutlinedInput-root': {
+												backgroundColor: '#fff',
+												'& fieldset': {
+													borderColor: '#4020A7',
+													borderWidth: '2px',
+												},
+											},
+										}}
+									/>
+
+									{hasValue ? (
+										<Box sx={{ display: 'flex', justifyContent: 'center' }}>
+											<DraggableTile
+												id={`grid-item-${index}`}
+												data={{
+													sourceType: 'grid',
+													gridIndex: index,
+													value: String(value || '').trim(),
+												}}
+												sx={{ px: 1, py: 0.25, width: 'fit-content' }}
+											>
+												<Typography sx={{ fontSize: '0.75rem', fontWeight: 700 }}>Drag</Typography>
+											</DraggableTile>
+										</Box>
+									) : null}
+								</Box>
+							</DropZone>
+						);
+					})}
 				</Box>
-				<Box>{renderSortBox(ADJECTIVE_CATEGORY, 260)}</Box>
-			</Box>
+
+				<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '3fr 1fr' }, gap: 2 }}>
+					<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
+						{SORT_GRID_CATEGORIES.map((category) => (
+							<Box key={category}>{renderSortBox(category, 260)}</Box>
+						))}
+					</Box>
+					<Box>{renderSortBox(ADJECTIVE_CATEGORY, 260)}</Box>
+				</Box>
+			</ActivityDndProvider>
 
 			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', gap: 2, mt: 4 }}>
 				<Button variant="outlined" onClick={handleClearWordGrid} sx={{ minWidth: 150 }}>
