@@ -67,6 +67,58 @@ import { AppleMusicIcon } from '../../icons/filled/brands/index.jsx';
 
 - **Icons Organization:** Icons are categorized by style (`filled/`, `line/`) and category (`general/`, `brands/`, etc.). See the library's [icons/](../icons/) directory for all available icons.
 
+## Shared Lesson Activity Foundation
+
+Lesson activities share a common set of animation and drag-and-drop primitives located at:
+
+```
+app/lesson-activities/components/shared/
+├── ActivityMotionProvider.js   LazyMotion wrapper (motion library)
+├── ActivityEntrance.js         Fade + slide-up entrance animation
+├── ActivityDndProvider.js      DnD context (pointer, touch, keyboard sensors)
+├── DraggableTile.js            Reusable draggable word/token tile
+├── DropZone.js                 Reusable drop target
+└── index.js                    Single import surface
+```
+
+### Animation — `motion`
+
+Uses the [`motion`](https://motion.dev) library (`^12.11.1`). All lesson activity pages should wrap their content with `ActivityMotionProvider` to enable animations and respect the user's reduced-motion preference.
+
+```javascript
+import { ActivityMotionProvider, ActivityEntrance } from '../components/shared';
+
+<ActivityMotionProvider>
+  <ActivityEntrance>
+    {/* page content fades + slides in */}
+  </ActivityEntrance>
+</ActivityMotionProvider>
+```
+
+`ActivityEntrance` uses `LazyMotion` (only the `domAnimation` feature set is loaded) and `MotionConfig` with `reducedMotion="user"` so system preferences are honoured automatically.
+
+### Drag-and-Drop — `@dnd-kit`
+
+Uses [`@dnd-kit/core`](https://dndkit.com) (`^6.3.1`) with `@dnd-kit/sortable` (`^10.0.0`) and `@dnd-kit/utilities` (`^3.2.2`). Sensors are pre-configured for pointer (desktop), touch (mobile), and keyboard (accessibility).
+
+```javascript
+import { ActivityDndProvider, DraggableTile, DropZone } from '../components/shared';
+
+<ActivityDndProvider onDragEnd={handleDragEnd}>
+  <DraggableTile id="word-1" data={{ value: 'prefix', sourceType: 'grid' }}>
+    prefix
+  </DraggableTile>
+
+  <DropZone id="noun-box" data={{ category: 'noun' }}>
+    {/* dropped items render here */}
+  </DropZone>
+</ActivityDndProvider>
+```
+
+`handleDragEnd` receives a `@dnd-kit` event — read `active.data.current` for the dragged item's metadata and `over.id` for the drop target.
+
+The `app/lesson-activities/part-of-speech/page.js` activity is the **reference implementation** showing the full pattern.
+
 ## Next Steps
 
 - Explore `../theme/components/` to see all available components
