@@ -45,7 +45,6 @@ import {
 	getUniqueLessonActivityName,
 	normalizeCloudProjects,
 } from '../components/projectManagerModel';
-import AuthDebugPanel from '../components/AuthDebugPanel';
 import TmkLogo from '../components/TmkLogo';
 
 
@@ -935,11 +934,10 @@ export default function LessonProjectsPage() {
 			}}
 		>
 			<Container maxWidth="xl">
-				<AuthDebugPanel />
 				<Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' }, alignItems: 'flex-end', pr: { xs: 0, md: 5 } }}>
 					<Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 1 }}>
 						<TmkLogo sx={{ mb: 2 }} />
-						<Typography sx={{ fontSize: '4rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 1, pl: 2 }}>
+						<Typography sx={{ fontSize: '3rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 1, pl: 2 }}>
 							Projects
 						</Typography>
 					</Stack>

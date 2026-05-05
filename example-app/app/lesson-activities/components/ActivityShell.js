@@ -110,16 +110,16 @@ export default function ActivityShell({
 				<Stack spacing={1.5} sx={{ mb: 1.5 }} direction={{ xs: 'column', sm: 'row' }} flexWrap="wrap" useFlexGap>
 					<Button
 						variant="outlined"
-						onClick={() => router.push('/dashboard')}
+						onClick={() => router.push('/lesson-activities')}
 						sx={{
 							...outlinedControlButtonSx,
 							fontWeight: 700,
 						}}
 					>
-						Dashboard
+						Lesson Actvities Home
 					</Button>
 					<Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
-						{authUser ? 'Logout from Teachable' : 'Login with Teachable'}
+						{authUser ? 'Logout' : 'Login'}
 					</Button>
 					<Box
 						sx={{
@@ -249,9 +249,6 @@ export default function ActivityShell({
 									Delete Activity
 								</Button>
 							)}
-							<Button variant="contained" color="primary" onClick={handleAddToProject} sx={{ textTransform: 'none' }}>
-								Add To Project
-							</Button>
 						</>
 					)}
 					{projectId && (
