@@ -360,9 +360,6 @@ export default function IntroPage() {
 										'& .MuiOutlinedInput-root': {
 											borderRadius: '4px',
 											transition: 'border-color 0.3s ease, background-color 0.3s ease',
-											'& .MuiOutlinedInput-notchedOutline legend': {
-												display: 'none',
-											},
 											'& .MuiOutlinedInput-input': {
 												padding: '10px',
 												textAlign: 'center',
@@ -408,9 +405,6 @@ export default function IntroPage() {
 							height: '100%',
 							borderRadius: '4px',
 							transition: 'border-color 0.3s ease, background-color 0.3s ease',
-							'& .MuiOutlinedInput-notchedOutline legend': {
-								display: 'none',
-							},
 							'& .MuiOutlinedInput-input': {
 								padding: '8px 10px',
 								textAlign: 'center',
