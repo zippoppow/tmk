@@ -41,10 +41,6 @@ export default function IntroPage() {
 		}
 	}, [diyLoading, hasDiyAccess, router]);
 
-	if (diyLoading) {
-		return null;
-	}
-
 	const {
 		data,
 		setData,
@@ -80,6 +76,10 @@ export default function IntroPage() {
 		openMenu: openContextMenuMenu,
 		closeMenu: closeContextMenu,
 	} = useContextActionMenu({ targetType: '', index: -1 });
+
+	if (diyLoading) {
+		return null;
+	}
 
 	const handleWordChange = (index, value) => {
 		setData((prev) => {
