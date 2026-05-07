@@ -150,29 +150,26 @@ export default function LessonActivitySelector({
                     <Box
                         sx={{
                             width: '100%',
-                            minHeight: 220,
-                            position: 'relative',
                             borderRadius: 1,
                             overflow: 'hidden',
                             backgroundColor: '#f0f0f0',
-                            aspectRatio: '16 / 9',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                               minHeight: selectedActivity?.previewImage ? 0 : 220,
                         }}
                     >
-                        <Image
-                            src="/lesson-activities/preview-images/lesson-activity-sample.png"
-                            alt="Lesson Activity Preview"
-                            width={1280}
-                            height={720}
-                            style={{
-                                objectFit: 'cover',
-                                width: '100%',
-                                height: '100%',
-                            }}
-                            priority
-                        />
+                        {selectedActivity?.previewImage ? (
+                               <Box
+                                   component="img"
+                                key={selectedActivity.previewImage}
+                                src={selectedActivity.previewImage}
+                                alt={`${selectedActivity.name} Preview`}
+                                   sx={{ width: '100%', height: 'auto', display: 'block' }}
+                            />
+                        ) : (
+                            <Typography sx={{ color: '#aaa', fontSize: '0.9rem' }}>No preview available</Typography>
+                        )}
                     </Box>
                 </Box>
             </Box>
