@@ -551,20 +551,24 @@ export default function ChameleonPrefixesPage() {
 									<Typography sx={{ minWidth: 30, fontWeight: 700, fontSize: '1.1rem', pt: 0.5 }}>
 										{pairIndex + 1}.
 									</Typography>
-									<Box sx={{ display: 'flex', gap: 1.25, flex: 1 }}>
+									<Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1.25, flex: 1 }}>
 										<DropZone
 											id={`pair-prefix-${pairIndex}`}
 											data={{ targetType: 'pair-prefix', pairIndex }}
-											minHeight={42}
+											minHeight={44}
 											sx={{
 												width: '33%',
-												p: 0.5,
+												display: 'flex',
+												alignItems: 'flex-end',
+												mt: '0',
+												minHeight: 44,
+												p: 0,
 												borderRadius: 1,
 											}}
 											inactiveSx={{ borderColor: 'transparent' }}
-											activeSx={{ borderColor: '#667eea', backgroundColor: 'rgba(102, 126, 234, 0.06)' }}
+											activeSx={{ borderColor: 'transparent', backgroundColor: 'transparent' }}
 										>
-											<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+											<Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 0.5, width: '100%' }}>
 												{String(prefixValue).trim() ? (
 													<DragHandle
 														id={`pair-prefix-${pairIndex}-${prefixValue}`}
@@ -584,19 +588,21 @@ export default function ChameleonPrefixesPage() {
 													onContextMenu={(event) => openContextMenu(event, 'pair', pairIndex, 'prefix')}
 													sx={{
 														width: '100%',
+														'& .MuiInputBase-root': {
+															height: 44,
+															alignItems: 'flex-end',
+														},
 														'& .MuiInputBase-input': {
-															padding: '8px',
+															height: 44,
+															boxSizing: 'border-box',
+															padding: '8px 0',
 															fontSize: '1.2rem',
 															color: '#333',
-															transition: 'border-color 0.3s ease, background-color 0.3s ease, padding 0.3s ease',
 															backgroundColor: 'transparent',
 														},
 														'& .MuiInput-underline:before': { borderBottom: '2px solid #ddd' },
 														'& .MuiInput-underline:hover:not(.Mui-disabled, .Mui-error):before': { borderBottom: '2px solid #ddd' },
 														'& .MuiInput-underline:after': { borderBottom: '2px solid #667eea' },
-														'& .MuiInputBase-input:focus': {
-															backgroundColor: 'rgba(102, 126, 234, 0.05)',
-														},
 														'& .MuiInputBase-input::placeholder': { color: '#ccc', opacity: 1 },
 													}}
 												/>
@@ -609,20 +615,22 @@ export default function ChameleonPrefixesPage() {
 											onContextMenu={(event) => openContextMenu(event, 'pair', pairIndex, 'word')}
 											sx={{
 												width: '66%',
+												transform: 'translateY(-1.5px)',
+												'& .MuiInputBase-root': {
+													height: 44,
+													alignItems: 'flex-end',
+												},
 												'& .MuiInputBase-input': {
+													height: 44,
+													boxSizing: 'border-box',
 													padding: '8px 0',
 													fontSize: '1.2rem',
 													color: '#333',
-													transition: 'border-color 0.3s ease, background-color 0.3s ease, padding 0.3s ease',
 													backgroundColor: 'transparent',
 												},
 												'& .MuiInput-underline:before': { borderBottom: '2px solid #ddd' },
 												'& .MuiInput-underline:hover:not(.Mui-disabled, .Mui-error):before': { borderBottom: '2px solid #ddd' },
 												'& .MuiInput-underline:after': { borderBottom: '2px solid #667eea' },
-												'& .MuiInputBase-input:focus': {
-													backgroundColor: 'rgba(102, 126, 234, 0.05)',
-													padding: '8px',
-												},
 												'& .MuiInputBase-input::placeholder': { color: '#ccc', opacity: 1 },
 											}}
 										/>
