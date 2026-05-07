@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import {
   Box,
@@ -14,9 +15,7 @@ import {
   Alert,
 } from '@mui/material';
 
-import { TMK_API_BASE_URL } from '@/lib/tmkApiOrigin.js';
-
-const TMK_API_URL = TMK_API_BASE_URL;
+import { fetchWithTmkToken } from '@/app/utilities/components/authHelpers';
 
 export default function CreateInstructionalLevelPage() {
   const [formData, setFormData] = useState({
@@ -59,7 +58,7 @@ export default function CreateInstructionalLevelPage() {
 
       console.log('Submitting payload:', payload);
 
-      const response = await fetch(`${TMK_API_URL}/api/instructional-levels`, {
+      const response = await fetchWithTmkToken('/api/instructional-levels', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -117,6 +116,12 @@ export default function CreateInstructionalLevelPage() {
             >
               Create Instructional Level
             </Typography>
+
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Button component={Link} href="/utilities/view/instructional-level" variant="outlined" size="small">
+                View Existing Instructional Levels
+              </Button>
+            </Box>
 
             {/* Message Alert */}
             {message.text && (

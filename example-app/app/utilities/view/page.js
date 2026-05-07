@@ -3,33 +3,32 @@
 import Link from 'next/link';
 import {
   Box,
+  Button,
   Card,
   CardContent,
   Container,
   Grid,
-  Typography,
-  Button,
   Paper,
+  Typography,
 } from '@mui/material';
 
-const createPages = [
-  { label: 'Word', path: '/utilities/create/word' },
-  { label: 'Morpheme', path: '/utilities/create/morpheme' },
-  { label: 'Instructional Level', path: '/utilities/create/instructional-level' },
-  { label: 'Part of Speech', path: '/utilities/create/part-of-speech' },
-  { label: 'Vocabulary Tier', path: '/utilities/create/vocabulary-tier' },
-  { label: 'Word Family', path: '/utilities/create/word-family' },
-  { label: 'Word List', path: '/utilities/create/word-list' },
-  { label: 'Lesson Activity Type', path: '/utilities/create/lesson-activity-type' },
+const viewPages = [
+  { label: 'Word', path: '/utilities/view/word' },
+  { label: 'Morpheme', path: '/utilities/view/morpheme' },
+  { label: 'Instructional Level', path: '/utilities/view/instructional-level' },
+  { label: 'Part of Speech', path: '/utilities/view/part-of-speech' },
+  { label: 'Vocabulary Tier', path: '/utilities/view/vocabulary-tier' },
+  { label: 'Word Family', path: '/utilities/view/word-family' },
+  { label: 'Word List', path: '/utilities/view/word-list' },
+  { label: 'Lesson Activity Type', path: '/utilities/view/lesson-activity-type' },
 ];
 
-export default function CreatePage() {
+export default function ViewPage() {
   return (
     <Box component="main" sx={{ py: 4, bgcolor: 'background.default', minHeight: '100vh' }}>
       <Container maxWidth="lg">
         <Card sx={{ boxShadow: 3 }}>
           <CardContent sx={{ p: 4 }}>
-            {/* Header */}
             <Typography
               variant="h4"
               component="h1"
@@ -40,7 +39,7 @@ export default function CreatePage() {
                 textTransform: 'uppercase',
               }}
             >
-              Create New Content
+              View Existing Content
             </Typography>
             <Typography
               variant="body1"
@@ -50,16 +49,15 @@ export default function CreatePage() {
                 mb: 4,
               }}
             >
-              Add new items to the TMK-API database
+              Browse records from the TMK-API database
             </Typography>
 
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-              <Button component={Link} href="/utilities/view" variant="outlined" size="small">
-                Switch to View Pages
+              <Button component={Link} href="/utilities/create" variant="outlined" size="small">
+                Switch to Create Pages
               </Button>
             </Box>
 
-            {/* Instructions */}
             <Paper
               sx={{
                 p: 2,
@@ -69,15 +67,13 @@ export default function CreatePage() {
               }}
             >
               <Typography variant="body2">
-                <strong>Choose what you'd like to create:</strong> Select one of the options below
-                to add a new item to the TMK API database. Each form is pre-configured to submit
-                to the appropriate API endpoint.
+                <strong>Choose what you'd like to view:</strong> Select one of the options below
+                to browse existing records from the TMK API endpoint for that resource.
               </Typography>
             </Paper>
 
-            {/* Grid of Create Options */}
             <Grid container spacing={3}>
-              {createPages.map((page) => (
+              {viewPages.map((page) => (
                 <Grid item xs={12} sm={6} md={4} key={page.path}>
                   <Link href={page.path} style={{ textDecoration: 'none' }}>
                     <Card
@@ -99,24 +95,11 @@ export default function CreatePage() {
                         },
                       }}
                     >
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontWeight: 'bold',
-                          color: '#333',
-                          mb: 1,
-                        }}
-                      >
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333', mb: 1 }}>
                         {page.label}
                       </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: '#999',
-                          fontSize: '0.85rem',
-                        }}
-                      >
-                        Add a new {page.label.toLowerCase()}
+                      <Typography variant="caption" sx={{ color: '#999', fontSize: '0.85rem' }}>
+                        View {page.label.toLowerCase()} records
                       </Typography>
                     </Card>
                   </Link>
