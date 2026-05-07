@@ -161,23 +161,24 @@ export default function LessonActivitiesPage() {
     }
 
     const lessonActivities = [
-        { name: 'Intro', path: '/lesson-activities/intro', description: 'Create and manage intro lesson activities' },
+        { name: 'Intro', path: '/lesson-activities/intro', description: 'Create and manage intro lesson activities', previewImage: '/lesson-activities/preview-images/Intro.png' },
         {
             name: 'Chameleon Prefixes',
             path: '/lesson-activities/chameleon-prefixes',
             description: 'Practice prefix transformations and word building',
+            previewImage: '/lesson-activities/preview-images/ChameleonPrefixes.png',
         },
-        { name: 'Common Base Word', path: '/lesson-activities/common-base-word', description: 'Identify and group common base words' },
-        { name: 'Constructor / Deconstructor', path: '/lesson-activities/constructor-deconstructor', description: 'Build and break apart words using morph parts' },
-        { name: 'Fill In The Morph - Paragraphs', path: '/lesson-activities/fill-in-the-morph-paragraphs', description: 'Complete morph pairs and paragraph contexts' },
-        { name: 'Morph Match - Definitions', path: '/lesson-activities/morph-match-definitions', description: 'Match morph words to numbered definitions' },
-        { name: 'Morph Match - Related Words', path: '/lesson-activities/morph-match-related-words', description: 'Pair focus words with related words' },
-        { name: 'Morph Morph Match', path: '/lesson-activities/morph-morph-match', description: 'Compare morph patterns and complete pair matches' },
-        { name: 'Morph Sort', path: '/lesson-activities/morph-sort', description: 'Sort words into morph-based categories' },
-        { name: 'Morph Which', path: '/lesson-activities/morph-which', description: 'Select and compare best morph options per prompt' },
-        { name: 'Part Of Speech', path: '/lesson-activities/part-of-speech', description: 'Sort morph words by part of speech' },
-        { name: 'Word Builder', path: '/lesson-activities/word-builder', description: 'Combine prefixes, bases, and suffixes to build words' },
-        { name: 'Word Meaning', path: '/lesson-activities/word-meaning', description: 'Infer and record meanings from morph clues' },
+        { name: 'Common Base Word', path: '/lesson-activities/common-base-word', description: 'Identify and group common base words', previewImage: '/lesson-activities/preview-images/CommonBaseWord.png' },
+        { name: 'Constructor / Deconstructor', path: '/lesson-activities/constructor-deconstructor', description: 'Build and break apart words using morph parts', previewImage: '/lesson-activities/preview-images/ConstructorDeconstructor.png' },
+        { name: 'Fill In The Morph - Paragraphs', path: '/lesson-activities/fill-in-the-morph-paragraphs', description: 'Complete morph pairs and paragraph contexts', previewImage: '/lesson-activities/preview-images/FillInTheMorphParagraphsSentences.png' },
+        { name: 'Morph Match - Definitions', path: '/lesson-activities/morph-match-definitions', description: 'Match morph words to numbered definitions', previewImage: '/lesson-activities/preview-images/MorphMatchDefinitions.png' },
+        { name: 'Morph Match - Related Words', path: '/lesson-activities/morph-match-related-words', description: 'Pair focus words with related words', previewImage: '/lesson-activities/preview-images/MorphMatchRelatedWords.png' },
+        { name: 'Morph Morph Match', path: '/lesson-activities/morph-morph-match', description: 'Compare morph patterns and complete pair matches', previewImage: '/lesson-activities/preview-images/MorphMorphMatch.png' },
+        { name: 'Morph Sort', path: '/lesson-activities/morph-sort', description: 'Sort words into morph-based categories', previewImage: '/lesson-activities/preview-images/MorphSort.png' },
+        { name: 'Morph Which', path: '/lesson-activities/morph-which', description: 'Select and compare best morph options per prompt', previewImage: '/lesson-activities/preview-images/MorphWhich.png' },
+        { name: 'Part Of Speech', path: '/lesson-activities/part-of-speech', description: 'Sort morph words by part of speech', previewImage: '/lesson-activities/preview-images/PartOfSpeechSort.png' },
+        { name: 'Word Builder', path: '/lesson-activities/word-builder', description: 'Combine prefixes, bases, and suffixes to build words', previewImage: '/lesson-activities/preview-images/WordBuilder.png' },
+        { name: 'Word Meaning', path: '/lesson-activities/word-meaning', description: 'Infer and record meanings from morph clues', previewImage: '/lesson-activities/preview-images/WordMeaning.png' },
     ];
 
     const isAuthenticated = Boolean(user);
