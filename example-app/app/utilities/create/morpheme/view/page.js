@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import {
   Box,
@@ -21,10 +22,7 @@ import {
   Chip,
   Button,
 } from '@mui/material';
-
-import { TMK_API_BASE_URL } from '@/lib/tmkApiOrigin.js';
-
-const TMK_API_URL = TMK_API_BASE_URL;
+import { fetchWithTmkToken } from '@/app/utilities/components/authHelpers';
 //TODO: Add the ability to update each morpheme
 
 export default function ViewMorphemesPage() {
@@ -41,7 +39,7 @@ export default function ViewMorphemesPage() {
         setLoading(true);
         setError('');
 
-        const response = await fetch(`${TMK_API_URL}/api/morphemes`);
+        const response = await fetchWithTmkToken('/api/morphemes');
 
         if (!response.ok) {
           throw new Error(`Failed to fetch morphemes: ${response.status}`);
@@ -85,7 +83,7 @@ export default function ViewMorphemesPage() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`${TMK_API_URL}/api/morphemes`);
+      const response = await fetchWithTmkToken('/api/morphemes');
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       const morphemesList = data.data || data || [];
@@ -158,6 +156,12 @@ export default function ViewMorphemesPage() {
             >
               View Morphemes
             </Typography>
+
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Button component={Link} href="/utilities/create/morpheme" variant="outlined" size="small">
+                Go to Create Morpheme
+              </Button>
+            </Box>
 
             {/* Error Alert */}
             {error && (

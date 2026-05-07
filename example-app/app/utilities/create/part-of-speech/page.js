@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import {
   Box,
@@ -14,9 +15,7 @@ import {
   Alert,
 } from '@mui/material';
 
-import { TMK_API_BASE_URL } from '@/lib/tmkApiOrigin.js';
-
-const TMK_API_URL = TMK_API_BASE_URL;
+import { fetchWithTmkToken } from '@/app/utilities/components/authHelpers';
 
 export default function CreatePartOfSpeechPage() {
   const [formData, setFormData] = useState({
@@ -57,7 +56,7 @@ export default function CreatePartOfSpeechPage() {
 
       console.log('Submitting payload:', payload);
 
-      const response = await fetch(`${TMK_API_URL}/api/parts-of-speech`, {
+      const response = await fetchWithTmkToken('/api/parts-of-speech', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,6 +113,12 @@ export default function CreatePartOfSpeechPage() {
             >
               Create Part of Speech
             </Typography>
+
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Button component={Link} href="/utilities/view/part-of-speech" variant="outlined" size="small">
+                View Existing Parts of Speech
+              </Button>
+            </Box>
 
             {/* Message Alert */}
             {message.text && (

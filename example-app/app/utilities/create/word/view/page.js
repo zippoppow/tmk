@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import {
   Box,
@@ -21,11 +22,8 @@ import {
   Chip,
   Button,
 } from '@mui/material';
+import { fetchWithTmkToken } from '@/app/utilities/components/authHelpers';
 import { findBestMorphemeVariant } from './morpheme-utils.js';
-
-import { TMK_API_BASE_URL } from '@/lib/tmkApiOrigin.js';
-
-const TMK_API_URL = TMK_API_BASE_URL;
 
 export default function ViewWordsPage() {
   const [words, setWords] = useState([]);
@@ -43,8 +41,8 @@ export default function ViewWordsPage() {
         setError('');
 
         const [wordsRes, morphemesRes] = await Promise.all([
-          fetch(`${TMK_API_URL}/api/words`),
-          fetch(`${TMK_API_URL}/api/morphemes`),
+          fetchWithTmkToken('/api/words'),
+          fetchWithTmkToken('/api/morphemes'),
         ]);
 
         if (!wordsRes.ok || !morphemesRes.ok) {
@@ -120,8 +118,8 @@ export default function ViewWordsPage() {
     setError('');
     try {
       const [wordsRes, morphemesRes] = await Promise.all([
-        fetch(`${TMK_API_URL}/api/words`),
-        fetch(`${TMK_API_URL}/api/morphemes`),
+        fetchWithTmkToken('/api/words'),
+        fetchWithTmkToken('/api/morphemes'),
       ]);
       if (!wordsRes.ok || !morphemesRes.ok) throw new Error(`HTTP ${wordsRes.status} / ${morphemesRes.status}`);
       
@@ -204,6 +202,12 @@ export default function ViewWordsPage() {
             >
               View Words
             </Typography>
+
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Button component={Link} href="/utilities/create/word" variant="outlined" size="small">
+                Go to Create Word
+              </Button>
+            </Box>
 
             {/* Error Alert */}
             {error && (

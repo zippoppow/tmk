@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import {
   Box,
@@ -26,10 +27,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-
-import { TMK_API_BASE_URL } from '@/lib/tmkApiOrigin.js';
-
-const TMK_API_URL = TMK_API_BASE_URL;
+import { fetchWithTmkToken } from '@/app/utilities/components/authHelpers';
 
 export default function CreateWordPage() {
   const [formData, setFormData] = useState({
@@ -66,10 +64,10 @@ export default function CreateWordPage() {
         setLookupError('');
 
         const [morphemesRes, posRes, tiersRes, levelsRes] = await Promise.all([
-          fetch(`${TMK_API_URL}/api/morphemes`),
-          fetch(`${TMK_API_URL}/api/parts-of-speech`),
-          fetch(`${TMK_API_URL}/api/vocabulary-tiers`),
-          fetch(`${TMK_API_URL}/api/instructional-levels`),
+          fetchWithTmkToken('/api/morphemes'),
+          fetchWithTmkToken('/api/parts-of-speech'),
+          fetchWithTmkToken('/api/vocabulary-tiers'),
+          fetchWithTmkToken('/api/instructional-levels'),
         ]);
 
         if (!morphemesRes.ok) {
@@ -180,7 +178,7 @@ export default function CreateWordPage() {
         (key) => payload[key] === undefined && delete payload[key]
       );
 
-      const response = await fetch(`${TMK_API_URL}/api/words`, {
+      const response = await fetchWithTmkToken('/api/words', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -242,6 +240,12 @@ export default function CreateWordPage() {
             >
               Create Word
             </Typography>
+
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Button component={Link} href="/utilities/view/word" variant="outlined" size="small">
+                View Existing Words
+              </Button>
+            </Box>
 
             {/* Message Alert */}
             {message.text && (

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import {
   Box,
@@ -26,10 +27,7 @@ import {
   IconButton,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-
-import { TMK_API_BASE_URL } from '@/lib/tmkApiOrigin.js';
-
-const TMK_API_URL = TMK_API_BASE_URL;
+import { fetchWithTmkToken } from '@/app/utilities/components/authHelpers';
 
 export default function CreateMorphemePage() {
   const [formData, setFormData] = useState({
@@ -60,9 +58,9 @@ export default function CreateMorphemePage() {
         setLookupError('');
 
         const [rolesRes, originsRes, conventionsRes] = await Promise.all([
-          fetch(`${TMK_API_URL}/api/morpheme-word-roles`),
-          fetch(`${TMK_API_URL}/api/morpheme-word-origins`),
-          fetch(`${TMK_API_URL}/api/word-formation-conventions`),
+          fetchWithTmkToken('/api/morpheme-word-roles'),
+          fetchWithTmkToken('/api/morpheme-word-origins'),
+          fetchWithTmkToken('/api/word-formation-conventions'),
         ]);
 
         if (!rolesRes.ok) {
@@ -165,7 +163,7 @@ export default function CreateMorphemePage() {
 
       console.log('Submitting payload:', payload);
 
-      const response = await fetch(`${TMK_API_URL}/api/morphemes`, {
+      const response = await fetchWithTmkToken('/api/morphemes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -227,6 +225,12 @@ export default function CreateMorphemePage() {
             >
               Create Morpheme
             </Typography>
+
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Button component={Link} href="/utilities/view/morpheme" variant="outlined" size="small">
+                View Existing Morphemes
+              </Button>
+            </Box>
 
             {/* Message Alert */}
             {message.text && (
