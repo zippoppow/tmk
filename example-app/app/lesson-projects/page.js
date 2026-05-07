@@ -994,9 +994,9 @@ export default function LessonProjectsPage() {
 										height: 40,
 										border: '1px solid #9aa4b2',
 										borderRadius: 1,
-										backgroundColor: '#ABC3F7',
+										backgroundColor: '#f6f9ff',
 										fontSize: '1.25rem',
-										textAlign: 'center',
+										textAlign: 'left',
 										px: 1.2,
 										outline: 'none',
 										'&:focus': {

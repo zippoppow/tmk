@@ -134,6 +134,41 @@ export default function MorphMatchRelatedWordsPage() {
 		setData((prev) => ({ ...prev, relatedWords: Array.from({ length: ROW_COUNT }, () => '') }));
 	};
 
+	const handleRandomizeRelatedWords = () => {
+		setData((prev) => {
+			const filledIndices = prev.relatedWords.reduce((indices, value, index) => {
+				if (value.trim()) {
+					indices.push(index);
+				}
+				return indices;
+			}, []);
+
+			for (let index = filledIndices.length - 1; index > 0; index -= 1) {
+				const randomIndex = Math.floor(Math.random() * (index + 1));
+				[filledIndices[index], filledIndices[randomIndex]] = [filledIndices[randomIndex], filledIndices[index]];
+			}
+
+			const nextRelatedWords = [...prev.relatedWords];
+			const nextRelatedWordColors = [...prev.relatedWordColors];
+			const shuffledFilledWords = filledIndices.map((index) => prev.relatedWords[index]);
+			const shuffledFilledColors = filledIndices.map((index) => prev.relatedWordColors[index]);
+
+			filledIndices
+				.slice()
+				.sort((left, right) => left - right)
+				.forEach((targetIndex, index) => {
+					nextRelatedWords[targetIndex] = shuffledFilledWords[index];
+					nextRelatedWordColors[targetIndex] = shuffledFilledColors[index];
+				});
+
+			return {
+				...prev,
+				relatedWords: nextRelatedWords,
+				relatedWordColors: nextRelatedWordColors,
+			};
+		});
+	};
+
 	const handleDownloadPdfCustom = () => {
 		const FOCUS_COLORS_HEX = FOCUS_COLORS;
 
@@ -250,8 +285,25 @@ export default function MorphMatchRelatedWordsPage() {
 				<Box sx={{ mt: 2, mb: 1.5, fontSize: '0.95rem', color: '#243b53' }}>
 					Drag a handle to match color, or use Select on the left and Apply on the right. Double-click a related word to clear its color.
 				</Box>
-				<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 4, mt: 3 }}>
-					<Stack spacing={1.8}>
+				<Box sx={{ mt: 3 }}>
+					<Box
+						sx={{
+							display: { xs: 'block', sm: 'grid' },
+							gridTemplateColumns: '1fr 1fr',
+							columnGap: 4,
+							mb: 1.8,
+							alignItems: 'end',
+						}}
+					>
+						<Box sx={{ display: { xs: 'none', sm: 'block' } }} />
+						<Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
+							<Button variant="outlined" size="small" onClick={handleRandomizeRelatedWords} sx={{ minWidth: 112 }}>
+								Randomize Order
+							</Button>
+						</Box>
+					</Box>
+					<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 4 }}>
+						<Stack spacing={1.8}>
 						{data.focusWords.map((value, index) => (
 							<Box
 								key={`focus-${index}`}
@@ -282,7 +334,7 @@ export default function MorphMatchRelatedWordsPage() {
 							</Button>
 						</Box>
 					</Stack>
-					<Stack spacing={1.8}>
+						<Stack spacing={1.8}>
 						{data.relatedWords.map((value, index) => (
 							<DropZone
 								key={`related-drop-${index}`}
@@ -318,7 +370,8 @@ export default function MorphMatchRelatedWordsPage() {
 								Clear Related Words
 							</Button>
 						</Box>
-					</Stack>
+						</Stack>
+					</Box>
 				</Box>
 			</ActivityDndProvider>
 		</ActivityShell>
