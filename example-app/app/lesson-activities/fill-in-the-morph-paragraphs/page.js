@@ -1,12 +1,24 @@
 'use client';
 
-import { Box, Button, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import ActivityShell from '../components/ActivityShell';
 import { openPrintWindow } from '../components/openPrintWindow';
 import { useLessonActivityProject } from '../components/useLessonActivityProject';
 
 const FORM_NAME = 'fill-in-the-morph-paragraphs';
-const DEFAULT_ACTIVITY_NAME = 'Fill In The Morph Paragraphs Activity';
+const DEFAULT_ACTIVITY_NAME = 'Fill In The Morph Connected Text Activity';
+const PARAGRAPH_FONT_SIZES = [14, 18, 22, 26];
+const PARAGRAPH_FONT_SIZE_OPTIONS = [
+	{ label: 'Small', value: 14 },
+	{ label: 'Default', value: 18 },
+	{ label: 'Larger', value: 22 },
+	{ label: 'Largest', value: 26 },
+];
+
+function normalizeParagraphFontSize(value) {
+	const parsed = Number(value);
+	return PARAGRAPH_FONT_SIZES.includes(parsed) ? parsed : 18;
+}
 
 function emptyData() {
 	return {
@@ -14,6 +26,7 @@ function emptyData() {
 		newWord: '',
 		morphWords: [],
 		paragraph: '',
+		paragraphFontSize: 18,
 	};
 }
 
@@ -24,6 +37,7 @@ function normalizeInputData(rawData) {
 		newWord: String(source.newWord || ''),
 		morphWords: Array.isArray(source.morphWords) ? source.morphWords.map((word) => String(word || '')) : [],
 		paragraph: String(source.paragraph || ''),
+		paragraphFontSize: normalizeParagraphFontSize(source.paragraphFontSize),
 	};
 }
 
@@ -72,7 +86,12 @@ export default function FillInTheMorphParagraphsPage() {
 		}));
 	};
 
+	const handleParagraphFontSizeChange = (size) => {
+		setData((prev) => ({ ...prev, paragraphFontSize: normalizeParagraphFontSize(size) }));
+	};
+
 	const handleDownloadPdfCustom = () => {
+		const paragraphFontSize = normalizeParagraphFontSize(data.paragraphFontSize);
 		const wordListItems = data.morphWords
 			.map((w) => `<div class="word-chip">${(w || '').replace(/</g, '&lt;')}</div>`)
 			.join('');
@@ -110,7 +129,7 @@ export default function FillInTheMorphParagraphsPage() {
 <body>
   <div class="header">
     <div class="header-column">
-      <div class="title">FILL IN THE MORPH — PARAGRAPHS</div>
+      <div class="title">FILL IN THE MORPH — CONNECTED TEXT</div>
       <div class="subtitle">Morpheme(s): <span class="morpheme-value">${(data.morpheme || '').replace(/</g, '&lt;')}</span></div>
       <div class="instructions">Complete each morph pair, then write or annotate the paragraph.</div>
     </div>
@@ -125,7 +144,7 @@ export default function FillInTheMorphParagraphsPage() {
     </div>
     <div>
       <div class="col-title">Paragraph</div>
-      <div class="paragraph-box">${(data.paragraph || '').replace(/</g, '&lt;').replace(/\n/g, '<br/>')}</div>
+			<div class="paragraph-box" style="font-size: ${paragraphFontSize}px;">${(data.paragraph || '').replace(/</g, '&lt;').replace(/\n/g, '<br/>')}</div>
     </div>
   </div>
   ${licenseFooter}
@@ -135,12 +154,14 @@ export default function FillInTheMorphParagraphsPage() {
 		});
 	};
 
+	const paragraphFontSize = normalizeParagraphFontSize(data.paragraphFontSize);
+
 	return (
 		<ActivityShell
-			title="FILL IN THE MORPH -- PARAGRAPHS"
+			title="FILL IN THE MORPH — CONNECTED TEXT"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Complete each morph pair, then write or annotate the paragraph."
+			instructions="Fill in the blank spots in the connected text with the correct word from the word list."
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}
@@ -186,13 +207,42 @@ export default function FillInTheMorphParagraphsPage() {
 				</Stack>
 
 				<Box>
+					<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1, mb: 1.25, flexWrap: 'wrap' }}>
+						<Typography sx={{ fontSize: '0.95rem', color: '#243b53', fontWeight: 600 }}>Connected Text Font Size:</Typography>
+						<TextField
+							select
+							size="small"
+							value={paragraphFontSize}
+							onChange={(event) => handleParagraphFontSizeChange(event.target.value)}
+							sx={{
+								minWidth: 140,
+								'& .MuiInputBase-root': {
+									height: 21,
+									alignItems: 'center',
+								},
+								'& .MuiSelect-select': {
+									display: 'flex',
+									alignItems: 'center',
+									height: '100%',
+									paddingTop: 0,
+									paddingBottom: 0,
+								},
+							}}
+						>
+							{PARAGRAPH_FONT_SIZE_OPTIONS.map((option) => (
+								<MenuItem key={option.value} value={option.value}>
+									{option.label}
+								</MenuItem>
+							))}
+						</TextField>
+					</Box>
 					<TextField
 						multiline
 						minRows={12}
 						fullWidth
 						value={data.paragraph}
 						onChange={(event) => setData((prev) => ({ ...prev, paragraph: event.target.value }))}
-						inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif' } }}
+						inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: `${paragraphFontSize}px` } }}
 						sx={{ '& .MuiOutlinedInput-root fieldset': { borderColor: '#4020A7', borderWidth: '2px' } }}
 					/>
 				</Box>
