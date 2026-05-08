@@ -62,7 +62,7 @@ const LESSON_ACTIVITY_TYPES = [
 	{ value: 'chameleon-prefixes', label: 'Chameleon Prefixes', path: '/lesson-activities/chameleon-prefixes' },
 	{ value: 'common-base-word', label: 'Common Base Word', path: '/lesson-activities/common-base-word' },
 	{ value: 'constructor-deconstructor', label: 'Constructor / Deconstructor', path: '/lesson-activities/constructor-deconstructor' },
-	{ value: 'fill-in-the-morph-paragraphs', label: 'Fill In The Morph - Paragraphs', path: '/lesson-activities/fill-in-the-morph-paragraphs' },
+	{ value: 'fill-in-the-morph-paragraphs', label: 'Fill In The Morph - Connected Text', path: '/lesson-activities/fill-in-the-morph-paragraphs' },
 	{ value: 'morph-match-definitions', label: 'Morph Match - Definitions', path: '/lesson-activities/morph-match-definitions' },
 	{ value: 'morph-match-related-words', label: 'Morph Match - Related Words', path: '/lesson-activities/morph-match-related-words' },
 	{ value: 'morph-morph-match', label: 'Morph Morph Match', path: '/lesson-activities/morph-morph-match' },
