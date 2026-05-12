@@ -899,11 +899,12 @@ export default function LessonProjectsPage() {
 
 	useEffect(() => {
 		if (isAuthenticated && hasDiyAccess) {
+			// No automatic compare on page load; dialog is only shown on button events
 			if (hasCheckedInitialReconcile.current) {
 				return;
 			}
 			hasCheckedInitialReconcile.current = true;
-			runLocalCloudCompare();
+			// runLocalCloudCompare(); // Removed: Only trigger compare on button events
 		} else {
 			setCloudStatus('');
 		}
@@ -1300,8 +1301,9 @@ export default function LessonProjectsPage() {
 				<DialogTitle>Local vs Cloud Project Differences Found</DialogTitle>
 				<DialogContent dividers>
 					<Typography sx={{ fontSize: '0.95rem', mb: 1.5 }}>
-						We found differences between your browser's local projects and cloud projects.
+						We found differences between your browser's local projects and your projects stored on the cloud server.
 						Would you like to sync local projects to cloud now?
+						Or, you may choose to keep using local projects without syncing, or apply cloud projects to overwrite local storage.
 					</Typography>
 
 					<Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
@@ -1344,8 +1346,15 @@ export default function LessonProjectsPage() {
 					</Stack>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={handleKeepLocalOnly} disabled={isApplyingInitialSync}>
+					<Button onClick={handleKeepLocalOnly} disabled={isApplyingInitialSync} variant="outlined">
 						Keep local only
+					</Button>
+					<Button
+						onClick={handleApplyLocalToCloud}
+						variant="contained"
+						disabled={isApplyingInitialSync}
+					>
+						{isApplyingInitialSync ? 'Syncing...' : 'Sync local to cloud'}
 					</Button>
 					<Button
 						onClick={handleApplyCloudToLocal}
@@ -1354,13 +1363,6 @@ export default function LessonProjectsPage() {
 						disabled={isApplyingInitialSync}
 					>
 						Sync cloud to local
-					</Button>
-					<Button
-						onClick={handleApplyLocalToCloud}
-						variant="contained"
-						disabled={isApplyingInitialSync}
-					>
-						{isApplyingInitialSync ? 'Syncing...' : 'Sync local to cloud'}
 					</Button>
 				</DialogActions>
 			</Dialog>
