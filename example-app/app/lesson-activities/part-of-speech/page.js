@@ -7,7 +7,7 @@ import { useLessonActivityProject } from '../components/useLessonActivityProject
 import { ActivityDndProvider, DraggableTile, DropZone } from '../components/shared';
 
 const FORM_NAME = 'part-of-speech';
-const DEFAULT_ACTIVITY_NAME = 'Part Of Speech Activity';
+const DEFAULT_ACTIVITY_NAME = 'Part of Speech Sort';
 const CATEGORY_ORDER = ['adjective', 'noun', 'verb', 'adverb'];
 const CATEGORY_LABELS = {
 	adjective: 'Adjective',
@@ -273,7 +273,7 @@ export default function PartOfSpeechPage() {
     <div class="header-column">
       <div class="title">PART OF SPEECH SORT</div>
       <div class="subtitle">Morpheme(s): <span class="morpheme-value">${(data.morpheme || '').replace(/</g, '&lt;')}</span></div>
-      <div class="instructions">Drag words from the grid into the correct part-of-speech boxes.</div>
+      <div class="instructions">Match the words to their part(s) of speech. Drag words from the grid into the correct part-of-speech boxes.</div>
     </div>
     <div class="header-column">
       <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
@@ -296,7 +296,7 @@ export default function PartOfSpeechPage() {
 			title="PART OF SPEECH SORT"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Drag words from the grid into the correct part-of-speech boxes, or drag sorted items back into empty grid cells."
+			instructions="Match the words to their part(s) of speech. Drag words from the grid into the correct part-of-speech boxes, or drag sorted items back into empty grid cells."
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}

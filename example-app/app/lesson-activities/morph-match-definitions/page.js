@@ -229,7 +229,7 @@ export default function MorphMatchDefinitionsPage() {
     <div class="header-column">
       <div class="title">MORPH MATCH -- DEFINITIONS</div>
       <div class="subtitle">Morpheme(s): <span class="morpheme-value">${(data.morpheme || '').replace(/</g, '&lt;')}</span></div>
-      <div class="instructions">Match each morph-based word to the correct numbered definition.</div>
+      <div class="instructions">Based on your knowledge of the morpheme, match the words on the left to the deﬁnitions on the right.</div>
     </div>
     <div class="header-column">
       <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
@@ -257,7 +257,8 @@ export default function MorphMatchDefinitionsPage() {
 			title="MORPH MATCH -- DEFINITIONS"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Match each morph-based word to the correct numbered definition."
+			instructions="Based on your knowledge of the morpheme, match the words on the left to the deﬁnitions on the right.
+"
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}

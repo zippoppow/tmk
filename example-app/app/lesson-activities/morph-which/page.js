@@ -188,7 +188,7 @@ export default function MorphWhichPage() {
     <div class="header-column">
       <div class="title">MORPH, WHICH?</div>
       <div class="subtitle">Morpheme(s): <span class="morpheme-value">${(data.morpheme || '').replace(/</g, '&lt;')}</span></div>
-      <div class="instructions">Write the focus prompt, then fill four option paths for each numbered item.</div>
+      <div class="instructions">Which words fit best?</div>
     </div>
     <div class="header-column">
       <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
@@ -213,7 +213,7 @@ export default function MorphWhichPage() {
 			title="MORPH, WHICH?"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Write the focus prompt, then fill four option paths for each numbered item."
+			instructions="Which words fit best?"
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}

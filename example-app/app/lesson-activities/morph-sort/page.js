@@ -274,7 +274,7 @@ export default function MorphSortPage() {
     <div class="header-column">
       <div class="title">MORPH SORT</div>
       <div class="subtitle">Morpheme(s): <span class="morpheme-value">${(data.morpheme || '').replace(/</g, '&lt;')}</span></div>
-      <div class="instructions">Sort the center words into left and right groups.</div>
+      <div class="instructions">Find the families.  Sort the words into two columns based on their related meanings.</div>
     </div>
     <div class="header-column">
       <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
@@ -306,7 +306,7 @@ export default function MorphSortPage() {
 			title="MORPH SORT"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Sort the center words into left and right groups."
+			instructions="Find the families.  Sort the words into two columns based on their related meanings."
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}
@@ -336,7 +336,7 @@ export default function MorphSortPage() {
 							size="small"
 							variant="outlined"
 							onClick={() => handleAddSelectedToBox('left')}
-							sx={{ mb: 1, fontSize: '0.75rem' }}
+							sx={{ mb: 1, fontSize: '1rem' }}
 						>
 							← Add "{String(data.words[selectedWordIndex] || '').trim()}" here
 						</Button>
@@ -347,18 +347,18 @@ export default function MorphSortPage() {
 						minHeight={0}
 						inactiveSx={{ border: '2px solid #4a4a4a', borderRadius: 1 }}
 						activeSx={{ border: '2px solid #667eea', backgroundColor: 'rgba(102, 126, 234, 0.05)' }}
-						sx={{ flex: 1, p: 1.5, overflow: 'auto' }}
+						sx={{ flex: 1, p: 1.5, overflow: 'auto', display: 'flex', flexDirection: 'column' }}
 					>
-						<List dense disablePadding>
+						<List dense disablePadding sx={{ flex: 1 }}>
 							{data.leftItems.map((item, itemIndex) => (
 								<ListItem
 									key={itemIndex}
 									disableGutters
 									secondaryAction={
 										<Box sx={{ display: 'flex', gap: 0.25 }}>
-											<IconButton size="small" aria-label="Move to Sort Box B" onClick={() => handleMoveBoxItem('left', itemIndex, 'right')} sx={{ fontSize: '0.7rem', color: '#4020A7', px: 0.5 }}>→B</IconButton>
-											<IconButton size="small" aria-label="Return to words" onClick={() => handleMoveBoxItem('left', itemIndex, 'words')} sx={{ fontSize: '0.7rem', color: '#666', px: 0.5 }}>↩</IconButton>
-											<IconButton size="small" aria-label="Remove" onClick={() => removeItem('left', itemIndex)} sx={{ fontSize: '1rem', color: '#999', px: 0.5 }}>×</IconButton>
+											<IconButton size="small" aria-label="Move to Sort Box B" onClick={() => handleMoveBoxItem('left', itemIndex, 'right')} sx={{ fontSize: '0.8rem', color: '#fbfbfb', px: 0.5 }}>→B</IconButton>
+											<IconButton size="small" aria-label="Return to words" onClick={() => handleMoveBoxItem('left', itemIndex, 'words')} sx={{ fontSize: '0.8rem', color: '#fbfbfb', px: 0.5 }}>↩</IconButton>
+											<IconButton size="small" aria-label="Remove" onClick={() => removeItem('left', itemIndex)} sx={{ fontSize: '1.1rem', color: '#fbfbfb', px: 0.5 }}>×</IconButton>
 										</Box>
 									}
 								>
@@ -370,6 +370,14 @@ export default function MorphSortPage() {
 								</ListItem>
 							))}
 						</List>
+						<Button
+							variant="outlined"
+							size="small"
+							onClick={() => setData((prev) => ({ ...prev, leftItems: [] }))}
+							sx={{ mt: 1 }}
+						>
+							Clear Sort Box A
+						</Button>
 					</DropZone>
 				</Grid>
 				<Grid item xs={12} md={4}>
@@ -414,7 +422,7 @@ export default function MorphSortPage() {
 											aria-label={isSelected ? 'Deselect word' : 'Select word to sort'}
 											sx={{ minWidth: 0, px: 1, py: 0.25, fontSize: '0.7rem', lineHeight: 1.4 }}
 										>
-											{isSelected ? '✓' : '⊕'}
+											{isSelected ? '✓' : <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>⊕</span>}
 										</Button>
 										<DragHandle
 											id={`word-handle-${index}`}
@@ -443,7 +451,7 @@ export default function MorphSortPage() {
 							size="small"
 							variant="outlined"
 							onClick={() => handleAddSelectedToBox('right')}
-							sx={{ mb: 1, fontSize: '0.75rem' }}
+							sx={{ mb: 1, fontSize: '1rem' }}
 						>
 							→ Add "{String(data.words[selectedWordIndex] || '').trim()}" here
 						</Button>
@@ -454,18 +462,18 @@ export default function MorphSortPage() {
 						minHeight={0}
 						inactiveSx={{ border: '2px solid #4a4a4a', borderRadius: 1 }}
 						activeSx={{ border: '2px solid #667eea', backgroundColor: 'rgba(102, 126, 234, 0.05)' }}
-						sx={{ flex: 1, p: 1.5, overflow: 'auto' }}
+						sx={{ flex: 1, p: 1.5, overflow: 'auto', display: 'flex', flexDirection: 'column' }}
 					>
-						<List dense disablePadding>
+						<List dense disablePadding sx={{ flex: 1 }}>
 							{data.rightItems.map((item, itemIndex) => (
 								<ListItem
 									key={itemIndex}
 									disableGutters
 									secondaryAction={
 										<Box sx={{ display: 'flex', gap: 0.25 }}>
-											<IconButton size="small" aria-label="Move to Sort Box A" onClick={() => handleMoveBoxItem('right', itemIndex, 'left')} sx={{ fontSize: '0.7rem', color: '#4020A7', px: 0.5 }}>A←</IconButton>
-											<IconButton size="small" aria-label="Return to words" onClick={() => handleMoveBoxItem('right', itemIndex, 'words')} sx={{ fontSize: '0.7rem', color: '#666', px: 0.5 }}>↩</IconButton>
-											<IconButton size="small" aria-label="Remove" onClick={() => removeItem('right', itemIndex)} sx={{ fontSize: '1rem', color: '#999', px: 0.5 }}>×</IconButton>
+											<IconButton size="small" aria-label="Move to Sort Box A" onClick={() => handleMoveBoxItem('right', itemIndex, 'left')} sx={{ fontSize: '0.7rem', color: '#fbfbfb', px: 0.5 }}>A←</IconButton>
+											<IconButton size="small" aria-label="Return to words" onClick={() => handleMoveBoxItem('right', itemIndex, 'words')} sx={{ fontSize: '0.8rem', color: '#fbfbfb', px: 0.5 }}>↩</IconButton>
+											<IconButton size="small" aria-label="Remove" onClick={() => removeItem('right', itemIndex)} sx={{ fontSize: '1.1rem', color: '#fbfbfb', px: 0.5 }}>×</IconButton>
 										</Box>
 									}
 								>
@@ -477,6 +485,14 @@ export default function MorphSortPage() {
 								</ListItem>
 							))}
 						</List>
+						<Button
+							variant="outlined"
+							size="small"
+							onClick={() => setData((prev) => ({ ...prev, rightItems: [] }))}
+							sx={{ mt: 1 }}
+						>
+							Clear Sort Box B
+						</Button>
 					</DropZone>
 				</Grid>
 			</Grid>

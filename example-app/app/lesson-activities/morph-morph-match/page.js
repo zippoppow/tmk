@@ -12,7 +12,7 @@ const FORM_NAME = 'morph-morph-match';
 const DEFAULT_ACTIVITY_NAME = 'Morph Morph Match Activity';
 
 function emptyPair() {
-	return { left: '', right: '' };
+	return { leftSub1: '', leftSub2: '', rightSub1: '', rightSub2: '' };
 }
 
 function emptyHeaders() {
@@ -46,7 +46,12 @@ function normalizeInputData(rawData) {
 		},
 		pairs: Array.from({ length: 10 }, (_, index) => {
 			const pair = pairs[index] || {};
-			return { left: String(pair.left || ''), right: String(pair.right || '') };
+			return {
+				leftSub1: String(pair.leftSub1 || ''),
+				leftSub2: String(pair.leftSub2 || ''),
+				rightSub1: String(pair.rightSub1 || ''),
+				rightSub2: String(pair.rightSub2 || ''),
+			};
 		}),
 	};
 }
@@ -142,16 +147,18 @@ export default function MorphMorphMatchPage() {
 	};
 
 	const moveGridValueToPairField = (pairIndex, field, payload) => {
-		if (!payload?.value || typeof payload.gridIndex !== 'number') return;
-		if (field !== 'left' && field !== 'right') return;
+		const sourceIndex = Number(payload?.gridIndex);
+		if (!Number.isInteger(sourceIndex) || sourceIndex < 0 || sourceIndex >= data.grid.length) return;
+		if (!['leftSub1', 'leftSub2', 'rightSub1', 'rightSub2'].includes(field)) return;
+		if (!Number.isInteger(pairIndex) || pairIndex < 0 || pairIndex >= data.pairs.length) return;
 
 		setData((prev) => {
-			const sourceValue = String(prev.grid[payload.gridIndex] || '').trim();
+			const sourceValue = String(prev.grid[sourceIndex] || '').trim();
 			if (!sourceValue) return prev;
 
 			const nextGrid = [...prev.grid];
 			const nextPairs = [...prev.pairs];
-			nextGrid[payload.gridIndex] = '';
+			nextGrid[sourceIndex] = '';
 			nextPairs[pairIndex] = {
 				...nextPairs[pairIndex],
 				[field]: sourceValue,
@@ -165,13 +172,40 @@ export default function MorphMorphMatchPage() {
 		});
 	};
 
+	const resolvePairDropTarget = (dropTarget, overId) => {
+		const dropField = dropTarget?.field;
+		const dropPairIndex = Number(dropTarget?.pairIndex);
+
+		if (['leftSub1', 'leftSub2', 'rightSub1', 'rightSub2'].includes(dropField) && Number.isInteger(dropPairIndex)) {
+			return { field: dropField, pairIndex: dropPairIndex };
+		}
+
+		const parsed = String(overId || '').match(/^pair-(left|right)-sub([12])-(\d+)$/);
+		if (!parsed) return null;
+
+		const side = parsed[1];
+		const subNum = parsed[2];
+		const pairIndex = Number(parsed[3]);
+		if (!Number.isInteger(pairIndex)) return null;
+
+		return {
+			field: `${side}Sub${subNum}`,
+			pairIndex,
+		};
+	};
+
 	const handleDragEnd = (event) => {
 		const payload = event?.active?.data?.current;
 		const dropTarget = event?.over?.data?.current;
-		if (!payload || !dropTarget) return;
-		if (payload.sourceType !== 'grid' || dropTarget.targetType !== 'pair-field') return;
+		const overId = event?.over?.id;
+		if (!payload || !overId) return;
+		if (payload.sourceType !== 'grid') return;
+		if (dropTarget && dropTarget.targetType !== 'pair-field') return;
 
-		moveGridValueToPairField(dropTarget.pairIndex, dropTarget.field, payload);
+		const resolvedTarget = resolvePairDropTarget(dropTarget, overId);
+		if (!resolvedTarget) return;
+
+		moveGridValueToPairField(resolvedTarget.pairIndex, resolvedTarget.field, payload);
 	};
 
 	const handleClearTopSection = () => {
@@ -197,8 +231,10 @@ export default function MorphMorphMatchPage() {
 				(pair, i) => `
 			<div class="pair-row">
 				<span class="pair-num">${i + 1}.</span>
-				<div class="pair-left">${(pair.left || '').replace(/</g, '&lt;')}</div>
-				<div class="pair-right">${(pair.right || '').replace(/</g, '&lt;')}</div>
+				<div class="pair-cell">${(pair.leftSub1 || '').replace(/</g, '&lt;')}</div>
+				<div class="pair-cell">${(pair.leftSub2 || '').replace(/</g, '&lt;')}</div>
+				<div class="pair-cell">${(pair.rightSub1 || '').replace(/</g, '&lt;')}</div>
+				<div class="pair-cell">${(pair.rightSub2 || '').replace(/</g, '&lt;')}</div>
 			</div>`
 			)
 			.join('');
@@ -233,9 +269,9 @@ export default function MorphMorphMatchPage() {
 		.sh-subs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center; margin-bottom: 10px; }
 		.sh-sub { font-size: 1em; color: #555; text-align: center; }
 		.pairs { display: flex; flex-direction: column; gap: 2px; break-inside: avoid; page-break-inside: avoid; }
-		.pair-row { display: grid; grid-template-columns: 20px 1fr 1fr; gap: 8px; align-items: center; border-bottom: 1px solid #eee; padding: 3.5px 0; }
+		.pair-row { display: grid; grid-template-columns: 20px repeat(4, 1fr); gap: 8px; align-items: center; border-bottom: 1px solid #eee; padding: 3.5px 0; }
     .pair-num { font-weight: 700; text-align: right; color: #555; font-size: 0.85em; }
-		.pair-left, .pair-right { font-family: 'Trebuchet MS', sans-serif; padding: 4px; min-height: 32px; border-bottom: 1px solid #ddd; font-size: 0.86em; }
+		.pair-cell { font-family: 'Trebuchet MS', sans-serif; padding: 4px; min-height: 32px; border-bottom: 1px solid #ddd; font-size: 0.86em; }
 		.license-footer { margin-top: 12px; padding-top: 8px; border-top: 1px solid #e5e7eb; text-align: right; font-size: 0.72em; color: #4b5563; font-style: italic; }
 		@media print {
 			@page { size: letter portrait; margin: 0.25in; }
@@ -362,7 +398,7 @@ export default function MorphMorphMatchPage() {
 					))}
 					<Box sx={{ pt: 1 }}>
 						<Button variant="outlined" size="small" onClick={handleClearTopSection}>
-							Clear Top Section
+							Clear Word Grid
 						</Button>
 					</Box>
 				</Box>
@@ -445,34 +481,64 @@ export default function MorphMorphMatchPage() {
 
 					<Stack spacing={1.25}>
 						{data.pairs.map((pair, index) => (
-							<Box key={index} sx={{ display: 'grid', gridTemplateColumns: '32px 1fr 1fr', gap: 1.5, alignItems: 'center' }}>
+							<Box key={index} sx={{ display: 'grid', gridTemplateColumns: '32px 1fr 1fr 1fr 1fr', gap: 1.5, alignItems: 'center' }}>
 								<Typography sx={{ fontWeight: 700 }}>{index + 1}.</Typography>
 								<DropZone
-									id={`pair-left-${index}`}
-									data={{ targetType: 'pair-field', pairIndex: index, field: 'left' }}
+									id={`pair-left-sub1-${index}`}
+									data={{ targetType: 'pair-field', pairIndex: index, field: 'leftSub1' }}
 									minHeight={0}
 									inactiveSx={{ borderColor: 'transparent', p: 0, backgroundColor: 'transparent' }}
 									sx={{ p: 0 }}
 								>
 									<TextField
 										variant="standard"
-										value={pair.left}
-										onChange={(event) => setPairValue(index, 'left', event.target.value)}
+										value={pair.leftSub1}
+										onChange={(event) => setPairValue(index, 'leftSub1', event.target.value)}
 										inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 										sx={{ width: '100%', '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 									/>
 								</DropZone>
 								<DropZone
-									id={`pair-right-${index}`}
-									data={{ targetType: 'pair-field', pairIndex: index, field: 'right' }}
+									id={`pair-left-sub2-${index}`}
+									data={{ targetType: 'pair-field', pairIndex: index, field: 'leftSub2' }}
 									minHeight={0}
 									inactiveSx={{ borderColor: 'transparent', p: 0, backgroundColor: 'transparent' }}
 									sx={{ p: 0 }}
 								>
 									<TextField
 										variant="standard"
-										value={pair.right}
-										onChange={(event) => setPairValue(index, 'right', event.target.value)}
+										value={pair.leftSub2}
+										onChange={(event) => setPairValue(index, 'leftSub2', event.target.value)}
+										inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+										sx={{ width: '100%', '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+									/>
+								</DropZone>
+								<DropZone
+									id={`pair-right-sub1-${index}`}
+									data={{ targetType: 'pair-field', pairIndex: index, field: 'rightSub1' }}
+									minHeight={0}
+									inactiveSx={{ borderColor: 'transparent', p: 0, backgroundColor: 'transparent' }}
+									sx={{ p: 0 }}
+								>
+									<TextField
+										variant="standard"
+										value={pair.rightSub1}
+										onChange={(event) => setPairValue(index, 'rightSub1', event.target.value)}
+										inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+										sx={{ width: '100%', '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
+									/>
+								</DropZone>
+								<DropZone
+									id={`pair-right-sub2-${index}`}
+									data={{ targetType: 'pair-field', pairIndex: index, field: 'rightSub2' }}
+									minHeight={0}
+									inactiveSx={{ borderColor: 'transparent', p: 0, backgroundColor: 'transparent' }}
+									sx={{ p: 0 }}
+								>
+									<TextField
+										variant="standard"
+										value={pair.rightSub2}
+										onChange={(event) => setPairValue(index, 'rightSub2', event.target.value)}
 										inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 										sx={{ width: '100%', '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 									/>
