@@ -176,7 +176,7 @@ export default function LessonActivitiesPage() {
         { name: 'Morph Morph Match', path: '/lesson-activities/morph-morph-match', description: 'Compare morph patterns and complete pair matches', previewImage: '/lesson-activities/preview-images/MorphMorphMatch.png' },
         { name: 'Morph Sort', path: '/lesson-activities/morph-sort', description: 'Sort words into morph-based categories', previewImage: '/lesson-activities/preview-images/MorphSort.png' },
         { name: 'Morph Which', path: '/lesson-activities/morph-which', description: 'Select and compare best morph options per prompt', previewImage: '/lesson-activities/preview-images/MorphWhich.png' },
-        { name: 'Part Of Speech', path: '/lesson-activities/part-of-speech', description: 'Sort morph words by part of speech', previewImage: '/lesson-activities/preview-images/PartOfSpeechSort.png' },
+        { name: 'Part of Speech Sort', path: '/lesson-activities/part-of-speech', description: 'Sort morph words by part of speech', previewImage: '/lesson-activities/preview-images/PartOfSpeechSort.png' },
         { name: 'Word Builder', path: '/lesson-activities/word-builder', description: 'Combine prefixes, bases, and suffixes to build words', previewImage: '/lesson-activities/preview-images/WordBuilder.png' },
         { name: 'Word Meaning', path: '/lesson-activities/word-meaning', description: 'Infer and record meanings from morph clues', previewImage: '/lesson-activities/preview-images/WordMeaning.png' },
     ];

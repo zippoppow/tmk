@@ -161,7 +161,7 @@ export default function FillInTheMorphParagraphsPage() {
 			title="FILL IN THE MORPH — CONNECTED TEXT"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Fill in the blank spots in the connected text with the correct word from the word list."
+			instructions="Highlight the morpheme in the word bank.  Read the words and discuss their meanings before filling in the blanks in the connected text."
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}

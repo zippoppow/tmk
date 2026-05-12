@@ -208,7 +208,8 @@ export default function ConstructorDeconstructorPage() {
     .subtitle { font-size: 1.1em; font-style: italic; }
     .morpheme-value { font-family: 'Courier New', monospace; color: #4020A7; }
     .instructions { font-size: 0.95em; color: #555; margin-top: 4px; }
-    .section-title { font-weight: 800; font-size: 1.05em; text-transform: uppercase; margin: 20px 0 8px; }
+	.section { margin: 20px 0 8px; }
+    .section-title { font-weight: 800; font-size: 1.05em; text-transform: uppercase;}
 		.rows { display: flex; flex-direction: column; gap: 8px; }
 		.print-row { display: grid; align-items: center; gap: 10px; }
 		.print-row.forward { grid-template-columns: 6fr 1fr 4fr; }
@@ -225,15 +226,15 @@ export default function ConstructorDeconstructorPage() {
     <div class="header-column">
       <div class="title">CONSTRUCTOR/DECONSTRUCTOR</div>
 		 <div class="subtitle">Morpheme(s): <span class="morpheme-value">${escapeHtml(data.morpheme)}</span></div>
-      <div class="instructions">Build words with constructor rows, then break them apart in deconstructor rows.</div>
+      <div class="instructions">See instructions below.</div>
     </div>
     <div class="header-column">
 		 <img src="${window.location.origin}/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
     </div>
   </div>
-  <div class="section-title">Constructor</div>
+  <div class="section"><span class="section-title">Constructor</span><span> Create words from the word parts:</span></div>
 	 <div class="rows">${renderRows(data.constructorRows, false)}</div>
-  <div class="section-title">Deconstructor</div>
+  <div class="section"><span class="section-title">Deconstructor</span><span> Break words into their parts:</span></div>
 	 <div class="rows">${renderRows(data.deconstructorRows, true)}</div>
   ${licenseFooter}
 </body>
@@ -247,7 +248,7 @@ export default function ConstructorDeconstructorPage() {
 			title="CONSTRUCTOR/DECONSTRUCTOR"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Build words with constructor rows, then break them apart in deconstructor rows."
+			instructions="See instructions below."
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}
@@ -283,12 +284,26 @@ export default function ConstructorDeconstructorPage() {
 			</Box>
 
 			<Box sx={{ mt: 3 }}>
-				<Typography sx={{ fontWeight: 800, mb: 1.5, fontSize: '1.15rem', textTransform: 'uppercase' }}>Constructor</Typography>
+				<Typography sx={{ mb: 1.5, fontSize: '1.25rem' }}>
+					<Box component="span" sx={{ fontWeight: 800 }}>
+						CONSTRUCTOR
+					</Box>{' '}
+					<Box component="span" sx={{ fontSize: '1rem', fontWeight: 400 }}>
+						Create words from the word parts:
+					</Box>
+				</Typography>
 				<RowGrid rows={data.constructorRows} onChange={setConstructorValue} />
 			</Box>
 
 			<Box sx={{ mt: 4 }}>
-				<Typography sx={{ fontWeight: 800, mb: 1.5, fontSize: '1.15rem', textTransform: 'uppercase' }}>Deconstructor</Typography>
+				<Typography sx={{ mb: 1.5, fontSize: '1.25rem' }}>
+					<Box component="span" sx={{ fontWeight: 800 }}>
+						DECONSTRUCTOR
+					</Box>{' '}
+					<Box component="span" sx={{ fontSize: '1rem', fontWeight: 400 }}>
+						Break words into their parts:
+					</Box>
+				</Typography>
 				<RowGrid rows={data.deconstructorRows} onChange={setDeconstructorValue} reverse />
 			</Box>
 

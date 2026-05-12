@@ -231,7 +231,7 @@ export default function CommonBaseWordPage() {
     <div class="header-column">
       <div class="title">COMMON BASE WORD</div>
       <div class="subtitle">Morpheme(s): <span class="morpheme-value">${(data.morpheme || '').replace(/</g, '&lt;')}</span></div>
-      <div class="instructions">Use the morpheme to build and sort related common base words.</div>
+      <div class="instructions">Sort the word into three different columns based on their word families.</div>
     </div>
     <div class="header-column">
       <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
@@ -252,7 +252,7 @@ export default function CommonBaseWordPage() {
 			title="COMMON BASE WORD"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Use the morpheme to build and sort related common base words."
+			instructions="Sort the word into three different columns based on their word families"
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}

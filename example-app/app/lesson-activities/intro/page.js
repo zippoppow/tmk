@@ -228,7 +228,6 @@ export default function IntroPage() {
 			font-style: normal;
 			margin-left: 6px;
 		}
-		.instructions { margin-top: 6px; color: #4b5563; font-size: 14px; }
 		.logo {
 			width: 100%;
 			max-width: 180px;
@@ -287,7 +286,6 @@ export default function IntroPage() {
 			<div>
 				<div class="title">INTRO</div>
 				<div class="morpheme">Morpheme(s):<span class="morpheme-value">${escapeHtml(data.morpheme)}</span></div>
-				<div class="instructions">Fill-in the correct form of the morpheme and read the following words.</div>
 			</div>
 			<img class="logo" src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
 		</header>
@@ -308,7 +306,7 @@ export default function IntroPage() {
 			title="INTRO"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Fill-in the correct form of the morpheme and read the following words."
+			instructions=""
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}

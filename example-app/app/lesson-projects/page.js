@@ -68,7 +68,7 @@ const LESSON_ACTIVITY_TYPES = [
 	{ value: 'morph-morph-match', label: 'Morph Morph Match', path: '/lesson-activities/morph-morph-match' },
 	{ value: 'morph-sort', label: 'Morph Sort', path: '/lesson-activities/morph-sort' },
 	{ value: 'morph-which', label: 'Morph Which', path: '/lesson-activities/morph-which' },
-	{ value: 'part-of-speech', label: 'Part Of Speech', path: '/lesson-activities/part-of-speech' },
+	{ value: 'part-of-speech', label: 'Part of Speech Sort', path: '/lesson-activities/part-of-speech' },
 	{ value: 'word-builder', label: 'Word Builder', path: '/lesson-activities/word-builder' },
 	{ value: 'word-meaning', label: 'Word Meaning', path: '/lesson-activities/word-meaning' },
 ];

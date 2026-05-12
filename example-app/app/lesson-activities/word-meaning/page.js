@@ -29,33 +29,6 @@ function normalizeInputData(rawData) {
 	};
 }
 
-function InputColumn({ title, values, onChange, onClear, variant = 'boxed' }) {
-	return (
-		<Stack spacing={1}>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-				<Typography sx={{ fontWeight: 700 }}>{title}</Typography>
-				<Button size="small" variant="outlined" sx={{ textTransform: 'none', minWidth: 0, px: 1.25, py: 0.25 }} onClick={onClear}>Clear</Button>
-			</Box>
-			{values.map((value, index) => (
-				<Box key={index} sx={variant === 'underlined' ? { minHeight: 56, display: 'flex', alignItems: 'center' } : { minHeight: 56, display: 'flex', alignItems: 'center', border: '2px solid #4020A7', borderRadius: 1, px: 1 }}>
-					<TextField
-						value={value}
-						onChange={(event) => onChange(index, event.target.value)}
-						size="small"
-						fullWidth
-						variant={variant === 'underlined' ? 'standard' : 'standard'}
-						InputProps={{ disableUnderline: variant !== 'underlined' }}
-							inputProps={{ style: { minHeight: 56, fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
-						sx={variant === 'underlined'
-							? { '& .MuiInputBase-root::before': { borderBottom: '2px solid #4020A7' } }
-							: {}}
-					/>
-				</Box>
-			))}
-		</Stack>
-	);
-}
-
 export default function WordMeaningPage() {
 	const {
 		data,
@@ -166,7 +139,7 @@ export default function WordMeaningPage() {
 		subtitle.append('Morpheme(s): ');
 		appendElement(subtitle, 'span', 'morpheme-value', data.morpheme || '');
 
-		appendElement(headerContent, 'div', 'instructions', 'Interpret each prompt word using the morph clues and write the meaning.');
+		appendElement(headerContent, 'div', 'instructions', 'Write the meaning for each prompt word using the provided clues.');
 
 		const headerLogo = appendElement(header, 'div', 'header-column');
 		const logo = printDocument.createElement('img');
@@ -177,7 +150,7 @@ export default function WordMeaningPage() {
 		const grid = appendElement(printDocument.body, 'div', 'grid');
 		const headers = appendElement(grid, 'div', 'headers');
 		appendElement(headers, 'div', 'col-header', 'Prompt Word');
-		appendElement(headers, 'div', 'col-header', 'Algo Phrase / Clue');
+		appendElement(headers, 'div', 'col-header', 'Clue');
 		appendElement(headers, 'div', 'col-header', 'Word Meaning');
 
 		Array.from({ length: 12 }, (_, index) => index).forEach((index) => {
@@ -213,7 +186,7 @@ export default function WordMeaningPage() {
 			title="WORD MEANING"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Interpret each prompt word using the morph clues and write the meaning."
+			instructions="Write the meaning for each prompt word using the provided clues."
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}
@@ -234,17 +207,82 @@ export default function WordMeaningPage() {
 			notice={notice}
 			setNotice={setNotice}
 		>
-			<Grid container spacing={2} sx={{ mt: 2 }}>
-				<Grid item xs={12} md={4}>
-					<InputColumn title="Prompt Words" values={data.promptWords} onChange={(index, value) => setList('promptWords', index, value)} onClear={() => clearList('promptWords')} />
-				</Grid>
-				<Grid item xs={12} md={4}>
-					<InputColumn title="Algo Phrase / Clue" values={data.algoPhrases} onChange={(index, value) => setList('algoPhrases', index, value)} onClear={() => clearList('algoPhrases')} variant="underlined" />
-				</Grid>
-				<Grid item xs={12} md={4}>
-					<InputColumn title="Word Meaning" values={data.answerMeanings} onChange={(index, value) => setList('answerMeanings', index, value)} onClear={() => clearList('answerMeanings')} />
-				</Grid>
-			</Grid>
+			<Box sx={{ mt: 2 }}>
+				<Box
+					sx={{
+						display: 'grid',
+						gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+						columnGap: 2,
+						rowGap: 1,
+						mb: 3,
+						mt:4,
+					}}
+				>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+						<Typography sx={{ fontWeight: 700 }}>Prompt Words</Typography>
+						<Button size="small" variant="outlined" sx={{ textTransform: 'none', minWidth: 0, px: 1.25, py: 0.25 }} onClick={() => clearList('promptWords')}>Clear</Button>
+					</Box>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+						<Typography sx={{ fontWeight: 700 }}>Clue</Typography>
+						<Button size="small" variant="outlined" sx={{ textTransform: 'none', minWidth: 0, px: 1.25, py: 0.25 }} onClick={() => clearList('algoPhrases')}>Clear</Button>
+					</Box>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+						<Typography sx={{ fontWeight: 700 }}>Word Meaning</Typography>
+						<Button size="small" variant="outlined" sx={{ textTransform: 'none', minWidth: 0, px: 1.25, py: 0.25 }} onClick={() => clearList('answerMeanings')}>Clear</Button>
+					</Box>
+				</Box>
+
+				<Stack spacing={1}>
+					{data.promptWords.map((promptWord, index) => (
+						<Box
+							key={`word-meaning-row-${index}`}
+							sx={{
+								display: 'grid',
+								gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+								columnGap: 2,
+								rowGap: 1,
+								alignItems: 'center',
+							}}
+						>
+							<Box sx={{ minHeight: 56, display: 'flex', alignItems: 'center', border: '2px solid #4020A7', borderRadius: 1, px: 1 }}>
+								<TextField
+									value={promptWord}
+									onChange={(event) => setList('promptWords', index, event.target.value)}
+									size="small"
+									fullWidth
+									variant="standard"
+									InputProps={{ disableUnderline: true }}
+									inputProps={{ style: { minHeight: 56, fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+								/>
+							</Box>
+
+							<Box sx={{ minHeight: 56, display: 'flex', alignItems: 'center' }}>
+								<TextField
+									value={data.algoPhrases[index]}
+									onChange={(event) => setList('algoPhrases', index, event.target.value)}
+									size="small"
+									fullWidth
+									variant="standard"
+									inputProps={{ style: { minHeight: 56, fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+									sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #4020A7' } }}
+								/>
+							</Box>
+
+							<Box sx={{ minHeight: 56, display: 'flex', alignItems: 'center', border: '2px solid #4020A7', borderRadius: 1, px: 1 }}>
+								<TextField
+									value={data.answerMeanings[index]}
+									onChange={(event) => setList('answerMeanings', index, event.target.value)}
+									size="small"
+									fullWidth
+									variant="standard"
+									InputProps={{ disableUnderline: true }}
+									inputProps={{ style: { minHeight: 56, fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+								/>
+							</Box>
+						</Box>
+					))}
+				</Stack>
+			</Box>
 		</ActivityShell>
 	);
 }
