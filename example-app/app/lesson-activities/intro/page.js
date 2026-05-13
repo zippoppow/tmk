@@ -11,6 +11,19 @@ import { useContextActionMenu } from '../components/interactionUtils';
 
 const FORM_NAME = 'intro';
 const DEFAULT_ACTIVITY_NAME = 'Intro Activity';
+const INTRO_INSTRUCTIONS = 'Read the following words.';
+const INTRO_GRID_FONT_SIZES = [16, 20, 24, 28];
+const INTRO_GRID_FONT_SIZE_OPTIONS = [
+	{ label: 'Small', value: 16 },
+	{ label: 'Default', value: 20 },
+	{ label: 'Larger', value: 24 },
+	{ label: 'Largest', value: 28 },
+];
+
+function normalizeIntroGridFontSize(value) {
+	const parsed = Number(value);
+	return INTRO_GRID_FONT_SIZES.includes(parsed) ? parsed : 20;
+}
 
 function emptyWordList() {
 	return Array.from({ length: 9 }, () => '');
@@ -29,6 +42,7 @@ export default function IntroPage() {
 			morpheme: String(source.morpheme || ''),
 			questionMorpheme: String(source.questionMorpheme || ''),
 			words,
+			gridFontSize: normalizeIntroGridFontSize(source.gridFontSize),
 		};
 	}, []);
 
@@ -67,7 +81,7 @@ export default function IntroPage() {
 	} = useLessonActivityProject({
 		formName: FORM_NAME,
 		defaultActivityName: DEFAULT_ACTIVITY_NAME,
-		initialData: { morpheme: '', questionMorpheme: '', words: emptyWordList() },
+		initialData: { morpheme: '', questionMorpheme: '', words: emptyWordList(), gridFontSize: 20 },
 		normalizeInputData,
 	});
 
@@ -172,6 +186,10 @@ export default function IntroPage() {
 		closeContextMenu();
 	};
 
+	const handleGridFontSizeChange = (size) => {
+		setData((prev) => ({ ...prev, gridFontSize: normalizeIntroGridFontSize(size) }));
+	};
+
 	const handleDownloadPdfLandscape = () => {
 		const escapeHtml = (value) => String(value || '')
 			.replace(/&/g, '&amp;')
@@ -183,6 +201,7 @@ export default function IntroPage() {
 		const wordsHtml = data.words
 			.map((word) => `<div class="word-cell">${escapeHtml(word)}</div>`)
 			.join('');
+		const gridFontSize = normalizeIntroGridFontSize(data.gridFontSize);
 
 		openPrintWindow({
 			features: 'width=1400,height=900',
@@ -222,6 +241,11 @@ export default function IntroPage() {
 		}
 		.title { font-size: 28px; letter-spacing: 0.08em; font-weight: 800; }
 		.morpheme { margin-top: 6px; font-size: 20px; font-style: italic; }
+		.instructions {
+			margin-top: 8px;
+			font-size: 16px;
+			color: #4b5563;
+		}
 		.morpheme-value {
 			font-family: 'Courier New', monospace;
 			color: #4020A7;
@@ -245,7 +269,7 @@ export default function IntroPage() {
 			border-radius: 7px;
 			padding: 8px 10px;
 			font-family: 'Courier New', monospace;
-			font-size: 18px;
+			font-size: ${gridFontSize}px;
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -286,6 +310,7 @@ export default function IntroPage() {
 			<div>
 				<div class="title">INTRO</div>
 				<div class="morpheme">Morpheme(s):<span class="morpheme-value">${escapeHtml(data.morpheme)}</span></div>
+				<div class="instructions">${escapeHtml(INTRO_INSTRUCTIONS)}</div>
 			</div>
 			<img class="logo" src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
 		</header>
@@ -306,7 +331,7 @@ export default function IntroPage() {
 			title="INTRO"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions=""
+			instructions={INTRO_INSTRUCTIONS}
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}
@@ -328,6 +353,44 @@ export default function IntroPage() {
 			notice={notice}
 			setNotice={setNotice}
 		>
+			<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1, mt: 1, mb: 1.25, flexWrap: 'wrap' }}>
+				<Typography sx={{ fontSize: '0.95rem', color: '#243b53', fontWeight: 600 }}>Word Grid Font Size:</Typography>
+				<TextField
+					select
+					size="small"
+					value={normalizeIntroGridFontSize(data.gridFontSize)}
+					onChange={(event) => handleGridFontSizeChange(event.target.value)}
+					sx={{
+						minWidth: 140,
+						'& .MuiInputBase-root': {
+							height: 30,
+							alignItems: 'center',
+						},
+						'& .MuiSelect-select': {
+							display: 'flex',
+							alignItems: 'center',
+							minHeight: 'unset !important',
+							height: '100% !important',
+							lineHeight: 1.2,
+							fontSize: '0.88rem',
+							paddingTop: '0 !important',
+							paddingBottom: '0 !important',
+							paddingLeft: '10px',
+							paddingRight: '28px !important',
+						},
+						'& .MuiSelect-icon': {
+							top: '50%',
+							transform: 'translateY(-50%)',
+						},
+					}}
+				>
+					{INTRO_GRID_FONT_SIZE_OPTIONS.map((option) => (
+						<MenuItem key={option.value} value={option.value}>
+							{option.label}
+						</MenuItem>
+					))}
+				</TextField>
+			</Box>
 			<Box sx={{ mt: 4, mb: 3 }}>
 				{Array.from({ length: 3 }, (_, rowIndex) => (
 					<Box
@@ -361,7 +424,7 @@ export default function IntroPage() {
 											'& .MuiOutlinedInput-input': {
 												padding: '10px',
 												textAlign: 'center',
-												fontSize: '1.25rem',
+												fontSize: `${normalizeIntroGridFontSize(data.gridFontSize)}px`,
 											},
 											'& fieldset': { borderColor: '#4020A7', borderWidth: '2px' },
 											'&:hover fieldset': { borderColor: '#667eea' },
@@ -436,7 +499,7 @@ export default function IntroPage() {
 			>
 				<Button
 					variant="outlined"
-					onClick={() => setData({ morpheme: '', questionMorpheme: '', words: emptyWordList() })}
+					onClick={() => setData({ morpheme: '', questionMorpheme: '', words: emptyWordList(), gridFontSize: 20 })}
 					sx={{ minWidth: 150 }}
 				>
 					Clear

@@ -471,7 +471,7 @@ export default function MorphSortPage() {
 									disableGutters
 									secondaryAction={
 										<Box sx={{ display: 'flex', gap: 0.25 }}>
-											<IconButton size="small" aria-label="Move to Sort Box A" onClick={() => handleMoveBoxItem('right', itemIndex, 'left')} sx={{ fontSize: '0.7rem', color: '#fbfbfb', px: 0.5 }}>A←</IconButton>
+											<IconButton size="small" aria-label="Move to Sort Box A" onClick={() => handleMoveBoxItem('right', itemIndex, 'left')} sx={{ fontSize: '0.8rem', color: '#fbfbfb', px: 0.5 }}>A←</IconButton>
 											<IconButton size="small" aria-label="Return to words" onClick={() => handleMoveBoxItem('right', itemIndex, 'words')} sx={{ fontSize: '0.8rem', color: '#fbfbfb', px: 0.5 }}>↩</IconButton>
 											<IconButton size="small" aria-label="Remove" onClick={() => removeItem('right', itemIndex)} sx={{ fontSize: '1.1rem', color: '#fbfbfb', px: 0.5 }}>×</IconButton>
 										</Box>
