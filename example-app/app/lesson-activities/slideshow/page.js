@@ -89,6 +89,7 @@ export default function LessonActivitySlideshowPage() {
 					projectId,
 					activityIndex: String(activityIndex),
 					activityType,
+					slideshow: '1',
 				});
 				if (activity?.id) {
 					params.set('activityId', String(activity.id));

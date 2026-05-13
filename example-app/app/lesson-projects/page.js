@@ -8,18 +8,31 @@ import {
 	Button,
 	Checkbox,
 	Chip,
+	CircularProgress,
 	Container,
 	Dialog,
 	DialogActions,
 	DialogContent,
 	DialogTitle,
 	Divider,
+	IconButton,
 	Paper,
+	Table,
+	TableBody,
+	TableCell,
+	TableContainer,
+	TableHead,
+	TableRow,
 	Snackbar,
 	Stack,
+	Tooltip,
 	Typography,
 } from '@mui/material';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {
+	createLessonActivityId,
 	DIY_PROJECTS_ENDPOINT,
 	deleteLessonActivityById,
 	formatActivityDate,
@@ -85,6 +98,11 @@ function getLessonActivityRoute(activityType) {
 	return found?.path || null;
 }
 
+function getLessonActivityLabel(activityType) {
+	const found = LESSON_ACTIVITY_TYPES.find((type) => type.value === activityType);
+	return found?.label || String(activityType || 'unknown');
+}
+
 function isValidLessonActivityType(activityType) {
 	return LESSON_ACTIVITY_TYPES.some((type) => type.value === activityType);
 }
@@ -105,6 +123,8 @@ export default function LessonProjectsPage() {
 	const [newActivityTypeByProjectId, setNewActivityTypeByProjectId] = useState({});
 	const [defaultActivityType, setDefaultActivityType] = useState(LESSON_ACTIVITY_TYPES[0].value);
 	const [selectedForSlideshowByProjectId, setSelectedForSlideshowByProjectId] = useState({});
+	const [draggingActivityIndexByProjectId, setDraggingActivityIndexByProjectId] = useState({});
+	const [dragOverActivityIndexByProjectId, setDragOverActivityIndexByProjectId] = useState({});
 	const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
 	const hasAppliedRequestedActivityType = useRef(false);
 	const hasCheckedInitialReconcile = useRef(false);
@@ -564,6 +584,60 @@ export default function LessonProjectsPage() {
 		}
 	};
 
+	const handleDuplicateProject = (projectId) => {
+		if (!hasDiyAccess) {
+			showNotice('warning', 'Active DIY course enrollment is required to duplicate lesson projects.');
+			return;
+		}
+
+		const projects = getAllStoredProjects();
+		const sourceProject = projects.find((item) => item.id === projectId && item.formName === PROJECT_FORM_NAME);
+		if (!sourceProject) {
+			showNotice('error', 'Project not found.');
+			return;
+		}
+
+		const existingNames = new Set(
+			projects
+				.filter((item) => item.formName === PROJECT_FORM_NAME)
+				.map((item) => String(item.name || '').trim())
+				.filter(Boolean)
+		);
+
+		const baseName = `${String(sourceProject.name || 'Untitled Project').trim() || 'Untitled Project'} Copy`;
+		let duplicateName = baseName;
+		let copyIndex = 2;
+		while (existingNames.has(duplicateName)) {
+			duplicateName = `${baseName} ${copyIndex}`;
+			copyIndex += 1;
+		}
+
+		const now = Date.now();
+		const duplicatedProject = createLocalProjectRecord(duplicateName, PROJECT_FORM_NAME);
+		const sourceActivities = getProjectLessonActivities(sourceProject, PROJECT_FORM_NAME, normalizeLessonInputData);
+		duplicatedProject.lessonActivities = sourceActivities.map((activity) => ({
+			...activity,
+			id: createLessonActivityId(),
+			'created-at': now,
+			'modified-at': now,
+			'lesson-input-data': normalizeLessonInputData(activity?.['lesson-input-data'] || {}),
+		}));
+		duplicatedProject.createdAtMs = now;
+		duplicatedProject.createdAt = new Date(now).toISOString();
+		duplicatedProject.modifiedAtMs = now;
+		duplicatedProject.syncedAt = null;
+		delete duplicatedProject.remoteId;
+
+		projects.unshift(duplicatedProject);
+		saveStoredProjects(projects);
+		setNewActivityTypeByProjectId((prev) => ({
+			...prev,
+			[duplicatedProject.id]: newActivityTypeByProjectId[projectId] || defaultActivityType,
+		}));
+		loadLocalProjects();
+		showNotice('success', `"${sourceProject.name}" duplicated as "${duplicateName}".`);
+	};
+
 	const handleDeleteProject = async (projectId) => {
 		if (!hasDiyAccess) {
 			showNotice('warning', 'Active DIY course enrollment is required to manage lesson projects.');
@@ -723,6 +797,150 @@ export default function LessonProjectsPage() {
 		router.push(`/lesson-activities/slideshow?${params.toString()}`);
 	};
 
+	const remapSelectedIndicesAfterMove = (selectedIndices, fromIndex, toIndex) => {
+		if (!Array.isArray(selectedIndices)) {
+			return [];
+		}
+
+		const remapped = selectedIndices
+			.map((index) => {
+				if (!Number.isInteger(index) || index < 0) {
+					return null;
+				}
+				if (index === fromIndex) {
+					return toIndex;
+				}
+				if (fromIndex < toIndex && index > fromIndex && index <= toIndex) {
+					return index - 1;
+				}
+				if (toIndex < fromIndex && index >= toIndex && index < fromIndex) {
+					return index + 1;
+				}
+				return index;
+			})
+			.filter((index) => Number.isInteger(index) && index >= 0);
+
+		return [...new Set(remapped)].sort((a, b) => a - b);
+	};
+
+	const remapSelectedIndicesAfterDelete = (selectedIndices, deletedIndex) => {
+		if (!Array.isArray(selectedIndices)) {
+			return [];
+		}
+
+		const remapped = selectedIndices
+			.map((index) => {
+				if (!Number.isInteger(index) || index < 0 || index === deletedIndex) {
+					return null;
+				}
+				return index > deletedIndex ? index - 1 : index;
+			})
+			.filter((index) => Number.isInteger(index) && index >= 0);
+
+		return [...new Set(remapped)].sort((a, b) => a - b);
+	};
+
+	const handleMoveActivity = (projectId, fromIndex, toIndex) => {
+		if (!hasDiyAccess) {
+			showNotice('warning', 'Active DIY course enrollment is required to reorder lesson activities.');
+			return;
+		}
+
+		if (!Number.isInteger(fromIndex) || !Number.isInteger(toIndex) || fromIndex === toIndex) {
+			return;
+		}
+
+		const projects = getAllStoredProjects();
+		const projectIndex = projects.findIndex((item) => item.id === projectId);
+		if (projectIndex === -1) {
+			return;
+		}
+
+		const project = projects[projectIndex];
+		const activities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
+		if (activities.length < 2) {
+			return;
+		}
+		if (fromIndex < 0 || fromIndex >= activities.length || toIndex < 0 || toIndex >= activities.length) {
+			return;
+		}
+
+		const reordered = [...activities];
+		const [moved] = reordered.splice(fromIndex, 1);
+		reordered.splice(toIndex, 0, moved);
+
+		project.lessonActivities = reordered;
+		project.modifiedAtMs = Date.now();
+		project.syncedAt = null;
+
+		saveStoredProjects(projects);
+		loadLocalProjects();
+
+		setSelectedForSlideshowByProjectId((prev) => {
+			const current = Array.isArray(prev[projectId]) ? prev[projectId] : [];
+			return {
+				...prev,
+				[projectId]: remapSelectedIndicesAfterMove(current, fromIndex, toIndex),
+			};
+		});
+	};
+
+	const handleMoveActivityUp = (projectId, activityIndex) => {
+		handleMoveActivity(projectId, activityIndex, activityIndex - 1);
+	};
+
+	const handleMoveActivityDown = (projectId, activityIndex) => {
+		handleMoveActivity(projectId, activityIndex, activityIndex + 1);
+	};
+
+	const handleActivityDragStart = (projectId, activityIndex, event) => {
+		setDraggingActivityIndexByProjectId((prev) => ({ ...prev, [projectId]: activityIndex }));
+		setDragOverActivityIndexByProjectId((prev) => ({ ...prev, [projectId]: activityIndex }));
+		event.dataTransfer.effectAllowed = 'move';
+		event.dataTransfer.setData('text/plain', String(activityIndex));
+	};
+
+	const handleActivityDragOver = (projectId, targetIndex, event) => {
+		event.preventDefault();
+		event.dataTransfer.dropEffect = 'move';
+		setDragOverActivityIndexByProjectId((prev) => ({ ...prev, [projectId]: targetIndex }));
+	};
+
+	const handleActivityDrop = (projectId, targetIndex, event) => {
+		event.preventDefault();
+		const payload = event.dataTransfer.getData('text/plain');
+		const fallbackSourceIndex = draggingActivityIndexByProjectId[projectId];
+		const sourceIndex = Number.parseInt(payload, 10);
+		const resolvedSource = Number.isInteger(sourceIndex) ? sourceIndex : fallbackSourceIndex;
+		if (Number.isInteger(resolvedSource)) {
+			handleMoveActivity(projectId, resolvedSource, targetIndex);
+		}
+		setDragOverActivityIndexByProjectId((prev) => ({ ...prev, [projectId]: -1 }));
+		setDraggingActivityIndexByProjectId((prev) => ({ ...prev, [projectId]: -1 }));
+	};
+
+	const handleActivityDragEnd = (projectId) => {
+		setDragOverActivityIndexByProjectId((prev) => ({ ...prev, [projectId]: -1 }));
+		setDraggingActivityIndexByProjectId((prev) => ({ ...prev, [projectId]: -1 }));
+	};
+
+	const handleActivityRowKeyDown = (projectId, activityIndex, event) => {
+		if (!hasDiyAccess || !event.altKey) {
+			return;
+		}
+
+		if (event.key === 'ArrowUp') {
+			event.preventDefault();
+			handleMoveActivityUp(projectId, activityIndex);
+			return;
+		}
+
+		if (event.key === 'ArrowDown') {
+			event.preventDefault();
+			handleMoveActivityDown(projectId, activityIndex);
+		}
+	};
+
 
 
 	const handleDeleteActivity = async (projectId, activityIndex) => {
@@ -765,6 +983,13 @@ export default function LessonProjectsPage() {
 
 		saveStoredProjects(projects);
 		loadLocalProjects();
+		setSelectedForSlideshowByProjectId((prev) => {
+			const current = Array.isArray(prev[projectId]) ? prev[projectId] : [];
+			return {
+				...prev,
+				[projectId]: remapSelectedIndicesAfterDelete(current, activityIndex),
+			};
+		});
 	};
 
 	const handleSyncProject = async (projectId) => {
@@ -918,9 +1143,25 @@ export default function LessonProjectsPage() {
 
 	if (authLoading) {
 		return (
-			<Container maxWidth="md" sx={{ py: 6 }}>
-				<Typography>Checking login...</Typography>
-			</Container>
+			<Box
+				sx={{
+					position: 'fixed',
+					top: 0,
+					left: 0,
+					right: 0,
+					bottom: 0,
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					backgroundColor: 'rgba(76, 76, 76, 0.5)',
+					zIndex: 9999,
+				}}
+			>
+				<Stack alignItems="center" spacing={2}>
+					<CircularProgress size={60} />
+					<Typography sx={{ color: '#aa34e5', fontSize: '1.1rem' }}>Checking login...</Typography>
+				</Stack>
+			</Box>
 		);
 	}
 
@@ -1033,7 +1274,52 @@ export default function LessonProjectsPage() {
 							No lesson activity projects yet.
 						</Typography>
 					)}
-
+					<Box sx={{ pt: 1, mt: 1, pb: 2, mb: 1 }}>
+						{isAuthenticated ? (
+							<Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end" flexWrap="wrap">
+									<Stack direction="row" spacing={0.6}>
+										<Tooltip title="Compare your local browser projects with the cloud and choose which version to keep when they differ.">
+											<span>
+												<Button
+													size="small"
+													variant="outlined"
+													disabled={isLoadingCloudProjects || isApplyingInitialSync}
+													onClick={async () => {
+														await runLocalCloudCompare({ forcePromptWhenSame: true });
+													}}
+													sx={{ textTransform: 'none' }}
+												>
+													Compare Local & Cloud
+												</Button>
+											</span>
+										</Tooltip>
+										<Tooltip title="Pull projects from the cloud into this browser. This does not push local changes to the cloud. But, local content will be updated with what you have previously saved to the cloud.">
+											<span>
+												<Button
+													size="small"
+													variant="contained"
+													color="info"
+													disabled={isLoadingCloudProjects}
+													onClick={async () => {
+														await loadCloudProjects();
+														if (!cloudMessage) {
+															setCloudStatus('Local browser projects refreshed from cloud.', 'success');
+														}
+													}}
+													sx={{ textTransform: 'none' }}
+												>
+													{isLoadingCloudProjects ? 'Refreshing...' : 'Pull Cloud to Browser'}
+												</Button>
+											</span>
+										</Tooltip>
+									</Stack>
+							</Stack>
+						) : (
+							<Typography sx={{ fontSize: '0.82rem', color: '#666' }}>
+								Login with Teachable to sync projects.
+							</Typography>
+						)}
+					</Box>
 					<Stack spacing={3}>
 								{displayProjects.map((project) => {
 									const lessonActivities = Array.isArray(project.lessonActivities) ? project.lessonActivities : [];
@@ -1091,9 +1377,18 @@ export default function LessonProjectsPage() {
 													</Button>
 												)}
 												{isAuthenticated && (
-													<Button size="small" variant="contained" color="info" onClick={() => handleSyncProject(project.id)} sx={{ textTransform: 'none' }}>
-														Sync Project Changes
-													</Button>
+													<Tooltip title="Save this project's current browser changes to the cloud.">
+														<Button size="small" variant="contained" color="info" onClick={() => handleSyncProject(project.id)} sx={{ textTransform: 'none' }}>
+															Save Project Changes
+														</Button>
+													</Tooltip>
+												)}
+												{hasDiyAccess && (
+													<Tooltip title='Create a local copy of this project with duplicated activities. Use "Save Project Changes" if you also want to save the copy to the cloud.'>
+														<Button size="small" variant="outlined" onClick={() => handleDuplicateProject(project.id)} sx={{ textTransform: 'none' }}>
+															Duplicate Project
+														</Button>
+													</Tooltip>
 												)}
 												{isAuthenticated && (
 													<Button size="small" variant="contained" color="error" onClick={() => handleDeleteProject(project.id)} sx={{ textTransform: 'none' }}>
@@ -1134,93 +1429,168 @@ export default function LessonProjectsPage() {
 											</Stack>
 
 											{lessonActivities.length > 0 && (
-												<Box
-													sx={{
-														display: 'grid',
-														gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
-														gap: 1,
-														mt: 1,
-													}}
-												>
-													{lessonActivities.map((activity, activityIndex) => {
-														const draftKey = `${project.id}:${activityIndex}`;
-														const activityType = String(activity['tmk-template'] || 'unknown');
-														const canOpenType = Boolean(getLessonActivityRoute(activityType));
-														const isSelectedForSlideshow = Array.isArray(selectedForSlideshowByProjectId[project.id]) && selectedForSlideshowByProjectId[project.id].includes(activityIndex);
+												<>
+													<Typography sx={{ fontSize: '0.78rem', color: '#4b5563', mt: 0.4, mb: 0.7 }}>
+														Tip: Use drag handle or focus a row and press Alt+Up / Alt+Down to reorder.
+													</Typography>
+													<TableContainer component={Paper} variant="outlined" sx={{ mt: 1, borderRadius: 1.5 }}>
+													<Table size="small">
+														<TableHead>
+															<TableRow>
+																<TableCell sx={{ fontWeight: 700, color: '#374151' }}>Order</TableCell>
+																<TableCell sx={{ fontWeight: 700, color: '#374151' }}>Select</TableCell>
+																<TableCell sx={{ fontWeight: 700, color: '#374151' }}>Activity</TableCell>
+																<TableCell sx={{ fontWeight: 700, color: '#374151' }}>Type</TableCell>
+																<TableCell sx={{ fontWeight: 700, color: '#374151' }}>Modified</TableCell>
+																<TableCell align="right" sx={{ fontWeight: 700, color: '#374151' }}>Actions</TableCell>
+															</TableRow>
+														</TableHead>
+														<TableBody>
+															{lessonActivities.map((activity, activityIndex) => {
+																const draftKey = `${project.id}:${activityIndex}`;
+																const activityType = String(activity['tmk-template'] || 'unknown');
+																const activityTypeLabel = getLessonActivityLabel(activityType);
+																const canOpenType = Boolean(getLessonActivityRoute(activityType));
+																const isSelectedForSlideshow = Array.isArray(selectedForSlideshowByProjectId[project.id]) && selectedForSlideshowByProjectId[project.id].includes(activityIndex);
+																const baseRowColor = activityIndex % 2 === 0 ? '#ffffff' : '#f3f4f6';
 
-														return (
-															<Paper
-																key={draftKey}
-																variant="outlined"
-																sx={{
-																	p: 1.25,
-																	borderRadius: 1.5,
-																	display: 'flex',
-																	flexDirection: 'column',
-																	gap: 0.5,
-																	backgroundColor: '#fff',
-																}}
-															>
-																<Stack direction="row" alignItems="flex-start" spacing={0.5} sx={{ minWidth: 0 }}>
-																	<Checkbox
-																		size="small"
-																		checked={isSelectedForSlideshow}
-																		onChange={(event) => {
-																			setSelectedForSlideshowByProjectId((prev) => {
-																				const current = Array.isArray(prev[project.id]) ? prev[project.id] : [];
-																				const next = event.target.checked
-																					? [...new Set([...current, activityIndex])]
-																					: current.filter((idx) => idx !== activityIndex);
-																				return { ...prev, [project.id]: next };
-																			});
+																return (
+																	<TableRow
+																		key={draftKey}
+																		hover
+																		tabIndex={0}
+																		onKeyDown={(event) => handleActivityRowKeyDown(project.id, activityIndex, event)}
+																		onDragOver={(event) => handleActivityDragOver(project.id, activityIndex, event)}
+																		onDrop={(event) => handleActivityDrop(project.id, activityIndex, event)}
+																		sx={{
+																			backgroundColor: dragOverActivityIndexByProjectId[project.id] === activityIndex ? '#eff6ff' : baseRowColor,
+																			opacity: draggingActivityIndexByProjectId[project.id] === activityIndex ? 0.7 : 1,
+																			'&:focus-visible': {
+																				outline: '2px solid #3f37c9',
+																				outlineOffset: '-2px',
+																			},
 																		}}
-																		inputProps={{ 'aria-label': `Add ${activity['lesson-name'] || 'activity'} to slideshow` }}
-																		sx={{ mt: -0.5, ml: -0.5, flexShrink: 0 }}
-																	/>
-																	<Typography sx={{ fontSize: '0.95rem', fontWeight: 600, color: '#1f2937', flex: 1, pt: 0.5 }} noWrap title={activity['lesson-name'] || project.name}>
-																		{activity['lesson-name'] || project.name}
-																	</Typography>
-																</Stack>
-																<Chip
-																	label={activityType}
-																	size="small"
-																	sx={{ alignSelf: 'flex-start', fontSize: '0.75rem', backgroundColor: '#eef2ff', color: '#3f37c9' }}
-																/>
-																<Typography sx={{ fontSize: '0.75rem', color: '#9ca3af', mt: 0.25 }}>
-																	{formatActivityDate(activity['modified-at']) || '--'}
-																</Typography>
-																{isAuthenticated && (
-																	<Stack direction="row" spacing={0.5} sx={{ mt: 'auto', pt: 0.75 }}>
-																		<Button
-																			size="small"
-																			variant="contained"
-																			disabled={!canOpenType}
-																			onClick={() => handleOpenActivity(project, activity, activityIndex)}
-																			sx={{ textTransform: 'none', flex: 1 }}
-																		>
-																			Open
-																		</Button>
-																		<Button
-																			size="small"
-																			variant="contained"
-																			color="error"
-																			onClick={() => handleDeleteActivity(project.id, activityIndex)}
-																			sx={{ textTransform: 'none', flex: 1 }}
-																		>
-																			Delete
-																		</Button>
-																	</Stack>
-																)}
-															</Paper>
-														);
-													})}
-												</Box>
+																	>
+																		<TableCell>
+																			<Stack direction="row" spacing={0.5} alignItems="center">
+																				<IconButton
+																					size="small"
+																					draggable={hasDiyAccess}
+																					onDragStart={(event) => handleActivityDragStart(project.id, activityIndex, event)}
+																					onDragEnd={() => handleActivityDragEnd(project.id)}
+																					disabled={!hasDiyAccess}
+																					aria-label={`Drag to reorder ${activity['lesson-name'] || 'activity'}`}
+																					sx={{
+																						border: '1px solid #cbd5e1',
+																						borderRadius: 1,
+																						backgroundColor: '#fff',
+																						cursor: hasDiyAccess ? 'grab' : 'not-allowed',
+																				}}
+																				>
+																					<DragIndicatorIcon fontSize="small" />
+																				</IconButton>
+																				<IconButton
+																					size="small"
+																					disabled={!hasDiyAccess || activityIndex === 0}
+																					onClick={() => handleMoveActivityUp(project.id, activityIndex)}
+																					aria-label={`Move ${activity['lesson-name'] || 'activity'} up`}
+																				>
+																					<KeyboardArrowUpIcon fontSize="small" />
+																				</IconButton>
+																				<IconButton
+																					size="small"
+																					disabled={!hasDiyAccess || activityIndex === lessonActivities.length - 1}
+																					onClick={() => handleMoveActivityDown(project.id, activityIndex)}
+																					aria-label={`Move ${activity['lesson-name'] || 'activity'} down`}
+																				>
+																					<KeyboardArrowDownIcon fontSize="small" />
+																				</IconButton>
+																			</Stack>
+																		</TableCell>
+																		<TableCell align="right">
+																			<Stack direction="row" spacing={0.5} justifyContent="flex-start" alignItems="center">
+																				{isAuthenticated && (
+																					<>
+																						<Checkbox
+																							size="small"
+																							checked={isSelectedForSlideshow}
+																							onChange={(event) => {
+																								setSelectedForSlideshowByProjectId((prev) => {
+																									const current = Array.isArray(prev[project.id]) ? prev[project.id] : [];
+																									const next = event.target.checked
+																										? [...new Set([...current, activityIndex])]
+																										: current.filter((idx) => idx !== activityIndex);
+																									return { ...prev, [project.id]: next };
+																								});
+																							}}
+																							inputProps={{ 'aria-label': `Add ${activity['lesson-name'] || 'activity'} to slideshow` }}
+																						/>
+																					</>
+																				)}
+																			</Stack>
+																		</TableCell>
+																		<TableCell>
+																			<Typography sx={{ fontSize: '0.92rem', fontWeight: 600, color: '#1f2937' }} noWrap title={activity['lesson-name'] || project.name}>
+																				{activity['lesson-name'] || project.name}
+																			</Typography>
+																		</TableCell>
+																		<TableCell>
+																			<Chip
+																				label={activityTypeLabel}
+																				size="small"
+																				sx={{ fontSize: '0.75rem', backgroundColor: '#eef2ff', color: '#3f37c9' }}
+																			/>
+																		</TableCell>
+																		<TableCell>
+																			<Typography sx={{ fontSize: '0.78rem', color: '#6b7280' }}>
+																				{formatActivityDate(activity['modified-at']) || '--'}
+																			</Typography>
+																		</TableCell>
+																		<TableCell align="right">
+																			<Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
+																				{isAuthenticated && (
+																					<>
+																						<Button
+																							size="small"
+																							variant="contained"
+																							disabled={!canOpenType}
+																							onClick={() => handleOpenActivity(project, activity, activityIndex)}
+																							sx={{ textTransform: 'none' }}
+																						>
+																							Open
+																						</Button>
+																						<Button
+																							size="small"
+																							variant="contained"
+																							color="error"
+																							onClick={() => handleDeleteActivity(project.id, activityIndex)}
+																							sx={{ textTransform: 'none' }}
+																						>
+																							Delete
+																						</Button>
+																					</>
+																				)}
+																			</Stack>
+																		</TableCell>
+																	</TableRow>
+																);
+															})}
+														</TableBody>
+													</Table>
+													</TableContainer>
+												</>
 											)}
 										</Box>
 									);
 								})}
 							</Stack>
-
+						<Box sx={{ borderTop: '1px solid #eee', pt: 1.5, mt: 2 }}>
+							<Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end" flexWrap="wrap">
+								<Typography sx={{ fontSize: '0.82rem', color: '#555' }}>
+									Licensed for use by {authUser?.email ? ` - ${authUser.email}` : ''}
+								</Typography>
+							</Stack>
+						</Box>
 					{isLoadingCloudProjects && (
 						<Typography sx={{ color: '#999', fontSize: '0.83rem', mt: 1 }}>Loading projects from cloud...</Typography>
 					)}
@@ -1237,48 +1607,6 @@ export default function LessonProjectsPage() {
 						</Typography>
 					)}
 
-					<Box sx={{ borderTop: '1px solid #eee', pt: 1.5, mt: 2 }}>
-						{isAuthenticated ? (
-							<Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" flexWrap="wrap">
-								<Typography sx={{ fontSize: '0.82rem', color: '#555' }}>
-									Sync each project individually using its `Sync Changes` button.
-									Licensed for use by {authUser?.email ? ` - ${authUser.email}` : ''}
-								</Typography>
-								<Stack direction="row" spacing={0.6}>
-									<Button
-										size="small"
-										variant="outlined"
-										disabled={isLoadingCloudProjects || isApplyingInitialSync}
-										onClick={async () => {
-											await runLocalCloudCompare({ forcePromptWhenSame: true });
-										}}
-										sx={{ textTransform: 'none' }}
-									>
-										Re-run Compare
-									</Button>
-									<Button
-										size="small"
-										variant="contained"
-										color="info"
-										disabled={isLoadingCloudProjects}
-										onClick={async () => {
-											await loadCloudProjects();
-											if (!cloudMessage) {
-												setCloudStatus('Cloud refreshed.', 'success');
-											}
-										}}
-										sx={{ textTransform: 'none' }}
-									>
-										{isLoadingCloudProjects ? 'Refreshing...' : 'Refresh Cloud'}
-									</Button>
-								</Stack>
-							</Stack>
-						) : (
-							<Typography sx={{ fontSize: '0.82rem', color: '#666' }}>
-								Login with Teachable to sync projects.
-							</Typography>
-						)}
-					</Box>
 				</Paper>
 			</Container>
 
