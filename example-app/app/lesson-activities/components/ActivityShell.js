@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -44,6 +45,7 @@ export default function ActivityShell({
 	setNotice,
 }) {
 	const router = useRouter();
+	const [isSlideshowMode, setIsSlideshowMode] = useState(false);
 	const outlinedControlButtonSx = {
 		textTransform: 'none',
 		bgcolor: '#fff',
@@ -62,6 +64,15 @@ export default function ActivityShell({
 				? 'Login flow completed — verifying session…'
 				: 'Not logged in';
 	const licenseLabel = authUser?.email ? `Licensed for use by: ${authUser.email}` : '';
+
+	useEffect(() => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+
+		const params = new URLSearchParams(window.location.search);
+		setIsSlideshowMode(params.get('slideshow') === '1');
+	}, []);
 
 	return (
 		<Box
@@ -107,85 +118,87 @@ export default function ActivityShell({
 				}
 			`}</style>
 			<Container maxWidth="lg">
-				<Box
-					sx={{
-						mb: 1.5,
-						display: 'flex',
-						flexDirection: { xs: 'column', sm: 'row' },
-						justifyContent: 'space-between',
-						gap: 1.5,
-					}}
-				>
-					<Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-						{!projectId && (
+				{!isSlideshowMode && (
+					<Box
+						sx={{
+							mb: 1.5,
+							display: 'flex',
+							flexDirection: { xs: 'column', sm: 'row' },
+							justifyContent: 'space-between',
+							gap: 1.5,
+						}}
+					>
+						<Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+							{!projectId && (
+								<Button
+									variant="outlined"
+									onClick={() => router.push('/lesson-activities')}
+									sx={{
+										...outlinedControlButtonSx,
+										fontWeight: 700,
+									}}
+								>
+									Lesson Actvities Home
+								</Button>
+							)}
+							{projectId && (
+								<Button
+									variant="outlined"
+									color="primary"
+									disabled={isSaving}
+									onClick={handleSaveAndReturn}
+									sx={{ textTransform: 'none' }}
+								>
+									Back to Projects
+								</Button>
+							)}
+						</Stack>
+
+						<Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap sx={{ justifyContent: 'flex-end' }}>
 							<Button
 								variant="outlined"
-								onClick={() => router.push('/lesson-activities')}
+								onClick={() => router.push('/dashboard')}
 								sx={{
 									...outlinedControlButtonSx,
 									fontWeight: 700,
 								}}
 							>
-								Lesson Actvities Home
+								Back to Dashboard
 							</Button>
-						)}
-						{projectId && (
-							<Button
-								variant="outlined"
-								color="primary"
-								disabled={isSaving}
-								onClick={handleSaveAndReturn}
-								sx={{ textTransform: 'none' }}
+							<Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
+								{authUser ? 'Logout' : 'Login'}
+							</Button>
+							<Box
+								sx={{
+									display: 'inline-flex',
+									alignItems: 'center',
+									px: 1.5,
+									py: 0.75,
+									borderRadius: 1,
+									backgroundColor: authUser ? '#d4edda' : authFromSuccessRedirect ? '#cce5ff' : '#fff3cd',
+									color: authUser ? '#155724' : authFromSuccessRedirect ? '#004085' : '#856404',
+									border: `1px solid ${authUser ? '#c3e6cb' : authFromSuccessRedirect ? '#b8daff' : '#ffeaa7'}`,
+									fontWeight: 700,
+									fontSize: '0.85rem',
+								}}
 							>
-								Back to Projects
-							</Button>
-						)}
-					</Stack>
+								{authLabel}
+							</Box>
+							{!authLoading && !authUser && authFromSuccessRedirect && (
+								<Button
+									size="small"
+									variant="outlined"
+									sx={{ ...outlinedControlButtonSx, fontSize: '0.8rem' }}
+									onClick={runAuthCheck}
+								>
+									Retry session check
+								</Button>
+							)}
+						</Stack>
+					</Box>
+				)}
 
-					<Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap sx={{ justifyContent: 'flex-end' }}>
-						<Button
-							variant="outlined"
-							onClick={() => router.push('/dashboard')}
-							sx={{
-								...outlinedControlButtonSx,
-								fontWeight: 700,
-							}}
-						>
-							Back to Dashboard
-						</Button>
-						<Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
-							{authUser ? 'Logout' : 'Login'}
-						</Button>
-						<Box
-							sx={{
-								display: 'inline-flex',
-								alignItems: 'center',
-								px: 1.5,
-								py: 0.75,
-								borderRadius: 1,
-								backgroundColor: authUser ? '#d4edda' : authFromSuccessRedirect ? '#cce5ff' : '#fff3cd',
-								color: authUser ? '#155724' : authFromSuccessRedirect ? '#004085' : '#856404',
-								border: `1px solid ${authUser ? '#c3e6cb' : authFromSuccessRedirect ? '#b8daff' : '#ffeaa7'}`,
-								fontWeight: 700,
-								fontSize: '0.85rem',
-							}}
-						>
-							{authLabel}
-						</Box>
-						{!authLoading && !authUser && authFromSuccessRedirect && (
-							<Button
-								size="small"
-								variant="outlined"
-								sx={{ ...outlinedControlButtonSx, fontSize: '0.8rem' }}
-								onClick={runAuthCheck}
-							>
-								Retry session check
-							</Button>
-						)}
-					</Stack>
-				</Box>
-
-				{projectId && (
+				{projectId && !isSlideshowMode && (
 					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea', }}>
 						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
 						<Typography sx={{ fontSize: { xs: '1.3rem', sm: '1.6rem', md: '2rem' }, color: '#011436', fontWeight: 700 }}>
