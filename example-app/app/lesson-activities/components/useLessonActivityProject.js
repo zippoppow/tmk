@@ -114,8 +114,8 @@ export function useLessonActivityProject({
 		}
 
 		const normalizedInput = normalizeInput(nextData ?? latestDataRef.current);
-		const resolvedActivityName = String(nextActivityName ?? latestActivityNameRef.current || '').trim() || defaultActivityName;
-		const resolvedActivityId = String(nextActivityId ?? latestStandaloneActivityIdRef.current || '').trim();
+		const resolvedActivityName = String((nextActivityName ?? latestActivityNameRef.current) || '').trim() || defaultActivityName;
+		const resolvedActivityId = String((nextActivityId ?? latestStandaloneActivityIdRef.current) || '').trim();
 
 		const existingDraft = getStandaloneDraftByLocalId(resolvedLocalDraftId);
 		return upsertStandaloneDraft({
