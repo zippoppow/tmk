@@ -14,6 +14,7 @@ import {
     Box,
     Checkbox,
     Chip,
+    CircularProgress,
     Typography,
     Button,
     Paper,
@@ -45,7 +46,7 @@ export default function LessonActivitiesPage() {
     const [selectedSavedActivityIds, setSelectedSavedActivityIds] = useState([]);
     const [selectedStagedLocalDraftIds, setSelectedStagedLocalDraftIds] = useState([]);
     const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
-    const { hasDiyAccess, authUser: user } = useDiyAccess();
+    const { hasDiyAccess, authUser: user, loading: authLoading } = useDiyAccess();
 
     const showNotice = (severity, message) => {
         setNotice({ open: true, severity, message });
@@ -55,7 +56,13 @@ export default function LessonActivitiesPage() {
         setIsMounted(true);
     }, []);
 
-    // No redirect for lack of DIY access; page still renders with disabled actions.
+    const isAuthenticated = Boolean(user);
+
+    useEffect(() => {
+        if (!authLoading && isAuthenticated && !hasDiyAccess) {
+            router.replace('/dashboard');
+        }
+    }, [authLoading, isAuthenticated, hasDiyAccess, router]);
 
     const loadStandaloneActivities = async () => {
         const localDraftRecords = listStandaloneDrafts().filter((record) => {
@@ -192,8 +199,32 @@ export default function LessonActivitiesPage() {
         window.location.href = buildTeachableLogoutUrl('/login?next=/lesson-activities');
     };
 
-    if (!isMounted || !user) {
+    if (!isMounted) {
         return null;
+    }
+
+    if (authLoading) {
+        return (
+            <Box
+                sx={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(76, 76, 76, 0.2)',
+                    zIndex: 9999,
+                }}
+            >
+                <Stack alignItems="center" spacing={2}>
+                    <CircularProgress size={60} />
+                    <Typography sx={{ color: '#aa34e5', fontSize: '1.1rem' }}>Checking login...</Typography>
+                </Stack>
+            </Box>
+        );
     }
 
     const lessonActivities = [
@@ -216,8 +247,6 @@ export default function LessonActivitiesPage() {
         { name: 'Word Builder', path: '/lesson-activities/word-builder', description: 'Combine prefixes, bases, and suffixes to build words', previewImage: '/lesson-activities/preview-images/WordBuilder.png' },
         { name: 'Word Meaning', path: '/lesson-activities/word-meaning', description: 'Infer and record meanings from morph clues', previewImage: '/lesson-activities/preview-images/WordMeaning.png' },
     ];
-
-    const isAuthenticated = Boolean(user);
 
     const formatLastModifiedTimestamp = (value) => {
         const numeric = Number(value);
@@ -283,6 +312,8 @@ export default function LessonActivitiesPage() {
             return;
         }
 
+        const templateName = String(activityRecord?.['tmk-template'] || activityRecord?.formName || '').trim();
+
         const shouldDelete = window.confirm(`Delete "${activityRecord?.['lesson-name'] || 'Untitled Lesson Activity'}"?`);
         if (!shouldDelete) {
             return;
@@ -296,6 +327,9 @@ export default function LessonActivitiesPage() {
             }
 
             deleteStandaloneDraftByActivityId(activityId);
+            if (templateName) {
+                clearFormSessionData(templateName);
+            }
             setSavedStandaloneActivities((prev) => prev.filter((activity) => String(activity?.id || '') !== activityId));
             setStagedStandaloneActivities((prev) => prev.filter((activity) => String(activity?.id || '') !== activityId));
             setSelectedSavedActivityIds((prev) => prev.filter((id) => id !== activityId));
@@ -312,12 +346,17 @@ export default function LessonActivitiesPage() {
             return;
         }
 
+        const templateName = String(activityRecord?.['tmk-template'] || activityRecord?.formName || '').trim();
+
         const shouldDelete = window.confirm(`Delete local draft "${activityRecord?.['lesson-name'] || 'Untitled Lesson Activity'}"?`);
         if (!shouldDelete) {
             return;
         }
 
         deleteStandaloneDraftByLocalId(localDraftId);
+        if (templateName) {
+            clearFormSessionData(templateName);
+        }
         setStagedStandaloneActivities((prev) => prev.filter((activity) => String(activity?.localDraftId || '') !== localDraftId));
         setSelectedStagedLocalDraftIds((prev) => prev.filter((id) => id !== localDraftId));
         showNotice('success', 'Staged local activity deleted.');

@@ -1153,7 +1153,7 @@ export default function LessonProjectsPage() {
 					display: 'flex',
 					alignItems: 'center',
 					justifyContent: 'center',
-					backgroundColor: 'rgba(76, 76, 76, 0.5)',
+					backgroundColor: 'rgba(76, 76, 76, 0.2)',
 					zIndex: 9999,
 				}}
 			>

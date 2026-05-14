@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	buildLessonActivityUpsertPayload,
+	clearFormSessionData,
 	createLessonActivityId,
 	deleteLessonActivityById,
 	deleteStandaloneDraftByActivityId,
@@ -85,6 +86,27 @@ export function useLessonActivityProject({
 			return existing;
 		}
 
+		const urlActivityId = typeof window !== 'undefined'
+			? String(new URL(window.location.href).searchParams.get('activityId') || '').trim()
+			: '';
+		const existingActivityId = String(latestStandaloneActivityIdRef.current || urlActivityId || '').trim();
+		if (existingActivityId) {
+			const existingDraft = getStandaloneDraftByActivityId(existingActivityId);
+			const existingDraftId = String(existingDraft?.localDraftId || '').trim();
+			if (existingDraftId) {
+				latestLocalDraftIdRef.current = existingDraftId;
+				setLocalDraftId(existingDraftId);
+
+				if (typeof window !== 'undefined') {
+					const url = new URL(window.location.href);
+					url.searchParams.set('localDraftId', existingDraftId);
+					window.history.replaceState({}, '', url.toString());
+				}
+
+				return existingDraftId;
+			}
+		}
+
 		const generated = createLessonActivityId();
 		latestLocalDraftIdRef.current = generated;
 		setLocalDraftId(generated);
@@ -108,14 +130,29 @@ export function useLessonActivityProject({
 			return null;
 		}
 
+		const normalizedInput = normalizeInput(nextData ?? latestDataRef.current);
+		const resolvedActivityName = String((nextActivityName ?? latestActivityNameRef.current) || '').trim() || defaultActivityName;
+		const urlActivityId = typeof window !== 'undefined'
+			? String(new URL(window.location.href).searchParams.get('activityId') || '').trim()
+			: '';
+		const resolvedActivityId = String((nextActivityId ?? latestStandaloneActivityIdRef.current ?? urlActivityId) || '').trim();
+		const existingLocalDraftId = String(latestLocalDraftIdRef.current || '').trim();
+
+		const hasContentChanges = JSON.stringify(normalizedInput) !== JSON.stringify(normalizeInput(initialData));
+		const hasCustomActivityName = resolvedActivityName !== defaultActivityName;
+		const shouldPersistStandaloneDraft = Boolean(resolvedActivityId)
+			|| Boolean(existingLocalDraftId)
+			|| hasContentChanges
+			|| hasCustomActivityName;
+
+		if (!shouldPersistStandaloneDraft) {
+			return null;
+		}
+
 		const resolvedLocalDraftId = ensureStandaloneLocalDraftId();
 		if (!resolvedLocalDraftId) {
 			return null;
 		}
-
-		const normalizedInput = normalizeInput(nextData ?? latestDataRef.current);
-		const resolvedActivityName = String((nextActivityName ?? latestActivityNameRef.current) || '').trim() || defaultActivityName;
-		const resolvedActivityId = String((nextActivityId ?? latestStandaloneActivityIdRef.current) || '').trim();
 
 		const existingDraft = getStandaloneDraftByLocalId(resolvedLocalDraftId);
 		return upsertStandaloneDraft({
@@ -187,7 +224,36 @@ export function useLessonActivityProject({
 					setLocalDraftId(paramLocalDraftId);
 				}
 
+				const explicitLocalDraft = paramLocalDraftId
+					? getStandaloneDraftByLocalId(paramLocalDraftId)
+					: null;
+				const fallbackDraftForActivity = paramActivityId
+					? getStandaloneDraftByActivityId(paramActivityId)
+					: null;
+				const preferredLocalDraft = explicitLocalDraft || fallbackDraftForActivity;
+
 				if (paramActivityId) {
+					if (!cancelled) {
+						// Keep editing bound to the existing standalone record even if cloud rehydrate fails.
+						latestStandaloneActivityIdRef.current = paramActivityId;
+						setStandaloneActivityId(paramActivityId);
+					}
+
+					if (preferredLocalDraft && !cancelled) {
+						const resolvedLocalDraftId = String(preferredLocalDraft.localDraftId || paramLocalDraftId || createLessonActivityId());
+						setLocalDraftId(resolvedLocalDraftId);
+						setActivityName(String(preferredLocalDraft['lesson-name'] || defaultActivityName));
+						setData(normalizeInput(preferredLocalDraft['lesson-input-data'] || {}));
+
+						if (typeof window !== 'undefined') {
+							const nextUrl = new URL(window.location.href);
+							nextUrl.searchParams.set('activityId', paramActivityId);
+							nextUrl.searchParams.set('localDraftId', resolvedLocalDraftId);
+							window.history.replaceState({}, '', nextUrl.toString());
+						}
+						return;
+					}
+
 					const cloudActivity = await fetchLessonActivityById(projectApiOrigin, paramActivityId);
 					if (cloudActivity && !cancelled) {
 						const draftForActivity = getStandaloneDraftByActivityId(paramActivityId);
@@ -217,6 +283,22 @@ export function useLessonActivityProject({
 						}
 						return;
 					}
+
+					const draftForActivity = getStandaloneDraftByActivityId(paramActivityId);
+					if (draftForActivity && !cancelled) {
+						const resolvedLocalDraftId = paramLocalDraftId || String(draftForActivity.localDraftId || createLessonActivityId());
+						setLocalDraftId(resolvedLocalDraftId);
+						setActivityName(String(draftForActivity['lesson-name'] || defaultActivityName));
+						setData(normalizeInput(draftForActivity['lesson-input-data'] || {}));
+
+						if (typeof window !== 'undefined') {
+							const nextUrl = new URL(window.location.href);
+							nextUrl.searchParams.set('activityId', paramActivityId);
+							nextUrl.searchParams.set('localDraftId', resolvedLocalDraftId);
+							window.history.replaceState({}, '', nextUrl.toString());
+						}
+						return;
+					}
 				}
 
 				if (paramLocalDraftId) {
@@ -230,29 +312,7 @@ export function useLessonActivityProject({
 					}
 				}
 
-				const resolvedLocalDraftId = paramLocalDraftId || createLessonActivityId();
-				setLocalDraftId(resolvedLocalDraftId);
-				const stored = readFormSessionData(formName);
-				if (stored && !cancelled) {
-					setData(normalizeInput(stored));
-					upsertStandaloneDraft({
-						localDraftId: resolvedLocalDraftId,
-						id: '',
-						'tmk-template': formName,
-						formName,
-						'lesson-name': defaultActivityName,
-						'lesson-input-data': normalizeInput(stored),
-						'created-at': Date.now(),
-						'modified-at': Date.now(),
-						savedToApi: false,
-					});
-				}
-
-				if (typeof window !== 'undefined') {
-					const nextUrl = new URL(window.location.href);
-					nextUrl.searchParams.set('localDraftId', resolvedLocalDraftId);
-					window.history.replaceState({}, '', nextUrl.toString());
-				}
+				setLocalDraftId('');
 				return;
 			}
 
@@ -558,7 +618,14 @@ export function useLessonActivityProject({
 		setIsSaving(true);
 		try {
 			const normalizedInput = normalizeInput(data);
-			const activityId = String(standaloneActivityId || createLessonActivityId());
+			const urlActivityId = typeof window !== 'undefined'
+				? String(new URL(window.location.href).searchParams.get('activityId') || '').trim()
+				: '';
+			const hadExistingId = Boolean(standaloneActivityId || urlActivityId);
+			const activityId = String(standaloneActivityId || urlActivityId || createLessonActivityId());
+			if (activityId && activityId !== standaloneActivityId) {
+				setStandaloneActivityId(activityId);
+			}
 
 			const response = await upsertLessonActivity(
 				projectApiOrigin,
@@ -632,6 +699,7 @@ export function useLessonActivityProject({
 			if (localDraftId) {
 				deleteStandaloneDraftByLocalId(localDraftId);
 			}
+			clearFormSessionData(formName);
 
 			setStandaloneActivityId('');
 			const nextLocalDraftId = createLessonActivityId();
