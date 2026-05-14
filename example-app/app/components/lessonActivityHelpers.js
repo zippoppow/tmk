@@ -4,6 +4,7 @@ import {
 	DIY_PROJECTS_ENDPOINT,
 	LESSON_ACTIVITIES_ENDPOINT,
 	PROJECTS_STORAGE_KEY,
+	STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY,
 } from './sharedHelperConstants';
 
 export {
@@ -11,6 +12,7 @@ export {
 	DIY_PROJECTS_ENDPOINT,
 	LESSON_ACTIVITIES_ENDPOINT,
 	PROJECTS_STORAGE_KEY,
+	STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY,
 } from './sharedHelperConstants';
 
 export function readFormSessionData(formName, storageKey = DEFAULT_SESSION_STORAGE_KEY) {
@@ -63,6 +65,115 @@ export function createProjectId() {
 
 export function createLessonActivityId() {
 	return `la_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function readStandaloneDraftMap(storageKey = STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY) {
+	if (typeof window === 'undefined') {
+		return {};
+	}
+
+	try {
+		const parsed = JSON.parse(window.localStorage.getItem(storageKey) || '{}');
+		return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+	} catch {
+		return {};
+	}
+}
+
+function writeStandaloneDraftMap(draftMap, storageKey = STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY) {
+	if (typeof window === 'undefined') {
+		return;
+	}
+
+	window.localStorage.setItem(storageKey, JSON.stringify(draftMap || {}));
+}
+
+export function listStandaloneDrafts(storageKey = STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY) {
+	const draftMap = readStandaloneDraftMap(storageKey);
+	return Object.values(draftMap)
+		.filter((record) => record && typeof record === 'object')
+		.sort((a, b) => Number(b?.['modified-at'] || 0) - Number(a?.['modified-at'] || 0));
+}
+
+export function getStandaloneDraftByLocalId(localDraftId, storageKey = STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY) {
+	const normalizedId = String(localDraftId || '').trim();
+	if (!normalizedId) {
+		return null;
+	}
+
+	const draftMap = readStandaloneDraftMap(storageKey);
+	return draftMap[normalizedId] || null;
+}
+
+export function getStandaloneDraftByActivityId(activityId, storageKey = STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY) {
+	const normalizedActivityId = String(activityId || '').trim();
+	if (!normalizedActivityId) {
+		return null;
+	}
+
+	const records = listStandaloneDrafts(storageKey);
+	return records.find((record) => String(record?.id || '').trim() === normalizedActivityId) || null;
+}
+
+export function upsertStandaloneDraft(record, storageKey = STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY) {
+	if (!record || typeof record !== 'object') {
+		return null;
+	}
+
+	const now = Date.now();
+	const localDraftId = String(record.localDraftId || createLessonActivityId()).trim();
+	const activityId = String(record.id || '').trim();
+	const template = String(record['tmk-template'] || record.formName || '').trim();
+	const lessonName = String(record['lesson-name'] || '').trim() || 'Untitled Lesson Activity';
+	const lessonInputData = record['lesson-input-data'] && typeof record['lesson-input-data'] === 'object' && !Array.isArray(record['lesson-input-data'])
+		? record['lesson-input-data']
+		: {};
+	const createdAt = Number(record['created-at']) || now;
+	const modifiedAt = Number(record['modified-at']) || now;
+
+	const nextRecord = {
+		...record,
+		localDraftId,
+		id: activityId,
+		formName: template || String(record.formName || '').trim(),
+		'tmk-template': template,
+		'lesson-name': lessonName,
+		'lesson-input-data': lessonInputData,
+		'created-at': createdAt,
+		'modified-at': modifiedAt,
+		savedToApi: Boolean(record.savedToApi || activityId),
+	};
+
+	const draftMap = readStandaloneDraftMap(storageKey);
+	draftMap[localDraftId] = nextRecord;
+	writeStandaloneDraftMap(draftMap, storageKey);
+	return nextRecord;
+}
+
+export function deleteStandaloneDraftByLocalId(localDraftId, storageKey = STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY) {
+	const normalizedId = String(localDraftId || '').trim();
+	if (!normalizedId) {
+		return;
+	}
+
+	const draftMap = readStandaloneDraftMap(storageKey);
+	delete draftMap[normalizedId];
+	writeStandaloneDraftMap(draftMap, storageKey);
+}
+
+export function deleteStandaloneDraftByActivityId(activityId, storageKey = STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY) {
+	const normalizedActivityId = String(activityId || '').trim();
+	if (!normalizedActivityId) {
+		return;
+	}
+
+	const draftMap = readStandaloneDraftMap(storageKey);
+	Object.keys(draftMap).forEach((draftId) => {
+		if (String(draftMap[draftId]?.id || '').trim() === normalizedActivityId) {
+			delete draftMap[draftId];
+		}
+	});
+	writeStandaloneDraftMap(draftMap, storageKey);
 }
 
 function coerceBoolean(value) {

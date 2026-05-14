@@ -12,7 +12,9 @@ import {
     Alert,
     Container,
     Box,
+    Checkbox,
     Chip,
+    CircularProgress,
     Typography,
     Button,
     Paper,
@@ -21,11 +23,14 @@ import {
 } from '@mui/material';
 import {
     clearFormSessionData,
+    deleteStandaloneDraftByActivityId,
+    deleteStandaloneDraftByLocalId,
     DIY_PROJECTS_ENDPOINT,
     deleteLessonActivityById,
     extractDiyProjectsFromResponse,
     getAllStoredProjects,
     isStandaloneLessonActivity,
+    listStandaloneDrafts,
     listLessonActivities,
 } from '../components/lessonActivityHelpers';
 import LessonActivitySelector from '../components/LessonActivitySelector';
@@ -35,10 +40,13 @@ export default function LessonActivitiesPage() {
 
     const router = useRouter();
     const [isMounted, setIsMounted] = useState(false);
-    const [standaloneActivities, setStandaloneActivities] = useState([]);
+    const [savedStandaloneActivities, setSavedStandaloneActivities] = useState([]);
+    const [stagedStandaloneActivities, setStagedStandaloneActivities] = useState([]);
     const [standaloneLoading, setStandaloneLoading] = useState(false);
+    const [selectedSavedActivityIds, setSelectedSavedActivityIds] = useState([]);
+    const [selectedStagedLocalDraftIds, setSelectedStagedLocalDraftIds] = useState([]);
     const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
-    const { hasDiyAccess, authUser: user } = useDiyAccess();
+    const { hasDiyAccess, authUser: user, loading: authLoading } = useDiyAccess();
 
     const showNotice = (severity, message) => {
         setNotice({ open: true, severity, message });
@@ -48,11 +56,23 @@ export default function LessonActivitiesPage() {
         setIsMounted(true);
     }, []);
 
-    // No redirect for lack of DIY access; page still renders with disabled actions.
+    const isAuthenticated = Boolean(user);
+
+    useEffect(() => {
+        if (!authLoading && isAuthenticated && !hasDiyAccess) {
+            router.replace('/dashboard');
+        }
+    }, [authLoading, isAuthenticated, hasDiyAccess, router]);
 
     const loadStandaloneActivities = async () => {
+        const localDraftRecords = listStandaloneDrafts().filter((record) => {
+            const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+            return Boolean(template) && template !== 'lesson-activities-project';
+        });
+
         if (!user || !hasDiyAccess) {
-            setStandaloneActivities([]);
+            setSavedStandaloneActivities([]);
+            setStagedStandaloneActivities(localDraftRecords.filter((record) => !String(record?.id || '').trim()));
             return;
         }
 
@@ -114,7 +134,7 @@ export default function LessonActivitiesPage() {
                 console.error('Failed to load diy-project associations for standalone filter:', projectError);
             }
 
-            const nonProjectRecords = records.filter((record) => {
+            const savedRecords = records.filter((record) => {
                 const template = String(record?.['tmk-template'] || record?.formName || '').trim();
 
                 // Guard against project-container pseudo records accidentally returned by sync flows.
@@ -138,11 +158,34 @@ export default function LessonActivitiesPage() {
 
                 return true;
             });
-            setStandaloneActivities(nonProjectRecords);
+
+            const savedById = new Set(
+                savedRecords
+                    .map((record) => String(record?.id || '').trim())
+                    .filter(Boolean)
+            );
+
+            const stagedRecords = localDraftRecords.filter((record) => {
+                const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+                if (!template || template === 'lesson-activities-project') {
+                    return false;
+                }
+
+                const linkedId = String(record?.id || '').trim();
+                if (!linkedId) {
+                    return true;
+                }
+
+                return !savedById.has(linkedId);
+            });
+
+            setSavedStandaloneActivities(savedRecords);
+            setStagedStandaloneActivities(stagedRecords);
         } catch (error) {
             // eslint-disable-next-line no-console
             console.error('Failed to load standalone lesson activities:', error);
-            setStandaloneActivities([]);
+            setSavedStandaloneActivities([]);
+            setStagedStandaloneActivities(localDraftRecords.filter((record) => !String(record?.id || '').trim()));
         } finally {
             setStandaloneLoading(false);
         }
@@ -156,8 +199,32 @@ export default function LessonActivitiesPage() {
         window.location.href = buildTeachableLogoutUrl('/login?next=/lesson-activities');
     };
 
-    if (!isMounted || !user) {
+    if (!isMounted) {
         return null;
+    }
+
+    if (authLoading) {
+        return (
+            <Box
+                sx={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(76, 76, 76, 0.2)',
+                    zIndex: 9999,
+                }}
+            >
+                <Stack alignItems="center" spacing={2}>
+                    <CircularProgress size={60} />
+                    <Typography sx={{ color: '#aa34e5', fontSize: '1.1rem' }}>Checking login...</Typography>
+                </Stack>
+            </Box>
+        );
     }
 
     const lessonActivities = [
@@ -181,12 +248,35 @@ export default function LessonActivitiesPage() {
         { name: 'Word Meaning', path: '/lesson-activities/word-meaning', description: 'Infer and record meanings from morph clues', previewImage: '/lesson-activities/preview-images/WordMeaning.png' },
     ];
 
-    const isAuthenticated = Boolean(user);
+    const formatLastModifiedTimestamp = (value) => {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric) || numeric <= 0) {
+            return 'Unknown';
+        }
+
+        try {
+            return new Date(numeric).toLocaleString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+            });
+        } catch {
+            return 'Unknown';
+        }
+    };
 
     const getActivityPath = (activityRecord) => {
         const templateName = String(activityRecord?.['tmk-template'] || activityRecord?.formName || '').trim();
         const match = lessonActivities.find((activity) => activity.path.endsWith(`/${templateName}`));
         return match?.path || null;
+    };
+
+    const getActivityTypeLabel = (templateName) => {
+        const normalizedTemplate = String(templateName || '').trim();
+        const match = lessonActivities.find((activity) => activity.path.endsWith(`/${normalizedTemplate}`));
+        return match?.name || normalizedTemplate || 'Unknown';
     };
 
     const handleManageStandalone = (activityRecord) => {
@@ -202,12 +292,18 @@ export default function LessonActivitiesPage() {
         }
 
         const activityId = String(activityRecord?.id || '').trim();
-        if (!activityId) {
-            router.push(path);
-            return;
+        const localDraftId = String(activityRecord?.localDraftId || '').trim();
+        const params = new URLSearchParams();
+
+        if (activityId) {
+            params.set('activityId', activityId);
+        }
+        if (localDraftId) {
+            params.set('localDraftId', localDraftId);
         }
 
-        router.push(`${path}?activityId=${encodeURIComponent(activityId)}`);
+        const suffix = params.toString();
+        router.push(suffix ? `${path}?${suffix}` : path);
     };
 
     const handleDeleteStandalone = async (activityRecord) => {
@@ -215,6 +311,8 @@ export default function LessonActivitiesPage() {
         if (!activityId) {
             return;
         }
+
+        const templateName = String(activityRecord?.['tmk-template'] || activityRecord?.formName || '').trim();
 
         const shouldDelete = window.confirm(`Delete "${activityRecord?.['lesson-name'] || 'Untitled Lesson Activity'}"?`);
         if (!shouldDelete) {
@@ -228,12 +326,69 @@ export default function LessonActivitiesPage() {
                 return;
             }
 
-            setStandaloneActivities((prev) => prev.filter((activity) => String(activity?.id || '') !== activityId));
+            deleteStandaloneDraftByActivityId(activityId);
+            if (templateName) {
+                clearFormSessionData(templateName);
+            }
+            setSavedStandaloneActivities((prev) => prev.filter((activity) => String(activity?.id || '') !== activityId));
+            setStagedStandaloneActivities((prev) => prev.filter((activity) => String(activity?.id || '') !== activityId));
+            setSelectedSavedActivityIds((prev) => prev.filter((id) => id !== activityId));
             showNotice('success', `"${activityRecord?.['lesson-name'] || 'Lesson Activity'}" deleted.`);
         } catch (error) {
             console.error('Failed to delete standalone lesson activity:', error);
             showNotice('error', 'Delete failed. Please try again.');
         }
+    };
+
+    const handleDeleteStagedStandalone = (activityRecord) => {
+        const localDraftId = String(activityRecord?.localDraftId || '').trim();
+        if (!localDraftId) {
+            return;
+        }
+
+        const templateName = String(activityRecord?.['tmk-template'] || activityRecord?.formName || '').trim();
+
+        const shouldDelete = window.confirm(`Delete local draft "${activityRecord?.['lesson-name'] || 'Untitled Lesson Activity'}"?`);
+        if (!shouldDelete) {
+            return;
+        }
+
+        deleteStandaloneDraftByLocalId(localDraftId);
+        if (templateName) {
+            clearFormSessionData(templateName);
+        }
+        setStagedStandaloneActivities((prev) => prev.filter((activity) => String(activity?.localDraftId || '') !== localDraftId));
+        setSelectedStagedLocalDraftIds((prev) => prev.filter((id) => id !== localDraftId));
+        showNotice('success', 'Staged local activity deleted.');
+    };
+
+    const handleLaunchStandaloneSlideshow = () => {
+        if (!hasDiyAccess) {
+            showNotice('warning', 'Active DIY course enrollment is required to present lesson activities.');
+            return;
+        }
+
+        const selectedIds = [...new Set(selectedSavedActivityIds)]
+            .map((id) => String(id || '').trim())
+            .filter(Boolean);
+
+        const selectedLocalDraftIds = [...new Set(selectedStagedLocalDraftIds)]
+            .map((id) => String(id || '').trim())
+            .filter(Boolean);
+
+        if (selectedIds.length === 0 && selectedLocalDraftIds.length === 0) {
+            showNotice('error', 'Select at least one staged or saved lesson activity to start a slideshow.');
+            return;
+        }
+
+        const params = new URLSearchParams();
+        if (selectedIds.length > 0) {
+            params.set('standaloneIds', selectedIds.join(','));
+        }
+        if (selectedLocalDraftIds.length > 0) {
+            params.set('localDraftIds', selectedLocalDraftIds.join(','));
+        }
+        router.push(`/lesson-activities/slideshow?${params.toString()}`);
     };
 
     const handleCreateNewActivity = (activity) => {
@@ -314,22 +469,162 @@ export default function LessonActivitiesPage() {
                         Your Standalone Lesson Activities
                     </Typography>
                     <Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 4 }}>
-                        Open or remove your standalone lesson activities.
+                        Select, open, present, or remove your standalone lesson activities. Staged activities are local-only drafts. Saved activities are synced to the API.
                     </Typography>
                     {!hasDiyAccess ? (
                         <Typography sx={{ color: '#666', fontSize: '0.95rem' }}>Active DIY enrollment required.</Typography>
                     ) : standaloneLoading ? (
                         <Typography sx={{ color: '#999', fontSize: '0.83rem', mt: 1 }}>Loading lesson activities...</Typography>
-                    ) : standaloneActivities.length === 0 ? (
+                    ) : stagedStandaloneActivities.length === 0 && savedStandaloneActivities.length === 0 ? (
                         <Typography sx={{ color: '#bbb', fontSize: '1.2rem', textAlign: 'center', py: 2 }}>
                             No standalone lesson activities found.
                         </Typography>
                     ) : (
                         <Stack spacing={3} sx={{ width: '100%', minWidth: 0 }}>
-                            {standaloneActivities.map((activity, index) => {
+                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="flex-end" alignItems={{ xs: 'stretch', sm: 'center' }}>
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    onClick={handleLaunchStandaloneSlideshow}
+                                    sx={{
+                                        textTransform: 'none',
+                                        color: '#3f37c9',
+                                        borderColor: '#3f37c9',
+                                        backgroundColor: '#fff',
+                                        '&:hover': {
+                                            color: '#fff',
+                                            borderColor: '#2f2a99',
+                                            backgroundColor: '#3f37c9',
+                                        },
+                                    }}
+                                >
+                                    Present Selected Activities
+                                </Button>
+                            </Stack>
+                            <Typography sx={{ fontSize: '1.15rem', fontWeight: 700, color: '#2f3a4a' }}>
+                                Staged Locally
+                            </Typography>
+                            {stagedStandaloneActivities.length === 0 && (
+                                <Typography sx={{ color: '#7a8190', fontSize: '0.92rem' }}>
+                                    No staged local activities.
+                                </Typography>
+                            )}
+                            {stagedStandaloneActivities.map((activity, index) => {
                                 const route = getActivityPath(activity);
                                 const activityName = String(activity?.['lesson-name'] || 'Untitled Lesson Activity');
                                 const activityType = String(activity?.['tmk-template'] || activity?.formName || 'unknown-template');
+                                const activityTypeLabel = getActivityTypeLabel(activityType);
+                                const localDraftId = String(activity?.localDraftId || '').trim();
+                                const modifiedAtLabel = formatLastModifiedTimestamp(activity?.['modified-at'] || activity?.timestamp);
+                                const isSelectedForSlideshow = localDraftId ? selectedStagedLocalDraftIds.includes(localDraftId) : false;
+                                return (
+                                    <Box
+                                        key={String(localDraftId || `${activityName}-${index}`)}
+                                        sx={{
+                                            border: '1px solid',
+                                            borderColor: '#060279',
+                                            borderRadius: 2,
+                                            p: 1.5,
+                                            backgroundColor: '#eeeff9',
+                                        }}
+                                    >
+                                        <Stack direction="row" alignItems="center" spacing={0.8}>
+                                            <Stack direction="column" spacing={0.2} sx={{ flex: 1, minWidth: 0 }}>
+                                                <Typography sx={{ fontSize: '1.2rem', fontWeight: 700, fontStyle: 'italic' }} noWrap title={activityName}>
+                                                    ACTIVITY: {activityName}
+                                                </Typography>
+                                                <Typography sx={{ fontSize: '0.74rem', color: '#64748b' }}>
+                                                    Last modified: {modifiedAtLabel}
+                                                </Typography>
+                                                <Stack direction="row" alignItems="center" spacing={1}>
+                                                    <Chip
+                                                        label={activityTypeLabel}
+                                                        size="small"
+                                                        sx={{
+                                                            height: 18,
+                                                            fontSize: '0.79rem',
+                                                            backgroundColor: '#e8e8e8',
+                                                            color: '#3f37c9',
+                                                        }}
+                                                    />
+                                                    <Chip
+                                                        label="Staged locally"
+                                                        size="small"
+                                                        sx={{
+                                                            height: 18,
+                                                            fontSize: '0.72rem',
+                                                            backgroundColor: '#fef3c7',
+                                                            color: '#92400e',
+                                                        }}
+                                                    />
+                                                </Stack>
+                                            </Stack>
+                                            <Checkbox
+                                                size="small"
+                                                disabled={!localDraftId}
+                                                checked={isSelectedForSlideshow}
+                                                onChange={(event) => {
+                                                    if (!localDraftId) {
+                                                        return;
+                                                    }
+                                                    setSelectedStagedLocalDraftIds((prev) => {
+                                                        if (event.target.checked) {
+                                                            return [...new Set([...prev, localDraftId])];
+                                                        }
+                                                        return prev.filter((id) => id !== localDraftId);
+                                                    });
+                                                }}
+                                                inputProps={{ 'aria-label': `Add ${activityName} to slideshow` }}
+                                            />
+                                            <Button
+                                                size="small"
+                                                variant="outlined"
+                                                disabled={!route}
+                                                onClick={() => handleManageStandalone(activity)}
+                                                sx={{
+                                                    textTransform: 'none',
+                                                    color: '#3f37c9',
+                                                    borderColor: '#3f37c9',
+                                                    backgroundColor: '#fff',
+                                                    '&:hover': {
+                                                        color: '#fff',
+                                                        borderColor: '#2f2a99',
+                                                        backgroundColor: '#3f37c9',
+                                                    },
+                                                }}
+                                            >
+                                                Manage
+                                            </Button>
+                                            <Button
+                                                size="small"
+                                                color="error"
+                                                variant="outlined"
+                                                onClick={() => handleDeleteStagedStandalone(activity)}
+                                                sx={{ textTransform: 'none' }}
+                                            >
+                                                Delete Local
+                                            </Button>
+                                        </Stack>
+                                    </Box>
+                                );
+                            })}
+
+                            <Typography sx={{ fontSize: '1.15rem', fontWeight: 700, color: '#2f3a4a', pt: 1 }}>
+                                Saved
+                            </Typography>
+                            {savedStandaloneActivities.length === 0 && (
+                                <Typography sx={{ color: '#7a8190', fontSize: '0.92rem' }}>
+                                    No saved standalone activities.
+                                </Typography>
+                            )}
+                            {savedStandaloneActivities.map((activity, index) => {
+                                const route = getActivityPath(activity);
+                                const activityName = String(activity?.['lesson-name'] || 'Untitled Lesson Activity');
+                                const activityType = String(activity?.['tmk-template'] || activity?.formName || 'unknown-template');
+                                const activityTypeLabel = getActivityTypeLabel(activityType);
+                                const activityId = String(activity?.id || '').trim();
+                                const modifiedAtLabel = formatLastModifiedTimestamp(activity?.['modified-at'] || activity?.timestamp);
+                                const isSelectedForSlideshow = activityId ? selectedSavedActivityIds.includes(activityId) : false;
                                 return (
                                     <Box
                                         key={String(activity?.id || `${activityName}-${index}`)}
@@ -346,9 +641,12 @@ export default function LessonActivitiesPage() {
                                                 <Typography sx={{ fontSize: '1.2rem', fontWeight: 700, fontStyle: 'italic' }} noWrap title={activityName}>
                                                     ACTIVITY: {activityName}
                                                 </Typography>
+                                                <Typography sx={{ fontSize: '0.74rem', color: '#64748b' }}>
+                                                    Last modified: {modifiedAtLabel}
+                                                </Typography>
                                                 <Stack direction="row" alignItems="center" spacing={1}>
                                                     <Chip
-                                                        label={activityType}
+                                                        label={activityTypeLabel}
                                                         size="small"
                                                         sx={{
                                                             height: 18,
@@ -357,8 +655,35 @@ export default function LessonActivitiesPage() {
                                                             color: '#3f37c9',
                                                         }}
                                                     />
+                                                    <Chip
+                                                        label="Saved"
+                                                        size="small"
+                                                        sx={{
+                                                            height: 18,
+                                                            fontSize: '0.72rem',
+                                                            backgroundColor: '#dcfce7',
+                                                            color: '#166534',
+                                                        }}
+                                                    />
                                                 </Stack>
                                             </Stack>
+                                            <Checkbox
+                                                size="small"
+                                                disabled={!activityId}
+                                                checked={isSelectedForSlideshow}
+                                                onChange={(event) => {
+                                                    if (!activityId) {
+                                                        return;
+                                                    }
+                                                    setSelectedSavedActivityIds((prev) => {
+                                                        if (event.target.checked) {
+                                                            return [...new Set([...prev, activityId])];
+                                                        }
+                                                        return prev.filter((id) => id !== activityId);
+                                                    });
+                                                }}
+                                                inputProps={{ 'aria-label': `Add ${activityName} to slideshow` }}
+                                            />
                                             <Button
                                                 size="small"
                                                 variant="outlined"

@@ -64,6 +64,15 @@ export default function ActivityShell({
 				? 'Login flow completed — verifying session…'
 				: 'Not logged in';
 	const licenseLabel = authUser?.email ? `Licensed for use by: ${authUser.email}` : '';
+	const allowDebouncedLocalPersist = async () => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+
+		await new Promise((resolve) => {
+			window.setTimeout(resolve, 325);
+		});
+	};
 
 	useEffect(() => {
 		if (typeof window === 'undefined') {
@@ -132,7 +141,10 @@ export default function ActivityShell({
 							{!projectId && (
 								<Button
 									variant="outlined"
-									onClick={() => router.push('/lesson-activities')}
+									onClick={async () => {
+										await allowDebouncedLocalPersist();
+										router.push('/lesson-activities');
+									}}
 									sx={{
 										...outlinedControlButtonSx,
 										fontWeight: 700,
@@ -157,7 +169,10 @@ export default function ActivityShell({
 						<Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap sx={{ justifyContent: 'flex-end' }}>
 							<Button
 								variant="outlined"
-								onClick={() => router.push('/dashboard')}
+								onClick={async () => {
+									await allowDebouncedLocalPersist();
+									router.push('/dashboard');
+								}}
 								sx={{
 									...outlinedControlButtonSx,
 									fontWeight: 700,
@@ -302,7 +317,15 @@ export default function ActivityShell({
 							</Button>
 						</>
 					)}
-					<Button variant="contained" color="success" onClick={handleDownloadPdf} sx={{ textTransform: 'none' }}>
+					<Button
+						variant="contained"
+						color="success"
+						onClick={async () => {
+							await allowDebouncedLocalPersist();
+							handleDownloadPdf();
+						}}
+						sx={{ textTransform: 'none' }}
+					>
 						Download as PDF
 					</Button>
 				</Box>
