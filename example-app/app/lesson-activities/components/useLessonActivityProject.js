@@ -6,13 +6,18 @@ import {
 	buildLessonActivityUpsertPayload,
 	createLessonActivityId,
 	deleteLessonActivityById,
+	deleteStandaloneDraftByActivityId,
+	deleteStandaloneDraftByLocalId,
 	fetchLessonActivityById,
+	getStandaloneDraftByActivityId,
+	getStandaloneDraftByLocalId,
 	upsertLessonActivity,
 	readFormSessionData,
 	writeFormSessionData,
 	DIY_PROJECTS_ENDPOINT,
 	getAllStoredProjects,
 	saveStoredProjects,
+	upsertStandaloneDraft,
 } from '../../components/lessonActivityHelpers';
 import {
 	buildTeachableLogoutUrl,
@@ -46,7 +51,13 @@ export function useLessonActivityProject({
 	const [projectName, setProjectName] = useState('');
 	const [activityName, setActivityName] = useState('');
 	const [standaloneActivityId, setStandaloneActivityId] = useState('');
+	const [localDraftId, setLocalDraftId] = useState('');
 	const [isSaving, setIsSaving] = useState(false);
+	const latestDataRef = useRef(initialData);
+	const latestActivityNameRef = useRef('');
+	const latestStandaloneActivityIdRef = useRef('');
+	const latestProjectIdRef = useRef('');
+	const latestLocalDraftIdRef = useRef('');
 
 	useEffect(() => {
 		normalizeInputDataRef.current = normalizeInputData;
@@ -64,6 +75,99 @@ export function useLessonActivityProject({
 		writeFormSessionData(formName, nextData);
 	};
 
+	const ensureStandaloneLocalDraftId = () => {
+		if (latestProjectIdRef.current) {
+			return '';
+		}
+
+		const existing = String(latestLocalDraftIdRef.current || '').trim();
+		if (existing) {
+			return existing;
+		}
+
+		const generated = createLessonActivityId();
+		latestLocalDraftIdRef.current = generated;
+		setLocalDraftId(generated);
+
+		if (typeof window !== 'undefined') {
+			const url = new URL(window.location.href);
+			url.searchParams.set('localDraftId', generated);
+			window.history.replaceState({}, '', url.toString());
+		}
+
+		return generated;
+	};
+
+	const persistStandaloneDraftRecord = ({
+		nextData,
+		nextActivityName,
+		nextActivityId,
+		markSaved = false,
+	}) => {
+		if (latestProjectIdRef.current) {
+			return null;
+		}
+
+		const resolvedLocalDraftId = ensureStandaloneLocalDraftId();
+		if (!resolvedLocalDraftId) {
+			return null;
+		}
+
+		const normalizedInput = normalizeInput(nextData ?? latestDataRef.current);
+		const resolvedActivityName = String(nextActivityName ?? latestActivityNameRef.current || '').trim() || defaultActivityName;
+		const resolvedActivityId = String(nextActivityId ?? latestStandaloneActivityIdRef.current || '').trim();
+
+		const existingDraft = getStandaloneDraftByLocalId(resolvedLocalDraftId);
+		return upsertStandaloneDraft({
+			...(existingDraft || {}),
+			localDraftId: resolvedLocalDraftId,
+			id: resolvedActivityId,
+			'tmk-template': formName,
+			formName,
+			'lesson-name': resolvedActivityName,
+			'lesson-input-data': normalizedInput,
+			'created-at': Number(existingDraft?.['created-at']) || Date.now(),
+			'modified-at': Date.now(),
+			savedToApi: markSaved || Boolean(resolvedActivityId),
+		});
+	};
+
+	const flushLocalDraft = () => {
+		const normalizedInput = normalizeInput(latestDataRef.current);
+		persist(normalizedInput);
+
+		if (latestProjectIdRef.current) {
+			return;
+		}
+
+		persistStandaloneDraftRecord({
+			nextData: normalizedInput,
+			nextActivityName: latestActivityNameRef.current,
+			nextActivityId: latestStandaloneActivityIdRef.current,
+			markSaved: Boolean(latestStandaloneActivityIdRef.current),
+		});
+	};
+
+	useEffect(() => {
+		latestDataRef.current = data;
+	}, [data]);
+
+	useEffect(() => {
+		latestActivityNameRef.current = activityName;
+	}, [activityName]);
+
+	useEffect(() => {
+		latestStandaloneActivityIdRef.current = standaloneActivityId;
+	}, [standaloneActivityId]);
+
+	useEffect(() => {
+		latestProjectIdRef.current = projectId;
+	}, [projectId]);
+
+	useEffect(() => {
+		latestLocalDraftIdRef.current = localDraftId;
+	}, [localDraftId]);
+
 	useEffect(() => {
 		if (typeof window === 'undefined') {
 			return;
@@ -76,20 +180,78 @@ export function useLessonActivityProject({
 			const paramProjectId = url.searchParams.get('projectId') || '';
 			const paramActivityIndex = url.searchParams.get('activityIndex');
 			const paramActivityId = (url.searchParams.get('activityId') || '').trim();
+			const paramLocalDraftId = (url.searchParams.get('localDraftId') || '').trim();
 
 			if (!paramProjectId) {
+				if (paramLocalDraftId) {
+					setLocalDraftId(paramLocalDraftId);
+				}
+
 				if (paramActivityId) {
 					const cloudActivity = await fetchLessonActivityById(projectApiOrigin, paramActivityId);
 					if (cloudActivity && !cancelled) {
+						const draftForActivity = getStandaloneDraftByActivityId(paramActivityId);
+						const resolvedLocalDraftId = paramLocalDraftId || String(draftForActivity?.localDraftId || createLessonActivityId());
+						setLocalDraftId(resolvedLocalDraftId);
 						setStandaloneActivityId(String(cloudActivity.id || paramActivityId));
 						setActivityName(String(cloudActivity['lesson-name'] || defaultActivityName));
 						setData(normalizeInput(cloudActivity['lesson-input-data'] || {}));
+						upsertStandaloneDraft({
+							...(draftForActivity || {}),
+							localDraftId: resolvedLocalDraftId,
+							id: String(cloudActivity.id || paramActivityId),
+							'tmk-template': String(cloudActivity['tmk-template'] || formName || '').trim(),
+							formName,
+							'lesson-name': String(cloudActivity['lesson-name'] || defaultActivityName),
+							'lesson-input-data': normalizeInput(cloudActivity['lesson-input-data'] || {}),
+							'created-at': Number(cloudActivity['created-at']) || Number(draftForActivity?.['created-at']) || Date.now(),
+							'modified-at': Date.now(),
+							savedToApi: true,
+						});
+
+						if (typeof window !== 'undefined') {
+							const nextUrl = new URL(window.location.href);
+							nextUrl.searchParams.set('activityId', String(cloudActivity.id || paramActivityId));
+							nextUrl.searchParams.set('localDraftId', resolvedLocalDraftId);
+							window.history.replaceState({}, '', nextUrl.toString());
+						}
 						return;
 					}
 				}
+
+				if (paramLocalDraftId) {
+					const stagedDraft = getStandaloneDraftByLocalId(paramLocalDraftId);
+					if (stagedDraft && !cancelled) {
+						setLocalDraftId(paramLocalDraftId);
+						setStandaloneActivityId(String(stagedDraft.id || ''));
+						setActivityName(String(stagedDraft['lesson-name'] || defaultActivityName));
+						setData(normalizeInput(stagedDraft['lesson-input-data'] || {}));
+						return;
+					}
+				}
+
+				const resolvedLocalDraftId = paramLocalDraftId || createLessonActivityId();
+				setLocalDraftId(resolvedLocalDraftId);
 				const stored = readFormSessionData(formName);
 				if (stored && !cancelled) {
 					setData(normalizeInput(stored));
+					upsertStandaloneDraft({
+						localDraftId: resolvedLocalDraftId,
+						id: '',
+						'tmk-template': formName,
+						formName,
+						'lesson-name': defaultActivityName,
+						'lesson-input-data': normalizeInput(stored),
+						'created-at': Date.now(),
+						'modified-at': Date.now(),
+						savedToApi: false,
+					});
+				}
+
+				if (typeof window !== 'undefined') {
+					const nextUrl = new URL(window.location.href);
+					nextUrl.searchParams.set('localDraftId', resolvedLocalDraftId);
+					window.history.replaceState({}, '', nextUrl.toString());
 				}
 				return;
 			}
@@ -181,11 +343,25 @@ export function useLessonActivityProject({
 				project.modifiedAtMs = Date.now();
 				project.syncedAt = null;
 				saveStoredProjects(projects);
+				return;
 			}
+
+			persistStandaloneDraftRecord({
+				nextData: normalizedInput,
+				nextActivityName: activityName,
+				nextActivityId: standaloneActivityId,
+				markSaved: Boolean(standaloneActivityId),
+			});
 		}, 300);
 
 		return () => clearTimeout(timeout);
-	}, [activityIndex, activityName, data, defaultActivityName, projectId]);
+	}, [activityIndex, activityName, data, defaultActivityName, projectId, standaloneActivityId]);
+
+	useEffect(() => {
+		return () => {
+			flushLocalDraft();
+		};
+	}, []);
 
 	const runAuthCheck = async () => {
 		setAuthLoading(true);
@@ -405,9 +581,23 @@ export function useLessonActivityProject({
 				return;
 			}
 
+			persist(normalizedInput);
+			const persistedDraft = persistStandaloneDraftRecord({
+				nextData: normalizedInput,
+				nextActivityName: activityName || defaultActivityName,
+				nextActivityId: activityId,
+				markSaved: true,
+			});
+
 			setStandaloneActivityId(activityId);
+			if (persistedDraft?.localDraftId) {
+				setLocalDraftId(String(persistedDraft.localDraftId));
+			}
 			const url = new URL(window.location.href);
 			url.searchParams.set('activityId', activityId);
+			if (persistedDraft?.localDraftId) {
+				url.searchParams.set('localDraftId', String(persistedDraft.localDraftId));
+			}
 			window.history.replaceState({}, '', url.toString());
 			showNotice('success', 'Standalone lesson activity saved.');
 		} catch (error) {
@@ -438,11 +628,19 @@ export function useLessonActivityProject({
 				return;
 			}
 
+			deleteStandaloneDraftByActivityId(standaloneActivityId);
+			if (localDraftId) {
+				deleteStandaloneDraftByLocalId(localDraftId);
+			}
+
 			setStandaloneActivityId('');
+			const nextLocalDraftId = createLessonActivityId();
+			setLocalDraftId(nextLocalDraftId);
 			setActivityName('');
 			setData(normalizeInput({}));
 			const url = new URL(window.location.href);
 			url.searchParams.delete('activityId');
+			url.searchParams.set('localDraftId', nextLocalDraftId);
 			window.history.replaceState({}, '', url.toString());
 			showNotice('success', 'Standalone lesson activity deleted.');
 		} catch (error) {
@@ -484,6 +682,8 @@ export function useLessonActivityProject({
 		handleSave,
 		handleSaveAndReturn,
 		standaloneActivityId,
+		localDraftId,
+		flushLocalDraft,
 		handleSaveStandalone,
 		handleDeleteStandalone,
 		handleGoToLessonProjects,
