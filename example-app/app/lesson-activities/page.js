@@ -50,6 +50,8 @@ export default function LessonActivitiesPage() {
     const [selectedSavedActivityIds, setSelectedSavedActivityIds] = useState([]);
     const [selectedStagedLocalDraftIds, setSelectedStagedLocalDraftIds] = useState([]);
     const [isSavingAllStaged, setIsSavingAllStaged] = useState(false);
+    const [isDeletingSelectedStaged, setIsDeletingSelectedStaged] = useState(false);
+    const [isDeletingSelectedSaved, setIsDeletingSelectedSaved] = useState(false);
     const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
     const { hasDiyAccess, authUser: user, loading: authLoading } = useDiyAccess();
 
@@ -437,6 +439,130 @@ export default function LessonActivitiesPage() {
         showNotice('success', 'Staged local activity deleted.');
     };
 
+    const handleDeleteSelectedStagedActivities = async () => {
+        if (!hasDiyAccess) {
+            showNotice('warning', 'Active DIY course enrollment is required to delete lesson activities.');
+            return;
+        }
+
+        const selectedDraftIds = [...new Set(selectedStagedLocalDraftIds)]
+            .map((id) => String(id || '').trim())
+            .filter(Boolean);
+
+        if (selectedDraftIds.length === 0) {
+            showNotice('info', 'Select at least one staged activity to delete.');
+            return;
+        }
+
+        const shouldDelete = window.confirm(
+            `Delete ${selectedDraftIds.length} staged activit${selectedDraftIds.length === 1 ? 'y' : 'ies'} from local storage?`
+        );
+        if (!shouldDelete) {
+            return;
+        }
+
+        setIsDeletingSelectedStaged(true);
+        try {
+            const selectedIdSet = new Set(selectedDraftIds);
+            const selectedRecords = stagedStandaloneActivities.filter((record) => selectedIdSet.has(String(record?.localDraftId || '').trim()));
+            const templateNames = new Set(
+                selectedRecords
+                    .map((record) => String(record?.['tmk-template'] || record?.formName || '').trim())
+                    .filter(Boolean)
+            );
+
+            selectedDraftIds.forEach((localDraftId) => {
+                deleteStandaloneDraftByLocalId(localDraftId);
+            });
+
+            templateNames.forEach((templateName) => {
+                clearFormSessionData(templateName);
+            });
+
+            setStagedStandaloneActivities((prev) => prev.filter((activity) => !selectedIdSet.has(String(activity?.localDraftId || '').trim())));
+            setSelectedStagedLocalDraftIds((prev) => prev.filter((id) => !selectedIdSet.has(String(id || '').trim())));
+            showNotice('success', `Deleted ${selectedDraftIds.length} staged activit${selectedDraftIds.length === 1 ? 'y' : 'ies'}.`);
+        } finally {
+            setIsDeletingSelectedStaged(false);
+        }
+    };
+
+    const handleDeleteSelectedSavedActivities = async () => {
+        if (!hasDiyAccess) {
+            showNotice('warning', 'Active DIY course enrollment is required to delete lesson activities.');
+            return;
+        }
+
+        if (!isAuthenticated) {
+            showNotice('error', 'Login with Teachable to delete saved lesson activities.');
+            return;
+        }
+
+        const selectedIds = [...new Set(selectedSavedActivityIds)]
+            .map((id) => String(id || '').trim())
+            .filter(Boolean);
+
+        if (selectedIds.length === 0) {
+            showNotice('info', 'Select at least one saved activity to delete.');
+            return;
+        }
+
+        const shouldDelete = window.confirm(
+            `Delete ${selectedIds.length} saved activit${selectedIds.length === 1 ? 'y' : 'ies'}? This cannot be undone.`
+        );
+        if (!shouldDelete) {
+            return;
+        }
+
+        setIsDeletingSelectedSaved(true);
+        const selectedIdSet = new Set(selectedIds);
+        const selectedRecords = savedStandaloneActivities.filter((record) => selectedIdSet.has(String(record?.id || '').trim()));
+        const templateNames = new Set(
+            selectedRecords
+                .map((record) => String(record?.['tmk-template'] || record?.formName || '').trim())
+                .filter(Boolean)
+        );
+
+        try {
+            const apiOrigin = resolveTmkApiOrigin();
+            const deletedIds = new Set();
+            let failureCount = 0;
+
+            for (const activityId of selectedIds) {
+                try {
+                    const response = await deleteLessonActivityById(apiOrigin, activityId);
+                    if (!response.ok) {
+                        failureCount += 1;
+                        continue;
+                    }
+                    deletedIds.add(activityId);
+                    deleteStandaloneDraftByActivityId(activityId);
+                } catch {
+                    failureCount += 1;
+                }
+            }
+
+            if (deletedIds.size > 0) {
+                templateNames.forEach((templateName) => {
+                    clearFormSessionData(templateName);
+                });
+                setSavedStandaloneActivities((prev) => prev.filter((activity) => !deletedIds.has(String(activity?.id || '').trim())));
+                setStagedStandaloneActivities((prev) => prev.filter((activity) => !deletedIds.has(String(activity?.id || '').trim())));
+                setSelectedSavedActivityIds((prev) => prev.filter((id) => !deletedIds.has(String(id || '').trim())));
+            }
+
+            if (failureCount === 0) {
+                showNotice('success', `Deleted ${deletedIds.size} saved activit${deletedIds.size === 1 ? 'y' : 'ies'}.`);
+            } else if (deletedIds.size > 0) {
+                showNotice('warning', `Deleted ${deletedIds.size} saved activit${deletedIds.size === 1 ? 'y' : 'ies'}, but ${failureCount} failed.`);
+            } else {
+                showNotice('error', 'Could not delete selected saved activities. Please try again.');
+            }
+        } finally {
+            setIsDeletingSelectedSaved(false);
+        }
+    };
+
     const handleLaunchStagedSlideshow = () => {
         if (!hasDiyAccess) {
             showNotice('warning', 'Active DIY course enrollment is required to present lesson activities.');
@@ -733,6 +859,16 @@ export default function LessonActivitiesPage() {
                                 >
                                     {isSavingAllStaged ? 'Saving Selected...' : 'Save Selected Activities'}
                                 </Button>
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="error"
+                                    disabled={isDeletingSelectedStaged || selectedStagedLocalDraftIds.length === 0}
+                                    onClick={handleDeleteSelectedStagedActivities}
+                                    sx={{ textTransform: 'none' }}
+                                >
+                                    {isDeletingSelectedStaged ? 'Deleting Selected...' : 'Delete Selected'}
+                                </Button>
                             </Stack>
                             {stagedStandaloneActivities.length === 0 && (
                                 <Typography sx={{ color: '#7a8190', fontSize: '0.92rem' }}>
@@ -872,6 +1008,16 @@ export default function LessonActivitiesPage() {
                                     }}
                                 >
                                     Present Selected Saved
+                                </Button>
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="error"
+                                    onClick={handleDeleteSelectedSavedActivities}
+                                    disabled={isDeletingSelectedSaved || selectedSavedActivityIds.length === 0}
+                                    sx={{ textTransform: 'none' }}
+                                >
+                                    {isDeletingSelectedSaved ? 'Deleting Selected...' : 'Delete Selected'}
                                 </Button>
                             </Stack>
                             {savedStandaloneActivities.length === 0 && (

@@ -60,6 +60,7 @@ export function useLessonActivityProject({
 	const latestStandaloneActivityIdRef = useRef('');
 	const latestProjectIdRef = useRef('');
 	const latestLocalDraftIdRef = useRef('');
+	const isPresentationCloneRef = useRef(false);
 
 	useEffect(() => {
 		normalizeInputDataRef.current = normalizeInputData;
@@ -74,11 +75,17 @@ export function useLessonActivityProject({
 	};
 
 	const persist = (nextData) => {
+		if (isPresentationCloneRef.current) {
+			return;
+		}
 		writeFormSessionData(formName, nextData);
 	};
 
 	const ensureStandaloneLocalDraftId = () => {
 		if (latestProjectIdRef.current) {
+			return '';
+		}
+		if (isPresentationCloneRef.current) {
 			return '';
 		}
 
@@ -130,6 +137,9 @@ export function useLessonActivityProject({
 		if (latestProjectIdRef.current) {
 			return null;
 		}
+		if (isPresentationCloneRef.current) {
+			return null;
+		}
 
 		const normalizedInput = normalizeInput(nextData ?? latestDataRef.current);
 		const resolvedActivityName = String((nextActivityName ?? latestActivityNameRef.current) || '').trim() || defaultActivityName;
@@ -171,6 +181,10 @@ export function useLessonActivityProject({
 	};
 
 	const flushLocalDraft = () => {
+		if (isPresentationCloneRef.current) {
+			return;
+		}
+
 		const normalizedInput = normalizeInput(latestDataRef.current);
 		persist(normalizedInput);
 
@@ -221,7 +235,7 @@ export function useLessonActivityProject({
 			const paramLocalDraftId = (url.searchParams.get('localDraftId') || '').trim();
 			const isSlideshowClone = url.searchParams.get('slideshowClone') === '1';
 			const cloneSeedKey = (url.searchParams.get('cloneSeedKey') || '').trim();
-			const slideshowSessionId = (url.searchParams.get('slideshowSessionId') || '').trim();
+			isPresentationCloneRef.current = isSlideshowClone;
 
 			if (!paramProjectId) {
 				if (isSlideshowClone && cloneSeedKey) {
@@ -231,7 +245,7 @@ export function useLessonActivityProject({
 
 					if (existingDraft) {
 						const existingDraftActivityId = String(existingDraft.id || paramActivityId || '').trim();
-						setLocalDraftId(paramLocalDraftId);
+						setLocalDraftId('');
 						setStandaloneActivityId(existingDraftActivityId);
 						setActivityName(String(existingDraft['lesson-name'] || defaultActivityName));
 						setData(normalizeInput(existingDraft['lesson-input-data'] || {}));
@@ -241,33 +255,18 @@ export function useLessonActivityProject({
 					const cloneSeed = getSlideshowCloneSeed(cloneSeedKey);
 					if (cloneSeed) {
 						const clonedActivityId = createLessonActivityId();
-						const clonedLocalDraftId = createLessonActivityId();
 						const clonedActivityName = String(cloneSeed?.['lesson-name'] || defaultActivityName);
 						const clonedData = normalizeInput(cloneSeed?.['lesson-input-data'] || {});
 
-						setLocalDraftId(clonedLocalDraftId);
+						setLocalDraftId('');
 						setStandaloneActivityId(clonedActivityId);
 						setActivityName(clonedActivityName);
 						setData(clonedData);
 
-						upsertStandaloneDraft({
-							localDraftId: clonedLocalDraftId,
-							id: clonedActivityId,
-							'tmk-template': String(cloneSeed?.['tmk-template'] || formName || '').trim(),
-							formName,
-							'lesson-name': clonedActivityName,
-							'lesson-input-data': clonedData,
-							'created-at': Date.now(),
-							'modified-at': Date.now(),
-							isSlideshowClone: true,
-							slideshowSessionId,
-							savedToApi: false,
-						});
-
 						if (typeof window !== 'undefined') {
 							const nextUrl = new URL(window.location.href);
 							nextUrl.searchParams.set('activityId', clonedActivityId);
-							nextUrl.searchParams.set('localDraftId', clonedLocalDraftId);
+							nextUrl.searchParams.delete('localDraftId');
 							window.history.replaceState({}, '', nextUrl.toString());
 						}
 						return;
@@ -460,12 +459,14 @@ export function useLessonActivityProject({
 				return;
 			}
 
-			persistStandaloneDraftRecord({
-				nextData: normalizedInput,
-				nextActivityName: activityName,
-				nextActivityId: standaloneActivityId,
-				markSaved: Boolean(standaloneActivityId),
-			});
+			if (!isPresentationCloneRef.current) {
+				persistStandaloneDraftRecord({
+					nextData: normalizedInput,
+					nextActivityName: activityName,
+					nextActivityId: standaloneActivityId,
+					markSaved: Boolean(standaloneActivityId),
+				});
+			}
 		}, 300);
 
 		return () => clearTimeout(timeout);
@@ -702,13 +703,16 @@ export function useLessonActivityProject({
 				return;
 			}
 
-			persist(normalizedInput);
-			const persistedDraft = persistStandaloneDraftRecord({
-				nextData: normalizedInput,
-				nextActivityName: activityName || defaultActivityName,
-				nextActivityId: activityId,
-				markSaved: true,
-			});
+			let persistedDraft = null;
+			if (!isPresentationCloneRef.current) {
+				persist(normalizedInput);
+				persistedDraft = persistStandaloneDraftRecord({
+					nextData: normalizedInput,
+					nextActivityName: activityName || defaultActivityName,
+					nextActivityId: activityId,
+					markSaved: true,
+				});
+			}
 
 			setStandaloneActivityId(activityId);
 			if (persistedDraft?.localDraftId) {
@@ -718,6 +722,8 @@ export function useLessonActivityProject({
 			url.searchParams.set('activityId', activityId);
 			if (persistedDraft?.localDraftId) {
 				url.searchParams.set('localDraftId', String(persistedDraft.localDraftId));
+			} else if (isPresentationCloneRef.current) {
+				url.searchParams.delete('localDraftId');
 			}
 			window.history.replaceState({}, '', url.toString());
 			showNotice('success', 'Standalone lesson activity saved.');
@@ -756,13 +762,22 @@ export function useLessonActivityProject({
 			clearFormSessionData(formName);
 
 			setStandaloneActivityId('');
-			const nextLocalDraftId = createLessonActivityId();
-			setLocalDraftId(nextLocalDraftId);
+			let nextLocalDraftId = '';
+			if (isPresentationCloneRef.current) {
+				setLocalDraftId('');
+			} else {
+				nextLocalDraftId = createLessonActivityId();
+				setLocalDraftId(nextLocalDraftId);
+			}
 			setActivityName('');
 			setData(normalizeInput({}));
 			const url = new URL(window.location.href);
 			url.searchParams.delete('activityId');
-			url.searchParams.set('localDraftId', nextLocalDraftId);
+			if (isPresentationCloneRef.current) {
+				url.searchParams.delete('localDraftId');
+			} else {
+				url.searchParams.set('localDraftId', nextLocalDraftId);
+			}
 			window.history.replaceState({}, '', url.toString());
 			showNotice('success', 'Standalone lesson activity deleted.');
 		} catch (error) {
