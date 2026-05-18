@@ -198,16 +198,18 @@ export default function MorphMatchDefinitionsPage() {
       border-bottom: 2px solid #ddd;
 			padding: 8px 0;
       font-size: 1em;
+			line-height: 1.2em;
 			font-family: 'Trebuchet MS', sans-serif;
 			color: #333;
 			transition: border-color 0.3s ease;
       background: transparent;
       width: 100%;
-			min-height: 1.5em;
+			min-height: 1.2em;
+			max-height: 3.6em;
 			box-sizing: border-box;
       resize: none;
-			height: 2.5em;
-			vertical-align: middle;
+			overflow: hidden;
+			vertical-align: top;
     }
     .license-footer {
       margin-top: 24px;
@@ -221,6 +223,7 @@ export default function MorphMatchDefinitionsPage() {
     @media print {
       @page { size: letter landscape; margin: 0.4in; }
       body { padding: 0; }
+			.definitions-input { max-height: 3.24em; }
     }
   </style>
 </head>
@@ -325,13 +328,13 @@ export default function MorphMatchDefinitionsPage() {
 										variant="standard"
 										multiline
 										minRows={1}
-										maxRows={1}
+										maxRows={3}
 										value={data.definitions[index] || ''}
 										onChange={(event) => setListValue('definitions', index, event.target.value)}
 										inputProps={{
 											style: {
-												minHeight: '0.375em',
-												height: '0.5625em',
+												lineHeight: '1.2em',
+												maxHeight: '3.6em',
 												fontFamily: 'Trebuchet MS, sans-serif',
 												fontSize: '1em',
 												color: '#333',
@@ -340,6 +343,7 @@ export default function MorphMatchDefinitionsPage() {
 												padding: '3px 0',
 												boxSizing: 'border-box',
 												resize: 'none',
+												overflowY: 'auto',
 												verticalAlign: 'middle',
 											},
 										}}

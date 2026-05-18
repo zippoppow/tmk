@@ -52,7 +52,7 @@ function ColumnList({ title, values, onChange, onAdd, onRemove, bg }) {
 						value={value}
 						onChange={(event) => onChange(index, event.target.value)}
 						fullWidth
-						inputProps={{ style: { fontFamily: 'Courier New, monospace' } }}
+						inputProps={{ style: { fontSize: '1.5rem' } }}
 					/>
 					<Button
 						type="button"
@@ -151,16 +151,16 @@ export default function WordBuilderPage() {
     .header-column img { max-width: 180px; height: auto; }
     .title { font-size: 1.5em; font-weight: bold; letter-spacing: 1px; }
     .subtitle { font-size: 1.1em; font-style: italic; }
-    .morpheme-value { font-family: 'Courier New', monospace; color: #4020A7; }
+    .morpheme-value { color: #4020A7; }
     .instructions { font-size: 0.95em; color: #555; margin-top: 4px; }
     .parts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
 	.col-box { padding: 10px; }
     .col-title { font-weight: 700; margin-bottom: 8px; font-size: 0.95em; }
-    .col-item { border-bottom: 1px solid #e8e8e8; padding: 6px; font-family: 'Courier New', monospace; min-height: 30px; }
+    .col-item { border-bottom: 1px solid #e8e8e8; padding: 6px; min-height: 30px; }
     .col-item.empty { color: #bbb; }
     .bin-title { font-weight: 700; margin-bottom: 8px; }
     .built-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .built-cell { border: 2px solid #4020A7; border-radius: 3px; padding: 8px; font-family: 'Courier New', monospace; text-align: center; min-height: 36px; }
+    .built-cell { border: 2px solid #4020A7; border-radius: 3px; padding: 8px; text-align: center; min-height: 36px; }
     .license-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e5e7eb; text-align: right; font-size: 0.8em; color: #4b5563; font-style: italic; }
     @media print { @page { size: letter portrait; margin: 0.4in; } body { padding: 0; } }
   </style>
