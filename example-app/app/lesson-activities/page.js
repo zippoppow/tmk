@@ -220,6 +220,28 @@ export default function LessonActivitiesPage() {
                 }
             });
 
+            const optimisticSavedRecords = localDraftRecords.filter((record) => {
+                const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+                if (!template || template === 'lesson-activities-project') {
+                    return false;
+                }
+
+                const linkedId = String(record?.id || '').trim();
+                if (!linkedId) {
+                    return false;
+                }
+
+                if (savedById.has(linkedId)) {
+                    return false;
+                }
+
+                if (!Boolean(record?.savedToApi)) {
+                    return false;
+                }
+
+                return true;
+            });
+
             const stagedRecords = localDraftRecords.filter((record) => {
                 const template = String(record?.['tmk-template'] || record?.formName || '').trim();
                 if (!template || template === 'lesson-activities-project') {
@@ -232,14 +254,17 @@ export default function LessonActivitiesPage() {
                 }
 
                 if (!savedById.has(linkedId)) {
-                    return true;
+                    return !Boolean(record?.savedToApi);
                 }
 
                 return dirtyLinkedIds.has(linkedId);
             });
 
             setSavedStandaloneActivities(
-                savedRecords.filter((record) => !dirtyLinkedIds.has(String(record?.id || '').trim()))
+                [
+                    ...savedRecords.filter((record) => !dirtyLinkedIds.has(String(record?.id || '').trim())),
+                    ...optimisticSavedRecords,
+                ]
             );
             setStagedStandaloneActivities(stagedRecords);
         } catch (error) {
@@ -383,69 +408,25 @@ export default function LessonActivitiesPage() {
         router.push(suffix ? `${path}?${suffix}` : path);
     };
 
-    const handleDeleteStandalone = async (activityRecord) => {
-        const activityId = String(activityRecord?.id || '').trim();
-        if (!activityId) {
-            return;
-        }
-
-        const templateName = String(activityRecord?.['tmk-template'] || activityRecord?.formName || '').trim();
-
-        const shouldDelete = window.confirm(`Delete "${activityRecord?.['lesson-name'] || 'Untitled Lesson Activity'}"?`);
-        if (!shouldDelete) {
-            return;
-        }
-
-        try {
-            const response = await deleteLessonActivityById(resolveTmkApiOrigin(), activityId);
-            if (!response.ok) {
-                showNotice('error', 'Delete failed. Please try again.');
-                return;
-            }
-
-            deleteStandaloneDraftByActivityId(activityId);
-            if (templateName) {
-                clearFormSessionData(templateName);
-            }
-            setSavedStandaloneActivities((prev) => prev.filter((activity) => String(activity?.id || '') !== activityId));
-            setStagedStandaloneActivities((prev) => prev.filter((activity) => String(activity?.id || '') !== activityId));
-            setSelectedSavedActivityIds((prev) => prev.filter((id) => id !== activityId));
-            showNotice('success', `"${activityRecord?.['lesson-name'] || 'Lesson Activity'}" deleted.`);
-        } catch (error) {
-            console.error('Failed to delete standalone lesson activity:', error);
-            showNotice('error', 'Delete failed. Please try again.');
-        }
-    };
-
     const handleDeleteStagedStandalone = (activityRecord) => {
         const localDraftId = String(activityRecord?.localDraftId || '').trim();
         if (!localDraftId) {
             return;
         }
 
-        const templateName = String(activityRecord?.['tmk-template'] || activityRecord?.formName || '').trim();
-
-        const shouldDelete = window.confirm(`Delete local draft "${activityRecord?.['lesson-name'] || 'Untitled Lesson Activity'}"?`);
-        if (!shouldDelete) {
-            return;
-        }
-
-        deleteStandaloneDraftByLocalId(localDraftId);
-        if (templateName) {
-            clearFormSessionData(templateName);
-        }
-        setStagedStandaloneActivities((prev) => prev.filter((activity) => String(activity?.localDraftId || '') !== localDraftId));
-        setSelectedStagedLocalDraftIds((prev) => prev.filter((id) => id !== localDraftId));
-        showNotice('success', 'Staged local activity deleted.');
+        setSelectedStagedLocalDraftIds([localDraftId]);
+        void handleDeleteSelectedStagedActivities([localDraftId]);
     };
 
-    const handleDeleteSelectedStagedActivities = async () => {
+    const handleDeleteSelectedStagedActivities = async (draftIdsOverride = null) => {
         if (!hasDiyAccess) {
             showNotice('warning', 'Active DIY course enrollment is required to delete lesson activities.');
             return;
         }
 
-        const selectedDraftIds = [...new Set(selectedStagedLocalDraftIds)]
+        const selectedDraftIds = [...new Set(
+            Array.isArray(draftIdsOverride) ? draftIdsOverride : selectedStagedLocalDraftIds
+        )]
             .map((id) => String(id || '').trim())
             .filter(Boolean);
 
@@ -487,7 +468,7 @@ export default function LessonActivitiesPage() {
         }
     };
 
-    const handleDeleteSelectedSavedActivities = async () => {
+    const handleDeleteSelectedSavedActivities = async (activityIdsOverride = null) => {
         if (!hasDiyAccess) {
             showNotice('warning', 'Active DIY course enrollment is required to delete lesson activities.');
             return;
@@ -498,7 +479,9 @@ export default function LessonActivitiesPage() {
             return;
         }
 
-        const selectedIds = [...new Set(selectedSavedActivityIds)]
+        const selectedIds = [...new Set(
+            Array.isArray(activityIdsOverride) ? activityIdsOverride : selectedSavedActivityIds
+        )]
             .map((id) => String(id || '').trim())
             .filter(Boolean);
 
@@ -561,6 +544,16 @@ export default function LessonActivitiesPage() {
         } finally {
             setIsDeletingSelectedSaved(false);
         }
+    };
+
+    const handleDeleteStandalone = (activityRecord) => {
+        const activityId = String(activityRecord?.id || '').trim();
+        if (!activityId) {
+            return;
+        }
+
+        setSelectedSavedActivityIds([activityId]);
+        void handleDeleteSelectedSavedActivities([activityId]);
     };
 
     const handleLaunchStagedSlideshow = () => {

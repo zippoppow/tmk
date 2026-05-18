@@ -166,17 +166,28 @@ export function useLessonActivityProject({
 		}
 
 		const existingDraft = getStandaloneDraftByLocalId(resolvedLocalDraftId);
+		const nextTemplate = String(formName || '').trim();
+		const nextInputJson = JSON.stringify(normalizedInput);
+		const existingInputJson = JSON.stringify(normalizeInput(existingDraft?.['lesson-input-data'] || {}));
+		const existingLessonName = String(existingDraft?.['lesson-name'] || '').trim() || defaultActivityName;
+		const existingTemplate = String(existingDraft?.['tmk-template'] || existingDraft?.formName || '').trim();
+		const draftChanged = Boolean(existingDraft)
+			&& (
+				existingLessonName !== resolvedActivityName
+				|| existingTemplate !== nextTemplate
+				|| existingInputJson !== nextInputJson
+			);
 		return upsertStandaloneDraft({
 			...(existingDraft || {}),
 			localDraftId: resolvedLocalDraftId,
 			id: resolvedActivityId,
-			'tmk-template': formName,
+			'tmk-template': nextTemplate,
 			formName,
 			'lesson-name': resolvedActivityName,
 			'lesson-input-data': normalizedInput,
 			'created-at': Number(existingDraft?.['created-at']) || Date.now(),
 			'modified-at': Date.now(),
-			savedToApi: markSaved || Boolean(resolvedActivityId),
+			savedToApi: markSaved || (Boolean(existingDraft?.savedToApi) && !draftChanged),
 		});
 	};
 
@@ -196,7 +207,7 @@ export function useLessonActivityProject({
 			nextData: normalizedInput,
 			nextActivityName: latestActivityNameRef.current,
 			nextActivityId: latestStandaloneActivityIdRef.current,
-			markSaved: Boolean(latestStandaloneActivityIdRef.current),
+			markSaved: false,
 		});
 	};
 
@@ -464,7 +475,7 @@ export function useLessonActivityProject({
 					nextData: normalizedInput,
 					nextActivityName: activityName,
 					nextActivityId: standaloneActivityId,
-					markSaved: Boolean(standaloneActivityId),
+					markSaved: false,
 				});
 			}
 		}, 300);
