@@ -254,6 +254,22 @@ export default function LessonActivitiesPage() {
         loadStandaloneActivities();
     }, [user, hasDiyAccess]);
 
+    useEffect(() => {
+        const validSavedIds = new Set(
+            savedStandaloneActivities
+                .map((activity) => String(activity?.id || '').trim())
+                .filter(Boolean)
+        );
+        setSelectedSavedActivityIds((prev) => prev.filter((id) => validSavedIds.has(String(id || '').trim())));
+
+        const validStagedDraftIds = new Set(
+            stagedStandaloneActivities
+                .map((activity) => String(activity?.localDraftId || '').trim())
+                .filter(Boolean)
+        );
+        setSelectedStagedLocalDraftIds((prev) => prev.filter((id) => validStagedDraftIds.has(String(id || '').trim())));
+    }, [savedStandaloneActivities, stagedStandaloneActivities]);
+
     const handleLogout = () => {
         window.location.href = buildTeachableLogoutUrl('/login?next=/lesson-activities');
     };
@@ -421,7 +437,27 @@ export default function LessonActivitiesPage() {
         showNotice('success', 'Staged local activity deleted.');
     };
 
-    const handleLaunchStandaloneSlideshow = () => {
+    const handleLaunchStagedSlideshow = () => {
+        if (!hasDiyAccess) {
+            showNotice('warning', 'Active DIY course enrollment is required to present lesson activities.');
+            return;
+        }
+
+        const selectedLocalDraftIds = [...new Set(selectedStagedLocalDraftIds)]
+            .map((id) => String(id || '').trim())
+            .filter(Boolean);
+
+        if (selectedLocalDraftIds.length === 0) {
+            showNotice('error', 'Select at least one staged lesson activity to start a slideshow.');
+            return;
+        }
+
+        const params = new URLSearchParams();
+        params.set('localDraftIds', selectedLocalDraftIds.join(','));
+        router.push(`/lesson-activities/slideshow?${params.toString()}`);
+    };
+
+    const handleLaunchSavedSlideshow = () => {
         if (!hasDiyAccess) {
             showNotice('warning', 'Active DIY course enrollment is required to present lesson activities.');
             return;
@@ -431,26 +467,17 @@ export default function LessonActivitiesPage() {
             .map((id) => String(id || '').trim())
             .filter(Boolean);
 
-        const selectedLocalDraftIds = [...new Set(selectedStagedLocalDraftIds)]
-            .map((id) => String(id || '').trim())
-            .filter(Boolean);
-
-        if (selectedIds.length === 0 && selectedLocalDraftIds.length === 0) {
-            showNotice('error', 'Select at least one staged or saved lesson activity to start a slideshow.');
+        if (selectedIds.length === 0) {
+            showNotice('error', 'Select at least one saved lesson activity to start a slideshow.');
             return;
         }
 
         const params = new URLSearchParams();
-        if (selectedIds.length > 0) {
-            params.set('standaloneIds', selectedIds.join(','));
-        }
-        if (selectedLocalDraftIds.length > 0) {
-            params.set('localDraftIds', selectedLocalDraftIds.join(','));
-        }
+        params.set('standaloneIds', selectedIds.join(','));
         router.push(`/lesson-activities/slideshow?${params.toString()}`);
     };
 
-    const handleSaveAllStagedActivities = async () => {
+    const handleSaveSelectedActivities = async () => {
         if (!hasDiyAccess) {
             showNotice('warning', 'Active DIY course enrollment is required to save lesson activities.');
             return;
@@ -461,13 +488,23 @@ export default function LessonActivitiesPage() {
             return;
         }
 
+        const selectedDraftIds = new Set(
+            selectedStagedLocalDraftIds
+                .map((id) => String(id || '').trim())
+                .filter(Boolean)
+        );
+
         const recordsToSave = stagedStandaloneActivities.filter((record) => {
             const template = String(record?.['tmk-template'] || record?.formName || '').trim();
-            return Boolean(template) && template !== 'lesson-activities-project';
+            const localDraftId = String(record?.localDraftId || '').trim();
+            return Boolean(template)
+                && template !== 'lesson-activities-project'
+                && Boolean(localDraftId)
+                && selectedDraftIds.has(localDraftId);
         });
 
         if (recordsToSave.length === 0) {
-            showNotice('info', 'No staged activities to save.');
+            showNotice('info', 'Select at least one staged activity to save.');
             return;
         }
 
@@ -519,18 +556,47 @@ export default function LessonActivitiesPage() {
             await loadStandaloneActivities();
 
             if (failureCount === 0) {
-                showNotice('success', `Saved ${successCount} staged activit${successCount === 1 ? 'y' : 'ies'} to the backend.`);
+                showNotice('success', `Saved ${successCount} selected staged activit${successCount === 1 ? 'y' : 'ies'} to the backend.`);
             } else if (successCount > 0) {
-                showNotice('warning', `Saved ${successCount} staged activit${successCount === 1 ? 'y' : 'ies'}, but ${failureCount} failed.`);
+                showNotice('warning', `Saved ${successCount} selected staged activit${successCount === 1 ? 'y' : 'ies'}, but ${failureCount} failed.`);
             } else {
-                showNotice('error', 'Could not save staged activities. Please try again.');
+                showNotice('error', 'Could not save selected staged activities. Please try again.');
             }
         } catch (error) {
-            console.error('Failed to save staged activities:', error);
-            showNotice('error', 'Could not save staged activities. Please try again.');
+            console.error('Failed to save selected staged activities:', error);
+            showNotice('error', 'Could not save selected staged activities. Please try again.');
         } finally {
             setIsSavingAllStaged(false);
         }
+    };
+
+    const selectableStagedLocalDraftIds = stagedStandaloneActivities
+        .map((activity) => String(activity?.localDraftId || '').trim())
+        .filter(Boolean);
+    const selectableSavedIds = savedStandaloneActivities
+        .map((activity) => String(activity?.id || '').trim())
+        .filter(Boolean);
+    const isAllStagedSelected = selectableStagedLocalDraftIds.length > 0 && selectedStagedLocalDraftIds.length === selectableStagedLocalDraftIds.length;
+    const isStagedPartiallySelected = selectedStagedLocalDraftIds.length > 0 && selectedStagedLocalDraftIds.length < selectableStagedLocalDraftIds.length;
+    const isAllSavedSelected = selectableSavedIds.length > 0 && selectedSavedActivityIds.length === selectableSavedIds.length;
+    const isSavedPartiallySelected = selectedSavedActivityIds.length > 0 && selectedSavedActivityIds.length < selectableSavedIds.length;
+
+    const handleToggleSelectAllStagedActivities = (event) => {
+        const checked = Boolean(event.target.checked);
+        if (checked) {
+            setSelectedStagedLocalDraftIds(selectableStagedLocalDraftIds);
+            return;
+        }
+        setSelectedStagedLocalDraftIds([]);
+    };
+
+    const handleToggleSelectAllSavedActivities = (event) => {
+        const checked = Boolean(event.target.checked);
+        if (checked) {
+            setSelectedSavedActivityIds(selectableSavedIds);
+            return;
+        }
+        setSelectedSavedActivityIds([]);
     };
 
     const handleCreateNewActivity = (activity) => {
@@ -623,11 +689,26 @@ export default function LessonActivitiesPage() {
                         </Typography>
                     ) : (
                         <Stack spacing={3} sx={{ width: '100%', minWidth: 0 }}>
+                            <Typography sx={{ fontSize: '1.15rem', fontWeight: 700, color: '#2f3a4a' }}>
+                                Staged Locally
+                            </Typography>
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="flex-end" alignItems={{ xs: 'stretch', sm: 'center' }}>
+                                <Stack direction="row" spacing={0.4} alignItems="center" sx={{ mr: { xs: 0, sm: 1 } }}>
+                                    <Checkbox
+                                        size="small"
+                                        checked={isAllStagedSelected}
+                                        indeterminate={isStagedPartiallySelected}
+                                        onChange={handleToggleSelectAllStagedActivities}
+                                        disabled={selectableStagedLocalDraftIds.length === 0}
+                                        inputProps={{ 'aria-label': 'Select all staged activities' }}
+                                    />
+                                    <Typography sx={{ fontSize: '0.88rem', color: '#374151' }}>Select All Staged</Typography>
+                                </Stack>
                                 <Button
                                     size="small"
                                     variant="outlined"
-                                    onClick={handleLaunchStandaloneSlideshow}
+                                    onClick={handleLaunchStagedSlideshow}
+                                    disabled={selectedStagedLocalDraftIds.length === 0}
                                     sx={{
                                         textTransform: 'none',
                                         color: '#3f37c9',
@@ -640,22 +721,19 @@ export default function LessonActivitiesPage() {
                                         },
                                     }}
                                 >
-                                    Present Selected Activities
+                                    Present Selected Staged
                                 </Button>
                                 <Button
                                     size="small"
                                     variant="contained"
                                     color="success"
-                                    disabled={isSavingAllStaged || stagedStandaloneActivities.length === 0}
-                                    onClick={handleSaveAllStagedActivities}
+                                    disabled={isSavingAllStaged || selectedStagedLocalDraftIds.length === 0}
+                                    onClick={handleSaveSelectedActivities}
                                     sx={{ textTransform: 'none' }}
                                 >
-                                    {isSavingAllStaged ? 'Saving Staged...' : 'Save All Staged Activities'}
+                                    {isSavingAllStaged ? 'Saving Selected...' : 'Save Selected Activities'}
                                 </Button>
                             </Stack>
-                            <Typography sx={{ fontSize: '1.15rem', fontWeight: 700, color: '#2f3a4a' }}>
-                                Staged Locally
-                            </Typography>
                             {stagedStandaloneActivities.length === 0 && (
                                 <Typography sx={{ color: '#7a8190', fontSize: '0.92rem' }}>
                                     No staged local activities.
@@ -764,6 +842,38 @@ export default function LessonActivitiesPage() {
                             <Typography sx={{ fontSize: '1.15rem', fontWeight: 700, color: '#2f3a4a', pt: 1 }}>
                                 Saved
                             </Typography>
+                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="flex-end" alignItems={{ xs: 'stretch', sm: 'center' }}>
+                                <Stack direction="row" spacing={0.4} alignItems="center" sx={{ mr: { xs: 0, sm: 1 } }}>
+                                    <Checkbox
+                                        size="small"
+                                        checked={isAllSavedSelected}
+                                        indeterminate={isSavedPartiallySelected}
+                                        onChange={handleToggleSelectAllSavedActivities}
+                                        disabled={selectableSavedIds.length === 0}
+                                        inputProps={{ 'aria-label': 'Select all saved activities' }}
+                                    />
+                                    <Typography sx={{ fontSize: '0.88rem', color: '#374151' }}>Select All Saved</Typography>
+                                </Stack>
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    onClick={handleLaunchSavedSlideshow}
+                                    disabled={selectedSavedActivityIds.length === 0}
+                                    sx={{
+                                        textTransform: 'none',
+                                        color: '#3f37c9',
+                                        borderColor: '#3f37c9',
+                                        backgroundColor: '#fff',
+                                        '&:hover': {
+                                            color: '#fff',
+                                            borderColor: '#2f2a99',
+                                            backgroundColor: '#3f37c9',
+                                        },
+                                    }}
+                                >
+                                    Present Selected Saved
+                                </Button>
+                            </Stack>
                             {savedStandaloneActivities.length === 0 && (
                                 <Typography sx={{ color: '#7a8190', fontSize: '0.92rem' }}>
                                     No saved standalone activities.
