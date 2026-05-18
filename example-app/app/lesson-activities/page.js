@@ -22,7 +22,9 @@ import {
     Stack,
 } from '@mui/material';
 import {
+    buildLessonActivityUpsertPayload,
     clearFormSessionData,
+    createLessonActivityId,
     deleteStandaloneDraftByActivityId,
     deleteStandaloneDraftByLocalId,
     DIY_PROJECTS_ENDPOINT,
@@ -32,6 +34,8 @@ import {
     isStandaloneLessonActivity,
     listStandaloneDrafts,
     listLessonActivities,
+    upsertLessonActivity,
+    upsertStandaloneDraft,
 } from '../components/lessonActivityHelpers';
 import LessonActivitySelector from '../components/LessonActivitySelector';
 import TmkLogo from '../components/TmkLogo';
@@ -45,6 +49,7 @@ export default function LessonActivitiesPage() {
     const [standaloneLoading, setStandaloneLoading] = useState(false);
     const [selectedSavedActivityIds, setSelectedSavedActivityIds] = useState([]);
     const [selectedStagedLocalDraftIds, setSelectedStagedLocalDraftIds] = useState([]);
+    const [isSavingAllStaged, setIsSavingAllStaged] = useState(false);
     const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
     const { hasDiyAccess, authUser: user, loading: authLoading } = useDiyAccess();
 
@@ -57,6 +62,31 @@ export default function LessonActivitiesPage() {
     }, []);
 
     const isAuthenticated = Boolean(user);
+
+    const normalizeActivityInputData = (value) => {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) {
+            return {};
+        }
+        return value;
+    };
+
+    const hasLocalStandaloneChanges = (draftRecord, savedRecord) => {
+        const draftName = String(draftRecord?.['lesson-name'] || '').trim();
+        const savedName = String(savedRecord?.['lesson-name'] || '').trim();
+        if (draftName !== savedName) {
+            return true;
+        }
+
+        const draftTemplate = String(draftRecord?.['tmk-template'] || draftRecord?.formName || '').trim();
+        const savedTemplate = String(savedRecord?.['tmk-template'] || savedRecord?.formName || '').trim();
+        if (draftTemplate !== savedTemplate) {
+            return true;
+        }
+
+        const draftInputData = JSON.stringify(normalizeActivityInputData(draftRecord?.['lesson-input-data'] || {}));
+        const savedInputData = JSON.stringify(normalizeActivityInputData(savedRecord?.['lesson-input-data'] || {}));
+        return draftInputData !== savedInputData;
+    };
 
     useEffect(() => {
         if (!authLoading && isAuthenticated && !hasDiyAccess) {
@@ -165,6 +195,29 @@ export default function LessonActivitiesPage() {
                     .filter(Boolean)
             );
 
+            const savedRecordById = new Map(
+                savedRecords
+                    .map((record) => [String(record?.id || '').trim(), record])
+                    .filter(([id]) => Boolean(id))
+            );
+
+            const dirtyLinkedIds = new Set();
+            localDraftRecords.forEach((record) => {
+                const linkedId = String(record?.id || '').trim();
+                if (!linkedId) {
+                    return;
+                }
+
+                const savedRecord = savedRecordById.get(linkedId);
+                if (!savedRecord) {
+                    return;
+                }
+
+                if (hasLocalStandaloneChanges(record, savedRecord)) {
+                    dirtyLinkedIds.add(linkedId);
+                }
+            });
+
             const stagedRecords = localDraftRecords.filter((record) => {
                 const template = String(record?.['tmk-template'] || record?.formName || '').trim();
                 if (!template || template === 'lesson-activities-project') {
@@ -176,10 +229,16 @@ export default function LessonActivitiesPage() {
                     return true;
                 }
 
-                return !savedById.has(linkedId);
+                if (!savedById.has(linkedId)) {
+                    return true;
+                }
+
+                return dirtyLinkedIds.has(linkedId);
             });
 
-            setSavedStandaloneActivities(savedRecords);
+            setSavedStandaloneActivities(
+                savedRecords.filter((record) => !dirtyLinkedIds.has(String(record?.id || '').trim()))
+            );
             setStagedStandaloneActivities(stagedRecords);
         } catch (error) {
             // eslint-disable-next-line no-console
@@ -391,6 +450,89 @@ export default function LessonActivitiesPage() {
         router.push(`/lesson-activities/slideshow?${params.toString()}`);
     };
 
+    const handleSaveAllStagedActivities = async () => {
+        if (!hasDiyAccess) {
+            showNotice('warning', 'Active DIY course enrollment is required to save lesson activities.');
+            return;
+        }
+
+        if (!isAuthenticated) {
+            showNotice('error', 'Login with Teachable to save staged lesson activities.');
+            return;
+        }
+
+        const recordsToSave = stagedStandaloneActivities.filter((record) => {
+            const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+            return Boolean(template) && template !== 'lesson-activities-project';
+        });
+
+        if (recordsToSave.length === 0) {
+            showNotice('info', 'No staged activities to save.');
+            return;
+        }
+
+        setIsSavingAllStaged(true);
+        const apiOrigin = resolveTmkApiOrigin();
+        let successCount = 0;
+        let failureCount = 0;
+
+        try {
+            for (const record of recordsToSave) {
+                const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+                const activityId = String(record?.id || createLessonActivityId()).trim();
+                const lessonName = String(record?.['lesson-name'] || 'Untitled Lesson Activity').trim() || 'Untitled Lesson Activity';
+                const lessonInputData = normalizeActivityInputData(record?.['lesson-input-data'] || {});
+                const createdAt = Number(record?.['created-at']) || Date.now();
+
+                const payload = buildLessonActivityUpsertPayload({
+                    id: activityId,
+                    template,
+                    lessonName,
+                    lessonInputData,
+                    createdAt,
+                    modifiedAt: Date.now(),
+                    extra: {
+                        formName: template,
+                    },
+                });
+
+                const response = await upsertLessonActivity(apiOrigin, payload);
+                if (!response.ok) {
+                    failureCount += 1;
+                    continue;
+                }
+
+                upsertStandaloneDraft({
+                    ...record,
+                    id: activityId,
+                    formName: template,
+                    'tmk-template': template,
+                    'lesson-name': lessonName,
+                    'lesson-input-data': lessonInputData,
+                    'created-at': createdAt,
+                    'modified-at': Date.now(),
+                    savedToApi: true,
+                });
+                successCount += 1;
+            }
+
+            await loadStandaloneActivities();
+
+            if (failureCount === 0) {
+                showNotice('success', `Saved ${successCount} staged activit${successCount === 1 ? 'y' : 'ies'} to the backend.`);
+            } else if (successCount > 0) {
+                showNotice('warning', `Saved ${successCount} staged activit${successCount === 1 ? 'y' : 'ies'}, but ${failureCount} failed.`);
+            } else {
+                showNotice('error', 'Could not save staged activities. Please try again.');
+            }
+        } catch (error) {
+            console.error('Failed to save staged activities:', error);
+            showNotice('error', 'Could not save staged activities. Please try again.');
+        } finally {
+            setIsSavingAllStaged(false);
+        }
+    };
+
     const handleCreateNewActivity = (activity) => {
         if (!hasDiyAccess) {
             showNotice('warning', 'Active DIY course enrollment is required to access lesson activities.');
@@ -499,6 +641,16 @@ export default function LessonActivitiesPage() {
                                     }}
                                 >
                                     Present Selected Activities
+                                </Button>
+                                <Button
+                                    size="small"
+                                    variant="contained"
+                                    color="success"
+                                    disabled={isSavingAllStaged || stagedStandaloneActivities.length === 0}
+                                    onClick={handleSaveAllStagedActivities}
+                                    sx={{ textTransform: 'none' }}
+                                >
+                                    {isSavingAllStaged ? 'Saving Staged...' : 'Save All Staged Activities'}
                                 </Button>
                             </Stack>
                             <Typography sx={{ fontSize: '1.15rem', fontWeight: 700, color: '#2f3a4a' }}>
