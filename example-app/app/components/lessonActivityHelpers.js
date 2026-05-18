@@ -15,6 +15,8 @@ export {
 	STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY,
 } from './sharedHelperConstants';
 
+const SLIDESHOW_CLONE_SEEDS_STORAGE_KEY = 'tmk_slideshow_clone_seeds_v1';
+
 export function readFormSessionData(formName, storageKey = DEFAULT_SESSION_STORAGE_KEY) {
 	if (typeof window === 'undefined') {
 		return null;
@@ -141,13 +143,61 @@ export function upsertStandaloneDraft(record, storageKey = STANDALONE_ACTIVITY_D
 		'lesson-input-data': lessonInputData,
 		'created-at': createdAt,
 		'modified-at': modifiedAt,
-		savedToApi: Boolean(record.savedToApi || activityId),
+		savedToApi: Object.prototype.hasOwnProperty.call(record, 'savedToApi')
+			? Boolean(record.savedToApi)
+			: Boolean(activityId),
 	};
 
 	const draftMap = readStandaloneDraftMap(storageKey);
 	draftMap[localDraftId] = nextRecord;
 	writeStandaloneDraftMap(draftMap, storageKey);
 	return nextRecord;
+}
+
+function readSlideshowCloneSeedMap(storageKey = SLIDESHOW_CLONE_SEEDS_STORAGE_KEY) {
+	if (typeof window === 'undefined') {
+		return {};
+	}
+
+	try {
+		const parsed = JSON.parse(window.sessionStorage.getItem(storageKey) || '{}');
+		return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+	} catch {
+		return {};
+	}
+}
+
+function writeSlideshowCloneSeedMap(seedMap, storageKey = SLIDESHOW_CLONE_SEEDS_STORAGE_KEY) {
+	if (typeof window === 'undefined') {
+		return;
+	}
+
+	window.sessionStorage.setItem(storageKey, JSON.stringify(seedMap || {}));
+}
+
+export function upsertSlideshowCloneSeed(seedKey, seed, storageKey = SLIDESHOW_CLONE_SEEDS_STORAGE_KEY) {
+	const normalizedSeedKey = String(seedKey || '').trim();
+	if (!normalizedSeedKey || !seed || typeof seed !== 'object') {
+		return null;
+	}
+
+	const seedMap = readSlideshowCloneSeedMap(storageKey);
+	seedMap[normalizedSeedKey] = {
+		...seed,
+		updatedAtMs: Date.now(),
+	};
+	writeSlideshowCloneSeedMap(seedMap, storageKey);
+	return seedMap[normalizedSeedKey];
+}
+
+export function getSlideshowCloneSeed(seedKey, storageKey = SLIDESHOW_CLONE_SEEDS_STORAGE_KEY) {
+	const normalizedSeedKey = String(seedKey || '').trim();
+	if (!normalizedSeedKey) {
+		return null;
+	}
+
+	const seedMap = readSlideshowCloneSeedMap(storageKey);
+	return seedMap[normalizedSeedKey] || null;
 }
 
 export function deleteStandaloneDraftByLocalId(localDraftId, storageKey = STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY) {

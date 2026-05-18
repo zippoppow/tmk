@@ -12,6 +12,7 @@ import {
 	fetchLessonActivityById,
 	getStandaloneDraftByActivityId,
 	getStandaloneDraftByLocalId,
+	getSlideshowCloneSeed,
 	upsertLessonActivity,
 	readFormSessionData,
 	writeFormSessionData,
@@ -218,8 +219,61 @@ export function useLessonActivityProject({
 			const paramActivityIndex = url.searchParams.get('activityIndex');
 			const paramActivityId = (url.searchParams.get('activityId') || '').trim();
 			const paramLocalDraftId = (url.searchParams.get('localDraftId') || '').trim();
+			const isSlideshowClone = url.searchParams.get('slideshowClone') === '1';
+			const cloneSeedKey = (url.searchParams.get('cloneSeedKey') || '').trim();
+			const slideshowSessionId = (url.searchParams.get('slideshowSessionId') || '').trim();
 
 			if (!paramProjectId) {
+				if (isSlideshowClone && cloneSeedKey) {
+					const existingDraft = paramLocalDraftId
+						? getStandaloneDraftByLocalId(paramLocalDraftId)
+						: null;
+
+					if (existingDraft) {
+						const existingDraftActivityId = String(existingDraft.id || paramActivityId || '').trim();
+						setLocalDraftId(paramLocalDraftId);
+						setStandaloneActivityId(existingDraftActivityId);
+						setActivityName(String(existingDraft['lesson-name'] || defaultActivityName));
+						setData(normalizeInput(existingDraft['lesson-input-data'] || {}));
+						return;
+					}
+
+					const cloneSeed = getSlideshowCloneSeed(cloneSeedKey);
+					if (cloneSeed) {
+						const clonedActivityId = createLessonActivityId();
+						const clonedLocalDraftId = createLessonActivityId();
+						const clonedActivityName = String(cloneSeed?.['lesson-name'] || defaultActivityName);
+						const clonedData = normalizeInput(cloneSeed?.['lesson-input-data'] || {});
+
+						setLocalDraftId(clonedLocalDraftId);
+						setStandaloneActivityId(clonedActivityId);
+						setActivityName(clonedActivityName);
+						setData(clonedData);
+
+						upsertStandaloneDraft({
+							localDraftId: clonedLocalDraftId,
+							id: clonedActivityId,
+							'tmk-template': String(cloneSeed?.['tmk-template'] || formName || '').trim(),
+							formName,
+							'lesson-name': clonedActivityName,
+							'lesson-input-data': clonedData,
+							'created-at': Date.now(),
+							'modified-at': Date.now(),
+							isSlideshowClone: true,
+							slideshowSessionId,
+							savedToApi: false,
+						});
+
+						if (typeof window !== 'undefined') {
+							const nextUrl = new URL(window.location.href);
+							nextUrl.searchParams.set('activityId', clonedActivityId);
+							nextUrl.searchParams.set('localDraftId', clonedLocalDraftId);
+							window.history.replaceState({}, '', nextUrl.toString());
+						}
+						return;
+					}
+				}
+
 				if (paramLocalDraftId) {
 					setLocalDraftId(paramLocalDraftId);
 				}
