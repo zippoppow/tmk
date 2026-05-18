@@ -111,6 +111,52 @@ export default function LessonProjectsPage() {
 	const router = useRouter();
 	const { user: authUser, hasDiyAccess, loading: authLoading } = useDiyAccess();
 	const [localProjects, setLocalProjects] = useState([]);
+	const [editingProjectId, setEditingProjectId] = useState(null);
+	const [editingProjectName, setEditingProjectName] = useState('');
+
+		// Inline edit handlers
+		const handleStartEditProjectName = (project) => {
+			setEditingProjectId(project.id);
+			setEditingProjectName(project.name || '');
+		};
+
+		const handleEditProjectNameChange = (e) => {
+			setEditingProjectName(e.target.value);
+		};
+
+		const handleEditProjectNameCancel = () => {
+			setEditingProjectId(null);
+			setEditingProjectName('');
+		};
+
+		const handleEditProjectNameSave = async (project) => {
+			const trimmed = editingProjectName.trim();
+			if (!trimmed || trimmed === project.name) {
+				handleEditProjectNameCancel();
+				return;
+			}
+			const projects = getAllStoredProjects();
+			const idx = projects.findIndex((p) => p.id === project.id);
+			if (idx === -1) {
+				handleEditProjectNameCancel();
+				return;
+			}
+			// Prevent duplicate names
+			if (projects.some((p) => p.formName === PROJECT_FORM_NAME && p.id !== project.id && (p.name || '').trim() === trimmed)) {
+				showNotice('error', 'A project with that name already exists.');
+				handleEditProjectNameCancel();
+				return;
+			}
+			projects[idx].name = trimmed;
+			projects[idx].modifiedAtMs = Date.now();
+			saveStoredProjects(projects);
+			loadLocalProjects();
+			handleEditProjectNameCancel();
+			if (isAuthenticated) {
+				await syncProjectToApi(projects[idx]);
+			}
+			showNotice('success', 'Project name updated.');
+		};
 	const [isLoadingCloudProjects, setIsLoadingCloudProjects] = useState(false);
 	const [cloudMessage, setCloudMessage] = useState('');
 	const [cloudMessageSeverity, setCloudMessageSeverity] = useState('error');
@@ -1335,67 +1381,106 @@ export default function LessonProjectsPage() {
 												backgroundColor: '#eeeff9',
 											}}
 										>
-											<Stack direction="row" alignItems="center" spacing={0.8}>	
-												<Stack direction="column" spacing={0.2} sx={{ flex: 1, minWidth: 0 }}>
-													<Typography sx={{ fontSize: '1.7rem', fontWeight: 700, fontStyle: 'italic' }} noWrap title={project.name}>
-														PROJECT: {project.name}
-													</Typography>
-													<Stack direction="row" alignItems="center" spacing={1}>
-														<Typography sx={{ fontSize: '0.75rem', color: '#888' }}>
-															Created: {formatProjectDate(project.createdAt)}
-														</Typography>
-														<Chip
-															label={`Total Activities: ${lessonActivities.length}`}
+											<Stack spacing={0.8}>
+												<Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={0.8} flexWrap="wrap">
+													{lessonActivities.length > 0 && (
+														<Button
 															size="small"
+															variant="outlined"
+															onClick={() => handleLaunchSlideshow(project.id)}
 															sx={{
-																height: 18,
-																fontSize: '0.89rem',
-																backgroundColor: '#e8e8e8',
+																textTransform: 'none',
 																color: '#3f37c9',
+																borderColor: '#3f37c9',
+																backgroundColor: '#fff',
+																'&:hover': {
+																	color: '#fff',
+																	borderColor: '#2f2a99',
+																	backgroundColor: '#3f37c9',
+																},
 															}}
-														/>
+														>
+															Present Lesson Activities
+														</Button>
+													)}
+													{isAuthenticated && (
+														<Tooltip title="Save this project's current browser changes to the cloud.">
+															<Button size="small" variant="contained" color="info" onClick={() => handleSyncProject(project.id)} sx={{ textTransform: 'none' }}>
+																Save Project Changes
+															</Button>
+														</Tooltip>
+													)}
+													{hasDiyAccess && (
+														<Tooltip title='Create a local copy of this project with duplicated activities. Use "Save Project Changes" if you also want to save the copy to the cloud.'>
+															<Button size="small" variant="outlined" onClick={() => handleDuplicateProject(project.id)} sx={{ textTransform: 'none' }}>
+																Duplicate Project
+															</Button>
+														</Tooltip>
+													)}
+													{isAuthenticated && (
+														<Button size="small" variant="contained" color="error" onClick={() => handleDeleteProject(project.id)} sx={{ textTransform: 'none' }}>
+															Delete Project
+														</Button>
+													)}
+												</Stack>
+
+												<Stack direction="row" alignItems="center" spacing={0.8}>
+													<Stack direction="column" spacing={0.2} sx={{ flex: 1, minWidth: 0 }}>
+														{editingProjectId === project.id ? (
+															<Box
+																component="input"
+																value={editingProjectName}
+																autoFocus
+																onChange={handleEditProjectNameChange}
+																onBlur={() => handleEditProjectNameSave(project)}
+																onKeyDown={(e) => {
+																	if (e.key === 'Enter') {
+																		e.preventDefault();
+																		handleEditProjectNameSave(project);
+																	} else if (e.key === 'Escape') {
+																		handleEditProjectNameCancel();
+																	}
+																}}
+																sx={{
+																	fontSize: '1.7rem',
+																	fontWeight: 700,
+																	fontStyle: 'italic',
+																	minWidth: 120,
+																	maxWidth: 340,
+																	px: 1,
+																	py: 0.5,
+																	border: '1.5px solid #3f37c9',
+																	borderRadius: 1,
+																	background: '#fff',
+																}}
+															/>
+														) : (
+															<Typography
+																sx={{ fontSize: '1.7rem', fontWeight: 700, fontStyle: 'italic', cursor: 'pointer' }}
+																noWrap
+																title={project.name}
+																onClick={() => handleStartEditProjectName(project)}
+															>
+																PROJECT: {project.name}
+															</Typography>
+														)}
+														<Stack direction="row" alignItems="center" spacing={1}>
+															<Typography sx={{ fontSize: '0.75rem', color: '#888' }}>
+																Created: {formatProjectDate(project.createdAt)}
+															</Typography>
+															<Chip
+																label={`Total Activities: ${lessonActivities.length}`}
+																size="small"
+																sx={{
+																	height: 18,
+																	fontSize: '0.89rem',
+																	backgroundColor: '#e8e8e8',
+																	color: '#3f37c9',
+																}}
+															/>
+														</Stack>
 													</Stack>
 												</Stack>
-												{lessonActivities.length > 0 && (
-													<Button
-														size="small"
-														variant="outlined"
-														onClick={() => handleLaunchSlideshow(project.id)}
-														sx={{
-															textTransform: 'none',
-															color: '#3f37c9',
-															borderColor: '#3f37c9',
-															backgroundColor: '#fff',
-															'&:hover': {
-																color: '#fff',
-																borderColor: '#2f2a99',
-																backgroundColor: '#3f37c9',
-															},
-														}}
-													>
-														Present Lesson Activities
-													</Button>
-												)}
-												{isAuthenticated && (
-													<Tooltip title="Save this project's current browser changes to the cloud.">
-														<Button size="small" variant="contained" color="info" onClick={() => handleSyncProject(project.id)} sx={{ textTransform: 'none' }}>
-															Save Project Changes
-														</Button>
-													</Tooltip>
-												)}
-												{hasDiyAccess && (
-													<Tooltip title='Create a local copy of this project with duplicated activities. Use "Save Project Changes" if you also want to save the copy to the cloud.'>
-														<Button size="small" variant="outlined" onClick={() => handleDuplicateProject(project.id)} sx={{ textTransform: 'none' }}>
-															Duplicate Project
-														</Button>
-													</Tooltip>
-												)}
-												{isAuthenticated && (
-													<Button size="small" variant="contained" color="error" onClick={() => handleDeleteProject(project.id)} sx={{ textTransform: 'none' }}>
-														Delete Project
-													</Button>
-												)}
-												
 											</Stack>
 											<Stack direction="row" spacing={0.6} sx={{ mt: 1, mb: lessonActivities.length ? 0.8 : 0 }}>
 											<Box
