@@ -1672,7 +1672,7 @@ export default function LessonProjectsPage() {
 						<Box sx={{ borderTop: '1px solid #eee', pt: 1.5, mt: 2 }}>
 							<Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end" flexWrap="wrap">
 								<Typography sx={{ fontSize: '0.82rem', color: '#555' }}>
-									Licensed for use by {authUser?.email ? ` - ${authUser.email}` : ''}
+									Licensed for use to {authUser?.email ? ` - ${authUser.email}` : ''}
 								</Typography>
 							</Stack>
 						</Box>

@@ -317,7 +317,7 @@ export default function LessonActivitiesPage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: 'rgba(76, 76, 76, 0.2)',
+                    backgroundColor: 'rgba(76, 76, 76, 0.09)',
                     zIndex: 9999,
                 }}
             >

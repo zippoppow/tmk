@@ -246,7 +246,7 @@ export default function MorphSortPage() {
 		const rightItems = data.rightItems.map((item) => `<li>${(item || '').replace(/</g, '&lt;')}</li>`).join('');
 
 		const licenseFooter = authUser?.email
-			? `<div class="license-footer">Licensed for use by: ${authUser.email.replace(/</g, '&lt;')}</div>`
+			? `<div class="license-footer">Licensed for use to: ${authUser.email.replace(/</g, '&lt;')}</div>`
 			: '';
 
 		openPrintWindow({

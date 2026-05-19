@@ -194,7 +194,7 @@ export default function ConstructorDeconstructorPage() {
 				.join('');
 
 		const licenseFooter = authUser?.email
-			? `<div class="license-footer">Licensed for use by: ${escapeHtml(authUser.email)}</div>`
+			? `<div class="license-footer">Licensed for use to: ${escapeHtml(authUser.email)}</div>`
 			: '';
 
 		openPrintWindow({

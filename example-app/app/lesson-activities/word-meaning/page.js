@@ -167,7 +167,7 @@ export default function WordMeaningPage() {
 		});
 
 		if (authUser?.email) {
-			appendElement(printDocument.body, 'div', 'license-footer', `Licensed for use by: ${authUser.email}`);
+			appendElement(printDocument.body, 'div', 'license-footer', `Licensed for use to: ${authUser.email}`);
 		}
 
 		const triggerPrint = () => {

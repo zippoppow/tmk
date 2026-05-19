@@ -324,7 +324,7 @@ export default function IntroPage() {
 		<section class="question">
 			How does <span class="question-value">${escapeHtml(data.questionMorpheme)}</span> affect the meaning of these words?
 		</section>
-		${authUser?.email ? `<footer class="license">Licensed for use by: ${escapeHtml(authUser.email)}</footer>` : ''}
+		${authUser?.email ? `<footer class="license">Licensed for use to: ${escapeHtml(authUser.email)}</footer>` : ''}
 	</main>
 </body>
 </html>`,
