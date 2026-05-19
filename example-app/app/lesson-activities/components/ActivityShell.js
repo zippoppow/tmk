@@ -333,6 +333,17 @@ export default function ActivityShell({
 					{projectId && (
 						<>
 							<Button
+								variant="outlined"
+								disabled={isSaving || isSlideshowMode}
+								onClick={openAddToProjectDialog}
+								sx={{
+									...outlinedControlButtonSx,
+									fontWeight: 700,
+								}}
+							>
+								Add to Project(s)
+							</Button>
+							<Button
 								variant="contained"
 								color="primary"
 								disabled={isSaving}
