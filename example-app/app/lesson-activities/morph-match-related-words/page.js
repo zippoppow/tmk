@@ -84,6 +84,12 @@ export default function MorphMatchRelatedWordsPage() {
 		handleSaveAndReturn,
 		handleGoToLessonProjects,
 		handleAddToProject,
+    isAddToProjectDialogOpen,
+    availableLessonProjects,
+    selectedProjectIdsForAdd,
+    setSelectedProjectIdsForAdd,
+    handleCloseAddToProjectDialog,
+    handleConfirmAddToProjects,
 		handleDownloadPdf,
 		standaloneActivityId,
 		handleSaveStandalone,
@@ -268,6 +274,12 @@ export default function MorphMatchRelatedWordsPage() {
 			handleLoginLogout={handleLoginLogout}
 			handleGoToLessonProjects={handleGoToLessonProjects}
 			handleAddToProject={handleAddToProject}
+        isAddToProjectDialogOpen={isAddToProjectDialogOpen}
+        availableLessonProjects={availableLessonProjects}
+        selectedProjectIdsForAdd={selectedProjectIdsForAdd}
+        setSelectedProjectIdsForAdd={setSelectedProjectIdsForAdd}
+        handleCloseAddToProjectDialog={handleCloseAddToProjectDialog}
+        handleConfirmAddToProjects={handleConfirmAddToProjects}
 			handleSaveAndReturn={handleSaveAndReturn}
 			handleDownloadPdf={handleDownloadPdfCustom}
 			standaloneActivityId={standaloneActivityId}
