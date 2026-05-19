@@ -78,13 +78,15 @@ export function useLessonActivityProject({
 	};
 
 	const loadAvailableLessonProjects = () => {
+		const currentProjectId = String(projectId || '').trim();
 		const projects = getAllStoredProjects()
 			.filter((project) => String(project?.formName || '').trim() === 'lesson-activities-project')
 			.map((project) => ({
 				id: String(project?.id || '').trim(),
 				name: String(project?.name || '').trim() || 'Untitled Project',
 			}))
-			.filter((project) => Boolean(project.id));
+			.filter((project) => Boolean(project.id))
+			.filter((project) => !currentProjectId || project.id !== currentProjectId);
 		setAvailableLessonProjects(projects);
 		return projects;
 	};
@@ -844,23 +846,51 @@ export function useLessonActivityProject({
 			return;
 		}
 
+		const currentProjectId = String(projectId || '').trim();
 		const uniqueProjectIds = [...new Set(selectedProjectIdsForAdd)]
 			.map((id) => String(id || '').trim())
-			.filter(Boolean);
+			.filter(Boolean)
+			.filter((id) => !currentProjectId || id !== currentProjectId);
 
 		if (uniqueProjectIds.length === 0) {
-			showNotice('info', 'Select at least one project.');
+			showNotice('info', 'Select at least one other project.');
 			return;
 		}
 
 		const normalizedInput = normalizeInput(data);
-		const lessonName = String(activityName || defaultActivityName).trim() || defaultActivityName;
-		const urlActivityId = typeof window !== 'undefined'
-			? String(new URL(window.location.href).searchParams.get('activityId') || '').trim()
-			: '';
-		const activityId = String(standaloneActivityId || urlActivityId || createLessonActivityId()).trim();
-		if (activityId && activityId !== standaloneActivityId) {
-			setStandaloneActivityId(activityId);
+		let lessonName = String(activityName || defaultActivityName).trim() || defaultActivityName;
+		let activityId = '';
+
+		if (projectId && Number.isInteger(activityIndex)) {
+			const sourceProject = getAllStoredProjects().find((item) => item.id === projectId && item.formName === 'lesson-activities-project');
+			const sourceActivities = sourceProject
+				? getProjectLessonActivities(sourceProject, 'lesson-activities-project', (input) => input || {})
+				: [];
+			const sourceActivity = sourceActivities[activityIndex] || null;
+			activityId = String(sourceActivity?.id || createLessonActivityId()).trim();
+			lessonName = String(activityName || sourceActivity?.['lesson-name'] || defaultActivityName).trim() || defaultActivityName;
+
+			if (sourceProject && sourceActivity) {
+				sourceActivities[activityIndex] = {
+					...sourceActivity,
+					id: activityId,
+					'tmk-template': formName,
+					'lesson-name': lessonName,
+					'lesson-input-data': normalizedInput,
+					'modified-at': Date.now(),
+				};
+				sourceProject.lessonActivities = sourceActivities;
+				sourceProject.modifiedAtMs = Date.now();
+				sourceProject.syncedAt = null;
+			}
+		} else {
+			const urlActivityId = typeof window !== 'undefined'
+				? String(new URL(window.location.href).searchParams.get('activityId') || '').trim()
+				: '';
+			activityId = String(standaloneActivityId || urlActivityId || createLessonActivityId()).trim();
+			if (activityId && activityId !== standaloneActivityId) {
+				setStandaloneActivityId(activityId);
+			}
 		}
 
 		const projects = getAllStoredProjects();

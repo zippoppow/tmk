@@ -1244,7 +1244,7 @@ export default function LessonProjectsPage() {
 							}}
 							sx={{ textTransform: 'none' }}
 						>
-							{isAuthenticated ? 'Logout from Teachable' : 'Login with Teachable'}
+							{isAuthenticated ? 'Logout' : 'Login'}
 						</Button>
 					</Stack>
 				</Box>
@@ -1642,7 +1642,7 @@ export default function LessonProjectsPage() {
 																							onClick={() => handleOpenActivity(project, activity, activityIndex)}
 																							sx={{ textTransform: 'none' }}
 																						>
-																							Open
+																							Manage
 																						</Button>
 																						<Button
 																							size="small"
