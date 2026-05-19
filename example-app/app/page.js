@@ -8,108 +8,82 @@
  * - Use Pegasus theme components
  * - Render Pegasus icons
  */
-
-import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Badge from '@mui/material/Badge';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
-import Link from 'next/link';
-import tokens from '../../tokens/global.json';
-import { templatePages } from './templates';
+import { useRouter } from 'next/navigation';
+import {
+    Alert,
+    Container,
+    Box,
+    Collapse,
+    Grid,
+    Typography,
+    Button,
+    Paper,
+    IconButton,
+} from '@mui/material';
+import TmkLogo from './components/TmkLogo';
 
 export default function Main() {
+   const router = useRouter();
+
   return (
-      <Box component="main" sx={{ padding: '2rem' }}>
-        <Typography variant="h1" sx={{ marginBottom: '2rem' }}>
-          The Morphology Kit® Admin
-        </Typography>
-
-        {/* Card Example */}
-        <Card sx={{ marginBottom: '2rem' }}>
-          <CardContent>
-            <Typography variant="h2" component="h2">
-              Card Component
-            </Typography>
-            <Typography>
-              This is a card rendered using Material-UI components (integrated with Pegasus).
-            </Typography>
-          </CardContent>
-        </Card>
-
-        {/* Button Examples */}
-        <Box component="section" sx={{ marginBottom: '2rem' }}>
-          <Typography variant="h2" component="h2" sx={{ marginBottom: '1rem' }}>
-            Button Components
-          </Typography>
-          <Box sx={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <Button variant="contained">Primary Button</Button>
-            <Button variant="outlined">Secondary Button</Button>
+      <Box sx={{
+                minHeight: '100vh',
+                backgroundImage:
+                    "linear-gradient(rgba(255, 255, 255, 0.8), rgba(255,255,255,0.86)), url('/branding/tmk_diy_cat.png')",
+                backgroundSize: '65% auto',
+                backgroundPosition: 'center calc(10%)',
+                backgroundRepeat: 'no-repeat',
+                backgroundAttachment: { xs: 'scroll', md: 'fixed' },
+            }}
+        >
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <TmkLogo sx={{ mb: 0 }} priority />
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <Typography variant="h2" component="h1">
+                       D.I.Y. HOME
+                    </Typography>
+                </Box>    
           </Box>
-        </Box>
 
-        {/* Badge Examples */}
-        <Box component="section" sx={{ marginBottom: '2rem' }}>
-          <Typography variant="h2" component="h2" sx={{ marginBottom: '1rem' }}>
-            Badge Components
-          </Typography>
-          <Box sx={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <Badge badgeContent={5} color="primary">
-              Messages
-            </Badge>
-            <Badge badgeContent={3} color="success">
-              Notifications
-            </Badge>
-          </Box>
-        </Box>
+          <Grid container spacing={{ xs: 2, md: 3 }} alignItems="flex-start" sx={{ mb: 4 }}>
+                {/* Left column: DIY Dashboard */}
+                <Grid item xs={12} md={6} sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3, order: { xs: 2, md: 1 } }}>
 
-        {/* Tokens Usage */}
-        <Box component="section">
-          <Typography variant="h2" component="h2" sx={{ marginBottom: '1rem' }}>
-            Design Tokens
-          </Typography>
-          <Typography variant="body1">
-            Pegasus design tokens are available at: <code>../../tokens/global.json</code>
-          </Typography>
-          <Typography variant="body2" sx={{ marginTop: '0.5rem', color: 'text.secondary' }}>
-            Note: Pegasus theme components use Material-UI. Customize the theme above to match your brand colors and spacing from tokens.
-          </Typography>
-        </Box>
+                    <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #224c88' }}>
+                        <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                            DIY Dashboard
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                            Create and manage lesson activities.
+                            You will gain access after active DIY course enrollment is verified.
+                        </Typography>
+                        <Button variant="contained" onClick={() => router.push('/dashboard')}>
+                            Go to Dashboard
+                        </Button>
+                    </Paper>
 
-        {/* Template Examples */}
-        <Box component="section" sx={{ marginTop: '3rem' }}>
-          <Typography variant="h2" component="h2" sx={{ marginBottom: '1rem' }}>
-            Educational Templates ({templatePages.length})
-          </Typography>
-          <Typography variant="body1" sx={{ marginBottom: '2rem' }}>
-            All {templatePages.length} educational templates have been converted to use Pegasus components:
-          </Typography>
-          <Grid container spacing={2}>
-            {templatePages.map((template) => (
-              <Grid item xs={12} sm={6} md={4} key={template.slug}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  component={Link}
-                  href={`/${template.slug}`}
-                  sx={{
-                    py: 2,
-                    px: 1,
-                    textAlign: 'center',
-                    textTransform: 'none',
-                    fontSize: '0.9rem',
-                    whiteSpace: 'normal',
-                    wordWrap: 'break-word',
-                  }}
-                >
-                  {template.title}
-                </Button>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
+                </Grid>
+
+                {/* Right column: Projects
+                <Grid item xs={12} md={6} sx={{ order: { xs: 1, md: 2 } }}>
+                    <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #224c88' }}>
+                        <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                            Projects (Sequences of Activities)
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                            {hasDiyAccess
+                                ? 'Create and manage sequences of lesson activities.'
+                                : 'Available after active DIY course enrollment is verified.'}
+                        </Typography>
+                        <Button variant="contained" onClick={() => router.push('/lesson-projects')} disabled={!hasDiyAccess}>
+                            Go to Projects
+                        </Button>
+                    </Paper>
+                </Grid> */}
+            </Grid>
+        </Container>
+
       </Box>
   );
 }
