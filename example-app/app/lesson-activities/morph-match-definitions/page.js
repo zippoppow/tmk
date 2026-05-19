@@ -202,7 +202,7 @@ export default function MorphMatchDefinitionsPage() {
     .definitions-input {
       border: none;
       border-bottom: 2px solid #ddd;
-			padding: 8px 0;
+			padding: 0;
       font-size: 1em;
 			line-height: 1.2em;
 			font-family: 'Trebuchet MS', sans-serif;
@@ -229,7 +229,7 @@ export default function MorphMatchDefinitionsPage() {
     @media print {
       @page { size: letter landscape; margin: 0.4in; }
       body { padding: 0; }
-			.definitions-input { max-height: 3.24em; }
+			.definitions-input { max-height: 3.6em; }
     }
   </style>
 </head>
