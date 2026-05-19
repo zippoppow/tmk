@@ -75,6 +75,12 @@ export default function IntroPage() {
 		handleSaveAndReturn,
 		handleGoToLessonProjects,
 		handleAddToProject,
+    isAddToProjectDialogOpen,
+    availableLessonProjects,
+    selectedProjectIdsForAdd,
+    setSelectedProjectIdsForAdd,
+    handleCloseAddToProjectDialog,
+    handleConfirmAddToProjects,
 		standaloneActivityId,
 		handleSaveStandalone,
 		handleDeleteStandalone,
@@ -339,6 +345,12 @@ export default function IntroPage() {
 			handleLoginLogout={handleLoginLogout}
 			handleGoToLessonProjects={handleGoToLessonProjects}
 			handleAddToProject={handleAddToProject}
+        isAddToProjectDialogOpen={isAddToProjectDialogOpen}
+        availableLessonProjects={availableLessonProjects}
+        selectedProjectIdsForAdd={selectedProjectIdsForAdd}
+        setSelectedProjectIdsForAdd={setSelectedProjectIdsForAdd}
+        handleCloseAddToProjectDialog={handleCloseAddToProjectDialog}
+        handleConfirmAddToProjects={handleConfirmAddToProjects}
 			handleSave={handleSave}
 			handleSaveAndReturn={handleSaveAndReturn}
 			handleDownloadPdf={handleDownloadPdfLandscape}

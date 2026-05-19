@@ -9,6 +9,11 @@ import {
 	Card,
 	CardContent,
 	Container,
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogTitle,
+	MenuItem,
 	Snackbar,
 	Stack,
 	TextField,
@@ -30,12 +35,19 @@ export default function ActivityShell({
 	handleLoginLogout,
 	handleGoToLessonProjects,
 	handleAddToProject,
+	handleOpenAddToProjectDialog,
+	handleCloseAddToProjectDialog,
+	handleConfirmAddToProjects,
 	handleSave,
 	handleSaveAndReturn,
 	handleDownloadPdf,
 	standaloneActivityId,
 	handleSaveStandalone,
 	handleDeleteStandalone,
+	isAddToProjectDialogOpen,
+	availableLessonProjects,
+	selectedProjectIdsForAdd,
+	setSelectedProjectIdsForAdd,
 	projectId,
 	projectName,
 	activityName,
@@ -64,6 +76,9 @@ export default function ActivityShell({
 				? 'Login flow completed — verifying session…'
 				: 'Not logged in';
 	const licenseLabel = authUser?.email ? `Licensed for use by: ${authUser.email}` : '';
+	const openAddToProjectDialog = typeof handleOpenAddToProjectDialog === 'function'
+		? handleOpenAddToProjectDialog
+		: handleAddToProject;
 	const allowDebouncedLocalPersist = async () => {
 		if (typeof window === 'undefined') {
 			return;
@@ -275,6 +290,17 @@ export default function ActivityShell({
 					{!projectId && (
 						<>
 							<Button
+								variant="outlined"
+								disabled={isSaving || isSlideshowMode}
+								onClick={openAddToProjectDialog}
+								sx={{
+									...outlinedControlButtonSx,
+									fontWeight: 700,
+								}}
+							>
+								Add to Project(s)
+							</Button>
+							<Button
 								variant="contained"
 								color="primary"
 								disabled={isSaving}
@@ -398,6 +424,63 @@ export default function ActivityShell({
 					{notice.message}
 				</Alert>
 			</Snackbar>
+
+			<Dialog
+				open={Boolean(isAddToProjectDialogOpen)}
+				onClose={handleCloseAddToProjectDialog}
+				fullWidth
+				maxWidth="sm"
+			>
+				<DialogTitle>Add Activity To Projects</DialogTitle>
+				<DialogContent>
+					<TextField
+						select
+						fullWidth
+						label="Select one or more projects"
+						margin="dense"
+						value={Array.isArray(selectedProjectIdsForAdd) ? selectedProjectIdsForAdd : []}
+						onChange={(event) => {
+							const nextValue = event.target.value;
+							setSelectedProjectIdsForAdd(Array.isArray(nextValue) ? nextValue : [nextValue]);
+						}}
+						SelectProps={{
+							multiple: true,
+							renderValue: (selected) => {
+								const selectedIds = Array.isArray(selected) ? selected : [];
+								const selectedNames = selectedIds
+									.map((id) => availableLessonProjects.find((project) => project.id === id)?.name || '')
+									.filter(Boolean);
+								return selectedNames.join(', ');
+							},
+						}}
+					>
+						{Array.isArray(availableLessonProjects) && availableLessonProjects.length > 0 ? (
+							availableLessonProjects.map((project) => (
+								<MenuItem key={project.id} value={project.id}>
+									{project.name}
+								</MenuItem>
+							))
+						) : (
+							<MenuItem value="" disabled>
+								No lesson projects available
+							</MenuItem>
+						)}
+					</TextField>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={handleCloseAddToProjectDialog} sx={{ textTransform: 'none' }}>
+						Cancel
+					</Button>
+					<Button
+						onClick={handleConfirmAddToProjects}
+						variant="contained"
+						disabled={isSaving || !Array.isArray(selectedProjectIdsForAdd) || selectedProjectIdsForAdd.length === 0}
+						sx={{ textTransform: 'none' }}
+					>
+						Add To Selected Projects
+					</Button>
+				</DialogActions>
+			</Dialog>
 		</Box>
 	);
 }

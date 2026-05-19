@@ -55,6 +55,9 @@ export function useLessonActivityProject({
 	const [standaloneActivityId, setStandaloneActivityId] = useState('');
 	const [localDraftId, setLocalDraftId] = useState('');
 	const [isSaving, setIsSaving] = useState(false);
+	const [isAddToProjectDialogOpen, setIsAddToProjectDialogOpen] = useState(false);
+	const [availableLessonProjects, setAvailableLessonProjects] = useState([]);
+	const [selectedProjectIdsForAdd, setSelectedProjectIdsForAdd] = useState([]);
 	const latestDataRef = useRef(initialData);
 	const latestActivityNameRef = useRef('');
 	const latestStandaloneActivityIdRef = useRef('');
@@ -72,6 +75,18 @@ export function useLessonActivityProject({
 
 	const showNotice = (severity, message) => {
 		setNotice({ open: true, severity, message });
+	};
+
+	const loadAvailableLessonProjects = () => {
+		const projects = getAllStoredProjects()
+			.filter((project) => String(project?.formName || '').trim() === 'lesson-activities-project')
+			.map((project) => ({
+				id: String(project?.id || '').trim(),
+				name: String(project?.name || '').trim() || 'Untitled Project',
+			}))
+			.filter((project) => Boolean(project.id));
+		setAvailableLessonProjects(projects);
+		return projects;
 	};
 
 	const persist = (nextData) => {
@@ -522,6 +537,7 @@ export function useLessonActivityProject({
 		}
 
 		runAuthCheck();
+		loadAvailableLessonProjects();
 	}, []);
 
 	const handleLoginLogout = () => {
@@ -803,8 +819,137 @@ export function useLessonActivityProject({
 		router.push('/lesson-projects');
 	};
 
+	const handleOpenAddToProjectDialog = () => {
+		const projects = loadAvailableLessonProjects();
+		if (projects.length === 0) {
+			showNotice('warning', 'Create at least one lesson project before adding activities.');
+			return;
+		}
+		setSelectedProjectIdsForAdd([]);
+		setIsAddToProjectDialogOpen(true);
+	};
+
+	const handleCloseAddToProjectDialog = () => {
+		setIsAddToProjectDialogOpen(false);
+		setSelectedProjectIdsForAdd([]);
+	};
+
 	const handleAddToProject = () => {
-		router.push(`/lesson-projects?activityType=${encodeURIComponent(formName)}`);
+		handleOpenAddToProjectDialog();
+	};
+
+	const handleConfirmAddToProjects = async () => {
+		if (selectedProjectIdsForAdd.length === 0) {
+			showNotice('info', 'Select at least one project.');
+			return;
+		}
+
+		const uniqueProjectIds = [...new Set(selectedProjectIdsForAdd)]
+			.map((id) => String(id || '').trim())
+			.filter(Boolean);
+
+		if (uniqueProjectIds.length === 0) {
+			showNotice('info', 'Select at least one project.');
+			return;
+		}
+
+		const normalizedInput = normalizeInput(data);
+		const lessonName = String(activityName || defaultActivityName).trim() || defaultActivityName;
+		const urlActivityId = typeof window !== 'undefined'
+			? String(new URL(window.location.href).searchParams.get('activityId') || '').trim()
+			: '';
+		const activityId = String(standaloneActivityId || urlActivityId || createLessonActivityId()).trim();
+		if (activityId && activityId !== standaloneActivityId) {
+			setStandaloneActivityId(activityId);
+		}
+
+		const projects = getAllStoredProjects();
+		const fingerprint = `${formName}::${lessonName}::${JSON.stringify(normalizedInput)}`;
+		const touchedProjects = [];
+		let addedCount = 0;
+		let duplicateCount = 0;
+
+		uniqueProjectIds.forEach((targetProjectId) => {
+			const project = projects.find((item) => item.id === targetProjectId && item.formName === 'lesson-activities-project');
+			if (!project) {
+				return;
+			}
+
+			const activities = getProjectLessonActivities(project, 'lesson-activities-project', (input) => input || {});
+			const hasSameId = activities.some((activity) => String(activity?.id || '').trim() === activityId);
+			const hasSameFingerprint = activities.some((activity) => {
+				const existingType = String(activity?.['tmk-template'] || '').trim();
+				const existingName = String(activity?.['lesson-name'] || '').trim();
+				const existingData = JSON.stringify(activity?.['lesson-input-data'] || {});
+				return `${existingType}::${existingName}::${existingData}` === fingerprint;
+			});
+
+			if (hasSameId || hasSameFingerprint) {
+				duplicateCount += 1;
+				return;
+			}
+
+			const now = Date.now();
+			project.lessonActivities = [
+				...activities,
+				{
+					id: activityId,
+					'tmk-template': formName,
+					'lesson-name': lessonName,
+					'created-at': now,
+					'modified-at': now,
+					'lesson-input-data': normalizedInput,
+				},
+			];
+			project.modifiedAtMs = now;
+			project.syncedAt = null;
+			touchedProjects.push(project);
+			addedCount += 1;
+		});
+
+		if (addedCount === 0) {
+			showNotice('info', duplicateCount > 0 ? 'Selected activity already exists in the selected project(s).' : 'No projects were updated.');
+			return;
+		}
+
+		saveStoredProjects(projects);
+		loadAvailableLessonProjects();
+
+		let syncFailureCount = 0;
+		if (authUser) {
+			for (const project of touchedProjects) {
+				try {
+					const payload = buildDiyProjectsPayload({
+						project,
+						formName: 'lesson-activities-project',
+						normalizeLessonInputData: (input) => input || {},
+					});
+					const response = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(payload),
+					});
+					if (!response.ok) {
+						syncFailureCount += 1;
+					}
+				} catch {
+					syncFailureCount += 1;
+				}
+			}
+		}
+
+		handleCloseAddToProjectDialog();
+		if (syncFailureCount > 0) {
+			showNotice('warning', `Added activity to ${addedCount} project${addedCount === 1 ? '' : 's'}, but ${syncFailureCount} cloud sync operation${syncFailureCount === 1 ? '' : 's'} failed.`);
+			return;
+		}
+
+		if (duplicateCount > 0) {
+			showNotice('success', `Added activity to ${addedCount} project${addedCount === 1 ? '' : 's'}. Skipped ${duplicateCount} duplicate${duplicateCount === 1 ? '' : 's'}.`);
+			return;
+		}
+
+		showNotice('success', `Added activity to ${addedCount} project${addedCount === 1 ? '' : 's'}.`);
 	};
 
 	const handleDownloadPdf = () => {
@@ -836,6 +981,13 @@ export function useLessonActivityProject({
 		handleDeleteStandalone,
 		handleGoToLessonProjects,
 		handleAddToProject,
+		handleOpenAddToProjectDialog,
+		handleCloseAddToProjectDialog,
+		handleConfirmAddToProjects,
 		handleDownloadPdf,
+		isAddToProjectDialogOpen,
+		availableLessonProjects,
+		selectedProjectIdsForAdd,
+		setSelectedProjectIdsForAdd,
 	};
 }
