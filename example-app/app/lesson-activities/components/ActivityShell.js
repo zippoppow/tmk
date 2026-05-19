@@ -76,7 +76,7 @@ export default function ActivityShell({
 			: authFromSuccessRedirect
 				? 'Login flow completed — verifying session…'
 				: 'Not logged in';
-	const licenseLabel = authUser?.email ? `Licensed for use by: ${authUser.email}` : '';
+	const licenseLabel = authUser?.email ? `Licensed for use to: ${authUser.email}` : '';
 	const openAddToProjectDialog = typeof handleOpenAddToProjectDialog === 'function'
 		? handleOpenAddToProjectDialog
 		: handleAddToProject;

@@ -275,7 +275,7 @@ export default function PartOfSpeechPage() {
 		</div>`;
 
 		const licenseFooter = authUser?.email
-			? `<div class="license-footer">Licensed for use by: ${authUser.email.replace(/</g, '&lt;')}</div>`
+			? `<div class="license-footer">Licensed for use to: ${authUser.email.replace(/</g, '&lt;')}</div>`
 			: '';
 
 		openPrintWindow({

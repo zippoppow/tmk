@@ -421,7 +421,7 @@ export default function ChameleonPrefixesPage() {
 		</header>
 		<section class="grid">${gridHtml}</section>
 		<section class="pairs">${pairRowsHtml}</section>
-		${authUser?.email ? `<footer class="license">Licensed for use by: ${escapeHtml(authUser.email)}</footer>` : ''}
+		${authUser?.email ? `<footer class="license">Licensed for use to: ${escapeHtml(authUser.email)}</footer>` : ''}
 	</main>
 </body>
 </html>`,
