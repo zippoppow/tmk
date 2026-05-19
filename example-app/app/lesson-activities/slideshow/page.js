@@ -66,6 +66,8 @@ function buildCloneSeedKey(prefix, uniquePart) {
 }
 
 export default function LessonActivitySlideshowPage() {
+
+
 	const router = useRouter();
 	const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 	const [isClient, setIsClient] = useState(false);
@@ -78,7 +80,50 @@ export default function LessonActivitySlideshowPage() {
 	const [localDraftRecords, setLocalDraftRecords] = useState([]);
 	const [loadingStandalone, setLoadingStandalone] = useState(false);
 	const [standaloneLoadError, setStandaloneLoadError] = useState('');
+	const [isIframeFullscreen, setIsIframeFullscreen] = useState(false);
 	const hasInstalledHistoryGuard = useRef(false);
+	const iframeRef = useRef(null);
+	const [iframeHeight, setIframeHeight] = useState('82vh');
+	const handleFullscreen = () => {
+		const iframe = iframeRef.current;
+		if (!iframe) return;
+		const container = iframe.parentElement;
+		if (container && container.requestFullscreen) {
+			setIsIframeFullscreen(true);
+			container.requestFullscreen();
+		} else if (iframe.requestFullscreen) {
+			setIsIframeFullscreen(true);
+			iframe.requestFullscreen();
+		}
+	};
+
+	const adjustIframeHeight = () => {
+		const iframe = iframeRef.current;
+		if (!iframe) return;
+
+		try {
+			const doc = iframe.contentDocument || iframe.contentWindow?.document;
+			if (!doc) return;
+
+			const body = doc.body;
+			const html = doc.documentElement;
+			const contentHeight = Math.max(
+				body?.scrollHeight || 0,
+				body?.offsetHeight || 0,
+				html?.clientHeight || 0,
+				html?.scrollHeight || 0,
+				html?.offsetHeight || 0
+			);
+
+			if (contentHeight > 0 && typeof window !== 'undefined') {
+				const viewportTarget = Math.max(520, window.innerHeight - 170);
+				const nextHeight = Math.max(contentHeight + 24, viewportTarget);
+				setIframeHeight(`${nextHeight}px`);
+			}
+		} catch {
+			// Ignore cross-document measurement issues and keep existing height.
+		}
+	};
 
 	useEffect(() => {
 		setIsClient(true);
@@ -309,6 +354,24 @@ export default function LessonActivitySlideshowPage() {
 	const totalSlides = slides.length;
 	const safeIndex = totalSlides === 0 ? 0 : Math.min(currentSlideIndex, totalSlides - 1);
 	const currentSlide = totalSlides === 0 ? null : slides[safeIndex];
+	const currentSlideSrc = useMemo(() => {
+		if (!currentSlide?.url) {
+			return '';
+		}
+
+		if (typeof window === 'undefined') {
+			return currentSlide.url;
+		}
+
+		const url = new URL(currentSlide.url, window.location.origin);
+		if (isIframeFullscreen) {
+			url.searchParams.set('slideshowFullscreen', '1');
+		} else {
+			url.searchParams.delete('slideshowFullscreen');
+		}
+
+		return `${url.pathname}${url.search}`;
+	}, [currentSlide?.url, isIframeFullscreen]);
 	const isStandaloneMode = !projectId && (standaloneIds.length > 0 || localDraftIds.length > 0);
 	const backRoute = isStandaloneMode ? '/lesson-activities' : '/lesson-projects';
 	const backLabel = isStandaloneMode ? 'Back to Lesson Activities' : 'Back to Lesson Projects';
@@ -414,6 +477,40 @@ export default function LessonActivitySlideshowPage() {
 		};
 	}, [isClient, slideshowSessionId]);
 
+	useEffect(() => {
+		if (!isClient || typeof window === 'undefined') {
+			return;
+		}
+
+		const handleFullscreenChange = () => {
+			setIsIframeFullscreen(Boolean(document.fullscreenElement));
+		};
+		document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+		const iframe = iframeRef.current;
+		if (!iframe) {
+			return () => {
+				document.removeEventListener('fullscreenchange', handleFullscreenChange);
+			};
+		}
+
+		const handleLoad = () => {
+			adjustIframeHeight();
+		};
+
+		iframe.addEventListener('load', handleLoad);
+		window.addEventListener('resize', adjustIframeHeight);
+
+		const timerId = window.setTimeout(adjustIframeHeight, 250);
+
+		return () => {
+			window.clearTimeout(timerId);
+			iframe.removeEventListener('load', handleLoad);
+			window.removeEventListener('resize', adjustIframeHeight);
+			document.removeEventListener('fullscreenchange', handleFullscreenChange);
+		};
+	}, [isClient, safeIndex, currentSlideSrc]);
+
 	if (!isClient) {
 		return (
 			<Container maxWidth="md" sx={{ py: 4 }}>
@@ -505,6 +602,9 @@ export default function LessonActivitySlideshowPage() {
 						<Button variant="contained" disabled={safeIndex >= totalSlides - 1} onClick={goToNext} sx={{ textTransform: 'none' }}>
 							Next
 						</Button>
+						<Button variant="outlined" onClick={handleFullscreen} sx={{ textTransform: 'none', ml: { xs: 0, md: 1 } }}>
+							Fullscreen
+						</Button>
 					</Stack>
 					<Typography sx={{ mt: 1, fontSize: '0.9rem', color: '#4b5563' }}>
 						{currentSlide.activityName} ({currentSlide.activityType})
@@ -514,8 +614,10 @@ export default function LessonActivitySlideshowPage() {
 				<Paper sx={{ borderRadius: 2.5, overflow: 'hidden', border: '1px solid #dbe2f0' }}>
 					<iframe
 						title={`Lesson activity slide ${safeIndex + 1}`}
-						src={currentSlide.url}
-						style={{ width: '100%', height: '82vh', border: 0, background: '#fff' }}
+						src={currentSlideSrc}
+						style={{ width: '100%', height: iframeHeight, border: 0, background: '#fff' }}
+						ref={iframeRef}
+						allow="fullscreen"
 					/>
 				</Paper>
 			</Container>

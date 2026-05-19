@@ -177,6 +177,39 @@ export default function PartOfSpeechPage() {
 		setData((prev) => ({ ...prev, grid: Array.from({ length: 12 }, () => '') }));
 	};
 
+	// Move all words from dropzones back to the first available empty grid slots
+	const handleReturnAllToGrid = () => {
+		setData((prev) => {
+			// Gather all words from all sortBoxes
+			const allSortedWords = [
+				...prev.sortBoxes.adjective,
+				...prev.sortBoxes.noun,
+				...prev.sortBoxes.verb,
+				...prev.sortBoxes.adverb,
+			];
+			// Fill empty grid slots in order
+			const nextGrid = [...prev.grid];
+			let wordIdx = 0;
+			for (let i = 0; i < nextGrid.length && wordIdx < allSortedWords.length; i++) {
+				if (!String(nextGrid[i] || '').trim()) {
+					nextGrid[i] = allSortedWords[wordIdx++];
+				}
+			}
+			// Remove all words from sortBoxes
+			const nextSortBoxes = {
+				adjective: [],
+				noun: [],
+				verb: [],
+				adverb: [],
+			};
+			return {
+				...prev,
+				grid: nextGrid,
+				sortBoxes: nextSortBoxes,
+			};
+		});
+	};
+
 	const renderSortBox = (category, minHeight = 260) => {
 		return (
 			<Box>
@@ -428,6 +461,9 @@ export default function PartOfSpeechPage() {
 			<Box sx={{ borderTop: '2px solid #eee', pt: 2.5, display: 'flex', justifyContent: 'center', gap: 2, mt: 4 }}>
 				<Button variant="outlined" onClick={handleClearWordGrid} sx={{ minWidth: 150 }}>
 					Clear Word Grid
+				</Button>
+				<Button variant="outlined" onClick={handleReturnAllToGrid} sx={{ minWidth: 210 }}>
+					Return All Words to Grid
 				</Button>
 				<Button variant="outlined" onClick={() => setData(emptyData())} sx={{ minWidth: 150 }}>
 					Clear All

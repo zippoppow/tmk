@@ -246,6 +246,21 @@ export default function MorphWhichPage() {
 			notice={notice}
 			setNotice={setNotice}
 		>
+			<Box
+				sx={{
+					mt: 2,
+					mb: 1,
+					px: 1.25,
+					py: 0.75,
+					borderRadius: 1,
+					backgroundColor: '#eef2ff',
+					border: '1px solid #c7d2fe',
+				}}
+			>
+				<Typography sx={{ fontSize: '0.92rem', color: '#1e293b' }}>
+					Tip: double-click an option to select (shade) it. Single-click a shaded option to deselect it.
+				</Typography>
+			</Box>
 			<Stack spacing={2} sx={{ mt: 3 }}>
 				{data.questions.map((question, index) => (
 					<Box key={index} sx={{ display: 'grid', gridTemplateColumns: '1fr 24fr', gap: 1.5, alignItems: 'start' }}>

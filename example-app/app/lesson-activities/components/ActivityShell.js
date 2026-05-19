@@ -58,6 +58,7 @@ export default function ActivityShell({
 }) {
 	const router = useRouter();
 	const [isSlideshowMode, setIsSlideshowMode] = useState(false);
+	const [isSlideshowFullscreenMode, setIsSlideshowFullscreenMode] = useState(false);
 	const outlinedControlButtonSx = {
 		textTransform: 'none',
 		bgcolor: '#fff',
@@ -96,6 +97,7 @@ export default function ActivityShell({
 
 		const params = new URLSearchParams(window.location.search);
 		setIsSlideshowMode(params.get('slideshow') === '1');
+		setIsSlideshowFullscreenMode(params.get('slideshowFullscreen') === '1');
 	}, []);
 
 	return (
@@ -228,7 +230,7 @@ export default function ActivityShell({
 					</Box>
 				)}
 
-				{projectId && !isSlideshowMode && (
+				{projectId && !isSlideshowMode && !isSlideshowFullscreenMode && (
 					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea', }}>
 						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
 						<Typography sx={{ fontSize: { xs: '1.3rem', sm: '1.6rem', md: '2rem' }, color: '#011436', fontWeight: 700 }}>
@@ -261,7 +263,7 @@ export default function ActivityShell({
 					</Box>
 				)}
 
-				{!projectId && (
+				{!projectId && !isSlideshowMode && !isSlideshowFullscreenMode && (
 					<Box sx={{ mb: 2, p: 1.5, backgroundColor: '#eef2ff', borderRadius: 1, borderLeft: '4px solid #667eea' }}>
 						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
 						<Typography sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' }, color: '#011436', fontWeight: 700 }}>
@@ -286,7 +288,8 @@ export default function ActivityShell({
 					</Box>
 				)}
 
-				<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+				{!isSlideshowFullscreenMode && (
+					<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', gap: 1, mb: 2, flexWrap: 'wrap' }}>
 					{!projectId && (
 						<>
 							<Button
@@ -365,7 +368,8 @@ export default function ActivityShell({
 					>
 						Download as PDF
 					</Button>
-				</Box>
+					</Box>
+				)}
 
 				<Card id="lesson-activity-print-root" sx={{ borderRadius: 2, boxShadow: 8 }}>
 					<CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
