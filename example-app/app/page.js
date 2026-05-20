@@ -63,6 +63,18 @@ export default function Main() {
                         </Button>
                     </Paper>
 
+                    <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #224c88' }}>
+                        <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
+                            Copyright
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                            View copyright and legal attribution information.
+                        </Typography>
+                        <Button variant="outlined" onClick={() => router.push('/copyright')}>
+                            Open Copyright Page
+                        </Button>
+                    </Paper>
+
                 </Grid>
 
                 {/* Right column: Projects
