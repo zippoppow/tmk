@@ -26,7 +26,7 @@ export default function DashboardPage() {
     const router = useRouter();
     const [isMounted, setIsMounted] = useState(false);
     const [activePreviewIndex, setActivePreviewIndex] = useState(0);
-    const [isCarouselOpen, setIsCarouselOpen] = useState(true);
+    const [isCarouselOpen, setIsCarouselOpen] = useState(false);
     const { hasDiyAccess, authUser: user } = useDiyAccess();
 
     const previewImages = useMemo(
@@ -99,8 +99,7 @@ export default function DashboardPage() {
                     <Button variant="outlined" onClick={handleLogout}>
                         Logout
                     </Button>
-                </Box>
-                
+                </Box>   
             </Box>
 
             <Grid container spacing={{ xs: 2, md: 3 }} alignItems="flex-start" sx={{ mb: 4 }}>
