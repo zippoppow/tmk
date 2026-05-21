@@ -544,7 +544,7 @@ export function useLessonActivityProject({
 
 	const handleLoginLogout = () => {
 		if (authUser) {
-			window.location.href = buildTeachableLogoutUrl(window.location.href);
+			window.location.href = buildTeachableLogoutUrl('/');
 			return;
 		}
 		window.location.href = buildTeachableStartUrl(window.location.href);

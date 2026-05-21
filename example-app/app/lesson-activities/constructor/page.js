@@ -187,7 +187,7 @@ export default function ConstructorPage() {
 
   const handleLoginLogout = () => {
     if (authUser) {
-      window.location.href = buildTeachableLogoutUrl(window.location.href);
+      window.location.href = buildTeachableLogoutUrl('/');
       return;
     }
 
@@ -216,7 +216,7 @@ export default function ConstructorPage() {
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ mb: 1.5 }}>
           <Button
             variant="outlined"
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/')}
             sx={{
               textTransform: 'none',
               backgroundColor: '#000',
@@ -228,7 +228,7 @@ export default function ConstructorPage() {
               },
             }}
           >
-            Dashboard
+            Home
           </Button>
           <Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
             {authUser ? 'Logout from Teachable' : 'Login with Teachable'}

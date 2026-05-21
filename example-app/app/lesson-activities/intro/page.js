@@ -51,7 +51,7 @@ export default function IntroPage() {
 
 	useEffect(() => {
 		if (!diyLoading && !hasDiyAccess) {
-			router.replace('/dashboard');
+			router.replace('/');
 		}
 	}, [diyLoading, hasDiyAccess, router]);
 
