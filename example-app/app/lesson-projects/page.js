@@ -1310,7 +1310,7 @@ export default function LessonProjectsPage() {
 				</Paper>
 				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
 					<Typography sx={{ fontSize: '2rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 0 }}>
-						Lesson Activity Projects
+						Lesson Activity Projects/Sequences
 					</Typography>
 					<Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 4 }}>
 						Now that you've created a project, add one or more lesson activities to that project.

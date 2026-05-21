@@ -37,6 +37,11 @@ const DIY_ACCESS_HINT_COOKIE = 'tmk_diy_access_hint';
 const AUTH_HINT_MAX_AGE_SECONDS = 60 * 60 * 12;
 const TMK_API_AUTH_HEADER = 'x-api-key';
 const AUTH_DEBUG_ENABLED = process.env.NODE_ENV !== 'production';
+const DIY_ACCESS_STORAGE_KEY = 'tmk-diy-access-by-email';
+const DIY_LAST_AUTH_USER_KEY = 'tmk-diy-last-auth-user';
+const UTILITIES_TOKEN_STORAGE_KEY = 'tmk-utilities-api-access-token';
+const LEGACY_AUTH_HINT_SESSION_KEY = 'tmk_teachable_auth_hint';
+const LEGACY_AUTH_EMAIL_SESSION_KEY = 'tmk_teachable_user_email';
 
 function authDebug(label, payload) {
 	if (!AUTH_DEBUG_ENABLED) {
@@ -291,6 +296,33 @@ export function captureTeachableSessionFromUrl() {
 	return sessionFromQuery;
 }
 
+export function clearLocalAuthState() {
+	userAccessToken = '';
+	teachableSessionHandoff = '';
+	clearAuthStateHints();
+
+	if (typeof window === 'undefined') {
+		return;
+	}
+
+	try {
+		window.localStorage.removeItem(TMK_API_ACCESS_TOKEN_STORAGE_KEY);
+		window.localStorage.removeItem(DIY_LAST_AUTH_USER_KEY);
+		window.localStorage.removeItem(DIY_ACCESS_STORAGE_KEY);
+		window.localStorage.removeItem(UTILITIES_TOKEN_STORAGE_KEY);
+	} catch {
+		// Ignore storage failures (private mode, quota exceeded)
+	}
+
+	try {
+		window.sessionStorage.removeItem(TEACHABLE_SESSION_STORAGE_KEY);
+		window.sessionStorage.removeItem(LEGACY_AUTH_HINT_SESSION_KEY);
+		window.sessionStorage.removeItem(LEGACY_AUTH_EMAIL_SESSION_KEY);
+	} catch {
+		// Ignore storage failures (private mode, quota exceeded)
+	}
+}
+
 function addTeachableSessionToPath(path) {
 	const session = captureTeachableSessionFromUrl() || getTeachableSessionHandoff();
 	if (!session) {
@@ -320,7 +352,7 @@ export function buildTeachableStartUrl(apiOriginOrRedirectTo, redirectTo) {
 }
 
 export function buildTeachableLogoutUrl(redirectTo) {
-	clearAuthStateHints();
+	clearLocalAuthState();
 
 	if (isAuthBypassMode()) {
 		if (typeof window === 'undefined') {
