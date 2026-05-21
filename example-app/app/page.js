@@ -52,7 +52,7 @@ export default function HomePage() {
     }, []);
 
     const handleLogout = () => {
-        window.location.href = buildTeachableLogoutUrl('/login?next=/');
+        window.location.href = buildTeachableLogoutUrl('/');
     };
 
     const handlePreviousPreview = () => {

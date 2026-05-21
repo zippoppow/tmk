@@ -298,7 +298,7 @@ export default function LessonActivitiesPage() {
     }, [savedStandaloneActivities, stagedStandaloneActivities]);
 
     const handleLogout = () => {
-        window.location.href = buildTeachableLogoutUrl('/login?next=/lesson-activities');
+        window.location.href = buildTeachableLogoutUrl('/');
     };
 
     if (!isMounted) {

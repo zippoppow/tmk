@@ -1237,7 +1237,7 @@ export default function LessonProjectsPage() {
 							variant="contained"
 							onClick={() => {
 								if (isAuthenticated) {
-									window.location.href = buildTeachableLogoutUrl('/lesson-projects');
+									window.location.href = buildTeachableLogoutUrl('/');
 									return;
 								}
 								window.location.href = '/login?next=/lesson-projects';
