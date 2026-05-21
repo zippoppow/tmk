@@ -188,14 +188,14 @@ export default function ActivityShell({
 								variant="outlined"
 								onClick={async () => {
 									await allowDebouncedLocalPersist();
-									router.push('/dashboard');
+									router.push('/');
 								}}
 								sx={{
 									...outlinedControlButtonSx,
 									fontWeight: 700,
 								}}
 							>
-								Back to Dashboard
+								Back to Home
 							</Button>
 							<Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
 								{authUser ? 'Logout' : 'Login'}

@@ -36,11 +36,11 @@ export async function middleware(request) {
     return NextResponse.next();
   }
 
-  const isDashboardRoute = pathname.startsWith('/dashboard');
+  const isHomeRoute = pathname === '/';
   const isLessonActivitiesRoute = pathname.startsWith('/lesson-activities');
   const isLessonProjectsRoute = pathname.startsWith('/lesson-projects');
 
-  if (!isDashboardRoute && !isLessonActivitiesRoute && !isLessonProjectsRoute) {
+  if (!isHomeRoute && !isLessonActivitiesRoute && !isLessonProjectsRoute) {
     return NextResponse.next();
   }
 
@@ -56,5 +56,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/lesson-activities/:path*', '/lesson-projects/:path*', '/dashboard/:path*'],
+  matcher: ['/', '/lesson-activities/:path*', '/lesson-projects/:path*'],
 };

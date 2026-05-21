@@ -92,7 +92,7 @@ export default function LessonActivitiesPage() {
 
     useEffect(() => {
         if (!authLoading && isAuthenticated && !hasDiyAccess) {
-            router.replace('/dashboard');
+            router.replace('/');
         }
     }, [authLoading, isAuthenticated, hasDiyAccess, router]);
 
@@ -750,8 +750,8 @@ export default function LessonActivitiesPage() {
                         </Typography>
                     </Stack>
                     <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} sx={{ mb: 1, ml: 'auto' }}>
-                        <Button variant="outlined" onClick={() => router.push('/dashboard')} sx={{ textTransform: 'none' }}>
-                            Back to Dashboard
+                        <Button variant="outlined" onClick={() => router.push('/')} sx={{ textTransform: 'none' }}>
+                            Back to Home
                         </Button>
                         <Button
                             variant="contained"
