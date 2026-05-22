@@ -636,7 +636,7 @@ export function useLessonActivityProject({
 			}
 
 		if (response.ok && activityResponse.ok) {
-			const result = await response.json();
+			const result = await response.json().catch(() => null);
 			const updated = getAllStoredProjects();
 			const updatedProject = updated.find((item) => item.id === projectId);
 			if (updatedProject) {

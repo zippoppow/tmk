@@ -92,7 +92,24 @@ function writeStandaloneDraftMap(draftMap, storageKey = STANDALONE_ACTIVITY_DRAF
 
 export function listStandaloneDrafts(storageKey = STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY) {
 	const draftMap = readStandaloneDraftMap(storageKey);
-	return Object.values(draftMap)
+	return Object.entries(draftMap)
+		.map(([draftKey, record]) => {
+			if (!record || typeof record !== 'object') {
+				return null;
+			}
+
+			const mapKey = String(draftKey || '').trim();
+			const localDraftId = String(record.localDraftId || '').trim();
+			if (localDraftId || !mapKey) {
+				return record;
+			}
+
+			// Backfill legacy records that predate localDraftId by using the map key.
+			return {
+				...record,
+				localDraftId: mapKey,
+			};
+		})
 		.filter((record) => record && typeof record === 'object')
 		.sort((a, b) => Number(b?.['modified-at'] || 0) - Number(a?.['modified-at'] || 0));
 }
