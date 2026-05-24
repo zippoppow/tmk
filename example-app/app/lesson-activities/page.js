@@ -72,7 +72,44 @@ export default function LessonActivitiesPage() {
         return value;
     };
 
+    const stableStringify = (value) => {
+        const seen = new WeakSet();
+
+        const normalize = (input) => {
+            if (!input || typeof input !== 'object') {
+                return input;
+            }
+
+            if (seen.has(input)) {
+                return null;
+            }
+            seen.add(input);
+
+            if (Array.isArray(input)) {
+                return input.map((item) => normalize(item));
+            }
+
+            return Object.keys(input)
+                .sort()
+                .reduce((accumulator, key) => {
+                    accumulator[key] = normalize(input[key]);
+                    return accumulator;
+                }, {});
+        };
+
+        return JSON.stringify(normalize(value));
+    };
+
     const hasLocalStandaloneChanges = (draftRecord, savedRecord) => {
+        const draftModifiedAt = Number(draftRecord?.['modified-at'] || draftRecord?.timestamp || 0);
+        const savedModifiedAt = Number(savedRecord?.['modified-at'] || savedRecord?.timestamp || 0);
+        if (Number.isFinite(draftModifiedAt) && Number.isFinite(savedModifiedAt) && savedModifiedAt > 0) {
+            // Only treat local as staged when local edits are newer than the saved snapshot.
+            if (draftModifiedAt <= savedModifiedAt) {
+                return false;
+            }
+        }
+
         const draftName = String(draftRecord?.['lesson-name'] || '').trim();
         const savedName = String(savedRecord?.['lesson-name'] || '').trim();
         if (draftName !== savedName) {
@@ -85,8 +122,8 @@ export default function LessonActivitiesPage() {
             return true;
         }
 
-        const draftInputData = JSON.stringify(normalizeActivityInputData(draftRecord?.['lesson-input-data'] || {}));
-        const savedInputData = JSON.stringify(normalizeActivityInputData(savedRecord?.['lesson-input-data'] || {}));
+        const draftInputData = stableStringify(normalizeActivityInputData(draftRecord?.['lesson-input-data'] || {}));
+        const savedInputData = stableStringify(normalizeActivityInputData(savedRecord?.['lesson-input-data'] || {}));
         return draftInputData !== savedInputData;
     };
 
