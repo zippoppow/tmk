@@ -1231,7 +1231,7 @@ export default function LessonProjectsPage() {
 					</Stack>
 					<Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} sx={{ mb: 1, ml: 'auto' }}>
 						<Button variant="outlined" onClick={() => router.push('/')} sx={{ textTransform: 'none' }}>
-							Back to Home
+							Back to Dashboard
 						</Button>
 						<Button
 							variant="contained"

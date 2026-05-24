@@ -15,6 +15,10 @@ import {
     Checkbox,
     Chip,
     CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
     Typography,
     Button,
     Paper,
@@ -52,6 +56,10 @@ export default function LessonActivitiesPage() {
     const [isSavingAllStaged, setIsSavingAllStaged] = useState(false);
     const [isDeletingSelectedStaged, setIsDeletingSelectedStaged] = useState(false);
     const [isDeletingSelectedSaved, setIsDeletingSelectedSaved] = useState(false);
+    const [reconcileDialogOpen, setReconcileDialogOpen] = useState(false);
+    const [initialLocalStandaloneActivities, setInitialLocalStandaloneActivities] = useState([]);
+    const [initialCloudStandaloneActivities, setInitialCloudStandaloneActivities] = useState([]);
+    const [isApplyingStandaloneSync, setIsApplyingStandaloneSync] = useState(false);
     const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
     const { hasDiyAccess, authUser: user, loading: authLoading } = useDiyAccess();
 
@@ -127,6 +135,352 @@ export default function LessonActivitiesPage() {
         return draftInputData !== savedInputData;
     };
 
+    const getLocalStandaloneDraftRecords = () => {
+        return listStandaloneDrafts().filter((record) => {
+            const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+            return Boolean(template) && template !== 'lesson-activities-project';
+        });
+    };
+
+    const getStandaloneProjectAssociationSets = async () => {
+        let projectActivityIds = new Set();
+        let projectActivityKeys = new Set();
+
+        const localProjects = getAllStoredProjects().filter(
+            (project) => String(project?.formName || '').trim() === 'lesson-activities-project'
+        );
+        localProjects.forEach((project) => {
+            const activities = Array.isArray(project?.lessonActivities) ? project.lessonActivities : [];
+            activities.forEach((activity) => {
+                const id = String(activity?.id || '').trim();
+                if (id) {
+                    projectActivityIds.add(id);
+                }
+
+                const template = String(activity?.['tmk-template'] || activity?.formName || '').trim();
+                const name = String(activity?.['lesson-name'] || '').trim();
+                if (template && name) {
+                    projectActivityKeys.add(`${template}::${name}`);
+                }
+            });
+        });
+
+        try {
+            const projectResponse = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, { method: 'GET' });
+            if (projectResponse.ok) {
+                const projectPayload = await projectResponse.json().catch(() => ({}));
+                const projects = extractDiyProjectsFromResponse(projectPayload);
+                const ids = new Set();
+                const keys = new Set();
+
+                projects.forEach((project) => {
+                    const activities = Array.isArray(project?.['lesson-activities']) ? project['lesson-activities'] : [];
+                    activities.forEach((activity) => {
+                        const id = String(activity?.id || '').trim();
+                        if (id) {
+                            ids.add(id);
+                        }
+
+                        const template = String(activity?.['tmk-template'] || activity?.formName || '').trim();
+                        const name = String(activity?.['lesson-name'] || '').trim();
+                        if (template && name) {
+                            keys.add(`${template}::${name}`);
+                        }
+                    });
+                });
+
+                projectActivityIds = new Set([...projectActivityIds, ...ids]);
+                projectActivityKeys = new Set([...projectActivityKeys, ...keys]);
+            }
+        } catch (projectError) {
+            // eslint-disable-next-line no-console
+            console.error('Failed to load diy-project associations for standalone filter:', projectError);
+        }
+
+        return { projectActivityIds, projectActivityKeys };
+    };
+
+    const fetchCloudStandaloneActivities = async (apiOrigin) => {
+        const records = await listLessonActivities(apiOrigin);
+        const { projectActivityIds, projectActivityKeys } = await getStandaloneProjectAssociationSets();
+
+        return records.filter((record) => {
+            const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+
+            if (template === 'lesson-activities-project') {
+                return false;
+            }
+
+            if (!isStandaloneLessonActivity(record)) {
+                return false;
+            }
+
+            const id = String(record?.id || '').trim();
+            if (id && projectActivityIds.has(id)) {
+                return false;
+            }
+
+            const name = String(record?.['lesson-name'] || '').trim();
+            if (template && name && projectActivityKeys.has(`${template}::${name}`)) {
+                return false;
+            }
+
+            return true;
+        });
+    };
+
+    const classifyStandaloneActivities = (localDraftRecords, savedRecords) => {
+        const savedById = new Set(
+            savedRecords
+                .map((record) => String(record?.id || '').trim())
+                .filter(Boolean)
+        );
+
+        const savedRecordById = new Map(
+            savedRecords
+                .map((record) => [String(record?.id || '').trim(), record])
+                .filter(([id]) => Boolean(id))
+        );
+
+        const dirtyLinkedIds = new Set();
+        localDraftRecords.forEach((record) => {
+            const linkedId = String(record?.id || '').trim();
+            if (!linkedId) {
+                return;
+            }
+
+            const savedRecord = savedRecordById.get(linkedId);
+            if (!savedRecord) {
+                return;
+            }
+
+            if (hasLocalStandaloneChanges(record, savedRecord)) {
+                dirtyLinkedIds.add(linkedId);
+            }
+        });
+
+        const optimisticSavedRecords = localDraftRecords.filter((record) => {
+            const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+            if (!template || template === 'lesson-activities-project') {
+                return false;
+            }
+
+            const linkedId = String(record?.id || '').trim();
+            if (!linkedId) {
+                return false;
+            }
+
+            if (savedById.has(linkedId)) {
+                return false;
+            }
+
+            if (!Boolean(record?.savedToApi)) {
+                return false;
+            }
+
+            return true;
+        });
+
+        const stagedRecords = localDraftRecords.filter((record) => {
+            const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+            if (!template || template === 'lesson-activities-project') {
+                return false;
+            }
+
+            const linkedId = String(record?.id || '').trim();
+            if (!linkedId) {
+                return true;
+            }
+
+            if (!savedById.has(linkedId)) {
+                return !Boolean(record?.savedToApi);
+            }
+
+            return dirtyLinkedIds.has(linkedId);
+        });
+
+        return {
+            saved: [
+                ...savedRecords.filter((record) => !dirtyLinkedIds.has(String(record?.id || '').trim())),
+                ...optimisticSavedRecords,
+            ],
+            staged: stagedRecords,
+        };
+    };
+
+    const toStandaloneDiffKey = (record) => {
+        const id = String(record?.id || '').trim();
+        const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+        const lessonName = String(record?.['lesson-name'] || '').trim();
+        const input = stableStringify(normalizeActivityInputData(record?.['lesson-input-data'] || {}));
+        return `${id}|${template}|${lessonName}|${input}`;
+    };
+
+    const hasStandaloneLocalCloudDifference = (localDraftRecords, cloudRecords) => {
+        const localKeys = localDraftRecords.map(toStandaloneDiffKey).sort();
+        const cloudKeys = cloudRecords.map(toStandaloneDiffKey).sort();
+
+        if (localKeys.length !== cloudKeys.length) {
+            return true;
+        }
+
+        return localKeys.some((key, index) => key !== cloudKeys[index]);
+    };
+
+    const runStandaloneLocalCloudCompare = async ({ forcePromptWhenSame = false } = {}) => {
+        if (!isAuthenticated || !hasDiyAccess) {
+            return;
+        }
+
+        try {
+            const apiOrigin = resolveTmkApiOrigin();
+            const localDraftRecords = getLocalStandaloneDraftRecords();
+            const cloudRecords = await fetchCloudStandaloneActivities(apiOrigin);
+
+            setInitialLocalStandaloneActivities(localDraftRecords);
+            setInitialCloudStandaloneActivities(cloudRecords);
+
+            const hasDifference = hasStandaloneLocalCloudDifference(localDraftRecords, cloudRecords);
+            if (hasDifference || forcePromptWhenSame) {
+                setReconcileDialogOpen(true);
+                return;
+            }
+
+            showNotice('success', 'Local and cloud standalone activities are already in sync.');
+        } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error('Failed standalone reconciliation:', error);
+            showNotice('error', 'Could not compare local and cloud standalone activities.');
+        }
+    };
+
+    const handleKeepStandaloneLocalOnly = () => {
+        setReconcileDialogOpen(false);
+        showNotice('info', 'Using local standalone activities without updating cloud.');
+    };
+
+    const handleApplyStandaloneLocalToCloud = async () => {
+        if (!isAuthenticated || !hasDiyAccess) {
+            setReconcileDialogOpen(false);
+            return;
+        }
+
+        setIsApplyingStandaloneSync(true);
+        try {
+            const apiOrigin = resolveTmkApiOrigin();
+            const localRecords = initialLocalStandaloneActivities;
+            const cloudRecords = initialCloudStandaloneActivities;
+            const syncedIds = new Set();
+
+            for (const record of localRecords) {
+                const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+                if (!template || template === 'lesson-activities-project') {
+                    continue;
+                }
+
+                const activityId = String(record?.id || createLessonActivityId()).trim();
+                const lessonName = String(record?.['lesson-name'] || 'Untitled Lesson Activity').trim() || 'Untitled Lesson Activity';
+                const lessonInputData = normalizeActivityInputData(record?.['lesson-input-data'] || {});
+                const createdAt = Number(record?.['created-at']) || Date.now();
+
+                const payload = buildLessonActivityUpsertPayload({
+                    id: activityId,
+                    template,
+                    lessonName,
+                    lessonInputData,
+                    createdAt,
+                    modifiedAt: Date.now(),
+                    extra: {
+                        formName: template,
+                    },
+                });
+
+                const response = await upsertLessonActivity(apiOrigin, payload);
+                if (!response.ok) {
+                    throw new Error(`Failed to upsert standalone activity: ${activityId}`);
+                }
+
+                upsertStandaloneDraft({
+                    ...record,
+                    id: activityId,
+                    formName: template,
+                    'tmk-template': template,
+                    'lesson-name': lessonName,
+                    'lesson-input-data': lessonInputData,
+                    'created-at': createdAt,
+                    'modified-at': Date.now(),
+                    savedToApi: true,
+                });
+
+                syncedIds.add(activityId);
+            }
+
+            for (const record of cloudRecords) {
+                const cloudId = String(record?.id || '').trim();
+                if (!cloudId || syncedIds.has(cloudId)) {
+                    continue;
+                }
+
+                const deleteResponse = await deleteLessonActivityById(apiOrigin, cloudId);
+                if (!deleteResponse.ok && deleteResponse.status !== 404) {
+                    throw new Error(`Failed to delete cloud standalone activity: ${cloudId}`);
+                }
+            }
+
+            setReconcileDialogOpen(false);
+            await loadStandaloneActivities();
+            showNotice('success', 'Cloud standalone activities updated to match local.');
+        } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error('Failed applying standalone local-to-cloud sync:', error);
+            showNotice('error', 'Could not sync local standalone activities to cloud.');
+        } finally {
+            setIsApplyingStandaloneSync(false);
+        }
+    };
+
+    const handleApplyStandaloneCloudToLocal = async () => {
+        setIsApplyingStandaloneSync(true);
+        try {
+            const localRecords = getLocalStandaloneDraftRecords();
+            localRecords.forEach((record) => {
+                const localDraftId = String(record?.localDraftId || '').trim();
+                if (localDraftId) {
+                    deleteStandaloneDraftByLocalId(localDraftId);
+                }
+            });
+
+            initialCloudStandaloneActivities.forEach((record) => {
+                const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+                if (!template || template === 'lesson-activities-project') {
+                    return;
+                }
+
+                upsertStandaloneDraft({
+                    localDraftId: createLessonActivityId(),
+                    id: String(record?.id || '').trim(),
+                    formName: template,
+                    'tmk-template': template,
+                    'lesson-name': String(record?.['lesson-name'] || 'Untitled Lesson Activity').trim() || 'Untitled Lesson Activity',
+                    'lesson-input-data': normalizeActivityInputData(record?.['lesson-input-data'] || {}),
+                    'created-at': Number(record?.['created-at']) || Date.now(),
+                    'modified-at': Number(record?.['modified-at']) || Date.now(),
+                    savedToApi: true,
+                });
+            });
+
+            setReconcileDialogOpen(false);
+            await loadStandaloneActivities();
+            showNotice('success', 'Local standalone activities updated from cloud.');
+        } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error('Failed applying standalone cloud-to-local sync:', error);
+            showNotice('error', 'Could not apply cloud standalone activities to local.');
+        } finally {
+            setIsApplyingStandaloneSync(false);
+        }
+    };
+
     useEffect(() => {
         if (!authLoading && isAuthenticated && !hasDiyAccess) {
             router.replace('/');
@@ -134,10 +488,7 @@ export default function LessonActivitiesPage() {
     }, [authLoading, isAuthenticated, hasDiyAccess, router]);
 
     const loadStandaloneActivities = async () => {
-        const localDraftRecords = listStandaloneDrafts().filter((record) => {
-            const template = String(record?.['tmk-template'] || record?.formName || '').trim();
-            return Boolean(template) && template !== 'lesson-activities-project';
-        });
+        const localDraftRecords = getLocalStandaloneDraftRecords();
 
         if (!user || !hasDiyAccess) {
             setSavedStandaloneActivities([]);
@@ -148,162 +499,10 @@ export default function LessonActivitiesPage() {
         setStandaloneLoading(true);
         try {
             const apiOrigin = resolveTmkApiOrigin();
-            const records = await listLessonActivities(apiOrigin);
-
-            let projectActivityIds = new Set();
-            let projectActivityKeys = new Set();
-
-            const localProjects = getAllStoredProjects().filter(
-                (project) => String(project?.formName || '').trim() === 'lesson-activities-project'
-            );
-            localProjects.forEach((project) => {
-                const activities = Array.isArray(project?.lessonActivities) ? project.lessonActivities : [];
-                activities.forEach((activity) => {
-                    const id = String(activity?.id || '').trim();
-                    if (id) {
-                        projectActivityIds.add(id);
-                    }
-
-                    const template = String(activity?.['tmk-template'] || activity?.formName || '').trim();
-                    const name = String(activity?.['lesson-name'] || '').trim();
-                    if (template && name) {
-                        projectActivityKeys.add(`${template}::${name}`);
-                    }
-                });
-            });
-            try {
-                const projectResponse = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, { method: 'GET' });
-                if (projectResponse.ok) {
-                    const projectPayload = await projectResponse.json().catch(() => ({}));
-                    const projects = extractDiyProjectsFromResponse(projectPayload);
-                    const ids = new Set();
-                    const keys = new Set();
-
-                    projects.forEach((project) => {
-                        const activities = Array.isArray(project?.['lesson-activities']) ? project['lesson-activities'] : [];
-                        activities.forEach((activity) => {
-                            const id = String(activity?.id || '').trim();
-                            if (id) {
-                                ids.add(id);
-                            }
-
-                            const template = String(activity?.['tmk-template'] || activity?.formName || '').trim();
-                            const name = String(activity?.['lesson-name'] || '').trim();
-                            if (template && name) {
-                                keys.add(`${template}::${name}`);
-                            }
-                        });
-                    });
-
-                    projectActivityIds = new Set([...projectActivityIds, ...ids]);
-                    projectActivityKeys = new Set([...projectActivityKeys, ...keys]);
-                }
-            } catch (projectError) {
-                // eslint-disable-next-line no-console
-                console.error('Failed to load diy-project associations for standalone filter:', projectError);
-            }
-
-            const savedRecords = records.filter((record) => {
-                const template = String(record?.['tmk-template'] || record?.formName || '').trim();
-
-                // Guard against project-container pseudo records accidentally returned by sync flows.
-                if (template === 'lesson-activities-project') {
-                    return false;
-                }
-
-                if (!isStandaloneLessonActivity(record)) {
-                    return false;
-                }
-
-                const id = String(record?.id || '').trim();
-                if (id && projectActivityIds.has(id)) {
-                    return false;
-                }
-
-                const name = String(record?.['lesson-name'] || '').trim();
-                if (template && name && projectActivityKeys.has(`${template}::${name}`)) {
-                    return false;
-                }
-
-                return true;
-            });
-
-            const savedById = new Set(
-                savedRecords
-                    .map((record) => String(record?.id || '').trim())
-                    .filter(Boolean)
-            );
-
-            const savedRecordById = new Map(
-                savedRecords
-                    .map((record) => [String(record?.id || '').trim(), record])
-                    .filter(([id]) => Boolean(id))
-            );
-
-            const dirtyLinkedIds = new Set();
-            localDraftRecords.forEach((record) => {
-                const linkedId = String(record?.id || '').trim();
-                if (!linkedId) {
-                    return;
-                }
-
-                const savedRecord = savedRecordById.get(linkedId);
-                if (!savedRecord) {
-                    return;
-                }
-
-                if (hasLocalStandaloneChanges(record, savedRecord)) {
-                    dirtyLinkedIds.add(linkedId);
-                }
-            });
-
-            const optimisticSavedRecords = localDraftRecords.filter((record) => {
-                const template = String(record?.['tmk-template'] || record?.formName || '').trim();
-                if (!template || template === 'lesson-activities-project') {
-                    return false;
-                }
-
-                const linkedId = String(record?.id || '').trim();
-                if (!linkedId) {
-                    return false;
-                }
-
-                if (savedById.has(linkedId)) {
-                    return false;
-                }
-
-                if (!Boolean(record?.savedToApi)) {
-                    return false;
-                }
-
-                return true;
-            });
-
-            const stagedRecords = localDraftRecords.filter((record) => {
-                const template = String(record?.['tmk-template'] || record?.formName || '').trim();
-                if (!template || template === 'lesson-activities-project') {
-                    return false;
-                }
-
-                const linkedId = String(record?.id || '').trim();
-                if (!linkedId) {
-                    return true;
-                }
-
-                if (!savedById.has(linkedId)) {
-                    return !Boolean(record?.savedToApi);
-                }
-
-                return dirtyLinkedIds.has(linkedId);
-            });
-
-            setSavedStandaloneActivities(
-                [
-                    ...savedRecords.filter((record) => !dirtyLinkedIds.has(String(record?.id || '').trim())),
-                    ...optimisticSavedRecords,
-                ]
-            );
-            setStagedStandaloneActivities(stagedRecords);
+            const savedRecords = await fetchCloudStandaloneActivities(apiOrigin);
+            const classified = classifyStandaloneActivities(localDraftRecords, savedRecords);
+            setSavedStandaloneActivities(classified.saved);
+            setStagedStandaloneActivities(classified.staged);
         } catch (error) {
             // eslint-disable-next-line no-console
             console.error('Failed to load standalone lesson activities:', error);
@@ -788,7 +987,7 @@ export default function LessonActivitiesPage() {
                     </Stack>
                     <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} sx={{ mb: 1, ml: 'auto' }}>
                         <Button variant="outlined" onClick={() => router.push('/')} sx={{ textTransform: 'none' }}>
-                            Back to Home
+                            Back to Dashboard
                         </Button>
                         <Button
                             variant="contained"
@@ -835,6 +1034,23 @@ export default function LessonActivitiesPage() {
                     <Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 4 }}>
                         Select, open, present, or remove your standalone lesson activities. Staged activities are local-only drafts. Saved activities are synced to the API.
                     </Typography>
+                    {isAuthenticated && hasDiyAccess && (
+                        <Box sx={{ mb: 2.5 }}>
+                            <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center" flexWrap="wrap">
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    disabled={standaloneLoading || isApplyingStandaloneSync}
+                                    onClick={async () => {
+                                        await runStandaloneLocalCloudCompare({ forcePromptWhenSame: true });
+                                    }}
+                                    sx={{ textTransform: 'none' }}
+                                >
+                                    Compare Local & Cloud
+                                </Button>
+                            </Stack>
+                        </Box>
+                    )}
                     {!hasDiyAccess ? (
                         <Typography sx={{ color: '#666', fontSize: '0.95rem' }}>Active DIY enrollment required.</Typography>
                     ) : standaloneLoading ? (
@@ -845,7 +1061,7 @@ export default function LessonActivitiesPage() {
                         </Typography>
                     ) : (
                         <Stack spacing={3} sx={{ width: '100%', minWidth: 0 }}>
-                            <Typography sx={{ fontSize: '1.15rem', fontWeight: 700, color: '#2f3a4a' }}>
+                            <Typography sx={{ fontSize: '1.6rem', fontWeight: 700, color: '#2f3a4a' }}>
                                 Staged Locally
                             </Typography>
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="flex-end" alignItems={{ xs: 'stretch', sm: 'center' }}>
@@ -1005,7 +1221,7 @@ export default function LessonActivitiesPage() {
                                 );
                             })}
 
-                            <Typography sx={{ fontSize: '1.15rem', fontWeight: 700, color: '#2f3a4a', pt: 1 }}>
+                            <Typography sx={{ fontSize: '1.6rem', fontWeight: 700, color: '#2f3a4a', pt: 1 }}>
                                 Saved
                             </Typography>
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="flex-end" alignItems={{ xs: 'stretch', sm: 'center' }}>
@@ -1172,6 +1388,87 @@ export default function LessonActivitiesPage() {
                 {notice.message}
             </Alert>
         </Snackbar>
+
+        <Dialog
+            open={reconcileDialogOpen}
+            onClose={isApplyingStandaloneSync ? undefined : handleKeepStandaloneLocalOnly}
+            fullWidth
+            maxWidth="md"
+        >
+            <DialogTitle>Local vs Cloud Standalone Differences Found</DialogTitle>
+            <DialogContent dividers>
+                <Typography sx={{ fontSize: '0.95rem', mb: 1.5 }}>
+                    We found differences between your browser's standalone lesson activities and cloud standalone lesson activities.
+                    Would you like to sync local standalone activities to cloud, keep local only, or apply cloud activities to local?
+                </Typography>
+
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                    <Box sx={{ flex: 1, border: '1px solid #dbe2ea', borderRadius: 1.5, p: 1.25, backgroundColor: '#f8fbff' }}>
+                        <Typography sx={{ fontWeight: 700, mb: 1 }}>
+                            Local Browser Storage ({initialLocalStandaloneActivities.length})
+                        </Typography>
+                        {initialLocalStandaloneActivities.length === 0 ? (
+                            <Typography sx={{ color: '#6b7280', fontSize: '0.9rem' }}>No local standalone activities.</Typography>
+                        ) : (
+                            <Stack spacing={0.6}>
+                                {initialLocalStandaloneActivities.map((activity, index) => {
+                                    const name = String(activity?.['lesson-name'] || 'Untitled Lesson Activity');
+                                    const type = getActivityTypeLabel(String(activity?.['tmk-template'] || activity?.formName || ''));
+                                    const key = String(activity?.localDraftId || activity?.id || `${name}-${index}`);
+                                    return (
+                                        <Typography key={`local-${key}`} sx={{ fontSize: '0.88rem', color: '#1f2937' }}>
+                                            - {name} ({type})
+                                        </Typography>
+                                    );
+                                })}
+                            </Stack>
+                        )}
+                    </Box>
+
+                    <Box sx={{ flex: 1, border: '1px solid #dbe2ea', borderRadius: 1.5, p: 1.25, backgroundColor: '#fffaf3' }}>
+                        <Typography sx={{ fontWeight: 700, mb: 1 }}>
+                            Cloud Server ({initialCloudStandaloneActivities.length})
+                        </Typography>
+                        {initialCloudStandaloneActivities.length === 0 ? (
+                            <Typography sx={{ color: '#6b7280', fontSize: '0.9rem' }}>No cloud standalone activities.</Typography>
+                        ) : (
+                            <Stack spacing={0.6}>
+                                {initialCloudStandaloneActivities.map((activity, index) => {
+                                    const name = String(activity?.['lesson-name'] || 'Untitled Lesson Activity');
+                                    const type = getActivityTypeLabel(String(activity?.['tmk-template'] || activity?.formName || ''));
+                                    const key = String(activity?.id || `${name}-${index}`);
+                                    return (
+                                        <Typography key={`cloud-${key}`} sx={{ fontSize: '0.88rem', color: '#1f2937' }}>
+                                            - {name} ({type})
+                                        </Typography>
+                                    );
+                                })}
+                            </Stack>
+                        )}
+                    </Box>
+                </Stack>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleKeepStandaloneLocalOnly} disabled={isApplyingStandaloneSync} variant="outlined">
+                    Keep local only
+                </Button>
+                <Button
+                    onClick={handleApplyStandaloneLocalToCloud}
+                    variant="contained"
+                    disabled={isApplyingStandaloneSync}
+                >
+                    {isApplyingStandaloneSync ? 'Syncing...' : 'Sync local to cloud'}
+                </Button>
+                <Button
+                    onClick={handleApplyStandaloneCloudToLocal}
+                    variant="outlined"
+                    color="warning"
+                    disabled={isApplyingStandaloneSync}
+                >
+                    Apply cloud to local
+                </Button>
+            </DialogActions>
+        </Dialog>
         </Box>
     );
 }
