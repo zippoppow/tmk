@@ -195,7 +195,7 @@ export default function ActivityShell({
 									fontWeight: 700,
 								}}
 							>
-								Back to Home
+								Back to Dashboard
 							</Button>
 							<Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
 								{authUser ? 'Logout' : 'Login'}
