@@ -650,19 +650,21 @@ export function useLessonActivityProject({
 			return true;
 		}
 				if (!activityResponse.ok && response.ok) {
-					showNotice('warning', 'Project synced, but activity record save failed.');
-					return false;
+					saveStoredProjects(projects);
+					showNotice('warning', 'Saved locally and project synced, but activity record save failed.');
+					return true;
 				}
 
 				if (activityResponse.ok && !response.ok) {
-					showNotice('warning', 'Activity saved to database, but project sync failed.');
-					return false;
+					saveStoredProjects(projects);
+					showNotice('warning', 'Saved locally and activity saved to database, but project sync failed.');
+					return true;
 				}
 
 				{
 					saveStoredProjects(projects);
 					showNotice('warning', 'Saved locally. Cloud save failed.');
-					return false;
+					return true;
 				}
 			} else {
 				saveStoredProjects(projects);

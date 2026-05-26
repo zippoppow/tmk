@@ -58,6 +58,7 @@ import {
 	getUniqueLessonActivityName,
 	normalizeCloudProjects,
 } from '../components/projectManagerModel';
+import { DIY_LESSON_ACTIVITY_TYPES } from '../../data/diy/diy-lesson-activity-types';
 import TmkLogo from '../components/TmkLogo';
 
 
@@ -65,27 +66,9 @@ import TmkLogo from '../components/TmkLogo';
 // to avoid UI and performance issues with very large data sets. For now we assume users will have a 
 // manageable number of projects and activities stored locally and in the cloud.
 
-//Note: TBD - consider moving these lesson-activity-types to a JSON or database-driven config 
-// if we expect them to change frequently or if there will be many types. 
-// For now we hardcode them in the component for simplicity.
-
 const PROJECT_FORM_NAME = 'lesson-activities-project';
 const SELECTED_PROJECT_STORAGE_KEY = 'tmk.lesson-projects.selectedProjectId';
-const LESSON_ACTIVITY_TYPES = [
-	{ value: 'intro', label: 'Intro', path: '/lesson-activities/intro' },
-	{ value: 'chameleon-prefixes', label: 'Chameleon Prefixes', path: '/lesson-activities/chameleon-prefixes' },
-	{ value: 'common-base-word', label: 'Common Base Word', path: '/lesson-activities/common-base-word' },
-	{ value: 'constructor-deconstructor', label: 'Constructor / Deconstructor', path: '/lesson-activities/constructor-deconstructor' },
-	{ value: 'fill-in-the-morph-paragraphs', label: 'Fill In The Morph - Connected Text', path: '/lesson-activities/fill-in-the-morph-paragraphs' },
-	{ value: 'morph-match-definitions', label: 'Morph Match - Definitions', path: '/lesson-activities/morph-match-definitions' },
-	{ value: 'morph-match-related-words', label: 'Morph Match - Related Words', path: '/lesson-activities/morph-match-related-words' },
-	{ value: 'morph-morph-match', label: 'Morph Morph Match', path: '/lesson-activities/morph-morph-match' },
-	{ value: 'morph-sort', label: 'Morph Sort', path: '/lesson-activities/morph-sort' },
-	{ value: 'morph-which', label: 'Morph Which', path: '/lesson-activities/morph-which' },
-	{ value: 'part-of-speech', label: 'Part of Speech Sort', path: '/lesson-activities/part-of-speech' },
-	{ value: 'word-builder', label: 'Word Builder', path: '/lesson-activities/word-builder' },
-	{ value: 'word-meaning', label: 'Word Meaning', path: '/lesson-activities/word-meaning' },
-];
+const LESSON_ACTIVITY_TYPES = DIY_LESSON_ACTIVITY_TYPES;
 
 function normalizeLessonInputData(rawData) {
 	if (!rawData || typeof rawData !== 'object' || Array.isArray(rawData)) {
