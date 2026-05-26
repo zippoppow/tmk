@@ -619,6 +619,22 @@ export default function LessonProjectsPage() {
 	}, [localProjects]);
 
 	useEffect(() => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+
+		const url = new URL(window.location.href);
+		const savedFlag = String(url.searchParams.get('saved') || '').trim();
+		if (savedFlag !== 'project-activity') {
+			return;
+		}
+
+		showNotice('success', 'Lesson activity saved.');
+		url.searchParams.delete('saved');
+		window.history.replaceState({}, '', url.toString());
+	}, []);
+
+	useEffect(() => {
 		if (displayProjects.length === 0) {
 			if (selectedProjectId) {
 				setSelectedProjectId('');

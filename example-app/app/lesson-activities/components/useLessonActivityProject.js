@@ -683,7 +683,7 @@ export function useLessonActivityProject({
 	const handleSaveAndReturn = async () => {
 		const didSave = await handleSave();
 		if (didSave) {
-			router.push('/lesson-projects');
+			router.push('/lesson-projects?saved=project-activity');
 		}
 	};
 
