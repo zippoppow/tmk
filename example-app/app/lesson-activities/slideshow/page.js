@@ -316,11 +316,16 @@ export default function LessonActivitySlideshowPage() {
 				});
 
 				const params = new URLSearchParams({
+					projectId: String(projectId),
+					activityIndex: String(activityIndex),
 					slideshow: '1',
 					slideshowClone: '1',
 					cloneSeedKey,
 					slideshowSessionId,
 				});
+				if (sourceActivityId) {
+					params.set('activityId', sourceActivityId);
+				}
 
 				return {
 					activityIndex,
