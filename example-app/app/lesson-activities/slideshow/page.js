@@ -13,22 +13,9 @@ import {
 } from '../../components/lessonActivityHelpers';
 import { resolveTmkApiOrigin } from '../../components/authHelpers';
 import { getProjectLessonActivities } from '../../components/projectManagerModel';
+import { DIY_LESSON_ACTIVITY_TYPES } from '../../../data/diy/diy-lesson-activity-types';
 
-const LESSON_ACTIVITY_TYPES = [
-	{ value: 'intro', path: '/lesson-activities/intro' },
-	{ value: 'chameleon-prefixes', path: '/lesson-activities/chameleon-prefixes' },
-	{ value: 'common-base-word', path: '/lesson-activities/common-base-word' },
-	{ value: 'constructor-deconstructor', path: '/lesson-activities/constructor-deconstructor' },
-	{ value: 'fill-in-the-morph-paragraphs', path: '/lesson-activities/fill-in-the-morph-paragraphs' },
-	{ value: 'morph-match-definitions', path: '/lesson-activities/morph-match-definitions' },
-	{ value: 'morph-match-related-words', path: '/lesson-activities/morph-match-related-words' },
-	{ value: 'morph-morph-match', path: '/lesson-activities/morph-morph-match' },
-	{ value: 'morph-sort', path: '/lesson-activities/morph-sort' },
-	{ value: 'morph-which', path: '/lesson-activities/morph-which' },
-	{ value: 'part-of-speech', path: '/lesson-activities/part-of-speech' },
-	{ value: 'word-builder', path: '/lesson-activities/word-builder' },
-	{ value: 'word-meaning', path: '/lesson-activities/word-meaning' },
-];
+const LESSON_ACTIVITY_TYPES = DIY_LESSON_ACTIVITY_TYPES;
 
 function getLessonActivityRoute(activityType) {
 	const found = LESSON_ACTIVITY_TYPES.find((type) => type.value === activityType);

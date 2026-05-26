@@ -41,6 +41,7 @@ import {
     upsertLessonActivity,
     upsertStandaloneDraft,
 } from '../components/lessonActivityHelpers';
+import { DIY_LESSON_ACTIVITY_TYPES } from '../../data/diy/diy-lesson-activity-types';
 import LessonActivitySelector from '../components/LessonActivitySelector';
 import TmkLogo from '../components/TmkLogo';
 
@@ -565,26 +566,7 @@ export default function LessonActivitiesPage() {
         );
     }
 
-    const lessonActivities = [
-        { name: 'Intro', path: '/lesson-activities/intro', description: 'Create and manage intro lesson activities', previewImage: '/lesson-activities/preview-images/Intro.png' },
-        {
-            name: 'Chameleon Prefixes',
-            path: '/lesson-activities/chameleon-prefixes',
-            description: 'Practice prefix transformations and word building',
-            previewImage: '/lesson-activities/preview-images/ChameleonPrefixes.png',
-        },
-        { name: 'Common Base Word', path: '/lesson-activities/common-base-word', description: 'Identify and group common base words', previewImage: '/lesson-activities/preview-images/CommonBaseWord.png' },
-        { name: 'Constructor / Deconstructor', path: '/lesson-activities/constructor-deconstructor', description: 'Build and break apart words using morph parts', previewImage: '/lesson-activities/preview-images/ConstructorDeconstructor.png' },
-        { name: 'Fill In The Morph - Connected Text', path: '/lesson-activities/fill-in-the-morph-paragraphs', description: 'Fill in the blank spots in the connected text with the correct word from the word list.', previewImage: '/lesson-activities/preview-images/FillInTheMorphConnectedText.png' },
-        { name: 'Morph Match - Definitions', path: '/lesson-activities/morph-match-definitions', description: 'Match morph words to numbered definitions', previewImage: '/lesson-activities/preview-images/MorphMatchDefinitions.png' },
-        { name: 'Morph Match - Related Words', path: '/lesson-activities/morph-match-related-words', description: 'Pair focus words with related words', previewImage: '/lesson-activities/preview-images/MorphMatchRelatedWords.png' },
-        { name: 'Morph Morph Match', path: '/lesson-activities/morph-morph-match', description: 'Compare morph patterns and complete pair matches', previewImage: '/lesson-activities/preview-images/MorphMorphMatch.png' },
-        { name: 'Morph Sort', path: '/lesson-activities/morph-sort', description: 'Sort words into morph-based categories', previewImage: '/lesson-activities/preview-images/MorphSort.png' },
-        { name: 'Morph Which', path: '/lesson-activities/morph-which', description: 'Select and compare best morph options per prompt', previewImage: '/lesson-activities/preview-images/MorphWhich.png' },
-        { name: 'Part of Speech Sort', path: '/lesson-activities/part-of-speech', description: 'Sort morph words by part of speech', previewImage: '/lesson-activities/preview-images/PartOfSpeechSort.png' },
-        { name: 'Word Builder', path: '/lesson-activities/word-builder', description: 'Combine prefixes, bases, and suffixes to build words', previewImage: '/lesson-activities/preview-images/WordBuilder.png' },
-        { name: 'Word Meaning', path: '/lesson-activities/word-meaning', description: 'Infer and record meanings from morph clues', previewImage: '/lesson-activities/preview-images/WordMeaning.png' },
-    ];
+    const lessonActivities = DIY_LESSON_ACTIVITY_TYPES;
 
     const formatLastModifiedTimestamp = (value) => {
         const numeric = Number(value);
@@ -614,7 +596,7 @@ export default function LessonActivitiesPage() {
     const getActivityTypeLabel = (templateName) => {
         const normalizedTemplate = String(templateName || '').trim();
         const match = lessonActivities.find((activity) => activity.path.endsWith(`/${normalizedTemplate}`));
-        return match?.name || normalizedTemplate || 'Unknown';
+        return match?.label || normalizedTemplate || 'Unknown';
     };
 
     const handleManageStandalone = (activityRecord) => {
