@@ -33,7 +33,7 @@ export default function HomePage() {
             { src: '/lesson-activities/preview-images/Intro.png', alt: 'Intro lesson activity preview' },
             { src: '/lesson-activities/preview-images/CommonBaseWord.png', alt: 'Common Base Word lesson activity preview' },
             { src: '/lesson-activities/preview-images/ConstructorDeconstructor.png', alt: 'Constructor Deconstructor lesson activity preview' },
-            { src: '/lesson-activities/preview-images/FillInTheMorphParagraphsSentences.png', alt: 'Fill In The Morph lesson activity preview' },
+            { src: '/lesson-activities/preview-images/FillInTheMorphConnectedText.png', alt: 'Fill In The Morph Connected Text lesson activity preview' },
             { src: '/lesson-activities/preview-images/MorphMatchDefinitions.png', alt: 'Morph Match Definitions lesson activity preview' },
             { src: '/lesson-activities/preview-images/MorphMatchRelatedWords.png', alt: 'Morph Match Related Words lesson activity preview' },
             { src: '/lesson-activities/preview-images/MorphMorphMatch.png', alt: 'Morph Morph Match lesson activity preview' },
