@@ -698,7 +698,7 @@ export function useLessonActivityProject({
 
 		if (!resolvedAuthUser) {
 			showNotice('error', 'Please login with Teachable to save standalone activities.');
-			return;
+			return false;
 		}
 
 		setIsSaving(true);
@@ -731,7 +731,7 @@ export function useLessonActivityProject({
 			if (!response.ok) {
 				showNotice('error', 'Could not save standalone lesson activity.');
 				setIsSaving(false);
-				return;
+				return false;
 			}
 
 			let persistedDraft = null;
@@ -758,9 +758,11 @@ export function useLessonActivityProject({
 			}
 			window.history.replaceState({}, '', url.toString());
 			showNotice('success', 'Standalone lesson activity saved.');
+			return true;
 		} catch (error) {
 			console.error('Save standalone failed:', error);
 			showNotice('error', 'Could not save standalone lesson activity.');
+			return false;
 		} finally {
 			setIsSaving(false);
 		}
