@@ -90,6 +90,21 @@ export default function ActivityShell({
 		});
 	};
 
+	const handleSaveActivityClick = async () => {
+		if (projectId) {
+			const didSave = await handleSave();
+			if (didSave) {
+				setNotice({ open: true, severity: 'success', message: 'Changes have been saved.' });
+			}
+			return;
+		}
+
+		const didSaveStandalone = await handleSaveStandalone();
+		if (didSaveStandalone) {
+			setNotice({ open: true, severity: 'success', message: 'Changes have been saved.' });
+		}
+	};
+
 	useEffect(() => {
 		if (typeof window === 'undefined') {
 			return;
@@ -307,7 +322,7 @@ export default function ActivityShell({
 								variant="contained"
 								color="primary"
 								disabled={isSaving}
-								onClick={handleSaveStandalone}
+								onClick={handleSaveActivityClick}
 								sx={{ textTransform: 'none' }}
 							>
 								{isSaving ? 'Saving...' : 'Save Activity'}
@@ -350,7 +365,7 @@ export default function ActivityShell({
 								variant="contained"
 								color="primary"
 								disabled={isSaving}
-								onClick={handleSaveAndReturn}
+								onClick={handleSaveActivityClick}
 								sx={{ textTransform: 'none' }}
 							>
 								{isSaving ? 'Saving...' : 'Save Activity'}

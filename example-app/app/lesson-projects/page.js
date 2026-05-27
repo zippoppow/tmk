@@ -632,7 +632,7 @@ export default function LessonProjectsPage() {
 		showNotice('success', 'Lesson activity saved.');
 		url.searchParams.delete('saved');
 		window.history.replaceState({}, '', url.toString());
-	}, []);
+	});
 
 	useEffect(() => {
 		if (displayProjects.length === 0) {

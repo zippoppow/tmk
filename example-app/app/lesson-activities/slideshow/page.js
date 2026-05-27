@@ -408,7 +408,7 @@ export default function LessonActivitySlideshowPage() {
 
 	const handleExitSlideshow = () => {
 		if (typeof window === 'undefined') {
-			router.push(backRoute);
+			router.push(isStandaloneMode ? backRoute : '/lesson-projects?saved=project-activity');
 			return;
 		}
 
@@ -422,7 +422,7 @@ export default function LessonActivitySlideshowPage() {
 			cleanupUnsavedCloneDrafts(unsavedCloneDrafts);
 		}
 
-		router.push(backRoute);
+		router.push(isStandaloneMode ? backRoute : '/lesson-projects?saved=project-activity');
 	};
 
 	useEffect(() => {
