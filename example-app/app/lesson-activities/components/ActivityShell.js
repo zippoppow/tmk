@@ -350,7 +350,7 @@ export default function ActivityShell({
 								variant="contained"
 								color="primary"
 								disabled={isSaving}
-								onClick={handleSave}
+								onClick={handleSaveAndReturn}
 								sx={{ textTransform: 'none' }}
 							>
 								{isSaving ? 'Saving...' : 'Save Activity'}
