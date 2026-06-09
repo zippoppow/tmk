@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, Container, Paper, Stack, Typography } from '@mui/material';
 import {
@@ -89,33 +89,22 @@ export default function LessonActivitySlideshowPage() {
 		}
 	};
 
-	const adjustIframeHeight = () => {
+	const adjustIframeHeight = useCallback(() => {
 		const iframe = iframeRef.current;
 		if (!iframe) return;
 
 		try {
-			const doc = iframe.contentDocument || iframe.contentWindow?.document;
-			if (!doc) return;
-
-			const body = doc.body;
-			const html = doc.documentElement;
-			const contentHeight = Math.max(
-				body?.scrollHeight || 0,
-				body?.offsetHeight || 0,
-				html?.clientHeight || 0,
-				html?.scrollHeight || 0,
-				html?.offsetHeight || 0
-			);
-
-			if (contentHeight > 0 && typeof window !== 'undefined') {
+			if (typeof window !== 'undefined') {
 				const viewportTarget = Math.max(520, window.innerHeight - 170);
-				const nextHeight = Math.max(contentHeight + 24, viewportTarget);
-				setIframeHeight(`${nextHeight}px`);
+				setIframeHeight((currentHeight) => {
+					const nextHeight = `${viewportTarget}px`;
+					return currentHeight === nextHeight ? currentHeight : nextHeight;
+				});
 			}
 		} catch {
 			// Ignore cross-document measurement issues and keep existing height.
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		setIsClient(true);
@@ -373,7 +362,7 @@ export default function LessonActivitySlideshowPage() {
 	const backRoute = isStandaloneMode ? '/lesson-activities' : '/lesson-projects';
 	const backLabel = isStandaloneMode ? 'Back to Lesson Activities' : 'Back to Lesson Projects';
 
-	const flushCurrentSlideDraft = async () => {
+	const flushCurrentSlideDraft = useCallback(async () => {
 		if (typeof window === 'undefined') {
 			return;
 		}
@@ -426,7 +415,7 @@ export default function LessonActivitySlideshowPage() {
 				window.location.origin
 			);
 		});
-	};
+	}, []);
 
 	const goToPrevious = async () => {
 		setTransitionIntent('previous');
