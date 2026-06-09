@@ -78,6 +78,29 @@ export function useLessonActivityProject({
 		setNotice({ open: true, severity, message });
 	};
 
+	const getSlideshowCloneContext = () => {
+		if (typeof window === 'undefined') {
+			return {
+				isClone: false,
+				cloneSeedKey: '',
+				slideshowSessionId: '',
+				cloneSeed: null,
+			};
+		}
+
+		const url = new URL(window.location.href);
+		const cloneSeedKey = String(url.searchParams.get('cloneSeedKey') || '').trim();
+		const slideshowSessionId = String(url.searchParams.get('slideshowSessionId') || '').trim();
+		const isClone = url.searchParams.get('slideshowClone') === '1';
+
+		return {
+			isClone,
+			cloneSeedKey,
+			slideshowSessionId,
+			cloneSeed: cloneSeedKey ? getSlideshowCloneSeed(cloneSeedKey) : null,
+		};
+	};
+
 	const loadAvailableLessonProjects = () => {
 		const currentProjectId = String(projectId || '').trim();
 		const projects = getAllStoredProjects()
@@ -100,10 +123,7 @@ export function useLessonActivityProject({
 	};
 
 	const ensureStandaloneLocalDraftId = () => {
-		if (latestProjectIdRef.current) {
-			return '';
-		}
-		if (isPresentationCloneRef.current) {
+		if (latestProjectIdRef.current && !isPresentationCloneRef.current) {
 			return '';
 		}
 
@@ -152,12 +172,11 @@ export function useLessonActivityProject({
 		nextActivityId,
 		markSaved = false,
 	}) => {
-		if (latestProjectIdRef.current) {
+		if (latestProjectIdRef.current && !isPresentationCloneRef.current) {
 			return null;
 		}
-		if (isPresentationCloneRef.current) {
-			return null;
-		}
+
+		const cloneContext = getSlideshowCloneContext();
 
 		const normalizedInput = normalizeInput(nextData ?? latestDataRef.current);
 		const resolvedActivityName = String((nextActivityName ?? latestActivityNameRef.current) || '').trim() || defaultActivityName;
@@ -205,6 +224,14 @@ export function useLessonActivityProject({
 			'lesson-input-data': normalizedInput,
 			'created-at': Number(existingDraft?.['created-at']) || Date.now(),
 			'modified-at': Date.now(),
+			isSlideshowClone: cloneContext.isClone,
+			slideshowSessionId: cloneContext.slideshowSessionId,
+			cloneSeedKey: cloneContext.cloneSeedKey,
+			sourceType: cloneContext.cloneSeed?.sourceType || existingDraft?.sourceType,
+			sourceProjectId: cloneContext.cloneSeed?.sourceProjectId || existingDraft?.sourceProjectId,
+			sourceActivityIndex: cloneContext.cloneSeed?.sourceActivityIndex ?? existingDraft?.sourceActivityIndex,
+			sourceActivityId: cloneContext.cloneSeed?.sourceActivityId || existingDraft?.sourceActivityId,
+			sourceLocalDraftId: cloneContext.cloneSeed?.sourceLocalDraftId || existingDraft?.sourceLocalDraftId,
 			savedToApi: markSaved || (Boolean(existingDraft?.savedToApi) && !draftChanged),
 		});
 	};
@@ -300,42 +327,71 @@ export function useLessonActivityProject({
 			const cloneSeedKey = (url.searchParams.get('cloneSeedKey') || '').trim();
 			isPresentationCloneRef.current = isSlideshowClone;
 
-			if (!paramProjectId) {
-				if (isSlideshowClone && cloneSeedKey) {
-					const existingDraft = paramLocalDraftId
-						? getStandaloneDraftByLocalId(paramLocalDraftId)
+			if (isSlideshowClone && cloneSeedKey) {
+				const existingDraft = paramLocalDraftId
+					? getStandaloneDraftByLocalId(paramLocalDraftId)
+					: paramActivityId
+						? getStandaloneDraftByActivityId(paramActivityId)
 						: null;
 
-					if (existingDraft) {
-						const existingDraftActivityId = String(existingDraft.id || paramActivityId || '').trim();
-						setLocalDraftId('');
-						setStandaloneActivityId(existingDraftActivityId);
-						setActivityName(String(existingDraft['lesson-name'] || defaultActivityName));
-						setData(normalizeInput(existingDraft['lesson-input-data'] || {}));
-						return;
-					}
+				if (existingDraft) {
+					const resolvedLocalDraftId = String(existingDraft.localDraftId || paramLocalDraftId || createLessonActivityId()).trim();
+					const resolvedActivityId = String(existingDraft.id || paramActivityId || createLessonActivityId()).trim();
+					setLocalDraftId(resolvedLocalDraftId);
+					setStandaloneActivityId(resolvedActivityId);
+					setActivityName(String(existingDraft['lesson-name'] || defaultActivityName));
+					setData(normalizeInput(existingDraft['lesson-input-data'] || {}));
 
-					const cloneSeed = getSlideshowCloneSeed(cloneSeedKey);
-					if (cloneSeed) {
-						const clonedActivityId = createLessonActivityId();
-						const clonedActivityName = String(cloneSeed?.['lesson-name'] || defaultActivityName);
-						const clonedData = normalizeInput(cloneSeed?.['lesson-input-data'] || {});
-
-						setLocalDraftId('');
-						setStandaloneActivityId(clonedActivityId);
-						setActivityName(clonedActivityName);
-						setData(clonedData);
-
-						if (typeof window !== 'undefined') {
-							const nextUrl = new URL(window.location.href);
-							nextUrl.searchParams.set('activityId', clonedActivityId);
-							nextUrl.searchParams.delete('localDraftId');
-							window.history.replaceState({}, '', nextUrl.toString());
-						}
-						return;
-					}
+					const nextUrl = new URL(window.location.href);
+					nextUrl.searchParams.set('activityId', resolvedActivityId);
+					nextUrl.searchParams.set('localDraftId', resolvedLocalDraftId);
+					window.history.replaceState({}, '', nextUrl.toString());
+					return;
 				}
 
+				const cloneSeed = getSlideshowCloneSeed(cloneSeedKey);
+				if (cloneSeed) {
+					const clonedActivityId = createLessonActivityId();
+					const resolvedLocalDraftId = createLessonActivityId();
+					const clonedActivityName = String(cloneSeed['lesson-name'] || defaultActivityName);
+					const clonedData = normalizeInput(cloneSeed['lesson-input-data'] || {});
+					const cloneDraft = upsertStandaloneDraft({
+						localDraftId: resolvedLocalDraftId,
+						id: clonedActivityId,
+						'tmk-template': String(cloneSeed['tmk-template'] || formName || '').trim(),
+						formName,
+						'lesson-name': clonedActivityName,
+						'lesson-input-data': clonedData,
+						'created-at': Date.now(),
+						'modified-at': Date.now(),
+						isSlideshowClone: true,
+						slideshowSessionId: String(url.searchParams.get('slideshowSessionId') || '').trim(),
+						cloneSeedKey,
+						sourceType: cloneSeed.sourceType,
+						sourceProjectId: cloneSeed.sourceProjectId,
+						sourceActivityIndex: cloneSeed.sourceActivityIndex,
+						sourceActivityId: cloneSeed.sourceActivityId,
+						sourceLocalDraftId: cloneSeed.sourceLocalDraftId,
+						savedToApi: false,
+					});
+
+					setLocalDraftId(resolvedLocalDraftId);
+					setStandaloneActivityId(clonedActivityId);
+					setActivityName(clonedActivityName);
+					setData(clonedData);
+
+					const nextUrl = new URL(window.location.href);
+					nextUrl.searchParams.set('activityId', clonedActivityId);
+					nextUrl.searchParams.set('localDraftId', resolvedLocalDraftId);
+					window.history.replaceState({}, '', nextUrl.toString());
+					if (cloneDraft) {
+						latestLocalDraftIdRef.current = resolvedLocalDraftId;
+					}
+					return;
+				}
+			}
+
+			if (!paramProjectId) {
 				if (paramLocalDraftId) {
 					setLocalDraftId(paramLocalDraftId);
 				}
@@ -496,6 +552,16 @@ export function useLessonActivityProject({
 		const timeout = setTimeout(() => {
 			const normalizedInput = normalizeInput(data);
 			persist(normalizedInput);
+
+			if (isPresentationCloneRef.current) {
+				persistStandaloneDraftRecord({
+					nextData: normalizedInput,
+					nextActivityName: activityName,
+					nextActivityId: standaloneActivityId,
+					markSaved: false,
+				});
+				return;
+			}
 
 			if (projectId && Number.isInteger(activityIndex)) {
 				const projects = getAllStoredProjects();
@@ -755,7 +821,7 @@ export function useLessonActivityProject({
 					template: formName,
 					lessonName: activityName || defaultActivityName,
 					lessonInputData: normalizedInput,
-					createdAt: Date.now(),
+					createdAt: Number(getStandaloneDraftByLocalId(localDraftId)?.['created-at']) || Date.now(),
 					modifiedAt: Date.now(),
 					extra: {
 						formName,
@@ -769,16 +835,13 @@ export function useLessonActivityProject({
 				return false;
 			}
 
-			let persistedDraft = null;
-			if (!isPresentationCloneRef.current) {
-				persist(normalizedInput);
-				persistedDraft = persistStandaloneDraftRecord({
-					nextData: normalizedInput,
-					nextActivityName: activityName || defaultActivityName,
-					nextActivityId: activityId,
-					markSaved: true,
-				});
-			}
+			persist(normalizedInput);
+			const persistedDraft = persistStandaloneDraftRecord({
+				nextData: normalizedInput,
+				nextActivityName: activityName || defaultActivityName,
+				nextActivityId: activityId,
+				markSaved: true,
+			});
 
 			setStandaloneActivityId(activityId);
 			if (persistedDraft?.localDraftId) {

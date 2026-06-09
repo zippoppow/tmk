@@ -91,7 +91,7 @@ export default function ActivityShell({
 	};
 
 	const handleSaveActivityClick = async () => {
-		if (projectId) {
+		if (projectId && !isSlideshowMode) {
 			const didSave = await handleSave();
 			if (didSave) {
 				setNotice({ open: true, severity: 'success', message: 'Changes have been saved.' });
@@ -104,6 +104,8 @@ export default function ActivityShell({
 			setNotice({ open: true, severity: 'success', message: 'Changes have been saved.' });
 		}
 	};
+
+	const shouldShowProjectActions = !isSlideshowFullscreenMode;
 
 	useEffect(() => {
 		if (typeof window === 'undefined') {
@@ -303,10 +305,11 @@ export default function ActivityShell({
 					</Box>
 				)}
 
-				{!isSlideshowFullscreenMode && (
+				{
 					<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', gap: 1, mb: 2, flexWrap: 'wrap' }}>
 					{!projectId && (
 						<>
+							{shouldShowProjectActions && (
 							<Button
 								variant="outlined"
 								disabled={isSaving || isSlideshowMode}
@@ -318,6 +321,7 @@ export default function ActivityShell({
 							>
 								Add to Project(s)
 							</Button>
+							)}
 							<Button
 								variant="contained"
 								color="primary"
@@ -327,7 +331,7 @@ export default function ActivityShell({
 							>
 								{isSaving ? 'Saving...' : 'Save Activity'}
 							</Button>
-							{standaloneActivityId && (
+							{shouldShowProjectActions && standaloneActivityId && (
 								<Button
 									variant="outlined"
 									color="error"
@@ -350,6 +354,7 @@ export default function ActivityShell({
 					)}
 					{projectId && (
 						<>
+							{shouldShowProjectActions && (
 							<Button
 								variant="outlined"
 								disabled={isSaving || isSlideshowMode}
@@ -361,6 +366,7 @@ export default function ActivityShell({
 							>
 								Add to Project(s)
 							</Button>
+							)}
 							<Button
 								variant="contained"
 								color="primary"
@@ -384,7 +390,7 @@ export default function ActivityShell({
 						Download as PDF
 					</Button>
 					</Box>
-				)}
+				}
 
 				<Card id="lesson-activity-print-root" sx={{ borderRadius: 2, boxShadow: 8 }}>
 					<CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
