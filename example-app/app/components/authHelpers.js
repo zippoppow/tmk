@@ -42,6 +42,7 @@ const DIY_LAST_AUTH_USER_KEY = 'tmk-diy-last-auth-user';
 const UTILITIES_TOKEN_STORAGE_KEY = 'tmk-utilities-api-access-token';
 const LEGACY_AUTH_HINT_SESSION_KEY = 'tmk_teachable_auth_hint';
 const LEGACY_AUTH_EMAIL_SESSION_KEY = 'tmk_teachable_user_email';
+const AUTH_ME_TIMEOUT_MS = 10000;
 
 function authDebug(label, payload) {
 	if (!AUTH_DEBUG_ENABLED) {
@@ -781,15 +782,26 @@ export async function fetchAuthenticatedUser() {
 		return AUTH_BYPASS_USER;
 	}
 
+	const canAbort = typeof AbortController !== 'undefined';
+	const controller = canAbort ? new AbortController() : null;
+	const timeoutId = controller
+		? setTimeout(() => {
+			controller.abort();
+		}, AUTH_ME_TIMEOUT_MS)
+		: null;
+
 	try {
 		const mePath = addTeachableSessionToPath(OAUTH_ENDPOINTS.me);
 		authDebug('fetchAuthenticatedUser -> request', {
 			url: mePath,
 			method: 'GET',
+			timeoutMs: AUTH_ME_TIMEOUT_MS,
 		});
 		const response = await fetch(mePath, {
 			method: 'GET',
 			credentials: 'include',
+			cache: 'no-store',
+			signal: controller?.signal,
 		});
 		authDebug('fetchAuthenticatedUser <- response', {
 			status: response.status,
@@ -823,9 +835,17 @@ export async function fetchAuthenticatedUser() {
 	} catch (err) {
 		clearAuthStateHints();
 		if (process.env.NODE_ENV !== 'production') {
-			console.error('[TMK auth] /me fetch failed (possible CORS or network error):', err?.message || err);
+			const isTimeoutError = err?.name === 'AbortError';
+			console.error(
+				`[TMK auth] /me fetch failed (${isTimeoutError ? 'request timeout' : 'possible CORS or network error'}):`,
+				err?.message || err
+			);
 		}
 		return null;
+	} finally {
+		if (timeoutId) {
+			clearTimeout(timeoutId);
+		}
 	}
 }
 

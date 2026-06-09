@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { buildTeachableStartUrl, fetchAuthenticatedUser } from '../components/authHelpers';
 
 const DEFAULT_NEXT_PATH = '/';
+const SESSION_CHECK_FALLBACK_MS = 12000;
 
 function sanitizeNextPath(candidate) {
   if (!candidate || typeof candidate !== 'string') {
@@ -39,6 +40,8 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isChecking, setIsChecking] = useState(true);
+  const [sessionCheckTimedOut, setSessionCheckTimedOut] = useState(false);
+  const [sessionCheckAttempt, setSessionCheckAttempt] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
 
   const nextPath = useMemo(() => {
@@ -47,6 +50,14 @@ function LoginPageContent() {
 
   useEffect(() => {
     let isMounted = true;
+    setSessionCheckTimedOut(false);
+
+    const fallbackTimerId = setTimeout(() => {
+      if (isMounted) {
+        setSessionCheckTimedOut(true);
+        setIsChecking(false);
+      }
+    }, SESSION_CHECK_FALLBACK_MS);
 
     async function checkSession() {
       const user = await fetchAuthenticatedUser();
@@ -59,6 +70,7 @@ function LoginPageContent() {
         return;
       }
 
+      setSessionCheckTimedOut(false);
       setIsChecking(false);
     }
 
@@ -66,8 +78,9 @@ function LoginPageContent() {
 
     return () => {
       isMounted = false;
+      clearTimeout(fallbackTimerId);
     };
-  }, [nextPath, router]);
+  }, [nextPath, router, sessionCheckAttempt]);
 
   useEffect(() => {
     const authFlag = searchParams.get('auth');
@@ -85,6 +98,12 @@ function LoginPageContent() {
 
   function handleLogin() {
     window.location.href = buildTeachableStartUrl(window.location.origin + nextPath);
+  }
+
+  function handleRetrySessionCheck() {
+    setSessionCheckTimedOut(false);
+    setIsChecking(true);
+    setSessionCheckAttempt((value) => value + 1);
   }
 
   if (isChecking) {
@@ -135,6 +154,43 @@ function LoginPageContent() {
           >
             {errorMessage}
           </div>
+        ) : null}
+
+        {sessionCheckTimedOut ? (
+          <div
+            style={{
+              marginTop: '14px',
+              background: '#fff7e6',
+              color: '#8a5800',
+              border: '1px solid #f5d68b',
+              borderRadius: '10px',
+              padding: '10px 12px',
+              fontSize: '14px',
+            }}
+          >
+            Session check timed out. Please retry, or continue to sign in.
+          </div>
+        ) : null}
+
+        {sessionCheckTimedOut ? (
+          <button
+            type="button"
+            onClick={handleRetrySessionCheck}
+            style={{
+              marginTop: '12px',
+              width: '100%',
+              border: '1px solid #d7dee7',
+              borderRadius: '10px',
+              background: '#ffffff',
+              color: '#1c2b3a',
+              fontSize: '15px',
+              fontWeight: 600,
+              padding: '10px 12px',
+              cursor: 'pointer',
+            }}
+          >
+            Retry Session Check
+          </button>
         ) : null}
 
         <button
