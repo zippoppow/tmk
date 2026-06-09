@@ -68,9 +68,14 @@ export default function LessonActivitySlideshowPage() {
 	const [loadingStandalone, setLoadingStandalone] = useState(false);
 	const [standaloneLoadError, setStandaloneLoadError] = useState('');
 	const [isIframeFullscreen, setIsIframeFullscreen] = useState(false);
+	const [isTransitionSaving, setIsTransitionSaving] = useState(false);
+	const [transitionIntent, setTransitionIntent] = useState('');
 	const hasInstalledHistoryGuard = useRef(false);
 	const iframeRef = useRef(null);
 	const [iframeHeight, setIframeHeight] = useState('82vh');
+	const flushMessageCounterRef = useRef(0);
+	const FLUSH_DRAFT_MESSAGE = 'TMK_FLUSH_LOCAL_DRAFT';
+	const FLUSH_DRAFT_ACK_MESSAGE = 'TMK_FLUSH_LOCAL_DRAFT_ACK';
 	const handleFullscreen = () => {
 		const iframe = iframeRef.current;
 		if (!iframe) return;
@@ -368,12 +373,83 @@ export default function LessonActivitySlideshowPage() {
 	const backRoute = isStandaloneMode ? '/lesson-activities' : '/lesson-projects';
 	const backLabel = isStandaloneMode ? 'Back to Lesson Activities' : 'Back to Lesson Projects';
 
-	const goToPrevious = () => {
-		setCurrentSlideIndex((prev) => Math.max(0, prev - 1));
+	const flushCurrentSlideDraft = async () => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+
+		const iframeWindow = iframeRef.current?.contentWindow;
+		if (!iframeWindow) {
+			return;
+		}
+
+		const requestId = `flush_${Date.now()}_${flushMessageCounterRef.current++}`;
+
+		await new Promise((resolve) => {
+			let settled = false;
+			const timeoutId = window.setTimeout(() => {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				window.removeEventListener('message', handleAck);
+				resolve();
+			}, 450);
+
+			const handleAck = (event) => {
+				const payload = event?.data;
+				if (!payload || payload.type !== FLUSH_DRAFT_ACK_MESSAGE) {
+					return;
+				}
+				if (String(payload.requestId || '') !== requestId) {
+					return;
+				}
+				if (event.source !== iframeWindow) {
+					return;
+				}
+
+				if (settled) {
+					return;
+				}
+				settled = true;
+				window.clearTimeout(timeoutId);
+				window.removeEventListener('message', handleAck);
+				resolve();
+			};
+
+			window.addEventListener('message', handleAck);
+			iframeWindow.postMessage(
+				{
+					type: FLUSH_DRAFT_MESSAGE,
+					requestId,
+				},
+				window.location.origin
+			);
+		});
 	};
 
-	const goToNext = () => {
-		setCurrentSlideIndex((prev) => Math.min(totalSlides - 1, prev + 1));
+	const goToPrevious = async () => {
+		setTransitionIntent('previous');
+		setIsTransitionSaving(true);
+		try {
+			await flushCurrentSlideDraft();
+			setCurrentSlideIndex((prev) => Math.max(0, prev - 1));
+		} finally {
+			setIsTransitionSaving(false);
+			setTransitionIntent('');
+		}
+	};
+
+	const goToNext = async () => {
+		setTransitionIntent('next');
+		setIsTransitionSaving(true);
+		try {
+			await flushCurrentSlideDraft();
+			setCurrentSlideIndex((prev) => Math.min(totalSlides - 1, prev + 1));
+		} finally {
+			setIsTransitionSaving(false);
+			setTransitionIntent('');
+		}
 	};
 
 	const getUnsavedCloneDrafts = () => {
@@ -406,8 +482,14 @@ export default function LessonActivitySlideshowPage() {
 		});
 	};
 
-	const handleExitSlideshow = () => {
+	const handleExitSlideshow = async () => {
+		setTransitionIntent('exit');
+		setIsTransitionSaving(true);
+		await flushCurrentSlideDraft();
+
 		if (typeof window === 'undefined') {
+			setIsTransitionSaving(false);
+			setTransitionIntent('');
 			router.push(isStandaloneMode ? backRoute : '/lesson-projects?saved=project-activity');
 			return;
 		}
@@ -417,6 +499,8 @@ export default function LessonActivitySlideshowPage() {
 		if (unsavedCloneDrafts.length > 0) {
 			const shouldExit = window.confirm(buildUnsavedExitMessage(unsavedCloneDrafts.length));
 			if (!shouldExit) {
+				setIsTransitionSaving(false);
+				setTransitionIntent('');
 				return;
 			}
 			cleanupUnsavedCloneDrafts(unsavedCloneDrafts);
@@ -474,8 +558,23 @@ export default function LessonActivitySlideshowPage() {
 			return;
 		}
 
-		const handleFullscreenChange = () => {
-			setIsIframeFullscreen(Boolean(document.fullscreenElement));
+		const handleFullscreenChange = async () => {
+			const isFullscreenNow = Boolean(document.fullscreenElement);
+
+			// When user exits fullscreen (commonly via Escape), flush pending draft changes
+			// before removing the fullscreen query flag, which reloads the iframe source.
+			if (isIframeFullscreen && !isFullscreenNow) {
+				setTransitionIntent('fullscreen-exit');
+				setIsTransitionSaving(true);
+				try {
+					await flushCurrentSlideDraft();
+				} finally {
+					setIsTransitionSaving(false);
+					setTransitionIntent('');
+				}
+			}
+
+			setIsIframeFullscreen(isFullscreenNow);
 		};
 		document.addEventListener('fullscreenchange', handleFullscreenChange);
 
@@ -501,7 +600,7 @@ export default function LessonActivitySlideshowPage() {
 			window.removeEventListener('resize', adjustIframeHeight);
 			document.removeEventListener('fullscreenchange', handleFullscreenChange);
 		};
-	}, [isClient, safeIndex, currentSlideSrc]);
+	}, [currentSlideSrc, flushCurrentSlideDraft, isClient, isIframeFullscreen, safeIndex]);
 
 	if (!isClient) {
 		return (
@@ -569,6 +668,17 @@ export default function LessonActivitySlideshowPage() {
 		);
 	}
 
+	const transitionStatusLabel =
+		transitionIntent === 'previous'
+			? 'Saving... then going to previous slide'
+			: transitionIntent === 'next'
+				? 'Saving... then going to next slide'
+				: transitionIntent === 'exit'
+					? 'Saving...'
+					: transitionIntent === 'fullscreen-exit'
+						? 'Saving...'
+					: 'Saving...';
+
 	return (
 		<Box
 			component="main"
@@ -581,20 +691,25 @@ export default function LessonActivitySlideshowPage() {
 		>
 			<Container maxWidth="xl">
 				<Paper sx={{ p: 1.5, borderRadius: 2.5, mb: 1.2 }}>
+					{isTransitionSaving && (
+						<Typography sx={{ mb: 1, color: '#4b5563', fontSize: '0.9rem', fontWeight: 600 }}>
+							{transitionStatusLabel}
+						</Typography>
+					)}
 					<Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'stretch', md: 'center' }}>
-						<Button variant="outlined" onClick={handleExitSlideshow} sx={{ textTransform: 'none' }}>
-							{backLabel}
+						<Button variant="outlined" onClick={handleExitSlideshow} disabled={isTransitionSaving} sx={{ textTransform: 'none' }}>
+							{isTransitionSaving && transitionIntent === 'exit' ? 'Saving...' : backLabel}
 						</Button>
 						<Typography sx={{ flex: 1, fontWeight: 700 }}>
 							{slideshow.projectName} · Slide {safeIndex + 1} of {totalSlides}
 						</Typography>
-						<Button variant="outlined" disabled={safeIndex === 0} onClick={goToPrevious} sx={{ textTransform: 'none' }}>
-							Previous
+						<Button variant="outlined" disabled={safeIndex === 0 || isTransitionSaving} onClick={goToPrevious} sx={{ textTransform: 'none' }}>
+							{isTransitionSaving && transitionIntent === 'previous' ? 'Saving...' : 'Previous'}
 						</Button>
-						<Button variant="contained" disabled={safeIndex >= totalSlides - 1} onClick={goToNext} sx={{ textTransform: 'none' }}>
-							Next
+						<Button variant="contained" disabled={safeIndex >= totalSlides - 1 || isTransitionSaving} onClick={goToNext} sx={{ textTransform: 'none' }}>
+							{isTransitionSaving && transitionIntent === 'next' ? 'Saving...' : 'Next'}
 						</Button>
-						<Button variant="outlined" onClick={handleFullscreen} sx={{ textTransform: 'none', ml: { xs: 0, md: 1 } }}>
+						<Button variant="outlined" onClick={handleFullscreen} disabled={isTransitionSaving} sx={{ textTransform: 'none', ml: { xs: 0, md: 1 } }}>
 							Fullscreen
 						</Button>
 					</Stack>

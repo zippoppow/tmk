@@ -64,6 +64,7 @@ export function useLessonActivityProject({
 	const latestProjectIdRef = useRef('');
 	const latestLocalDraftIdRef = useRef('');
 	const isPresentationCloneRef = useRef(false);
+	const flushLocalDraftRef = useRef(() => {});
 
 	useEffect(() => {
 		normalizeInputDataRef.current = normalizeInputData;
@@ -227,6 +228,40 @@ export function useLessonActivityProject({
 			markSaved: false,
 		});
 	};
+
+	useEffect(() => {
+		flushLocalDraftRef.current = flushLocalDraft;
+	});
+
+	useEffect(() => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+
+		const handleMessage = (event) => {
+			const payload = event?.data;
+			if (!payload || payload.type !== 'TMK_FLUSH_LOCAL_DRAFT') {
+				return;
+			}
+
+			flushLocalDraftRef.current?.();
+
+			if (event.source && typeof event.source.postMessage === 'function') {
+				event.source.postMessage(
+					{
+						type: 'TMK_FLUSH_LOCAL_DRAFT_ACK',
+						requestId: String(payload.requestId || ''),
+					},
+					event.origin || '*'
+				);
+			}
+		};
+
+		window.addEventListener('message', handleMessage);
+		return () => {
+			window.removeEventListener('message', handleMessage);
+		};
+	}, []);
 
 	useEffect(() => {
 		latestDataRef.current = data;
@@ -502,7 +537,7 @@ export function useLessonActivityProject({
 
 	useEffect(() => {
 		return () => {
-			flushLocalDraft();
+			flushLocalDraftRef.current?.();
 		};
 	}, []);
 
