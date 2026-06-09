@@ -105,7 +105,8 @@ export default function ActivityShell({
 		}
 	};
 
-	const shouldShowProjectActions = !isSlideshowFullscreenMode;
+	const shouldShowActionButtons = !isSlideshowMode;
+	const shouldShowProjectActions = shouldShowActionButtons && !isSlideshowFullscreenMode;
 
 	useEffect(() => {
 		if (typeof window === 'undefined') {
@@ -305,7 +306,7 @@ export default function ActivityShell({
 					</Box>
 				)}
 
-				{
+				{shouldShowActionButtons && (
 					<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', gap: 1, mb: 2, flexWrap: 'wrap' }}>
 					{!projectId && (
 						<>
@@ -390,7 +391,7 @@ export default function ActivityShell({
 						Download as PDF
 					</Button>
 					</Box>
-				}
+				)}
 
 				<Card id="lesson-activity-print-root" sx={{ borderRadius: 2, boxShadow: 8 }}>
 					<CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
