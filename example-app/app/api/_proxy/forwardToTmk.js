@@ -5,6 +5,21 @@ const HOP_BY_HOP_REQUEST_HEADERS = new Set([
   'content-length',
   'host',
   'transfer-encoding',
+  // Avoid upstream compressed payload/header mismatches when proxying through Node fetch.
+  'accept-encoding',
+]);
+
+const HOP_BY_HOP_RESPONSE_HEADERS = new Set([
+  'connection',
+  'content-length',
+  'content-encoding',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
 ]);
 
 const TEACHABLE_SESSION_PARAM = 'teachable_session';
@@ -48,6 +63,8 @@ function rewriteSetCookieForProxy(cookieValue) {
 function buildProxyResponseHeaders(upstreamHeaders) {
   const headers = new Headers(upstreamHeaders || {});
   const setCookies = getSetCookieHeaders(upstreamHeaders);
+
+  HOP_BY_HOP_RESPONSE_HEADERS.forEach((header) => headers.delete(header));
 
   if (setCookies.length > 0) {
     headers.delete('set-cookie');
