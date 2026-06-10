@@ -241,7 +241,7 @@ export default function MorphMatchRelatedWordsPage() {
       <div class="instructions">Match focus words with related words that share morph connections.</div>
     </div>
     <div class="header-column">
-      <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
+      <img src="/branding/tmk_diy_logo_templates.png" alt="The Morphology Kit" />
     </div>
   </div>
   <div class="cols">

@@ -318,7 +318,7 @@ export default function IntroPage() {
 				<div class="morpheme">Morpheme(s):<span class="morpheme-value">${escapeHtml(data.morpheme)}</span></div>
 				<div class="instructions">${escapeHtml(INTRO_INSTRUCTIONS)}</div>
 			</div>
-			<img class="logo" src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
+			<img class="logo" src="/branding/tmk_diy_logo_templates.png" alt="The Morphology Kit" />
 		</header>
 		<section class="grid">${wordsHtml}</section>
 		<section class="question">

@@ -240,7 +240,7 @@ export default function CommonBaseWordPage() {
       <div class="instructions">Sort the word into three different columns based on their word families.</div>
     </div>
     <div class="header-column">
-      <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
+      <img src="/branding/tmk_diy_logo_templates.png" alt="The Morphology Kit" />
     </div>
   </div>
   <div class="word-grid">${gridCells}</div>

@@ -315,7 +315,7 @@ export default function PartOfSpeechPage() {
       <div class="instructions">Match the words to their part(s) of speech. Drag words from the grid into the correct part-of-speech boxes.</div>
     </div>
     <div class="header-column">
-      <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
+      <img src="/branding/tmk_diy_logo_templates.png" alt="The Morphology Kit" />
     </div>
   </div>
   <div class="word-grid">${gridCells}</div>

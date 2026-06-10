@@ -241,7 +241,7 @@ export default function MorphMatchDefinitionsPage() {
       <div class="instructions">Based on your knowledge of the morpheme, match the words on the left to the deﬁnitions on the right.</div>
     </div>
     <div class="header-column">
-      <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
+      <img src="/branding/tmk_diy_logo_templates.png" alt="The Morphology Kit" />
     </div>
   </div>
   <div class="content">

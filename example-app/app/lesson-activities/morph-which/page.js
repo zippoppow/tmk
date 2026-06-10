@@ -197,7 +197,7 @@ export default function MorphWhichPage() {
       <div class="instructions">Which words fit best?</div>
     </div>
     <div class="header-column">
-      <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
+      <img src="/branding/tmk_diy_logo_templates.png" alt="The Morphology Kit" />
     </div>
   </div>
   <div class="questions">${questionBlocks}</div>

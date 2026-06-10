@@ -149,7 +149,7 @@ export default function WordMeaningPage() {
 
 		const headerLogo = appendElement(header, 'div', 'header-column');
 		const logo = printDocument.createElement('img');
-		logo.src = `${window.location.origin}/branding/tmk_diy_logo.png`;
+		logo.src = `${window.location.origin}/branding/tmk_diy_logo_templates.png`;
 		logo.alt = 'The Morphology Kit';
 		headerLogo.appendChild(logo);
 

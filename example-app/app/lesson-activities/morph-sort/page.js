@@ -283,7 +283,7 @@ export default function MorphSortPage() {
       <div class="instructions">Find the families.  Sort the words into two columns based on their related meanings.</div>
     </div>
     <div class="header-column">
-      <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
+      <img src="/branding/tmk_diy_logo_templates.png" alt="The Morphology Kit" />
     </div>
   </div>
   <div class="cols">

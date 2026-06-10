@@ -235,7 +235,7 @@ export default function ConstructorDeconstructorPage() {
       <div class="instructions">See instructions below.</div>
     </div>
     <div class="header-column">
-		 <img src="${window.location.origin}/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
+		 <img src="${window.location.origin}/branding/tmk_diy_logo_templates.png" alt="The Morphology Kit" />
     </div>
   </div>
   <div class="section"><span class="section-title">Constructor</span><span> Create words from the word parts:</span></div>

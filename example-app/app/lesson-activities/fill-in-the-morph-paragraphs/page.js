@@ -140,7 +140,7 @@ export default function FillInTheMorphParagraphsPage() {
       <div class="instructions">Complete each morph pair, then write or annotate the paragraph.</div>
     </div>
     <div class="header-column">
-      <img src="/branding/tmk_diy_logo.png" alt="The Morphology Kit" />
+      <img src="/branding/tmk_diy_logo_templates.png" alt="The Morphology Kit" />
     </div>
   </div>
   <div class="layout">
