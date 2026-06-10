@@ -1010,12 +1010,6 @@ export default function LessonActivitiesPage() {
                 </Paper>
 
                 <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
-                    <Typography sx={{ fontSize: '2rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 0 }}>
-                        Your Standalone Lesson Activities
-                    </Typography>
-                    <Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 4 }}>
-                        Select, open, present, or remove your standalone lesson activities. Staged activities are local-only drafts. Saved activities are synced to the API.
-                    </Typography>
                     {isAuthenticated && hasDiyAccess && (
                         <Box sx={{ mb: 2.5 }}>
                             <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center" flexWrap="wrap">
@@ -1033,6 +1027,12 @@ export default function LessonActivitiesPage() {
                             </Stack>
                         </Box>
                     )}
+                    <Typography sx={{ fontSize: '2rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 0 }}>
+                        Your Standalone Lesson Activities
+                    </Typography>
+                    <Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 4 }}>
+                        Select, open, present, or remove your standalone lesson activities. Staged activities are local-only drafts. Saved activities are synced to the API.
+                    </Typography>
                     {!hasDiyAccess ? (
                         <Typography sx={{ color: '#666', fontSize: '0.95rem' }}>Active DIY enrollment required.</Typography>
                     ) : standaloneLoading ? (

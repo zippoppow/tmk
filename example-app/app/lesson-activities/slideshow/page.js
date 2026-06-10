@@ -483,17 +483,17 @@ export default function LessonActivitySlideshowPage() {
 			return;
 		}
 
-		const unsavedCloneDrafts = getUnsavedCloneDrafts();
+		// const unsavedCloneDrafts = getUnsavedCloneDrafts();
 
-		if (unsavedCloneDrafts.length > 0) {
-			const shouldExit = window.confirm(buildUnsavedExitMessage(unsavedCloneDrafts.length));
-			if (!shouldExit) {
-				setIsTransitionSaving(false);
-				setTransitionIntent('');
-				return;
-			}
-			cleanupUnsavedCloneDrafts(unsavedCloneDrafts);
-		}
+		// if (unsavedCloneDrafts.length > 0) {
+		// 	const shouldExit = window.confirm(buildUnsavedExitMessage(unsavedCloneDrafts.length));
+		// 	if (!shouldExit) {
+		// 		setIsTransitionSaving(false);
+		// 		setTransitionIntent('');
+		// 		return;
+		// 	}
+		// 	cleanupUnsavedCloneDrafts(unsavedCloneDrafts);
+		// }
 
 		router.push(isStandaloneMode ? backRoute : '/lesson-projects?saved=project-activity');
 	};
@@ -524,11 +524,11 @@ export default function LessonActivitySlideshowPage() {
 				return;
 			}
 
-			const shouldExit = window.confirm(buildUnsavedExitMessage(unsavedCloneDrafts.length));
-			if (!shouldExit) {
-				window.history.pushState({ slideshowGuard: true }, '', window.location.href);
-				return;
-			}
+			// const shouldExit = window.confirm(buildUnsavedExitMessage(unsavedCloneDrafts.length));
+			// if (!shouldExit) {
+			// 	window.history.pushState({ slideshowGuard: true }, '', window.location.href);
+			// 	return;
+			// }
 
 			cleanupUnsavedCloneDrafts(unsavedCloneDrafts);
 		};
