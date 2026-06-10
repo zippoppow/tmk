@@ -19,7 +19,8 @@ export default function TmkLogo({
 				component="img"
 				src={TMK_DIY_LOGO_SRC}
 				alt={alt}
-				sx={{ width: '100%', maxWidth, height: 'auto', ...sx }}
+				sx={{ width: '100%', maxWidth, height: 'auto', cursor: 'pointer', ...sx }}
+				onClick={() => router.push('/')}
 				{...rest}
 			/>
 		);
@@ -33,7 +34,8 @@ export default function TmkLogo({
 				width={width}
 				height={height}
 				priority={priority}
-				style={{ width: '100%', height: 'auto' }}
+				style={{ width: '100%', height: 'auto', cursor: 'pointer' }}
+				onClick={() => router.push('/')}
 			/>
 		</Box>
 	);

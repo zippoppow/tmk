@@ -1290,7 +1290,7 @@ export default function LessonProjectsPage() {
 					</Stack>
 					<Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} sx={{ mb: 1, ml: 'auto' }}>
 						<Button variant="outlined" onClick={() => router.push('/')} sx={{ textTransform: 'none' }}>
-							Back to Dashboard
+							Back to Home
 						</Button>
 						<Button
 							variant="contained"
@@ -1368,17 +1368,6 @@ export default function LessonProjectsPage() {
 					</Box>
 				</Paper>
 				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
-					<Typography sx={{ fontSize: '2rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 0 }}>
-						Lesson Activity Projects/Sequences
-					</Typography>
-					<Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 4 }}>
-						Now that you've created a project, add one or more lesson activities to that project.
-					</Typography>
-					{displayProjects.length === 0 && (
-						<Typography sx={{ color: '#bbb', fontSize: '1.2rem', textAlign: 'center', py: 2 }}>
-							No lesson activity projects yet.
-						</Typography>
-					)}
 					<Box sx={{ pt: 1, mt: 1, pb: 2, mb: 1 }}>
 						{isAuthenticated ? (
 							<Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end" flexWrap="wrap">
@@ -1406,6 +1395,18 @@ export default function LessonProjectsPage() {
 							</Typography>
 						)}
 					</Box>
+					<Typography sx={{ fontSize: '2rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 0 }}>
+						Your Lesson Activity Projects
+					</Typography>
+					<Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 4 }}>
+						Now that you've created a project, add one or more lesson activities to that project. Projects allow you to build sequences of lesson activities.
+					</Typography>
+					{displayProjects.length === 0 && (
+						<Typography sx={{ color: '#bbb', fontSize: '1.2rem', textAlign: 'center', py: 2 }}>
+							No lesson activity projects yet.
+						</Typography>
+					)}
+					
 					<Stack spacing={2}>
 						{displayProjects.length > 0 && (
 							<Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'stretch', md: 'center' }}>

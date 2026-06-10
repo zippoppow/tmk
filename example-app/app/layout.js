@@ -10,7 +10,7 @@ const lato = Lato({
 
 export const metadata = {
   title: 'The Morphology Kit® DIY',
-  description: 'Tools and resources for teaching morphology.',
+  description: 'Tools and resources for creating your own morphology-based lesson activities based on The Morphology Kit® Latin Progression lesson activities.',
 };
 
 export default function RootLayout({ children }) {
