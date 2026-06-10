@@ -46,20 +46,24 @@ function DragHandle({ id, data, disabled = false }) {
 				display: 'inline-flex',
 				alignItems: 'center',
 				justifyContent: 'center',
-				width: 28,
-				height: 28,
-				border: '1px dashed #667eea',
-				borderRadius: 1,
-				backgroundColor: isDragging ? 'rgba(102, 126, 234, 0.10)' : '#f9faff',
-				color: '#4020A7',
-				fontSize: '0.9rem',
+				width: 24,
+				height: 24,
+				border: '1px solid #c2c8d6',
+				borderRadius: 0.75,
+				backgroundColor: isDragging ? 'rgba(64, 32, 167, 0.12)' : 'transparent',
+				color: '#263142',
+				fontSize: '0.72rem',
 				lineHeight: 1,
 				cursor: disabled ? 'default' : isDragging ? 'grabbing' : 'grab',
 				userSelect: 'none',
 				touchAction: disabled ? 'auto' : 'none',
 				opacity: disabled ? 0.45 : isDragging ? 0.75 : 1,
 				transform: CSS.Translate.toString(transform),
-				transition: 'opacity 120ms ease, transform 120ms ease, background-color 120ms ease',
+				transition: 'opacity 120ms ease, transform 120ms ease, background-color 120ms ease, border-color 120ms ease',
+				'&:hover': {
+					backgroundColor: 'rgba(64, 32, 167, 0.08)',
+					borderColor: '#4020A7',
+				},
 			}}
 		>
 			::
@@ -70,6 +74,21 @@ function DragHandle({ id, data, disabled = false }) {
 export default function MorphSortPage() {
 	const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, wordIndex: -1 });
 	const [selectedWordIndex, setSelectedWordIndex] = useState(null);
+	const rowActionButtonSx = {
+		minWidth: 0,
+		width: 24,
+		height: 24,
+		border: '1px solid #c2c8d6',
+		borderRadius: 0.75,
+		backgroundColor: 'transparent',
+		color: '#263142',
+		fontSize: '0.72rem',
+		px: 0,
+		'&:hover': {
+			backgroundColor: 'rgba(64, 32, 167, 0.08)',
+			borderColor: '#4020A7',
+		},
+	};
 
 	const {
 		data,
@@ -366,11 +385,12 @@ export default function MorphSortPage() {
 								<ListItem
 									key={itemIndex}
 									disableGutters
+									sx={{ pr: 11 }}
 									secondaryAction={
-										<Box sx={{ display: 'flex', gap: 0.25 }}>
-											<IconButton size="small" aria-label="Move to Sort Box B" onClick={() => handleMoveBoxItem('left', itemIndex, 'right')} sx={{ fontSize: '0.8rem', color: '#fbfbfb', px: 0.5 }}>→B</IconButton>
-											<IconButton size="small" aria-label="Return to words" onClick={() => handleMoveBoxItem('left', itemIndex, 'words')} sx={{ fontSize: '0.8rem', color: '#fbfbfb', px: 0.5 }}>↩</IconButton>
-											<IconButton size="small" aria-label="Remove" onClick={() => removeItem('left', itemIndex)} sx={{ fontSize: '1.1rem', color: '#fbfbfb', px: 0.5 }}>×</IconButton>
+										<Box sx={{ display: 'flex', gap: 0.35 }}>
+											<IconButton size="small" aria-label="Move to Sort Box B" onClick={() => handleMoveBoxItem('left', itemIndex, 'right')} sx={rowActionButtonSx}>→B</IconButton>
+											<IconButton size="small" aria-label="Return to words" onClick={() => handleMoveBoxItem('left', itemIndex, 'words')} sx={rowActionButtonSx}>↩</IconButton>
+											<IconButton size="small" aria-label="Remove" onClick={() => removeItem('left', itemIndex)} sx={{ ...rowActionButtonSx, fontSize: '0.95rem' }}>×</IconButton>
 										</Box>
 									}
 								>
@@ -481,11 +501,12 @@ export default function MorphSortPage() {
 								<ListItem
 									key={itemIndex}
 									disableGutters
+									sx={{ pr: 11 }}
 									secondaryAction={
-										<Box sx={{ display: 'flex', gap: 0.25 }}>
-											<IconButton size="small" aria-label="Move to Sort Box A" onClick={() => handleMoveBoxItem('right', itemIndex, 'left')} sx={{ fontSize: '0.8rem', color: '#fbfbfb', px: 0.5 }}>A←</IconButton>
-											<IconButton size="small" aria-label="Return to words" onClick={() => handleMoveBoxItem('right', itemIndex, 'words')} sx={{ fontSize: '0.8rem', color: '#fbfbfb', px: 0.5 }}>↩</IconButton>
-											<IconButton size="small" aria-label="Remove" onClick={() => removeItem('right', itemIndex)} sx={{ fontSize: '1.1rem', color: '#fbfbfb', px: 0.5 }}>×</IconButton>
+										<Box sx={{ display: 'flex', gap: 0.35 }}>
+											<IconButton size="small" aria-label="Move to Sort Box A" onClick={() => handleMoveBoxItem('right', itemIndex, 'left')} sx={rowActionButtonSx}>A←</IconButton>
+											<IconButton size="small" aria-label="Return to words" onClick={() => handleMoveBoxItem('right', itemIndex, 'words')} sx={rowActionButtonSx}>↩</IconButton>
+											<IconButton size="small" aria-label="Remove" onClick={() => removeItem('right', itemIndex)} sx={{ ...rowActionButtonSx, fontSize: '0.95rem' }}>×</IconButton>
 										</Box>
 									}
 								>

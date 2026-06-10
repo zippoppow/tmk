@@ -270,7 +270,7 @@ export default function MorphWhichPage() {
 								variant="standard"
 								value={question}
 								onChange={(event) => setQuestion(index, event.target.value)}
-								placeholder="Question / root word"
+								placeholder="Question"
 								inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 								sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #ddd' } }}
 							/>
