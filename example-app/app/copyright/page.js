@@ -18,7 +18,7 @@ export default function CopyrightPage() {
 		>
 			<Container maxWidth="md">
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-					<TmkLogo sx={{ mb: 0 }} />
+					<TmkLogo sx={{ mb: 0 }} routeToHome />
 					<Button variant="outlined" onClick={() => router.push('/')} sx={{ textTransform: 'none' }}>
 						Back to Home
 					</Button>

@@ -1283,7 +1283,7 @@ export default function LessonProjectsPage() {
 			<Container maxWidth="xl">
 				<Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' }, alignItems: 'flex-end', pr: { xs: 0, md: 5 } }}>
 					<Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 1 }}>
-						<TmkLogo sx={{ mb: 2 }} />
+						<TmkLogo sx={{ mb: 2 }} routeToHome />
 						<Typography sx={{ fontSize: '3rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 1, pl: 2 }}>
 							Projects
 						</Typography>

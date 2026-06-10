@@ -82,7 +82,7 @@ export default function HomePage() {
         >
         <Container maxWidth="lg" sx={{ py: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <TmkLogo sx={{ mb: 0 }} priority />
+                <TmkLogo sx={{ mb: 0 }} priority routeToHome />
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <Typography variant="h2" component="h1">
                        DASHBOARD
