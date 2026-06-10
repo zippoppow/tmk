@@ -4,9 +4,18 @@ import { AUTH_BYPASS_ENABLED, AUTH_BYPASS_USER, exchangeTeachableSessionForTmkTo
 const DIY_COURSE_ID = '2944218';
 const DIY_ACCESS_STORAGE_KEY = 'tmk-diy-access-by-email';
 const DIY_LAST_AUTH_USER_KEY = 'tmk-diy-last-auth-user';
+const DIY_AUTH_CACHE_TTL_MS = 4 * 60 * 60 * 1000;
 
 function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
+}
+
+function isFreshTimestamp(value, now = Date.now()) {
+  const checkedAt = Number(value);
+  if (!Number.isFinite(checkedAt) || checkedAt <= 0) {
+    return false;
+  }
+  return now - checkedAt < DIY_AUTH_CACHE_TTL_MS;
 }
 
 function readDiyAccessMap() {
@@ -23,21 +32,34 @@ function readDiyAccessMap() {
   }
 }
 
-function readStoredDiyAccess(email) {
+function readStoredDiyAccess(email, now = Date.now()) {
   const key = normalizeEmail(email);
   if (!key) {
     return null;
   }
 
   const map = readDiyAccessMap();
-  if (typeof map[key] === 'boolean') {
-    return map[key];
+  const entry = map[key];
+  if (typeof entry === 'boolean') {
+    return {
+      value: entry,
+      checkedAt: null,
+      isFresh: false,
+    };
+  }
+
+  if (entry && typeof entry === 'object' && !Array.isArray(entry) && typeof entry.value === 'boolean') {
+    return {
+      value: entry.value,
+      checkedAt: Number(entry.checkedAt) || null,
+      isFresh: isFreshTimestamp(entry.checkedAt, now),
+    };
   }
 
   return null;
 }
 
-function writeStoredDiyAccess(email, hasAccess) {
+function writeStoredDiyAccess(email, hasAccess, checkedAt = Date.now()) {
   const key = normalizeEmail(email);
   if (!key || typeof window === 'undefined') {
     return;
@@ -45,14 +67,17 @@ function writeStoredDiyAccess(email, hasAccess) {
 
   try {
     const map = readDiyAccessMap();
-    map[key] = Boolean(hasAccess);
+    map[key] = {
+      value: Boolean(hasAccess),
+      checkedAt,
+    };
     window.localStorage.setItem(DIY_ACCESS_STORAGE_KEY, JSON.stringify(map));
   } catch {
     // Ignore storage failures (private mode/quota) and continue.
   }
 }
 
-function readStoredAuthUser() {
+function readStoredAuthUser(now = Date.now()) {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -64,18 +89,37 @@ function readStoredAuthUser() {
       return null;
     }
 
-    const email = String(parsed.email || parsed?.profile?.email || '').trim();
+    // Backward-compatible with prior shape: plain user object.
+    if (typeof parsed.email === 'string' || parsed?.profile?.email) {
+      const legacyEmail = String(parsed.email || parsed?.profile?.email || '').trim();
+      if (!legacyEmail) {
+        return null;
+      }
+
+      return {
+        user: parsed,
+        checkedAt: null,
+        isFresh: false,
+      };
+    }
+
+    const userData = parsed?.user;
+    const email = String(userData?.email || userData?.profile?.email || '').trim();
     if (!email) {
       return null;
     }
 
-    return parsed;
+    return {
+      user: userData,
+      checkedAt: Number(parsed.checkedAt) || null,
+      isFresh: isFreshTimestamp(parsed.checkedAt, now),
+    };
   } catch {
     return null;
   }
 }
 
-function writeStoredAuthUser(userData) {
+function writeStoredAuthUser(userData, checkedAt = Date.now()) {
   if (typeof window === 'undefined' || !userData || typeof userData !== 'object') {
     return;
   }
@@ -86,36 +130,50 @@ function writeStoredAuthUser(userData) {
   }
 
   try {
-    window.localStorage.setItem(DIY_LAST_AUTH_USER_KEY, JSON.stringify(userData));
+    window.localStorage.setItem(
+      DIY_LAST_AUTH_USER_KEY,
+      JSON.stringify({
+        user: userData,
+        checkedAt,
+      })
+    );
   } catch {
     // Ignore storage failures (private mode/quota) and continue.
   }
 }
 
 function getInitialStoredState() {
-  const storedUser = readStoredAuthUser();
+  const now = Date.now();
+  const storedUserEntry = readStoredAuthUser(now);
+  const storedUser = storedUserEntry?.user || null;
   const storedEmail = String(storedUser?.email || storedUser?.profile?.email || '').trim();
-  const storedAccess = readStoredDiyAccess(storedEmail);
+  const storedAccessEntry = readStoredDiyAccess(storedEmail, now);
+  const storedAccess = storedAccessEntry?.value ?? null;
+  const hasFreshCache = Boolean(storedUserEntry?.isFresh) && Boolean(storedAccessEntry?.isFresh);
 
   return {
     storedUser,
     storedAccess,
     hasCachedState: Boolean(storedUser) && storedAccess !== null,
+    hasFreshCache,
   };
 }
 
 export function useDiyAccess() {
+  const initialStoredState = AUTH_BYPASS_ENABLED
+    ? null
+    : getInitialStoredState();
   const [user, setUser] = useState(() => {
     if (AUTH_BYPASS_ENABLED) return AUTH_BYPASS_USER;
-    return null;
+    return initialStoredState?.storedUser || null;
   });
   const [hasDiyAccess, setHasDiyAccess] = useState(() => {
     if (AUTH_BYPASS_ENABLED) return AUTH_BYPASS_USER?.access?.diyCourseActiveEnrollment === true;
-    return false;
+    return Boolean(initialStoredState?.storedAccess);
   });
   const [loading, setLoading] = useState(() => {
     if (AUTH_BYPASS_ENABLED) return false;
-    return true;
+    return !Boolean(initialStoredState?.hasFreshCache);
   });
 
   useEffect(() => {
@@ -125,7 +183,17 @@ export function useDiyAccess() {
     let cancelled = false;
 
     async function checkAccess() {
-      const { storedUser: cachedUser, storedAccess: cachedAccess, hasCachedState } = getInitialStoredState();
+      const { storedUser: cachedUser, storedAccess: cachedAccess, hasCachedState, hasFreshCache } = getInitialStoredState();
+
+      if (hasFreshCache) {
+        if (!cancelled) {
+          setUser(cachedUser);
+          setHasDiyAccess(cachedAccess);
+          setLoading(false);
+        }
+        return;
+      }
+
       if (!hasCachedState) {
         setLoading(true);
       }
@@ -156,16 +224,25 @@ export function useDiyAccess() {
         }
 
         if (!cancelled) setUser(userData);
-        writeStoredAuthUser(userData);
+        const now = Date.now();
+        writeStoredAuthUser(userData, now);
 
         // Exchange Teachable session for TMK API token
         await exchangeTeachableSessionForTmkToken();
 
         const rawEmail = String(userData.email || userData?.profile?.email || '').trim();
-        const storedAccess = readStoredDiyAccess(rawEmail);
+        const storedAccessEntry = readStoredDiyAccess(rawEmail, now);
+        const storedAccess = storedAccessEntry?.value ?? null;
         if (!cancelled && storedAccess !== null) {
           // Use cached access immediately for smoother navigation between pages.
           setHasDiyAccess(storedAccess);
+        }
+
+        if (storedAccessEntry?.isFresh) {
+          if (!cancelled) {
+            setHasDiyAccess(storedAccess);
+          }
+          return;
         }
 
         // Step 2: check DIY course enrollment via server-side route
@@ -196,7 +273,7 @@ export function useDiyAccess() {
         }
 
         if (verifiedEnrollment) {
-          writeStoredDiyAccess(rawEmail, diyAccess);
+          writeStoredDiyAccess(rawEmail, diyAccess, Date.now());
         }
       } finally {
         if (!cancelled) {
