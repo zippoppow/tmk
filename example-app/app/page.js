@@ -93,7 +93,7 @@ export default function HomePage() {
                         Welcome, {displayName}
                     </Typography>
                     <Button variant="outlined" onClick={handleLogout}>
-                        Logout
+                        Logout from App
                     </Button>
                 </Box>
           </Box>
