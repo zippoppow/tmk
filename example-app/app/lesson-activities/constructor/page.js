@@ -231,7 +231,7 @@ export default function ConstructorPage() {
             Home
           </Button>
           <Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
-            {authUser ? 'Logout from Teachable' : 'Login with Teachable'}
+            {authUser ? 'Logout from App' : 'Login'}
           </Button>
           <Button variant="outlined" onClick={handleSaveSession} sx={{ textTransform: 'none' }}>
             Save Session

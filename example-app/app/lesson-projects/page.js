@@ -1303,7 +1303,7 @@ export default function LessonProjectsPage() {
 							}}
 							sx={{ textTransform: 'none' }}
 						>
-							{isAuthenticated ? 'Logout' : 'Login'}
+							{isAuthenticated ? 'Logout from App' : 'Login'}
 						</Button>
 					</Stack>
 				</Box>

@@ -211,7 +211,7 @@ export default function ConstructorPage() {
       <Container maxWidth="lg">
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ mb: 1.5 }}>
           <Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
-            {authUser ? 'Logout from Teachable' : 'Login with Teachable'}
+            {authUser ? 'Logout from App' : 'Login'}
           </Button>
           <Button variant="outlined" onClick={handleSaveSession} sx={{ textTransform: 'none' }}>
             Save Session

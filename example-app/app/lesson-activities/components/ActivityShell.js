@@ -216,7 +216,7 @@ export default function ActivityShell({
 								Back to Dashboard
 							</Button>
 							<Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
-								{authUser ? 'Logout' : 'Login'}
+								{authUser ? 'Logout from App' : 'Login'}
 							</Button>
 							<Box
 								sx={{
