@@ -1006,6 +1006,9 @@ export function useLessonActivityProject({
 		const projects = getAllStoredProjects();
 		const fingerprint = `${formName}::${lessonName}::${JSON.stringify(normalizedInput)}`;
 		const touchedProjects = [];
+		const redirectTargetProjectId = uniqueProjectIds[0] || '';
+		let redirectProjectId = '';
+		let redirectActivityIndex = -1;
 		let addedCount = 0;
 		let duplicateCount = 0;
 
@@ -1025,6 +1028,21 @@ export function useLessonActivityProject({
 			});
 
 			if (hasSameId || hasSameFingerprint) {
+				if (!redirectProjectId && targetProjectId === redirectTargetProjectId) {
+					const existingIndex = activities.findIndex((activity) => {
+						if (String(activity?.id || '').trim() === activityId) {
+							return true;
+						}
+						const existingType = String(activity?.['tmk-template'] || '').trim();
+						const existingName = String(activity?.['lesson-name'] || '').trim();
+						const existingData = JSON.stringify(activity?.['lesson-input-data'] || {});
+						return `${existingType}::${existingName}::${existingData}` === fingerprint;
+					});
+					if (existingIndex >= 0) {
+						redirectProjectId = targetProjectId;
+						redirectActivityIndex = existingIndex;
+					}
+				}
 				duplicateCount += 1;
 				return;
 			}
@@ -1043,6 +1061,10 @@ export function useLessonActivityProject({
 			];
 			project.modifiedAtMs = now;
 			project.syncedAt = null;
+			if (!redirectProjectId && targetProjectId === redirectTargetProjectId) {
+				redirectProjectId = targetProjectId;
+				redirectActivityIndex = activities.length;
+			}
 			touchedProjects.push(project);
 			addedCount += 1;
 		});
@@ -1079,6 +1101,33 @@ export function useLessonActivityProject({
 		}
 
 		handleCloseAddToProjectDialog();
+
+		const shouldRedirectToProjectContext = !projectId
+			&& Boolean(redirectProjectId)
+			&& Number.isInteger(redirectActivityIndex)
+			&& redirectActivityIndex >= 0;
+
+		if (shouldRedirectToProjectContext) {
+			deleteStandaloneDraftByActivityId(activityId);
+			if (localDraftId) {
+				deleteStandaloneDraftByLocalId(localDraftId);
+			}
+			clearFormSessionData(formName);
+			setLocalDraftId('');
+			setStandaloneActivityId('');
+
+			if (typeof window !== 'undefined') {
+				const params = new URLSearchParams({
+					projectId: redirectProjectId,
+					activityIndex: String(redirectActivityIndex),
+					activityType: formName,
+					activityId,
+				});
+				router.push(`${window.location.pathname}?${params.toString()}`);
+				return;
+			}
+		}
+
 		if (syncFailureCount > 0) {
 			showNotice('warning', `Added activity to ${addedCount} project${addedCount === 1 ? '' : 's'}, but ${syncFailureCount} cloud sync operation${syncFailureCount === 1 ? '' : 's'} failed.`);
 			return;
