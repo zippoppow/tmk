@@ -89,6 +89,7 @@ export default function CommonBaseWordPage() {
 		isSaving,
 		runAuthCheck,
 		handleLoginLogout,
+		handleSave,
 		handleSaveAndReturn,
 		handleGoToLessonProjects,
 		handleAddToProject,
@@ -264,6 +265,7 @@ export default function CommonBaseWordPage() {
 			authFromSuccessRedirect={authFromSuccessRedirect}
 			runAuthCheck={runAuthCheck}
 			handleLoginLogout={handleLoginLogout}
+			handleSave={handleSave}
 			handleGoToLessonProjects={handleGoToLessonProjects}
 			handleAddToProject={handleAddToProject}
         isAddToProjectDialogOpen={isAddToProjectDialogOpen}

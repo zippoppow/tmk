@@ -86,6 +86,7 @@ export default function WordBuilderPage() {
 		isSaving,
 		runAuthCheck,
 		handleLoginLogout,
+		handleSave,
 		handleSaveAndReturn,
 		handleGoToLessonProjects,
 		handleAddToProject,
@@ -216,6 +217,7 @@ export default function WordBuilderPage() {
 			authFromSuccessRedirect={authFromSuccessRedirect}
 			runAuthCheck={runAuthCheck}
 			handleLoginLogout={handleLoginLogout}
+			handleSave={handleSave}
 			handleGoToLessonProjects={handleGoToLessonProjects}
 			handleAddToProject={handleAddToProject}
         isAddToProjectDialogOpen={isAddToProjectDialogOpen}

@@ -112,6 +112,7 @@ export default function MorphMorphMatchPage() {
 		isSaving,
 		runAuthCheck,
 		handleLoginLogout,
+		handleSave,
 		handleSaveAndReturn,
 		handleGoToLessonProjects,
 		handleAddToProject,
@@ -334,6 +335,7 @@ export default function MorphMorphMatchPage() {
 			authFromSuccessRedirect={authFromSuccessRedirect}
 			runAuthCheck={runAuthCheck}
 			handleLoginLogout={handleLoginLogout}
+			handleSave={handleSave}
 			handleGoToLessonProjects={handleGoToLessonProjects}
 			handleAddToProject={handleAddToProject}
         isAddToProjectDialogOpen={isAddToProjectDialogOpen}
