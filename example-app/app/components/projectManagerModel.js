@@ -182,17 +182,21 @@ export function buildDiyProjectsPayload({ project, formName, normalizeLessonInpu
 				'project-name': projectName,
 				'created-at': createdAtMs,
 				'modified-at': modifiedAtMs,
-				'lesson-activities': normalizedActivities.map((activity) => ({
-					'tmk-template': String(activity['tmk-template'] || formName),
-					'lesson-name': String(activity['lesson-name'] || projectName),
-					'created-at': Number.isFinite(Number(activity['created-at']))
-						? Number(activity['created-at'])
-						: createdAtMs,
-					'modified-at': Number.isFinite(Number(activity['modified-at']))
-						? Number(activity['modified-at'])
-						: modifiedAtMs,
-					'lesson-input-data': normalizeLessonInputData(activity['lesson-input-data'] || {}),
-				})),
+				'lesson-activities': normalizedActivities.map((activity) => {
+					const activityId = String(activity?.id || activity?.['lesson-activity-id'] || '').trim();
+					return {
+						...(activityId ? { id: activityId, 'lesson-activity-id': activityId } : {}),
+						'tmk-template': String(activity['tmk-template'] || formName),
+						'lesson-name': String(activity['lesson-name'] || projectName),
+						'created-at': Number.isFinite(Number(activity['created-at']))
+							? Number(activity['created-at'])
+							: createdAtMs,
+						'modified-at': Number.isFinite(Number(activity['modified-at']))
+							? Number(activity['modified-at'])
+							: modifiedAtMs,
+						'lesson-input-data': normalizeLessonInputData(activity['lesson-input-data'] || {}),
+					};
+				}),
 			},
 		],
 	};

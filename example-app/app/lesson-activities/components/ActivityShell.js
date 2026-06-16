@@ -91,7 +91,10 @@ export default function ActivityShell({
 	};
 
 	const handleSaveActivityClick = async () => {
-		if (projectId && !isSlideshowMode) {
+		const hasProjectRouteContext = Boolean(projectId)
+			|| (typeof window !== 'undefined' && Boolean(new URLSearchParams(window.location.search).get('projectId')));
+
+		if (hasProjectRouteContext && !isSlideshowMode) {
 			const didSave = await handleSave();
 			if (didSave) {
 				setNotice({ open: true, severity: 'success', message: 'Changes have been saved.' });

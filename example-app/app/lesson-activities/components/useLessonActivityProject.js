@@ -789,6 +789,14 @@ export function useLessonActivityProject({
 	};
 
 	const handleSaveStandalone = async () => {
+		const projectIdInUrl = typeof window !== 'undefined'
+			? String(new URL(window.location.href).searchParams.get('projectId') || '').trim()
+			: '';
+		if (projectId || projectIdInUrl) {
+			showNotice('info', 'Project-linked activity detected. Use project save.');
+			return false;
+		}
+
 		let resolvedAuthUser = authUser;
 		if (!resolvedAuthUser) {
 			resolvedAuthUser = await fetchAuthenticatedUser();

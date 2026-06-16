@@ -231,17 +231,21 @@ export default function LessonProjectsPage() {
 					'project-name': projectName,
 					'created-at': createdAtMs,
 					'modified-at': modifiedAtMs,
-					'lesson-activities': lessonActivities.map((activity) => ({
-						'tmk-template': String(activity?.['tmk-template'] || PROJECT_FORM_NAME),
-						'lesson-name': String(activity?.['lesson-name'] || projectName),
-						'created-at': Number.isFinite(Number(activity?.['created-at']))
-							? Number(activity['created-at'])
-							: createdAtMs,
-						'modified-at': Number.isFinite(Number(activity?.['modified-at']))
-							? Number(activity['modified-at'])
-							: modifiedAtMs,
-						'lesson-input-data': normalizeLessonInputData(activity?.['lesson-input-data'] || {}),
-					})),
+					'lesson-activities': lessonActivities.map((activity) => {
+						const activityId = String(activity?.id || activity?.['lesson-activity-id'] || '').trim();
+						return {
+							...(activityId ? { id: activityId, 'lesson-activity-id': activityId } : {}),
+							'tmk-template': String(activity?.['tmk-template'] || PROJECT_FORM_NAME),
+							'lesson-name': String(activity?.['lesson-name'] || projectName),
+							'created-at': Number.isFinite(Number(activity?.['created-at']))
+								? Number(activity['created-at'])
+								: createdAtMs,
+							'modified-at': Number.isFinite(Number(activity?.['modified-at']))
+								? Number(activity['modified-at'])
+								: modifiedAtMs,
+							'lesson-input-data': normalizeLessonInputData(activity?.['lesson-input-data'] || {}),
+						};
+					}),
 				};
 			}),
 		};
