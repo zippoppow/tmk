@@ -1006,10 +1006,8 @@ export function useLessonActivityProject({
 		const projects = getAllStoredProjects();
 		const fingerprint = `${formName}::${lessonName}::${JSON.stringify(normalizedInput)}`;
 		const touchedProjects = [];
-		const redirectTargetProjectId = uniqueProjectIds[0] || '';
-		let redirectProjectId = '';
-		let redirectActivityIndex = -1;
 		let addedCount = 0;
+		let updatedCount = 0;
 		let duplicateCount = 0;
 
 		uniqueProjectIds.forEach((targetProjectId) => {
@@ -1019,31 +1017,35 @@ export function useLessonActivityProject({
 			}
 
 			const activities = getProjectLessonActivities(project, 'lesson-activities-project', (input) => input || {});
-			const hasSameId = activities.some((activity) => String(activity?.id || '').trim() === activityId);
-			const hasSameFingerprint = activities.some((activity) => {
+			const sameIdIndex = activities.findIndex((activity) => String(activity?.id || '').trim() === activityId);
+			const sameFingerprintIndex = activities.findIndex((activity) => {
 				const existingType = String(activity?.['tmk-template'] || '').trim();
 				const existingName = String(activity?.['lesson-name'] || '').trim();
 				const existingData = JSON.stringify(activity?.['lesson-input-data'] || {});
 				return `${existingType}::${existingName}::${existingData}` === fingerprint;
 			});
+			const existingIndex = sameIdIndex >= 0 ? sameIdIndex : sameFingerprintIndex;
 
-			if (hasSameId || hasSameFingerprint) {
-				if (!redirectProjectId && targetProjectId === redirectTargetProjectId) {
-					const existingIndex = activities.findIndex((activity) => {
-						if (String(activity?.id || '').trim() === activityId) {
-							return true;
-						}
-						const existingType = String(activity?.['tmk-template'] || '').trim();
-						const existingName = String(activity?.['lesson-name'] || '').trim();
-						const existingData = JSON.stringify(activity?.['lesson-input-data'] || {});
-						return `${existingType}::${existingName}::${existingData}` === fingerprint;
-					});
-					if (existingIndex >= 0) {
-						redirectProjectId = targetProjectId;
-						redirectActivityIndex = existingIndex;
-					}
+			if (existingIndex >= 0) {
+				const now = Date.now();
+				const existing = activities[existingIndex] || {};
+				activities[existingIndex] = {
+					...existing,
+					id: activityId,
+					'tmk-template': formName,
+					'lesson-name': lessonName,
+					'lesson-input-data': normalizedInput,
+					'created-at': Number(existing?.['created-at']) || now,
+					'modified-at': now,
+				};
+				project.lessonActivities = activities;
+				project.modifiedAtMs = now;
+				project.syncedAt = null;
+				if (!touchedProjects.includes(project)) {
+					touchedProjects.push(project);
 				}
 				duplicateCount += 1;
+				updatedCount += 1;
 				return;
 			}
 
@@ -1061,15 +1063,11 @@ export function useLessonActivityProject({
 			];
 			project.modifiedAtMs = now;
 			project.syncedAt = null;
-			if (!redirectProjectId && targetProjectId === redirectTargetProjectId) {
-				redirectProjectId = targetProjectId;
-				redirectActivityIndex = activities.length;
-			}
 			touchedProjects.push(project);
 			addedCount += 1;
 		});
 
-		if (addedCount === 0) {
+		if (addedCount === 0 && updatedCount === 0) {
 			showNotice('info', duplicateCount > 0 ? 'Selected activity already exists in the selected project(s).' : 'No projects were updated.');
 			return;
 		}
@@ -1078,7 +1076,15 @@ export function useLessonActivityProject({
 		loadAvailableLessonProjects();
 
 		let syncFailureCount = 0;
-		if (authUser) {
+		let resolvedAuthUser = authUser;
+		if (!resolvedAuthUser) {
+			resolvedAuthUser = await fetchAuthenticatedUser();
+			if (resolvedAuthUser) {
+				setAuthUser(resolvedAuthUser);
+			}
+		}
+
+		if (resolvedAuthUser) {
 			for (const project of touchedProjects) {
 				try {
 					const payload = buildDiyProjectsPayload({
@@ -1102,12 +1108,7 @@ export function useLessonActivityProject({
 
 		handleCloseAddToProjectDialog();
 
-		const shouldRedirectToProjectContext = !projectId
-			&& Boolean(redirectProjectId)
-			&& Number.isInteger(redirectActivityIndex)
-			&& redirectActivityIndex >= 0;
-
-		if (shouldRedirectToProjectContext) {
+		if (!projectId) {
 			deleteStandaloneDraftByActivityId(activityId);
 			if (localDraftId) {
 				deleteStandaloneDraftByLocalId(localDraftId);
@@ -1115,26 +1116,20 @@ export function useLessonActivityProject({
 			clearFormSessionData(formName);
 			setLocalDraftId('');
 			setStandaloneActivityId('');
-
-			if (typeof window !== 'undefined') {
-				const params = new URLSearchParams({
-					projectId: redirectProjectId,
-					activityIndex: String(redirectActivityIndex),
-					activityType: formName,
-					activityId,
-				});
-				router.push(`${window.location.pathname}?${params.toString()}`);
-				return;
-			}
 		}
 
-		if (syncFailureCount > 0) {
-			showNotice('warning', `Added activity to ${addedCount} project${addedCount === 1 ? '' : 's'}, but ${syncFailureCount} cloud sync operation${syncFailureCount === 1 ? '' : 's'} failed.`);
+		if (!projectId) {
+			router.push('/lesson-projects?saved=added-to-project');
 			return;
 		}
 
-		if (duplicateCount > 0) {
-			showNotice('success', `Added activity to ${addedCount} project${addedCount === 1 ? '' : 's'}. Skipped ${duplicateCount} duplicate${duplicateCount === 1 ? '' : 's'}.`);
+		if (syncFailureCount > 0) {
+			showNotice('warning', `Added or updated activity in ${addedCount + updatedCount} project${addedCount + updatedCount === 1 ? '' : 's'}, but ${syncFailureCount} cloud sync operation${syncFailureCount === 1 ? '' : 's'} failed.`);
+			return;
+		}
+
+		if (updatedCount > 0 || duplicateCount > 0) {
+			showNotice('success', `Added activity to ${addedCount} project${addedCount === 1 ? '' : 's'} and updated ${updatedCount} existing project activit${updatedCount === 1 ? 'y' : 'ies'}.`);
 			return;
 		}
 
