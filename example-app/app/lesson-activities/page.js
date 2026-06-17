@@ -201,6 +201,52 @@ export default function LessonActivitiesPage() {
         return { projectActivityIds, projectActivityKeys };
     };
 
+    const filterProjectAssociatedLocalDrafts = (localDraftRecords, associationSets) => {
+        const ids = associationSets?.projectActivityIds instanceof Set
+            ? associationSets.projectActivityIds
+            : new Set();
+        const keys = associationSets?.projectActivityKeys instanceof Set
+            ? associationSets.projectActivityKeys
+            : new Set();
+
+        return localDraftRecords.filter((record) => {
+            const linkedId = String(record?.id || '').trim();
+            if (linkedId && ids.has(linkedId)) {
+                return false;
+            }
+
+            const template = String(record?.['tmk-template'] || record?.formName || '').trim();
+            const name = String(record?.['lesson-name'] || '').trim();
+            if (template && name && keys.has(`${template}::${name}`)) {
+                return false;
+            }
+
+            return true;
+        });
+    };
+
+    const purgeProjectAssociatedStandaloneDrafts = (localDraftRecords, associationSets) => {
+        const retainedRecords = filterProjectAssociatedLocalDrafts(localDraftRecords, associationSets);
+        if (retainedRecords.length === localDraftRecords.length) {
+            return retainedRecords;
+        }
+
+        const retainedDraftIds = new Set(
+            retainedRecords
+                .map((record) => String(record?.localDraftId || '').trim())
+                .filter(Boolean)
+        );
+
+        localDraftRecords.forEach((record) => {
+            const localDraftId = String(record?.localDraftId || '').trim();
+            if (localDraftId && !retainedDraftIds.has(localDraftId)) {
+                deleteStandaloneDraftByLocalId(localDraftId);
+            }
+        });
+
+        return retainedRecords;
+    };
+
     const fetchCloudStandaloneActivities = async (apiOrigin) => {
         const records = await listLessonActivities(apiOrigin);
         const { projectActivityIds, projectActivityKeys } = await getStandaloneProjectAssociationSets();
@@ -335,7 +381,11 @@ export default function LessonActivitiesPage() {
 
         try {
             const apiOrigin = resolveTmkApiOrigin();
-            const localDraftRecords = getLocalStandaloneDraftRecords();
+            const associationSets = await getStandaloneProjectAssociationSets();
+            const localDraftRecords = purgeProjectAssociatedStandaloneDrafts(
+                getLocalStandaloneDraftRecords(),
+                associationSets
+            );
             const cloudRecords = await fetchCloudStandaloneActivities(apiOrigin);
 
             setInitialLocalStandaloneActivities(localDraftRecords);
@@ -489,16 +539,20 @@ export default function LessonActivitiesPage() {
     }, [authLoading, isAuthenticated, hasDiyAccess, router]);
 
     const loadStandaloneActivities = async () => {
-        const localDraftRecords = getLocalStandaloneDraftRecords();
-
-        if (!user || !hasDiyAccess) {
-            setSavedStandaloneActivities([]);
-            setStagedStandaloneActivities(localDraftRecords.filter((record) => !String(record?.id || '').trim()));
-            return;
-        }
-
         setStandaloneLoading(true);
         try {
+            const associationSets = await getStandaloneProjectAssociationSets();
+            const localDraftRecords = purgeProjectAssociatedStandaloneDrafts(
+                getLocalStandaloneDraftRecords(),
+                associationSets
+            );
+
+            if (!user || !hasDiyAccess) {
+                setSavedStandaloneActivities([]);
+                setStagedStandaloneActivities(localDraftRecords.filter((record) => !String(record?.id || '').trim()));
+                return;
+            }
+
             const apiOrigin = resolveTmkApiOrigin();
             const savedRecords = await fetchCloudStandaloneActivities(apiOrigin);
             const classified = classifyStandaloneActivities(localDraftRecords, savedRecords);
@@ -507,6 +561,7 @@ export default function LessonActivitiesPage() {
         } catch (error) {
             // eslint-disable-next-line no-console
             console.error('Failed to load standalone lesson activities:', error);
+            const localDraftRecords = getLocalStandaloneDraftRecords();
             setSavedStandaloneActivities([]);
             setStagedStandaloneActivities(localDraftRecords.filter((record) => !String(record?.id || '').trim()));
         } finally {
