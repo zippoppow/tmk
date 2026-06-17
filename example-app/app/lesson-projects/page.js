@@ -32,9 +32,10 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {
+	clearFormSessionData,
 	createLessonActivityId,
 	DIY_PROJECTS_ENDPOINT,
-	deleteLessonActivityById,
+	deleteStandaloneDraftByActivityId,
 	formatActivityDate,
 	formatProjectDate,
 	getLessonActivityProjectAssociation,
@@ -763,16 +764,23 @@ export default function LessonProjectsPage() {
 			return;
 		}
 
-		if (isAuthenticated) {
-			const associatedIds = new Set();
+		const associatedIds = new Set();
+		const associatedTemplateNames = new Set();
 
-			const activities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
-			activities.forEach((activity) => {
-				const id = String(activity?.id || '').trim();
-				if (id) {
-					associatedIds.add(id);
-				}
-			});
+		const activities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
+		activities.forEach((activity) => {
+			const id = String(activity?.id || '').trim();
+			if (id) {
+				associatedIds.add(id);
+			}
+
+			const templateName = String(activity?.['tmk-template'] || activity?.formName || '').trim();
+			if (templateName) {
+				associatedTemplateNames.add(templateName);
+			}
+		});
+
+		if (isAuthenticated) {
 
 			try {
 				const cloudRecords = await listLessonActivities(apiOrigin);
@@ -787,6 +795,11 @@ export default function LessonProjectsPage() {
 					const id = String(record?.id || '').trim();
 					if (id) {
 						associatedIds.add(id);
+					}
+
+					const templateName = String(record?.['tmk-template'] || record?.formName || '').trim();
+					if (templateName) {
+						associatedTemplateNames.add(templateName);
 					}
 				});
 			} catch (error) {
@@ -805,6 +818,14 @@ export default function LessonProjectsPage() {
 				}
 			}
 		}
+
+		associatedIds.forEach((activityId) => {
+			deleteStandaloneDraftByActivityId(activityId);
+		});
+
+		associatedTemplateNames.forEach((templateName) => {
+			clearFormSessionData(templateName);
+		});
 
 		saveStoredProjects(getAllStoredProjects().filter((item) => item.id !== projectId));
 		setNewActivityTypeByProjectId((prev) => {
