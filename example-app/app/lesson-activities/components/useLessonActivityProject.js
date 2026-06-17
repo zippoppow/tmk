@@ -844,24 +844,25 @@ export function useLessonActivityProject({
 			}
 
 			persist(normalizedInput);
-			const persistedDraft = persistStandaloneDraftRecord({
+			persistStandaloneDraftRecord({
 				nextData: normalizedInput,
 				nextActivityName: activityName || defaultActivityName,
 				nextActivityId: activityId,
 				markSaved: true,
 			});
 
-			setStandaloneActivityId(activityId);
-			if (persistedDraft?.localDraftId) {
-				setLocalDraftId(String(persistedDraft.localDraftId));
+			deleteStandaloneDraftByActivityId(activityId);
+			if (localDraftId) {
+				deleteStandaloneDraftByLocalId(localDraftId);
 			}
+			clearFormSessionData(formName);
+
+
+			setStandaloneActivityId(activityId);
+			setLocalDraftId('');
 			const url = new URL(window.location.href);
 			url.searchParams.set('activityId', activityId);
-			if (persistedDraft?.localDraftId) {
-				url.searchParams.set('localDraftId', String(persistedDraft.localDraftId));
-			} else if (isPresentationCloneRef.current) {
-				url.searchParams.delete('localDraftId');
-			}
+			url.searchParams.delete('localDraftId');
 			window.history.replaceState({}, '', url.toString());
 			showNotice('success', 'Standalone lesson activity saved.');
 			return true;

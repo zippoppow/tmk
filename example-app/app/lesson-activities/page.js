@@ -876,17 +876,10 @@ export default function LessonActivitiesPage() {
                     continue;
                 }
 
-                upsertStandaloneDraft({
-                    ...record,
-                    id: activityId,
-                    formName: template,
-                    'tmk-template': template,
-                    'lesson-name': lessonName,
-                    'lesson-input-data': lessonInputData,
-                    'created-at': createdAt,
-                    'modified-at': Date.now(),
-                    savedToApi: true,
-                });
+                deleteStandaloneDraftByActivityId(activityId);
+                if (record?.localDraftId) {
+                    deleteStandaloneDraftByLocalId(String(record.localDraftId));
+                }
                 successCount += 1;
             }
 
