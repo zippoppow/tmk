@@ -814,6 +814,34 @@ export default function LessonProjectsPage() {
 		});
 		loadLocalProjects();
 		if (isAuthenticated) {
+			const remainingLessonProjects = getAllStoredProjects().filter(
+				(item) => item.formName === PROJECT_FORM_NAME
+			);
+
+			try {
+				if (remainingLessonProjects.length === 0) {
+					const deleteResponse = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, {
+						method: 'DELETE',
+					});
+					if (!deleteResponse.ok && deleteResponse.status !== 404) {
+						showNotice('warning', 'Project removed locally, but cloud project collection could not be cleared.');
+					}
+				} else {
+					const payload = buildDiyProjectsCollectionPayload(remainingLessonProjects);
+					const syncResponse = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(payload),
+					});
+					if (!syncResponse.ok) {
+						showNotice('warning', 'Project removed locally, but cloud projects could not be updated.');
+					}
+				}
+			} catch (error) {
+				console.error('Failed to sync cloud project deletion:', error);
+				showNotice('warning', 'Project removed locally, but cloud projects could not be updated.');
+			}
+
 			await loadCloudProjects();
 		}
 	};
