@@ -277,7 +277,9 @@ export default function WordMeaningPage() {
 									size="small"
 									fullWidth
 									variant="standard"
-									inputProps={{ style: { minHeight: 56, fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
+									multiline
+									minRows={2}
+									inputProps={{ style: { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '1.2rem', color: '#000000' } }}
 									sx={{ '& .MuiInputBase-root::before': { borderBottom: '2px solid #4020A7' } }}
 								/>
 							</Box>
