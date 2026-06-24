@@ -48,6 +48,11 @@ export default function IntroPage() {
 
 	const router = useRouter();
 	const { hasDiyAccess, loading: diyLoading } = useDiyAccess();
+	const [isMounted, setIsMounted] = useState(false);
+
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
 
 	useEffect(() => {
 		if (!diyLoading && !hasDiyAccess) {
@@ -96,6 +101,10 @@ export default function IntroPage() {
 		openMenu: openContextMenuMenu,
 		closeMenu: closeContextMenu,
 	} = useContextActionMenu({ targetType: '', index: -1 });
+
+	if (!isMounted) {
+		return null;
+	}
 
 	if (diyLoading) {
 		return null;

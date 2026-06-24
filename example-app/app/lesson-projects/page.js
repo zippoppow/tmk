@@ -95,9 +95,14 @@ function isValidLessonActivityType(activityType) {
 export default function LessonProjectsPage() {
 	const router = useRouter();
 	const { user: authUser, hasDiyAccess, loading: authLoading } = useDiyAccess();
+	const [isMounted, setIsMounted] = useState(false);
 	const [localProjects, setLocalProjects] = useState([]);
 	const [editingProjectId, setEditingProjectId] = useState(null);
 	const [editingProjectName, setEditingProjectName] = useState('');
+
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
 
 		// Inline edit handlers
 		const handleStartEditProjectName = (project) => {
@@ -1298,6 +1303,10 @@ export default function LessonProjectsPage() {
 			router.replace('/');
 		}
 	}, [authLoading, isAuthenticated, hasDiyAccess, router]);
+
+	if (!isMounted) {
+		return null;
+	}
 
 	if (authLoading) {
 		return (
