@@ -26,22 +26,34 @@ import { NextResponse } from 'next/server';
 const DIY_COURSE_ID = '2944218';
 const TEACHABLE_ENROLLMENT_ENDPOINT = '/api/teachable-enrollment';
 
-async function getUserInfo(apiOrigin) {
+async function getUserInfo(apiOrigin, teachableSession) {
 	try {
-		const response = await fetch(`${apiOrigin}/api/auth/teachable/me`, {
+		const url = new URL(`${apiOrigin}/api/auth/teachable/me`);
+		// Pass teachable_session as query param so it gets forwarded to TMK API
+		if (teachableSession) {
+			url.searchParams.set('teachable_session', teachableSession);
+		}
+
+		console.log('[callback.getUserInfo] calling:', url.toString());
+
+		const response = await fetch(url.toString(), {
 			method: 'GET',
-			credentials: 'include',
 		});
 
+		console.log('[callback.getUserInfo] response status:', response.status);
+
 		if (!response.ok) {
-			console.error('[callback] getUserInfo failed:', response.status);
+			console.error('[callback.getUserInfo] failed with status:', response.status);
+			const errorText = await response.text();
+			console.error('[callback.getUserInfo] error body:', errorText);
 			return null;
 		}
 
 		const data = await response.json();
+		console.log('[callback.getUserInfo] got data:', !!data, 'email:', data?.data?.email || data?.email);
 		return data?.data || data || null;
 	} catch (error) {
-		console.error('[callback] getUserInfo error:', error?.message || error);
+		console.error('[callback.getUserInfo] error:', error?.message || error);
 		return null;
 	}
 }
@@ -74,6 +86,11 @@ export async function GET(request) {
 	try {
 		const { searchParams } = request.nextUrl;
 		const redirectTo = searchParams.get('redirectTo') || '/';
+		const teachableSession = searchParams.get('teachable_session');
+
+		console.log('[callback] Starting OAuth callback handler');
+		console.log('[callback] redirectTo:', redirectTo);
+		console.log('[callback] teachableSession present:', !!teachableSession);
 
 		// Determine API origin (from env or default)
 		const apiOrigin = process.env.NEXT_PUBLIC_TMK_API_URL || 
@@ -81,10 +98,15 @@ export async function GET(request) {
 				? 'https://tmk-api.up.railway.app' 
 				: 'http://localhost:3000');
 
-		// Get user info using the Teachable session cookie set by TMK API
-		const userInfo = await getUserInfo(apiOrigin);
+		console.log('[callback] apiOrigin:', apiOrigin);
+
+		// Get user info using the teachable_session passed by TMK API
+		const userInfo = await getUserInfo(apiOrigin, teachableSession);
+		console.log('[callback] userInfo retrieved:', !!userInfo, userInfo?.email);
+		
 		if (!userInfo) {
 			// User not authenticated via Teachable session
+			console.log('[callback] Failed to get user info, redirecting to login');
 			return NextResponse.redirect(new URL('/login?auth=error&message=' + encodeURIComponent('Failed to fetch user info'), request.url));
 		}
 
@@ -92,10 +114,14 @@ export async function GET(request) {
 		const userEmail = userInfo.email || userInfo?.profile?.email || '';
 		const hasDiyAccess = await checkEnrollment(apiOrigin, userEmail);
 
+		console.log('[callback] enrollment check:', hasDiyAccess, 'for', userEmail);
+
 		// Prepare app session
 		const APP_SESSION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 		const appSessionExpiresAt = Date.now() + APP_SESSION_LIFETIME_MS;
 		const cookieValue = `isAppLoggedIn:true|${appSessionExpiresAt}`;
+
+		console.log('[callback] setting cookie with expiry:', appSessionExpiresAt);
 
 		// Create redirect response
 		const redirectUrl = new URL(redirectTo, request.url);
@@ -129,6 +155,8 @@ export async function GET(request) {
 		// Store headers for client to read if needed
 		response.headers.set('X-TMK-USER-EMAIL', userEmail);
 		response.headers.set('X-TMK-HAS-DIY-ACCESS', String(hasDiyAccess));
+
+		console.log('[callback] OAuth flow complete, redirecting to:', redirectTo);
 
 		return response;
 	} catch (error) {
