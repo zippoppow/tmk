@@ -167,7 +167,7 @@ export default function LessonActivitiesPage() {
         });
 
         try {
-            const projectResponse = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, { method: 'GET' });
+            const projectResponse = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, { method: 'GET', headers: {} });
             if (projectResponse.ok) {
                 const projectPayload = await projectResponse.json().catch(() => ({}));
                 const projects = extractDiyProjectsFromResponse(projectPayload);
