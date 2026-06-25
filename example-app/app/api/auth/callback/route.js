@@ -58,26 +58,38 @@ async function getUserInfo(apiOrigin, teachableSession) {
 	}
 }
 
-async function checkEnrollment(apiOrigin, userEmail) {
+async function checkEnrollment(apiOrigin, userEmail, teachableSession) {
 	try {
 		const email = encodeURIComponent(userEmail);
 		const url = new URL(`${apiOrigin}${TEACHABLE_ENROLLMENT_ENDPOINT}`);
 		url.searchParams.set('email', email);
 		url.searchParams.set('courseNumber', DIY_COURSE_ID);
+		
+		// Pass teachable_session if available to authenticate the request
+		if (teachableSession) {
+			url.searchParams.set('teachable_session', teachableSession);
+		}
+
+		console.log('[callback.checkEnrollment] calling:', url.toString().replace(teachableSession, '***'));
 
 		const response = await fetch(url.toString(), {
 			method: 'GET',
 		});
 
+		console.log('[callback.checkEnrollment] response status:', response.status);
+
 		if (!response.ok) {
-			console.error('[callback] enrollment check failed:', response.status);
+			console.error('[callback.checkEnrollment] failed with status:', response.status);
+			const errorText = await response.text();
+			console.error('[callback.checkEnrollment] error body:', errorText);
 			return false;
 		}
 
 		const data = await response.json();
+		console.log('[callback.checkEnrollment] enrolled:', data?.enrolled);
 		return data?.enrolled === true;
 	} catch (error) {
-		console.error('[callback] enrollment check error:', error?.message || error);
+		console.error('[callback.checkEnrollment] error:', error?.message || error);
 		return false;
 	}
 }
@@ -114,7 +126,7 @@ export async function GET(request) {
 
 		// Check DIY enrollment
 		const userEmail = userInfo.email || userInfo?.profile?.email || '';
-		const hasDiyAccess = await checkEnrollment(apiOrigin, userEmail);
+		const hasDiyAccess = await checkEnrollment(apiOrigin, userEmail, teachableSession);
 
 		console.log('[callback] enrollment check:', hasDiyAccess, 'for', userEmail);
 
