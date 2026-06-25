@@ -81,11 +81,8 @@ function hasValidAppSession(request) {
     console.log('[middleware] parsed cookie names:', Object.keys(cookies));
 
     const appSessionCookie = cookies['tmk_app_session'];
-    console.log('[middleware] tmk_app_session present:', !!appSessionCookie);
-    console.log('[middleware] tmk_app_session raw value:', appSessionCookie?.substring(0, 100));
     
     if (!appSessionCookie) {
-      console.log('[middleware] ❌ no cookie');
       return false;
     }
 
@@ -94,39 +91,28 @@ function hasValidAppSession(request) {
     try {
       decodedCookie = decodeURIComponent(appSessionCookie);
     } catch (e) {
-      console.log('[middleware] ❌ failed to decode cookie:', e?.message);
+      console.error('[middleware] Failed to decode app session cookie:', e?.message);
       return false;
     }
-    
-    console.log('[middleware] decoded cookie value:', decodedCookie?.substring(0, 100));
 
 // Parse cookie value: format is "isAppLoggedIn:true|<expiresAtTimestamp>"
 	const [loginState, expiryStr] = decodedCookie.split('|');
-	console.log('[middleware] after split - loginState:', JSON.stringify(loginState), 'expiryStr:', expiryStr?.substring(0, 20));
-	console.log('[middleware] loginState.startsWith check:', loginState?.startsWith?.('isAppLoggedIn:true'));
 
 	if (!loginState || !loginState.startsWith('isAppLoggedIn:true')) {
-		console.log('[middleware] ❌ invalid loginState. Expected "isAppLoggedIn:true|<timestamp>", got:', JSON.stringify(decodedCookie?.substring(0, 60)));
 		return false;
 	}
 
 	// Check expiry
 	if (expiryStr) {
 		const expiresAt = parseInt(expiryStr, 10);
-		const now = Date.now();
-		const isExpired = now > expiresAt;
-		console.log('[middleware] expiresAt:', expiresAt, 'now:', now, 'isExpired:', isExpired);
       if (!Number.isFinite(expiresAt)) {
-        console.log('[middleware] ❌ expiresAt not a valid number');
         return false;
       }
-      if (isExpired) {
-        console.log('[middleware] ❌ session expired');
-        return false;
+      if (Date.now() > expiresAt) {
+        return false; // Session expired
       }
     }
 
-    console.log('[middleware] ✅ session is valid');
     return true;
   } catch {
     return false;
