@@ -89,13 +89,24 @@ function hasValidAppSession(request) {
       return false;
     }
 
+    // URL-decode the cookie value (browsers encode special chars like : and |)
+    let decodedCookie;
+    try {
+      decodedCookie = decodeURIComponent(appSessionCookie);
+    } catch (e) {
+      console.log('[middleware] ❌ failed to decode cookie:', e?.message);
+      return false;
+    }
+    
+    console.log('[middleware] decoded cookie value:', decodedCookie?.substring(0, 100));
+
 // Parse cookie value: format is "isAppLoggedIn:true|<expiresAtTimestamp>"
-	const [loginState, expiryStr] = appSessionCookie.split('|');
+	const [loginState, expiryStr] = decodedCookie.split('|');
 	console.log('[middleware] after split - loginState:', JSON.stringify(loginState), 'expiryStr:', expiryStr?.substring(0, 20));
 	console.log('[middleware] loginState.startsWith check:', loginState?.startsWith?.('isAppLoggedIn:true'));
 
 	if (!loginState || !loginState.startsWith('isAppLoggedIn:true')) {
-		console.log('[middleware] ❌ invalid loginState. Expected "isAppLoggedIn:true|<timestamp>", got:', JSON.stringify(appSessionCookie?.substring(0, 60)));
+		console.log('[middleware] ❌ invalid loginState. Expected "isAppLoggedIn:true|<timestamp>", got:', JSON.stringify(decodedCookie?.substring(0, 60)));
 		return false;
 	}
 
