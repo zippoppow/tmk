@@ -82,7 +82,7 @@ function hasValidAppSession(request) {
 
     const appSessionCookie = cookies['tmk_app_session'];
     console.log('[middleware] tmk_app_session present:', !!appSessionCookie);
-    console.log('[middleware] tmk_app_session raw value:', appSessionCookie?.substring(0, 80));
+    console.log('[middleware] tmk_app_session raw value:', appSessionCookie?.substring(0, 100));
     
     if (!appSessionCookie) {
       console.log('[middleware] ❌ no cookie');
@@ -91,10 +91,11 @@ function hasValidAppSession(request) {
 
 // Parse cookie value: format is "isAppLoggedIn:true|<expiresAtTimestamp>"
 	const [loginState, expiryStr] = appSessionCookie.split('|');
-	console.log('[middleware] loginState:', loginState, 'expiryStr:', expiryStr);
+	console.log('[middleware] after split - loginState:', JSON.stringify(loginState), 'expiryStr:', expiryStr?.substring(0, 20));
+	console.log('[middleware] loginState.startsWith check:', loginState?.startsWith?.('isAppLoggedIn:true'));
 
 	if (!loginState || !loginState.startsWith('isAppLoggedIn:true')) {
-		console.log('[middleware] ❌ invalid loginState');
+		console.log('[middleware] ❌ invalid loginState. Expected "isAppLoggedIn:true|<timestamp>", got:', JSON.stringify(appSessionCookie?.substring(0, 60)));
 		return false;
 	}
 
