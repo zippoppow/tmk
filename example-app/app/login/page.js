@@ -2,10 +2,11 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { buildTeachableStartUrl, fetchAuthenticatedUser } from '../components/authHelpers';
+import { buildTeachableStartUrl, fetchAuthenticatedUser, initializeDiySession, exchangeTeachableSessionForTmkToken } from '../components/authHelpers';
 
 const DEFAULT_NEXT_PATH = '/';
 const SESSION_CHECK_FALLBACK_MS = 12000;
+const DIY_COURSE_ID = '2944218';
 
 function sanitizeNextPath(candidate) {
   if (!candidate || typeof candidate !== 'string') {
@@ -66,7 +67,31 @@ function LoginPageContent() {
       }
 
       if (user) {
-        router.replace(nextPath);
+        // Exchange Teachable session for TMK JWT
+        await exchangeTeachableSessionForTmkToken();
+        
+        // Initialize app session (sets httpOnly cookie) before redirecting
+        // Check enrollment via API to determine DIY access
+        let hasDiyAccess = false;
+        try {
+          const DIY_COURSE_ID = '2944218';
+          const email = encodeURIComponent(user.email || user?.profile?.email || '');
+          const resp = await fetch(`/api/teachable-enrollment?email=${email}&courseNumber=${DIY_COURSE_ID}`, { credentials: 'include' });
+          if (resp.ok) {
+            const data = await resp.json();
+            hasDiyAccess = data?.enrolled === true;
+          }
+        } catch (err) {
+          console.error('[login] enrollment check failed:', err?.message || err);
+        }
+        
+        // Initialize session with DIY access status
+        await initializeDiySession(user, hasDiyAccess);
+        
+        // Now redirect to next page
+        if (isMounted) {
+          router.replace(nextPath);
+        }
         return;
       }
 
