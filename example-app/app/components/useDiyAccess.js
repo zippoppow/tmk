@@ -274,11 +274,13 @@ export function useDiyAccess() {
 
         if (verifiedEnrollment) {
           writeStoredDiyAccess(rawEmail, diyAccess, Date.now());
+        }
 
-          // Initialize DIY session after successful login and enrollment verification
-          if (userData && diyAccess) {
-            await initializeDiySession(userData, true);
-          }
+        // Initialize DIY session for ALL authenticated users (not just enrolled)
+        // This sets the app session cookie so middleware allows them through
+        // hasDiyAccess flag controls feature access; enrollment can be false
+        if (userData) {
+          await initializeDiySession(userData, diyAccess);
         }
       } finally {
         if (!cancelled) {
