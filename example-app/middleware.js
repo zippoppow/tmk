@@ -70,13 +70,19 @@ function extractAuthenticatedUser(data) {
 function hasValidAppSession(request) {
   try {
     const cookieHeader = request.headers.get('cookie') || '';
+    console.log('[middleware] cookie header:', cookieHeader.substring(0, 100)); // Log first 100 chars
+    
     const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
       const [name, value] = cookie.trim().split('=');
       acc[name] = value;
       return acc;
     }, {});
 
+    console.log('[middleware] parsed cookie names:', Object.keys(cookies));
+
     const appSessionCookie = cookies['tmk_app_session'];
+    console.log('[middleware] tmk_app_session present:', !!appSessionCookie);
+    
     if (!appSessionCookie) {
       return false;
     }
@@ -121,8 +127,10 @@ export async function middleware(request) {
   }
 
   const { pathname } = request.nextUrl;
+  console.log('[middleware] processing path:', pathname);
 
   if (isInternalOrStaticPath(pathname)) {
+    console.log('[middleware] internal/static path, allowing through');
     return NextResponse.next();
   }
 

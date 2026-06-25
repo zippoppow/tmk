@@ -107,7 +107,9 @@ export async function GET(request) {
 		if (!userInfo) {
 			// User not authenticated via Teachable session
 			console.log('[callback] Failed to get user info, redirecting to login');
-			return NextResponse.redirect(new URL('/login?auth=error&message=' + encodeURIComponent('Failed to fetch user info'), request.url));
+			const errorResponse = NextResponse.redirect(new URL('/login?auth=error&message=' + encodeURIComponent('Failed to fetch user info'), request.url));
+			errorResponse.headers.set('X-TMK-CALLBACK-ERROR', 'no-user-info');
+			return errorResponse;
 		}
 
 		// Check DIY enrollment
@@ -155,12 +157,16 @@ export async function GET(request) {
 		// Store headers for client to read if needed
 		response.headers.set('X-TMK-USER-EMAIL', userEmail);
 		response.headers.set('X-TMK-HAS-DIY-ACCESS', String(hasDiyAccess));
+		response.headers.set('X-TMK-CALLBACK-SUCCESS', 'true');
+		response.headers.set('X-TMK-COOKIE-EXPIRY', String(appSessionExpiresAt));
 
 		console.log('[callback] OAuth flow complete, redirecting to:', redirectTo);
 
 		return response;
 	} catch (error) {
 		console.error('[callback] error:', error?.message || error);
-		return NextResponse.redirect(new URL('/login?auth=error&message=' + encodeURIComponent('Authentication failed'), request.url));
+		const errorResponse = NextResponse.redirect(new URL('/login?auth=error&message=' + encodeURIComponent('Authentication failed'), request.url));
+		errorResponse.headers.set('X-TMK-CALLBACK-ERROR', error?.message || 'unknown');
+		return errorResponse;
 	}
 }
