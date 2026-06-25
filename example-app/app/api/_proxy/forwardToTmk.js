@@ -95,8 +95,6 @@ function buildTargetUrl(request, routePrefix, pathSegments = []) {
   const query = request?.nextUrl?.search || '';
   const targetUrl = `${baseUrl}${baseApiPath}${suffix}${query}`;
   
-  console.log(`[buildTargetUrl] baseUrl=${baseUrl}, prefix=${prefix || '(derived)'}, fallbackPath=${fallbackPath || '(none)'}, suffix=${suffix}, query=${query} → ${targetUrl}`);
-  
   return targetUrl;
 }
 
@@ -150,7 +148,6 @@ export async function forwardToTmkApi(request, { routePrefix, pathSegments = [] 
 
   const targetUrl = buildTargetUrl(request, routePrefix, pathSegments);
   if (/\/api\/?(?:\?.*)?$/.test(targetUrl)) {
-    console.error(`[forwardToTmkApi] Refusing to forward root-like API path: ${targetUrl}`);
     return Response.json(
       {
         error: 'Proxy path resolution failed.',
@@ -160,16 +157,12 @@ export async function forwardToTmkApi(request, { routePrefix, pathSegments = [] 
     );
   }
 
-  console.log(`[forwardToTmkApi] Forwarding ${request?.method || 'GET'} ${request?.nextUrl?.pathname || '/'} → ${targetUrl}`);
 
   try {
     const requestInit = await buildProxyRequestInit(request, apiAuthKey);
     const upstreamResponse = await fetch(targetUrl, requestInit);
     const responseHeaders = buildProxyResponseHeaders(upstreamResponse.headers);
 
-    if (responseHeaders.has('set-cookie')) {
-      console.log(`[forwardToTmkApi] Rewrote proxied Set-Cookie header(s) for ${request?.nextUrl?.pathname || '/'}`);
-    }
 
     return new Response(upstreamResponse.body, {
       status: upstreamResponse.status,
@@ -177,7 +170,6 @@ export async function forwardToTmkApi(request, { routePrefix, pathSegments = [] 
       headers: responseHeaders,
     });
   } catch (error) {
-    console.error(`[forwardToTmkApi] Error forwarding to ${targetUrl}:`, error);
     return Response.json(
       {
         error: 'Failed to reach TMK API.',
