@@ -10,7 +10,6 @@ import {
 import * as diySessionManager from '../lib/diySessionManager';
 import * as diyJwtRefreshScheduler from '../lib/diyJwtRefreshScheduler';
 import * as teachableReVerificationScheduler from '../lib/teachableReVerificationScheduler';
-import * as teachableSessionValidityScheduler from '../lib/teachableSessionValidityScheduler';
 
 export {
 	AUTH_BYPASS_ENABLED,
@@ -312,7 +311,6 @@ export function clearLocalAuthState() {
 	// Stop background schedulers
 	diyJwtRefreshScheduler.stopDiyJwtRefreshScheduler();
 	teachableReVerificationScheduler.stopTeachableReVerificationScheduler();
-	teachableSessionValidityScheduler.stopTeachableSessionValidityScheduler();
 
 	if (typeof window === 'undefined') {
 		return;
@@ -538,10 +536,7 @@ export async function initializeDiySession(user, hasDiyAccess) {
 		diySessionManager.setAppSession(user, hasDiyAccess, userAccessToken, jwtExpiresAtMs);
 		diyJwtRefreshScheduler.startDiyJwtRefreshScheduler();
 		teachableReVerificationScheduler.startTeachableReVerificationScheduler(() => {
-			authDebug('Enrollment loss notification in bypass mode');
-		});
-		teachableSessionValidityScheduler.startTeachableSessionValidityScheduler(() => {
-			authDebug('Teachable session lost in bypass mode');
+			authDebug('Enrollment loss detected, disabling DIY access');
 		});
 		return true;
 	}
@@ -582,19 +577,10 @@ export async function initializeDiySession(user, hasDiyAccess) {
 		// Initialize DIY Session Manager (client-side state)
 		diySessionManager.setAppSession(user, hasDiyAccess, userAccessToken, jwtExpiresAtMs);
 
-		// Start background schedulers
+		// Start background schedulers for JWT refresh and enrollment verification
 		diyJwtRefreshScheduler.startDiyJwtRefreshScheduler();
 		teachableReVerificationScheduler.startTeachableReVerificationScheduler(() => {
-			authDebug('Enrollment loss detected, hasDiyAccess disabled');
-		});
-		teachableSessionValidityScheduler.startTeachableSessionValidityScheduler(() => {
-			authDebug('Teachable session lost, logging out user');
-			// Clear all session state
-			clearLocalAuthState();
-			// Redirect to login with error message
-			if (typeof window !== 'undefined') {
-				window.location.href = '/login?auth=error&message=' + encodeURIComponent('Your Teachable session has ended. Please log in again.');
-			}
+			authDebug('Enrollment status updated (checked via Teachable API)');
 		});
 
 		authDebug('DIY session initialized successfully');

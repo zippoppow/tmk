@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { buildTeachableStartUrl, fetchAuthenticatedUser, initializeDiySession, exchangeTeachableSessionForTmkToken } from '../components/authHelpers';
+import { Box, Container, Paper, Typography, Button, Alert, CircularProgress } from '@mui/material';
+import TmkLogo from '../components/TmkLogo';
 
 const DEFAULT_NEXT_PATH = '/';
 const SESSION_CHECK_FALLBACK_MS = 12000;
@@ -133,119 +135,117 @@ function LoginPageContent() {
 
   if (isChecking) {
     return (
-      <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', fontFamily: 'ui-sans-serif, system-ui' }}>
-        <p>Checking session...</p>
-      </main>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          backgroundImage:
+            "linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.86)), url('/branding/tmk_diy_cat.png')",
+          backgroundSize: '65% auto',
+          backgroundPosition: 'center calc(10%)',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: { xs: 'scroll', md: 'fixed' },
+          display: 'grid',
+          placeItems: 'center',
+        }}
+      >
+        <CircularProgress />
+      </Box>
     );
   }
 
   return (
-    <main
-      style={{
+    <Box
+      sx={{
         minHeight: '100vh',
+        backgroundImage:
+          "linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.86)), url('/branding/tmk_diy_cat.png')",
+        backgroundSize: '65% auto',
+        backgroundPosition: 'center calc(10%)',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: { xs: 'scroll', md: 'fixed' },
         display: 'grid',
         placeItems: 'center',
-        background: 'linear-gradient(135deg, #f6f9fc 0%, #e9eff7 100%)',
-        padding: '24px',
+        py: 4,
       }}
     >
-      <section
-        style={{
-          width: '100%',
-          maxWidth: '420px',
-          background: '#ffffff',
-          borderRadius: '14px',
-          boxShadow: '0 14px 40px rgba(18, 38, 63, 0.12)',
-          padding: '28px',
-          fontFamily: 'ui-sans-serif, system-ui',
-        }}
-      >
-        <h1 style={{ margin: 0, fontSize: '28px', lineHeight: 1.2, color: '#1c2b3a' }}>TMK Login</h1>
-        <p style={{ marginTop: '10px', color: '#4b5d70', lineHeight: 1.5 }}>
-          Sign in with your Teachable account to access lesson activities.
-        </p>
+      <Container maxWidth="sm">
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+          <TmkLogo priority routeToHome />
+        </Box>
 
-        {errorMessage ? (
-          <div
-            style={{
-              marginTop: '14px',
-              background: '#fdecec',
-              color: '#9f1c1c',
-              border: '1px solid #f8b4b4',
-              borderRadius: '10px',
-              padding: '10px 12px',
-              fontSize: '14px',
-            }}
-          >
-            {errorMessage}
-          </div>
-        ) : null}
-
-        {sessionCheckTimedOut ? (
-          <div
-            style={{
-              marginTop: '14px',
-              background: '#fff7e6',
-              color: '#8a5800',
-              border: '1px solid #f5d68b',
-              borderRadius: '10px',
-              padding: '10px 12px',
-              fontSize: '14px',
-            }}
-          >
-            Session check timed out. Please retry, or continue to sign in.
-          </div>
-        ) : null}
-
-        {sessionCheckTimedOut ? (
-          <button
-            type="button"
-            onClick={handleRetrySessionCheck}
-            style={{
-              marginTop: '12px',
-              width: '100%',
-              border: '1px solid #d7dee7',
-              borderRadius: '10px',
-              background: '#ffffff',
-              color: '#1c2b3a',
-              fontSize: '15px',
-              fontWeight: 600,
-              padding: '10px 12px',
-              cursor: 'pointer',
-            }}
-          >
-            Retry Session Check
-          </button>
-        ) : null}
-
-        <button
-          type="button"
-          onClick={handleLogin}
-          style={{
-            marginTop: '18px',
-            width: '100%',
-            border: 'none',
-            borderRadius: '10px',
-            background: '#0f5d9c',
-            color: 'white',
-            fontSize: '16px',
-            fontWeight: 600,
-            padding: '12px 14px',
-            cursor: 'pointer',
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 3, md: 4 },
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            border: '1px solid #224c88',
           }}
         >
-          Continue With Teachable
-        </button>
-      </section>
-    </main>
+          <Typography variant="h5" component="h1" sx={{ mb: 1, fontWeight: 600, color: '#1c2b3a' }}>
+            TMK Login
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+            Sign in with your Teachable account to access lesson activities.
+          </Typography>
+
+          {errorMessage ? (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {errorMessage}
+            </Alert>
+          ) : null}
+
+          {sessionCheckTimedOut ? (
+            <>
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                Session check timed out. Please retry, or continue to sign in.
+              </Alert>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={handleRetrySessionCheck}
+                sx={{ mb: 2 }}
+              >
+                Retry Session Check
+              </Button>
+            </>
+          ) : null}
+
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={handleLogin}
+            sx={{
+              py: 1.5,
+              fontSize: '1rem',
+              fontWeight: 600,
+            }}
+          >
+            Continue With Teachable
+          </Button>
+        </Paper>
+      </Container>
+    </Box>
   );
 }
 
 function LoginFallback() {
   return (
-    <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', fontFamily: 'ui-sans-serif, system-ui' }}>
-      <p>Loading login...</p>
-    </main>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        backgroundImage:
+          "linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.86)), url('/branding/tmk_diy_cat.png')",
+        backgroundSize: '65% auto',
+        backgroundPosition: 'center calc(10%)',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: { xs: 'scroll', md: 'fixed' },
+        display: 'grid',
+        placeItems: 'center',
+      }}
+    >
+      <CircularProgress />
+    </Box>
   );
 }
 
