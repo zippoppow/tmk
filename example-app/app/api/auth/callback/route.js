@@ -126,7 +126,14 @@ export async function GET(request) {
 
 		// Check DIY enrollment
 		const userEmail = userInfo.email || userInfo?.profile?.email || '';
-		const hasDiyAccess = await checkEnrollment(apiOrigin, userEmail, teachableSession);
+		let hasDiyAccess = false;
+		try {
+			hasDiyAccess = await checkEnrollment(apiOrigin, userEmail, teachableSession);
+		} catch (enrollError) {
+			console.error('[callback] enrollment check exception:', enrollError?.message);
+			// Don't fail the entire flow if enrollment check errors - just set to false
+			hasDiyAccess = false;
+		}
 
 		console.log('[callback] enrollment check:', hasDiyAccess, 'for', userEmail);
 
