@@ -29,8 +29,8 @@ export async function POST(request) {
 		const appSessionExpiresAt = Date.now() + APP_SESSION_LIFETIME_MS;
 
 		// Set httpOnly cookie for app session
-		// Format: isAppLoggedIn:true|false;expiresAt:<timestamp>
-		const cookieValue = `isAppLoggedIn:true;expiresAt:${appSessionExpiresAt}`;
+		// Format: isAppLoggedIn:true|<expiresAtTimestamp>
+		const cookieValue = `isAppLoggedIn:true|${appSessionExpiresAt}`;
 
 		const response = NextResponse.json(
 			{

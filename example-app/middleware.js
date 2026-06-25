@@ -81,22 +81,16 @@ function hasValidAppSession(request) {
       return false;
     }
 
-    // Parse cookie value
-    const parts = appSessionCookie.split(';');
-    const loginState = parts.find(p => p.startsWith('isAppLoggedIn:'));
-    const expiryPart = parts.find(p => p.startsWith('expiresAt:'));
+// Parse cookie value: format is "isAppLoggedIn:true|<expiresAtTimestamp>"
+	const [loginState, expiryStr] = appSessionCookie.split('|');
 
-    if (!loginState) {
-      return false;
-    }
+	if (!loginState || !loginState.startsWith('isAppLoggedIn:true')) {
+		return false;
+	}
 
-    const isLoggedIn = loginState.includes('true');
-    if (!isLoggedIn) {
-      return false;
-    }
-
-    if (expiryPart) {
-      const expiresAt = parseInt(expiryPart.replace('expiresAt:', ''), 10);
+	// Check expiry
+	if (expiryStr) {
+		const expiresAt = parseInt(expiryStr, 10);
       if (Number.isFinite(expiresAt) && Date.now() > expiresAt) {
         return false; // Session expired
       }
