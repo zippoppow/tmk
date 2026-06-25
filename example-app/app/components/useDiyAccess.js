@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AUTH_BYPASS_ENABLED, AUTH_BYPASS_USER, exchangeTeachableSessionForTmkToken, fetchAuthenticatedUser } from './authHelpers';
+import { AUTH_BYPASS_ENABLED, AUTH_BYPASS_USER, exchangeTeachableSessionForTmkToken, fetchAuthenticatedUser, initializeDiySession } from './authHelpers';
 
 const DIY_COURSE_ID = '2944218';
 const DIY_ACCESS_STORAGE_KEY = 'tmk-diy-access-by-email';
@@ -274,6 +274,11 @@ export function useDiyAccess() {
 
         if (verifiedEnrollment) {
           writeStoredDiyAccess(rawEmail, diyAccess, Date.now());
+
+          // Initialize DIY session after successful login and enrollment verification
+          if (userData && diyAccess) {
+            await initializeDiySession(userData, true);
+          }
         }
       } finally {
         if (!cancelled) {

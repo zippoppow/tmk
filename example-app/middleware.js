@@ -63,24 +63,46 @@ function extractAuthenticatedUser(data) {
   return inferredUser;
 }
 
-async function hasAuthenticatedSession(request) {
-  const meUrl = new URL('/api/auth/teachable/me', request.url);
-
+/**
+ * Parse app session cookie and check if session is valid
+ * Format: "isAppLoggedIn:true|false;expiresAt:<timestamp>"
+ */
+function hasValidAppSession(request) {
   try {
-    const response = await fetch(meUrl, {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        cookie: request.headers.get('cookie') || '',
-      },
-    });
+    const cookieHeader = request.headers.get('cookie') || '';
+    const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+      const [name, value] = cookie.trim().split('=');
+      acc[name] = value;
+      return acc;
+    }, {});
 
-    if (!response.ok) {
+    const appSessionCookie = cookies['tmk_app_session'];
+    if (!appSessionCookie) {
       return false;
     }
 
-    const payload = await response.json().catch(() => null);
-    return Boolean(extractAuthenticatedUser(payload));
+    // Parse cookie value
+    const parts = appSessionCookie.split(';');
+    const loginState = parts.find(p => p.startsWith('isAppLoggedIn:'));
+    const expiryPart = parts.find(p => p.startsWith('expiresAt:'));
+
+    if (!loginState) {
+      return false;
+    }
+
+    const isLoggedIn = loginState.includes('true');
+    if (!isLoggedIn) {
+      return false;
+    }
+
+    if (expiryPart) {
+      const expiresAt = parseInt(expiryPart.replace('expiresAt:', ''), 10);
+      if (Number.isFinite(expiresAt) && Date.now() > expiresAt) {
+        return false; // Session expired
+      }
+    }
+
+    return true;
   } catch {
     return false;
   }
@@ -118,7 +140,7 @@ export async function middleware(request) {
     return NextResponse.next();
   }
 
-  const isAuthenticated = await hasAuthenticatedSession(request);
+  const isAuthenticated = hasValidAppSession(request);
   if (!isAuthenticated) {
     return buildLoginRedirect(request);
   }

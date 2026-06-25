@@ -7,6 +7,10 @@ import {
 	TEACHABLE_SESSION_STORAGE_KEY,
 	USER_AUTH_ENDPOINTS,
 } from './sharedHelperConstants';
+import * as diySessionManager from '../lib/diySessionManager';
+import * as diyJwtRefreshScheduler from '../lib/diyJwtRefreshScheduler';
+import * as teachableReVerificationScheduler from '../lib/teachableReVerificationScheduler';
+import * as teachableSessionValidityScheduler from '../lib/teachableSessionValidityScheduler';
 
 export {
 	AUTH_BYPASS_ENABLED,
@@ -302,6 +306,14 @@ export function clearLocalAuthState() {
 	teachableSessionHandoff = '';
 	clearAuthStateHints();
 
+	// Clear DIY session manager
+	diySessionManager.clearAppSession();
+
+	// Stop background schedulers
+	diyJwtRefreshScheduler.stopDiyJwtRefreshScheduler();
+	teachableReVerificationScheduler.stopTeachableReVerificationScheduler();
+	teachableSessionValidityScheduler.stopTeachableSessionValidityScheduler();
+
 	if (typeof window === 'undefined') {
 		return;
 	}
@@ -353,7 +365,22 @@ export function buildTeachableStartUrl(apiOriginOrRedirectTo, redirectTo) {
 }
 
 export function buildTeachableLogoutUrl(redirectTo) {
+	// Clear all local auth state and stop schedulers
 	clearLocalAuthState();
+
+	// Call logout API to clear the httpOnly session cookie
+	if (typeof window !== 'undefined') {
+		try {
+			fetch('/api/session/logout', {
+				method: 'POST',
+				credentials: 'include',
+			}).catch(() => {
+				// Ignore errors, logout will proceed regardless
+			});
+		} catch {
+			// Ignore errors
+		}
+	}
 
 	if (isAuthBypassMode()) {
 		if (typeof window === 'undefined') {
@@ -496,6 +523,87 @@ export async function exchangeTeachableSessionForTmkToken() {
 		userAccessToken = '';
 		setStoredTmkApiAccessToken('');
 		return '';
+	}
+}
+
+export async function initializeDiySession(user, hasDiyAccess) {
+	if (typeof window === 'undefined') {
+		authDebug('initializeDiySession called on server-side, skipping');
+		return false;
+	}
+
+	if (isAuthBypassMode()) {
+		// In bypass mode, initialize session locally but don't call API
+		const jwtExpiresAtMs = Date.now() + 7200 * 1000;
+		diySessionManager.setAppSession(user, hasDiyAccess, userAccessToken, jwtExpiresAtMs);
+		diyJwtRefreshScheduler.startDiyJwtRefreshScheduler();
+		teachableReVerificationScheduler.startTeachableReVerificationScheduler(() => {
+			authDebug('Enrollment loss notification in bypass mode');
+		});
+		teachableSessionValidityScheduler.startTeachableSessionValidityScheduler(() => {
+			authDebug('Teachable session lost in bypass mode');
+		});
+		return true;
+	}
+
+	try {
+		// Calculate JWT expiry (7200 seconds from now)
+		const jwtExpiresAtMs = Date.now() + 7200 * 1000;
+
+		authDebug('initializeDiySession -> request', {
+			userEmail: user?.email,
+			hasDiyAccess,
+		});
+
+		// Call API to set httpOnly cookie
+		const response = await fetch('/api/session/init', {
+			method: 'POST',
+			credentials: 'include',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				user,
+				hasDiyAccess,
+				jwtExpiresAtMs,
+			}),
+		});
+
+		authDebug('initializeDiySession <- response', {
+			status: response.status,
+			ok: response.ok,
+		});
+
+		if (!response.ok) {
+			authDebug('initializeDiySession failed');
+			return false;
+		}
+
+		// Initialize DIY Session Manager (client-side state)
+		diySessionManager.setAppSession(user, hasDiyAccess, userAccessToken, jwtExpiresAtMs);
+
+		// Start background schedulers
+		diyJwtRefreshScheduler.startDiyJwtRefreshScheduler();
+		teachableReVerificationScheduler.startTeachableReVerificationScheduler(() => {
+			authDebug('Enrollment loss detected, hasDiyAccess disabled');
+		});
+		teachableSessionValidityScheduler.startTeachableSessionValidityScheduler(() => {
+			authDebug('Teachable session lost, logging out user');
+			// Clear all session state
+			clearLocalAuthState();
+			// Redirect to login with error message
+			if (typeof window !== 'undefined') {
+				window.location.href = '/login?auth=error&message=' + encodeURIComponent('Your Teachable session has ended. Please log in again.');
+			}
+		});
+
+		authDebug('DIY session initialized successfully');
+		return true;
+	} catch (error) {
+		authDebug('initializeDiySession error', {
+			message: error?.message || String(error),
+		});
+		return false;
 	}
 }
 
