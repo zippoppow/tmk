@@ -143,6 +143,8 @@ export async function GET(request) {
 		const cookieValue = `isAppLoggedIn:true|${appSessionExpiresAt}`;
 
 		console.log('[callback] setting cookie with expiry:', appSessionExpiresAt);
+		console.log('[callback] cookie value:', cookieValue);
+		console.log('[callback] cookie value length:', cookieValue.length);
 
 		// Create redirect response
 		const redirectUrl = new URL(redirectTo, request.url);
@@ -156,6 +158,8 @@ export async function GET(request) {
 			maxAge: APP_SESSION_LIFETIME_MS / 1000, // Max-Age in seconds
 			path: '/',
 		});
+
+		console.log('[callback] cookie set on response');
 
 		// Store user and enrollment info in separate cookies for client access
 		// (note: these are NOT httpOnly so client can read them)

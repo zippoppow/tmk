@@ -82,26 +82,39 @@ function hasValidAppSession(request) {
 
     const appSessionCookie = cookies['tmk_app_session'];
     console.log('[middleware] tmk_app_session present:', !!appSessionCookie);
+    console.log('[middleware] tmk_app_session raw value:', appSessionCookie?.substring(0, 80));
     
     if (!appSessionCookie) {
+      console.log('[middleware] ❌ no cookie');
       return false;
     }
 
 // Parse cookie value: format is "isAppLoggedIn:true|<expiresAtTimestamp>"
 	const [loginState, expiryStr] = appSessionCookie.split('|');
+	console.log('[middleware] loginState:', loginState, 'expiryStr:', expiryStr);
 
 	if (!loginState || !loginState.startsWith('isAppLoggedIn:true')) {
+		console.log('[middleware] ❌ invalid loginState');
 		return false;
 	}
 
 	// Check expiry
 	if (expiryStr) {
 		const expiresAt = parseInt(expiryStr, 10);
-      if (Number.isFinite(expiresAt) && Date.now() > expiresAt) {
-        return false; // Session expired
+		const now = Date.now();
+		const isExpired = now > expiresAt;
+		console.log('[middleware] expiresAt:', expiresAt, 'now:', now, 'isExpired:', isExpired);
+      if (!Number.isFinite(expiresAt)) {
+        console.log('[middleware] ❌ expiresAt not a valid number');
+        return false;
+      }
+      if (isExpired) {
+        console.log('[middleware] ❌ session expired');
+        return false;
       }
     }
 
+    console.log('[middleware] ✅ session is valid');
     return true;
   } catch {
     return false;
