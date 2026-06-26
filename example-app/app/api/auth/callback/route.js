@@ -61,15 +61,8 @@ async function checkEnrollment(apiOrigin, userEmail, teachableSession) {
 			url.searchParams.set('teachable_session', teachableSession);
 		}
 
-		const headers = {};
-		const apiAuthKey = String(process.env.TMK_API_AUTH_KEY || '').trim();
-		if (apiAuthKey) {
-			headers['x-api-key'] = apiAuthKey;
-		}
-
 		const response = await fetch(url.toString(), {
 			method: 'GET',
-			headers,
 		});
 
 		if (!response.ok) {
