@@ -889,6 +889,7 @@ export async function fetchAuthenticatedUser() {
 		const apiOrigin = resolveTmkApiOrigin();
 		const meUrl = new URL(OAUTH_ENDPOINTS.me, apiOrigin);
 		const mePath = addTeachableSessionToPath(meUrl.toString());
+		console.log('[TMK auth] fetchAuthenticatedUser calling:', mePath);
 		authDebug('fetchAuthenticatedUser -> request', {
 			url: mePath,
 			method: 'GET',
@@ -900,6 +901,7 @@ export async function fetchAuthenticatedUser() {
 			cache: 'no-store',
 			signal: controller?.signal,
 		});
+		console.log('[TMK auth] fetchAuthenticatedUser response status:', response.status);
 		authDebug('fetchAuthenticatedUser <- response', {
 			status: response.status,
 			ok: response.ok,
@@ -914,11 +916,21 @@ export async function fetchAuthenticatedUser() {
 			return null;
 		}
 
-		const data = await response.json();
+		let data;
+		try {
+			data = await response.json();
+		} catch (jsonErr) {
+			console.warn('[TMK auth] /me returned 200 but response body is not valid JSON:', jsonErr?.message);
+			console.warn('[TMK auth] response headers:', Array.from(response.headers.entries()));
+			clearAuthStateHints();
+			return null;
+		}
+
 		authDebug('fetchAuthenticatedUser payload', {
 			payloadKeys: Object.keys(data || {}),
 			hasUserCandidate: Boolean(data?.user || data?.data || data?.result || data?.email),
 		});
+		console.log('[TMK auth] /me response data:', JSON.stringify(data, null, 2));
 		const user = extractAuthenticatedUser(data);
 		if (user) {
 			syncAuthStateHints(user);
