@@ -113,8 +113,11 @@ export async function GET(request) {
 		const appSessionExpiresAt = Date.now() + APP_SESSION_LIFETIME_MS;
 		const cookieValue = `isAppLoggedIn:true|${appSessionExpiresAt}`;
 
-		// Create redirect response
+		// Create redirect response - include teachable_session so client can capture it
 		const redirectUrl = new URL(redirectTo, request.url);
+		if (teachableSession) {
+			redirectUrl.searchParams.set('teachable_session', teachableSession);
+		}
 		const response = NextResponse.redirect(redirectUrl);
 
 		// Set httpOnly app session cookie

@@ -897,7 +897,6 @@ export async function fetchAuthenticatedUser() {
 		});
 		const response = await fetch(mePath, {
 			method: 'GET',
-			credentials: 'include',
 			cache: 'no-store',
 			signal: controller?.signal,
 		});
