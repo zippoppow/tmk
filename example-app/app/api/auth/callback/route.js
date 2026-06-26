@@ -34,26 +34,17 @@ async function getUserInfo(apiOrigin, teachableSession) {
 			url.searchParams.set('teachable_session', teachableSession);
 		}
 
-		console.log('[callback.getUserInfo] calling:', url.toString());
-
 		const response = await fetch(url.toString(), {
 			method: 'GET',
 		});
 
-		console.log('[callback.getUserInfo] response status:', response.status);
-
 		if (!response.ok) {
-			console.error('[callback.getUserInfo] failed with status:', response.status);
-			const errorText = await response.text();
-			console.error('[callback.getUserInfo] error body:', errorText);
 			return null;
 		}
 
 		const data = await response.json();
-		console.log('[callback.getUserInfo] got data:', !!data, 'email:', data?.data?.email || data?.email);
 		return data?.data || data || null;
 	} catch (error) {
-		console.error('[callback.getUserInfo] error:', error?.message || error);
 		return null;
 	}
 }
@@ -70,26 +61,24 @@ async function checkEnrollment(apiOrigin, userEmail, teachableSession) {
 			url.searchParams.set('teachable_session', teachableSession);
 		}
 
-		console.log('[callback.checkEnrollment] calling:', url.toString().replace(teachableSession, '***'));
+		const headers = {};
+		const apiAuthKey = String(process.env.TMK_API_AUTH_KEY || '').trim();
+		if (apiAuthKey) {
+			headers['x-api-key'] = apiAuthKey;
+		}
 
 		const response = await fetch(url.toString(), {
 			method: 'GET',
+			headers,
 		});
 
-		console.log('[callback.checkEnrollment] response status:', response.status);
-
 		if (!response.ok) {
-			console.error('[callback.checkEnrollment] failed with status:', response.status);
-			const errorText = await response.text();
-			console.error('[callback.checkEnrollment] error body:', errorText);
 			return false;
 		}
 
 		const data = await response.json();
-		console.log('[callback.checkEnrollment] enrolled:', data?.enrolled);
 		return data?.enrolled === true;
 	} catch (error) {
-		console.error('[callback.checkEnrollment] error:', error?.message || error);
 		return false;
 	}
 }
@@ -100,25 +89,17 @@ export async function GET(request) {
 		const redirectTo = searchParams.get('redirectTo') || '/';
 		const teachableSession = searchParams.get('teachable_session');
 
-		console.log('[callback] Starting OAuth callback handler');
-		console.log('[callback] redirectTo:', redirectTo);
-		console.log('[callback] teachableSession present:', !!teachableSession);
-
 		// Determine API origin (from env or default)
 		const apiOrigin = process.env.NEXT_PUBLIC_TMK_API_URL || 
 			(process.env.NODE_ENV === 'production' 
 				? 'https://tmk-api.up.railway.app' 
 				: 'http://localhost:3000');
 
-		console.log('[callback] apiOrigin:', apiOrigin);
-
 		// Get user info using the teachable_session passed by TMK API
 		const userInfo = await getUserInfo(apiOrigin, teachableSession);
-		console.log('[callback] userInfo retrieved:', !!userInfo, userInfo?.email);
 		
 		if (!userInfo) {
 			// User not authenticated via Teachable session
-			console.log('[callback] Failed to get user info, redirecting to login');
 			const errorResponse = NextResponse.redirect(new URL('/login?auth=error&message=' + encodeURIComponent('Failed to fetch user info'), request.url));
 			errorResponse.headers.set('X-TMK-CALLBACK-ERROR', 'no-user-info');
 			return errorResponse;
@@ -130,12 +111,9 @@ export async function GET(request) {
 		try {
 			hasDiyAccess = await checkEnrollment(apiOrigin, userEmail, teachableSession);
 		} catch (enrollError) {
-			console.error('[callback] enrollment check exception:', enrollError?.message);
 			// Don't fail the entire flow if enrollment check errors - just set to false
 			hasDiyAccess = false;
 		}
-
-		console.log('[callback] enrollment check:', hasDiyAccess, 'for', userEmail);
 
 		// Prepare app session
 		const APP_SESSION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
