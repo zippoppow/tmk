@@ -148,11 +148,8 @@ export async function GET(request) {
 		response.headers.set('X-TMK-CALLBACK-SUCCESS', 'true');
 		response.headers.set('X-TMK-COOKIE-EXPIRY', String(appSessionExpiresAt));
 
-		console.log('[callback] OAuth flow complete, redirecting to:', redirectTo);
-
 		return response;
 	} catch (error) {
-		console.error('[callback] error:', error?.message || error);
 		const errorResponse = NextResponse.redirect(new URL('/login?auth=error&message=' + encodeURIComponent('Authentication failed'), request.url));
 		errorResponse.headers.set('X-TMK-CALLBACK-ERROR', error?.message || 'unknown');
 		return errorResponse;

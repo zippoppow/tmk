@@ -885,7 +885,10 @@ export async function fetchAuthenticatedUser() {
 		: null;
 
 	try {
-		const mePath = addTeachableSessionToPath(OAUTH_ENDPOINTS.me);
+		// Build full TMK API URL directly (not through example-app proxy)
+		const apiOrigin = resolveTmkApiOrigin();
+		const meUrl = new URL(OAUTH_ENDPOINTS.me, apiOrigin);
+		const mePath = addTeachableSessionToPath(meUrl.toString());
 		authDebug('fetchAuthenticatedUser -> request', {
 			url: mePath,
 			method: 'GET',
