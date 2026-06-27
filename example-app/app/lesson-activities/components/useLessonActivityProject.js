@@ -66,6 +66,7 @@ export function useLessonActivityProject({
 	const latestLocalDraftIdRef = useRef('');
 	const isPresentationCloneRef = useRef(false);
 	const flushLocalDraftRef = useRef(() => {});
+	const slideshowCloneContextRef = useRef({ cloneSeedKey: '', isSlideshowClone: false });
 
 	useEffect(() => {
 		normalizeInputDataRef.current = normalizeInputData;
@@ -599,13 +600,7 @@ export function useLessonActivityProject({
 	// Cleanup presentation mode: delete clone seed and draft when exiting slideshow
 	useEffect(() => {
 		return () => {
-			if (typeof window === 'undefined') {
-				return;
-			}
-
-			const url = new URL(window.location.href);
-			const cloneSeedKey = String(url.searchParams.get('cloneSeedKey') || '').trim();
-			const isSlideshowClone = url.searchParams.get('slideshowClone') === '1';
+			const { cloneSeedKey, isSlideshowClone } = slideshowCloneContextRef.current;
 
 			// If exiting a slideshow presentation, clean up the temporary clone
 			if (isSlideshowClone && cloneSeedKey && latestLocalDraftIdRef.current) {
@@ -653,6 +648,11 @@ export function useLessonActivityProject({
 				url.searchParams.delete('message');
 				window.history.replaceState({}, '', url.toString());
 			}
+
+			// Capture presentation clone context early so it's available in cleanup effect
+			const cloneSeedKey = String(url.searchParams.get('cloneSeedKey') || '').trim();
+			const isSlideshowClone = url.searchParams.get('slideshowClone') === '1';
+			slideshowCloneContextRef.current = { cloneSeedKey, isSlideshowClone };
 		}
 
 		runAuthCheck();
