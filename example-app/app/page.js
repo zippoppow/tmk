@@ -12,6 +12,7 @@ import {
     Box,
     Collapse,
     Grid,
+    LinearProgress,
     Typography,
     Button,
     Paper,
@@ -26,7 +27,7 @@ export default function HomePage() {
     const [isMounted, setIsMounted] = useState(false);
     const [activePreviewIndex, setActivePreviewIndex] = useState(0);
     const [isCarouselOpen, setIsCarouselOpen] = useState(false);
-    const { hasDiyAccess, authUser: user } = useDiyAccess();
+    const { hasDiyAccess, authUser: user, loading: enrollmentLoading } = useDiyAccess();
 
     const previewImages = useMemo(
         () => [
@@ -99,11 +100,25 @@ export default function HomePage() {
           </Box>
 
           <Grid container spacing={{ xs: 2, md: 3 }} alignItems="flex-start" sx={{ mb: 4 }}>
-                 {!hasDiyAccess && (
-                    <Alert severity="warning" sx={{ mb: 1 }}>
-                        Active enrollment in the DIY course is required to access Lesson Activities and Projects.
-                        To enroll, please visit the <a href="https://themorphologykit.com" target="_blank" rel="noopener noreferrer">The Morphology Kit®DIY Course page</a>.
-                    </Alert>
+                {(enrollmentLoading || !hasDiyAccess) && (
+                    <Grid item xs={12}>
+                        {enrollmentLoading ? (
+                            <Alert severity="info" sx={{ alignItems: 'center' }}>
+                                <Box sx={{ width: '100%' }}>
+                                    <Typography variant="body2" sx={{ mb: 1 }}>
+                                        Checking your DIY course enrollment status…
+                                    </Typography>
+                                    <LinearProgress color="info" />
+                                </Box>
+                            </Alert>
+                        ) : (
+                            <Alert severity="warning">
+                                Enrollment check complete. Active enrollment in the DIY course is required to access Lesson Activities and Projects.
+                                If you believe you should have access, please contact support or visit the{' '}
+                                <a href="https://themorphologykit.com/p/diy" target="_blank" rel="noopener noreferrer">The Morphology Kit® DIY Course page</a> to enroll.
+                            </Alert>
+                        )}
+                    </Grid>
                 )}
                 {/* Left column: Lesson Activities + Standalone */}
                 <Grid item xs={12} md={6} sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3, order: { xs: 2, md: 1 } }}>
