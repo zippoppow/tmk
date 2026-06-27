@@ -217,6 +217,17 @@ export function getSlideshowCloneSeed(seedKey, storageKey = SLIDESHOW_CLONE_SEED
 	return seedMap[normalizedSeedKey] || null;
 }
 
+export function deleteSlideshowCloneSeed(seedKey, storageKey = SLIDESHOW_CLONE_SEEDS_STORAGE_KEY) {
+	const normalizedSeedKey = String(seedKey || '').trim();
+	if (!normalizedSeedKey) {
+		return;
+	}
+
+	const seedMap = readSlideshowCloneSeedMap(storageKey);
+	delete seedMap[normalizedSeedKey];
+	writeSlideshowCloneSeedMap(seedMap, storageKey);
+}
+
 export function deleteStandaloneDraftByLocalId(localDraftId, storageKey = STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY) {
 	const normalizedId = String(localDraftId || '').trim();
 	if (!normalizedId) {
