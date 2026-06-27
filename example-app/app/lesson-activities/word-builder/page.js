@@ -130,6 +130,7 @@ export default function WordBuilderPage() {
 	};
 
 	const handleDownloadPdfCustom = () => {
+		const isSlideshowClone = typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('slideshowClone') === '1';
 		const makeColItems = (arr) =>
 			arr.length > 0
 				? arr.map((v) => `<div class="col-item">${(v || '').replace(/</g, '&lt;')}</div>`).join('')
@@ -139,7 +140,7 @@ export default function WordBuilderPage() {
 			.map((v) => `<div class="built-cell">${(v || '').replace(/</g, '&lt;')}</div>`)
 			.join('');
 
-		const licenseFooter = authUser?.email
+		const licenseFooter = !isSlideshowClone && authUser?.email
 			? `<div class="license-footer">Licensed for use to: ${authUser.email.replace(/</g, '&lt;')}</div>`
 			: '';
 

@@ -228,6 +228,7 @@ export default function MorphMorphMatchPage() {
 	};
 
 	const handleDownloadPdfCustom = () => {
+		const isSlideshowClone = typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('slideshowClone') === '1';
 		const sh = data.sectionHeaders || {};
 		const gridCells = data.grid
 			.map((v) => `<div class="grid-cell">${(v || '').replace(/</g, '&lt;')}</div>`)
@@ -246,7 +247,7 @@ export default function MorphMorphMatchPage() {
 			)
 			.join('');
 
-		const licenseFooter = authUser?.email
+		const licenseFooter = !isSlideshowClone && authUser?.email
 			? `<div class="license-footer">Licensed for use to: ${authUser.email.replace(/</g, '&lt;')}</div>`
 			: '';
 

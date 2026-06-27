@@ -79,6 +79,7 @@ export default function WordMeaningPage() {
 	};
 
 	const handleDownloadPdfCustom = () => {
+		const isSlideshowClone = typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('slideshowClone') === '1';
 		const printWindow = window.open('', '', 'width=1100,height=1400');
 
 		if (!printWindow) {
@@ -167,7 +168,7 @@ export default function WordMeaningPage() {
 			appendElement(row, 'div', 'cell cell-boxed', data.answerMeanings[index] || '');
 		});
 
-		if (authUser?.email) {
+		if (!isSlideshowClone && authUser?.email) {
 			appendElement(printDocument.body, 'div', 'license-footer', `Licensed for use to: ${authUser.email}`);
 		}
 

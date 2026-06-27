@@ -275,7 +275,8 @@ export default function PartOfSpeechPage() {
 			<div class="sort-box">${adjectiveItems}</div>
 		</div>`;
 
-		const licenseFooter = authUser?.email
+		const isSlideshowClone = typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('slideshowClone') === '1';
+		const licenseFooter = !isSlideshowClone && authUser?.email
 			? `<div class="license-footer">Licensed for use to: ${authUser.email.replace(/</g, '&lt;')}</div>`
 			: '';
 

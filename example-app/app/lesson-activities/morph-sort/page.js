@@ -258,6 +258,7 @@ export default function MorphSortPage() {
 	};
 
 	const handleDownloadPdfCustom = () => {
+		const isSlideshowClone = typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('slideshowClone') === '1';
 		const wordItems = data.words
 			.map((w) => `<div class="word-cell">${(w || '').replace(/</g, '&lt;')}</div>`)
 			.join('');
@@ -265,7 +266,7 @@ export default function MorphSortPage() {
 		const leftItems = data.leftItems.map((item) => `<li>${(item || '').replace(/</g, '&lt;')}</li>`).join('');
 		const rightItems = data.rightItems.map((item) => `<li>${(item || '').replace(/</g, '&lt;')}</li>`).join('');
 
-		const licenseFooter = authUser?.email
+		const licenseFooter = !isSlideshowClone && authUser?.email
 			? `<div class="license-footer">Licensed for use to: ${authUser.email.replace(/</g, '&lt;')}</div>`
 			: '';
 

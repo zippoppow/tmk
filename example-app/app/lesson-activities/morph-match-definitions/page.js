@@ -117,6 +117,7 @@ export default function MorphMatchDefinitionsPage() {
 	};
 
 	const handleDownloadPdfCustom = () => {
+		const isSlideshowClone = typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('slideshowClone') === '1';
 		const wordsRows = data.words
 			.map(
 				(word, i) => `
@@ -255,7 +256,7 @@ export default function MorphMatchDefinitionsPage() {
       ${definitionRows}
     </div>
   </div>
-  ${authUser?.email ? `<div class="license-footer">Licensed for use to: ${authUser.email.replace(/</g, '&lt;')}</div>` : ''}
+  ${!isSlideshowClone && authUser?.email ? `<div class="license-footer">Licensed for use to: ${authUser.email.replace(/</g, '&lt;')}</div>` : ''}
 </body>
 </html>`,
 			onPopupBlocked: () => setNotice({ type: 'error', message: 'Allow pop-ups to print this activity.' }),
