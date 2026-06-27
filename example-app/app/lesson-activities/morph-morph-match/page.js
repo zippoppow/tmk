@@ -330,7 +330,7 @@ export default function MorphMorphMatchPage() {
 			title="MORPH, MORPH? MATCH"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Use the top grid to explore morph forms, then pair related morph words below."
+			instructions="Read the words in the top grid. Then sort and match related words below."
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}
@@ -360,7 +360,7 @@ export default function MorphMorphMatchPage() {
 		>
 			<ActivityDndProvider onDragEnd={handleDragEnd}>
 				<Box sx={{ mt: 2, mb: 1, fontSize: '0.95rem', color: '#243b53' }}>
-					Drag from the top grid into either left or right numbered input below.
+					Drag from the top grid into the columns below.
 				</Box>
 				<Box sx={{ my: 3 }}>
 					{Array.from({ length: 4 }, (_, rowIndex) => (

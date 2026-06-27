@@ -239,7 +239,7 @@ export default function CommonBaseWordPage() {
     <div class="header-column">
       <div class="title">COMMON BASE WORD</div>
       <div class="subtitle">Morpheme(s): <span class="morpheme-value">${(data.morpheme || '').replace(/</g, '&lt;')}</span></div>
-      <div class="instructions">Sort the word into three different columns based on their word families.</div>
+      <div class="instructions">Sort the words into three different columns based on their word families.</div>
     </div>
     <div class="header-column">
       <img src="/branding/tmk_diy_logo_templates.png" alt="The Morphology Kit" />
@@ -260,7 +260,7 @@ export default function CommonBaseWordPage() {
 			title="COMMON BASE WORD"
 			morpheme={data.morpheme}
 			onMorphemeChange={(value) => setData((prev) => ({ ...prev, morpheme: value }))}
-			instructions="Sort the word into three different columns based on their word families"
+			instructions="Sort the words into three different columns based on their word families."
 			authUser={authUser}
 			authLoading={authLoading}
 			authFromSuccessRedirect={authFromSuccessRedirect}
@@ -339,11 +339,6 @@ export default function CommonBaseWordPage() {
 						</Box>
 					))}
 				</Box>
-
-				<Box sx={{ textAlign: 'center', fontSize: '1.05rem', color: '#555', mb: 3 }}>
-					Sort the words into 3 different columns based on a shared base word.
-				</Box>
-
 				{/* Group boxes */}
 				<Typography sx={{ fontWeight: 700, mb: 1.5 }}>Common Base Word Groups</Typography>
 				<Grid container spacing={2}>

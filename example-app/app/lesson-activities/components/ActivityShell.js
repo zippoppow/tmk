@@ -59,6 +59,7 @@ export default function ActivityShell({
 	const router = useRouter();
 	const [isSlideshowMode, setIsSlideshowMode] = useState(false);
 	const [isSlideshowFullscreenMode, setIsSlideshowFullscreenMode] = useState(false);
+	const [isConfirmSaveDialogOpen, setIsConfirmSaveDialogOpen] = useState(false);
 	const outlinedControlButtonSx = {
 		textTransform: 'none',
 		bgcolor: '#fff',
@@ -90,7 +91,12 @@ export default function ActivityShell({
 		});
 	};
 
-	const handleSaveActivityClick = async () => {
+	const handleSaveActivityClick = () => {
+		setIsConfirmSaveDialogOpen(true);
+	};
+
+	const handleConfirmSave = async () => {
+		setIsConfirmSaveDialogOpen(false);
 		const hasProjectRouteContext = Boolean(projectId)
 			|| (typeof window !== 'undefined' && Boolean(new URLSearchParams(window.location.search).get('projectId')));
 
@@ -464,6 +470,37 @@ export default function ActivityShell({
 					{notice.message}
 				</Alert>
 			</Snackbar>
+
+			<Dialog
+				open={isConfirmSaveDialogOpen}
+				onClose={() => setIsConfirmSaveDialogOpen(false)}
+				PaperProps={{
+					sx: {
+						minWidth: { xs: '90vw', sm: 400 },
+					},
+				}}
+			>
+				<DialogTitle sx={{ fontWeight: 700, fontSize: '1.1rem' }}>Confirm Save</DialogTitle>
+				<DialogContent>
+					<Box sx={{ mt: 1 }}>Are you sure you want to save your changes?</Box>
+				</DialogContent>
+				<DialogActions sx={{ gap: 1, p: 2 }}>
+					<Button
+						variant="outlined"
+						onClick={() => setIsConfirmSaveDialogOpen(false)}
+					>
+						Cancel
+					</Button>
+					<Button
+						variant="contained"
+						color="primary"
+						disabled={isSaving}
+						onClick={handleConfirmSave}
+					>
+						{isSaving ? 'Saving...' : 'Save'}
+					</Button>
+				</DialogActions>
+			</Dialog>
 
 			<Dialog
 				open={Boolean(isAddToProjectDialogOpen)}
