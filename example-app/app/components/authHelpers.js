@@ -396,7 +396,8 @@ export function buildTeachableLogoutUrl(redirectTo) {
 		OAUTH_ENDPOINTS.logout,
 		typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
 	);
-	logoutUrl.searchParams.set('redirectTo', redirectTo || (typeof window !== 'undefined' ? window.location.href : '/'));
+	// Always redirect to login after logout, not to home
+	logoutUrl.searchParams.set('redirectTo', '/login');
 	const session = getTeachableSessionHandoff();
 	if (session) {
 		logoutUrl.searchParams.set(TEACHABLE_SESSION_PARAM, session);
