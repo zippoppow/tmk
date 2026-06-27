@@ -95,6 +95,7 @@ export default function MorphMatchRelatedWordsPage() {
 		standaloneActivityId,
 		handleSaveStandalone,
 		handleDeleteStandalone,
+		handleDeleteProjectActivity,
 	} = useLessonActivityProject({
 		formName: FORM_NAME,
 		defaultActivityName: DEFAULT_ACTIVITY_NAME,
@@ -288,6 +289,7 @@ export default function MorphMatchRelatedWordsPage() {
 			standaloneActivityId={standaloneActivityId}
 			handleSaveStandalone={handleSaveStandalone}
 			handleDeleteStandalone={handleDeleteStandalone}
+			handleDeleteProjectActivity={handleDeleteProjectActivity}
 			projectId={projectId}
 			projectName={projectName}
 			activityName={activityName}

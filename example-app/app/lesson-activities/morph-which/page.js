@@ -82,6 +82,7 @@ export default function MorphWhichPage() {
 		standaloneActivityId,
 		handleSaveStandalone,
 		handleDeleteStandalone,
+		handleDeleteProjectActivity,
 	} = useLessonActivityProject({
 		formName: FORM_NAME,
 		defaultActivityName: DEFAULT_ACTIVITY_NAME,
@@ -241,6 +242,7 @@ export default function MorphWhichPage() {
 			standaloneActivityId={standaloneActivityId}
 			handleSaveStandalone={handleSaveStandalone}
 			handleDeleteStandalone={handleDeleteStandalone}
+			handleDeleteProjectActivity={handleDeleteProjectActivity}
 			projectId={projectId}
 			projectName={projectName}
 			activityName={activityName}

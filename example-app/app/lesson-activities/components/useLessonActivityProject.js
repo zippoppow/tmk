@@ -871,18 +871,21 @@ export function useLessonActivityProject({
 
 		setIsSaving(true);
 		try {
-			const response = await deleteLessonActivityById(projectApiOrigin, standaloneActivityId);
-			if (!response.ok) {
-				showNotice('error', 'Delete failed.');
-				setIsSaving(false);
-				return;
-			}
-
+			// Always delete from local storage first, regardless of server result
 			deleteStandaloneDraftByActivityId(standaloneActivityId);
 			if (localDraftId) {
 				deleteStandaloneDraftByLocalId(localDraftId);
 			}
 			clearFormSessionData(formName);
+
+			// Then attempt to delete from server
+			let serverDeleteSucceeded = false;
+			try {
+				const response = await deleteLessonActivityById(projectApiOrigin, standaloneActivityId);
+				serverDeleteSucceeded = response?.ok || false;
+			} catch (serverError) {
+				console.warn('Server delete failed, but local storage was cleaned up:', serverError);
+			}
 
 			setStandaloneActivityId('');
 			let nextLocalDraftId = '';
@@ -902,11 +905,87 @@ export function useLessonActivityProject({
 				url.searchParams.set('localDraftId', nextLocalDraftId);
 			}
 			window.history.replaceState({}, '', url.toString());
-			showNotice('success', 'Standalone lesson activity deleted.');
+
+			if (serverDeleteSucceeded) {
+				showNotice('success', 'Standalone lesson activity deleted.');
+			} else {
+				showNotice('success', 'Activity deleted locally. Server sync may fail, but your local copy is now removed.');
+			}
 		} catch (error) {
 			console.error('Delete standalone failed:', error);
 			showNotice('error', 'Delete failed.');
 		} finally {
+			setIsSaving(false);
+		}
+	};
+
+	const handleDeleteProjectActivity = async () => {
+		if (!projectId || !Number.isInteger(activityIndex)) {
+			showNotice('error', 'No project activity selected.');
+			return;
+		}
+
+		const shouldDelete = window.confirm('Delete this lesson activity from the project? This cannot be undone.');
+		if (!shouldDelete) {
+			return;
+		}
+
+		setIsSaving(true);
+		try {
+			const projects = getAllStoredProjects();
+			const project = projects.find((item) => item.id === projectId);
+			if (!project) {
+				showNotice('error', 'Project not found.');
+				setIsSaving(false);
+				return;
+			}
+
+			const activities = getProjectLessonActivities(project, 'lesson-activities-project', (input) => input || {});
+			const activityToDelete = activities[activityIndex];
+			if (!activityToDelete) {
+				showNotice('error', 'Activity not found in project.');
+				setIsSaving(false);
+				return;
+			}
+
+			const activityId = String(activityToDelete.id || '').trim();
+
+			// Delete from cloud if it has a saved ID
+			if (activityId) {
+				try {
+					await deleteLessonActivityById(projectApiOrigin, activityId);
+				} catch (cloudError) {
+					console.warn('Could not delete from cloud:', cloudError);
+				}
+			}
+
+			// Delete from local project storage
+			activities.splice(activityIndex, 1);
+			project.lessonActivities = activities;
+			project['modified-at'] = Date.now();
+			saveStoredProjects(projects);
+
+			// Also delete any standalone drafts associated with this activity
+			if (activityId) {
+				deleteStandaloneDraftByActivityId(activityId);
+			}
+
+			clearFormSessionData(formName);
+			setActivityIndex(null);
+			setActivityName('');
+			setData(normalizeInput({}));
+
+			const url = new URL(window.location.href);
+			url.searchParams.delete('activityIndex');
+			url.searchParams.delete('activityId');
+			window.history.replaceState({}, '', url.toString());
+
+			showNotice('success', 'Lesson activity deleted from project.');
+			// Navigate back to projects after deletion
+			router.push('/lesson-projects');
+		} catch (error) {
+			console.error('Delete project activity failed:', error);
+			showNotice('error', 'Delete failed.');
 			setIsSaving(false);
 		}
 	};
@@ -1147,6 +1226,7 @@ export function useLessonActivityProject({
 		flushLocalDraft,
 		handleSaveStandalone,
 		handleDeleteStandalone,
+		handleDeleteProjectActivity,
 		handleGoToLessonProjects,
 		handleAddToProject,
 		handleOpenAddToProjectDialog,

@@ -55,6 +55,7 @@ export default function ActivityShell({
 	isSaving,
 	notice,
 	setNotice,
+	handleDeleteProjectActivity,
 }) {
 	const router = useRouter();
 	const [isSlideshowMode, setIsSlideshowMode] = useState(false);
@@ -386,6 +387,25 @@ export default function ActivityShell({
 							>
 								{isSaving ? 'Saving...' : 'Save Activity'}
 							</Button>
+							{shouldShowProjectActions && (
+								<Button
+									variant="outlined"
+									color="error"
+									disabled={isSaving}
+									onClick={handleDeleteProjectActivity}
+									sx={{
+										...outlinedControlButtonSx,
+										borderColor: '#ef4444',
+										color: '#b91c1c',
+										'&:hover': {
+											bgcolor: '#fee2e2',
+											borderColor: '#dc2626',
+										},
+									}}
+								>
+									Delete Activity
+								</Button>
+							)}
 						</>
 					)}
 					<Button
