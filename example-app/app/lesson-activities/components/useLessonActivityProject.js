@@ -13,6 +13,7 @@ import {
 	getStandaloneDraftByActivityId,
 	getStandaloneDraftByLocalId,
 	getSlideshowCloneSeed,
+	deleteSlideshowCloneSeed,
 	upsertLessonActivity,
 	readFormSessionData,
 	writeFormSessionData,
@@ -553,13 +554,9 @@ export function useLessonActivityProject({
 			const normalizedInput = normalizeInput(data);
 			persist(normalizedInput);
 
+			// In presentation mode: skip saving to draft storage
+			// (allows only in-memory/temporary debounced updates)
 			if (isPresentationCloneRef.current) {
-				persistStandaloneDraftRecord({
-					nextData: normalizedInput,
-					nextActivityName: activityName,
-					nextActivityId: standaloneActivityId,
-					markSaved: false,
-				});
 				return;
 			}
 
@@ -588,18 +585,37 @@ export function useLessonActivityProject({
 				return;
 			}
 
-			if (!isPresentationCloneRef.current) {
-				persistStandaloneDraftRecord({
-					nextData: normalizedInput,
-					nextActivityName: activityName,
-					nextActivityId: standaloneActivityId,
-					markSaved: false,
-				});
-			}
+			persistStandaloneDraftRecord({
+				nextData: normalizedInput,
+				nextActivityName: activityName,
+				nextActivityId: standaloneActivityId,
+				markSaved: false,
+			});
 		}, 300);
 
 		return () => clearTimeout(timeout);
 	}, [activityIndex, activityName, data, defaultActivityName, projectId, standaloneActivityId]);
+
+	// Cleanup presentation mode: delete clone seed and draft when exiting slideshow
+	useEffect(() => {
+		return () => {
+			if (typeof window === 'undefined') {
+				return;
+			}
+
+			const url = new URL(window.location.href);
+			const cloneSeedKey = String(url.searchParams.get('cloneSeedKey') || '').trim();
+			const isSlideshowClone = url.searchParams.get('slideshowClone') === '1';
+
+			// If exiting a slideshow presentation, clean up the temporary clone
+			if (isSlideshowClone && cloneSeedKey && latestLocalDraftIdRef.current) {
+				// Delete the temporary draft created for presentation
+				deleteStandaloneDraftByLocalId(latestLocalDraftIdRef.current);
+				// Delete the clone seed so it doesn't persist after slideshow
+				deleteSlideshowCloneSeed(cloneSeedKey);
+			}
+		};
+	}, []);
 
 	useEffect(() => {
 		return () => {
