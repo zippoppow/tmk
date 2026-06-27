@@ -469,9 +469,10 @@ export function useLessonActivityProject({
 			}
 
 			setProjectName(project.name || 'Untitled Project');
+			setProjectId(paramProjectId);
 			const activities = getProjectLessonActivities(project, 'lesson-activities-project', (input) => input || {});
 
-			let resolvedIndex = Number.isInteger(parsedIndex) ? parsedIndex : -1;
+			let resolvedIndex = Number.isInteger(paramActivityIndex) ? Number(paramActivityIndex) : -1;
 			if (resolvedIndex < 0 && paramActivityId) {
 				resolvedIndex = activities.findIndex((activity) => String(activity?.id || '') === paramActivityId);
 			}
