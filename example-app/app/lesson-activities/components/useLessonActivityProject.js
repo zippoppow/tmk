@@ -888,23 +888,12 @@ export function useLessonActivityProject({
 			}
 
 			setStandaloneActivityId('');
-			let nextLocalDraftId = '';
-			if (isPresentationCloneRef.current) {
-				setLocalDraftId('');
-			} else {
-				nextLocalDraftId = createLessonActivityId();
-				setLocalDraftId(nextLocalDraftId);
-			}
-			setActivityName('');
-			setData(normalizeInput({}));
-			const url = new URL(window.location.href);
-			url.searchParams.delete('activityId');
-			if (isPresentationCloneRef.current) {
-				url.searchParams.delete('localDraftId');
-			} else {
-				url.searchParams.set('localDraftId', nextLocalDraftId);
-			}
-			window.history.replaceState({}, '', url.toString());
+		setLocalDraftId('');
+		setActivityName('');
+		setData(normalizeInput({}));
+		const url = new URL(window.location.href);
+		url.searchParams.delete('activityId');
+		url.searchParams.delete('localDraftId');
 
 			if (serverDeleteSucceeded) {
 				showNotice('success', 'Standalone lesson activity deleted.');
@@ -916,6 +905,7 @@ export function useLessonActivityProject({
 			showNotice('error', 'Delete failed.');
 		} finally {
 			setIsSaving(false);
+			router.push('/lesson-activities');
 		}
 	};
 

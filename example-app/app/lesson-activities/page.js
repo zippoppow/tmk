@@ -58,6 +58,8 @@ export default function LessonActivitiesPage() {
     const [isDeletingSelectedStaged, setIsDeletingSelectedStaged] = useState(false);
     const [isDeletingSelectedSaved, setIsDeletingSelectedSaved] = useState(false);
     const [reconcileDialogOpen, setReconcileDialogOpen] = useState(false);
+    const [confirmDeleteLocalOpen, setConfirmDeleteLocalOpen] = useState(false);
+    const [pendingDeleteLocalActivity, setPendingDeleteLocalActivity] = useState(null);
     const [initialLocalStandaloneActivities, setInitialLocalStandaloneActivities] = useState([]);
     const [initialCloudStandaloneActivities, setInitialCloudStandaloneActivities] = useState([]);
     const [isApplyingStandaloneSync, setIsApplyingStandaloneSync] = useState(false);
@@ -1230,7 +1232,10 @@ export default function LessonActivitiesPage() {
                                                 size="small"
                                                 color="error"
                                                 variant="outlined"
-                                                onClick={() => handleDeleteStagedStandalone(activity)}
+                                                onClick={() => {
+                                                    setPendingDeleteLocalActivity(activity);
+                                                    setConfirmDeleteLocalOpen(true);
+                                                }}
                                                 sx={{ textTransform: 'none' }}
                                             >
                                                 Delete Local
@@ -1407,6 +1412,42 @@ export default function LessonActivitiesPage() {
                 {notice.message}
             </Alert>
         </Snackbar>
+
+        <Dialog
+            open={confirmDeleteLocalOpen}
+            onClose={() => setConfirmDeleteLocalOpen(false)}
+            PaperProps={{
+                sx: {
+                    minWidth: { xs: '90vw', sm: 400 },
+                },
+            }}
+        >
+            <DialogTitle sx={{ fontWeight: 700, fontSize: '1.1rem' }}>Confirm Delete</DialogTitle>
+            <DialogContent>
+                <Box sx={{ mt: 1 }}>Are you sure you want to delete this local activity? This cannot be undone.</Box>
+            </DialogContent>
+            <DialogActions sx={{ gap: 1, p: 2 }}>
+                <Button
+                    variant="outlined"
+                    onClick={() => setConfirmDeleteLocalOpen(false)}
+                >
+                    Cancel
+                </Button>
+                <Button
+                    variant="contained"
+                    color="error"
+                    onClick={() => {
+                        setConfirmDeleteLocalOpen(false);
+                        if (pendingDeleteLocalActivity) {
+                            handleDeleteStagedStandalone(pendingDeleteLocalActivity);
+                            setPendingDeleteLocalActivity(null);
+                        }
+                    }}
+                >
+                    Delete
+                </Button>
+            </DialogActions>
+        </Dialog>
 
         <Dialog
             open={reconcileDialogOpen}
