@@ -864,11 +864,6 @@ export function useLessonActivityProject({
 			return;
 		}
 
-		const shouldDelete = window.confirm('Delete this standalone lesson activity? This cannot be undone.');
-		if (!shouldDelete) {
-			return;
-		}
-
 		setIsSaving(true);
 		try {
 			// Always delete from local storage first, regardless of server result
@@ -912,11 +907,6 @@ export function useLessonActivityProject({
 	const handleDeleteProjectActivity = async () => {
 		if (!projectId || !Number.isInteger(activityIndex)) {
 			showNotice('error', 'No project activity selected.');
-			return;
-		}
-
-		const shouldDelete = window.confirm('Delete this lesson activity from the project? This cannot be undone.');
-		if (!shouldDelete) {
 			return;
 		}
 
