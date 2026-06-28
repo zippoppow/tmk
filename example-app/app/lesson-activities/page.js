@@ -1061,17 +1061,6 @@ export default function LessonActivitiesPage() {
                     {isAuthenticated && hasDiyAccess && (
                         <Box sx={{ mb: 2.5 }}>
                             <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center" flexWrap="wrap">
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    disabled={standaloneLoading || isApplyingStandaloneSync}
-                                    onClick={async () => {
-                                        await runStandaloneLocalCloudCompare({ forcePromptWhenSame: true });
-                                    }}
-                                    sx={{ textTransform: 'none' }}
-                                >
-                                    Compare Local & Cloud
-                                </Button>
                             </Stack>
                         </Box>
                     )}

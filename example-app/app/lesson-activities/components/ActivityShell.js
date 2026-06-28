@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	Alert,
@@ -61,6 +61,8 @@ export default function ActivityShell({
 	const [isSlideshowMode, setIsSlideshowMode] = useState(false);
 	const [isSlideshowFullscreenMode, setIsSlideshowFullscreenMode] = useState(false);
 	const [isConfirmSaveDialogOpen, setIsConfirmSaveDialogOpen] = useState(false);
+	const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
+	const pendingDeleteHandlerRef = useRef(null);
 	const outlinedControlButtonSx = {
 		textTransform: 'none',
 		bgcolor: '#fff',
@@ -94,6 +96,19 @@ export default function ActivityShell({
 
 	const handleSaveActivityClick = () => {
 		setIsConfirmSaveDialogOpen(true);
+	};
+
+	const openConfirmDeleteDialog = (handler) => {
+		pendingDeleteHandlerRef.current = handler;
+		setIsConfirmDeleteDialogOpen(true);
+	};
+
+	const handleConfirmDelete = async () => {
+		setIsConfirmDeleteDialogOpen(false);
+		if (typeof pendingDeleteHandlerRef.current === 'function') {
+			await pendingDeleteHandlerRef.current();
+			pendingDeleteHandlerRef.current = null;
+		}
 	};
 
 	const handleConfirmSave = async () => {
@@ -347,7 +362,7 @@ export default function ActivityShell({
 									variant="outlined"
 									color="error"
 									disabled={isSaving}
-									onClick={handleDeleteStandalone}
+									onClick={() => openConfirmDeleteDialog(handleDeleteStandalone)}
 									sx={{
 										...outlinedControlButtonSx,
 										borderColor: '#ef4444',
@@ -392,7 +407,7 @@ export default function ActivityShell({
 									variant="outlined"
 									color="error"
 									disabled={isSaving}
-									onClick={handleDeleteProjectActivity}
+									onClick={() => openConfirmDeleteDialog(handleDeleteProjectActivity)}
 									sx={{
 										...outlinedControlButtonSx,
 										borderColor: '#ef4444',
@@ -490,6 +505,37 @@ export default function ActivityShell({
 					{notice.message}
 				</Alert>
 			</Snackbar>
+
+			<Dialog
+				open={isConfirmDeleteDialogOpen}
+				onClose={() => setIsConfirmDeleteDialogOpen(false)}
+				PaperProps={{
+					sx: {
+						minWidth: { xs: '90vw', sm: 400 },
+					},
+				}}
+			>
+				<DialogTitle sx={{ fontWeight: 700, fontSize: '1.1rem' }}>Confirm Delete</DialogTitle>
+				<DialogContent>
+					<Box sx={{ mt: 1 }}>Are you sure you want to delete this activity? This cannot be undone.</Box>
+				</DialogContent>
+				<DialogActions sx={{ gap: 1, p: 2 }}>
+					<Button
+						variant="outlined"
+						onClick={() => setIsConfirmDeleteDialogOpen(false)}
+					>
+						Cancel
+					</Button>
+					<Button
+						variant="contained"
+						color="error"
+						disabled={isSaving}
+						onClick={handleConfirmDelete}
+					>
+						{isSaving ? 'Deleting...' : 'Delete'}
+					</Button>
+				</DialogActions>
+			</Dialog>
 
 			<Dialog
 				open={isConfirmSaveDialogOpen}

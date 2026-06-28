@@ -76,10 +76,10 @@ function LoginPageContent() {
           }}
         >
           <Typography variant="h5" component="h1" sx={{ mb: 1, fontWeight: 600, color: '#1c2b3a' }}>
-            TMK Login
+            The Morphology Kit® DIY Login
           </Typography>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-            Sign in with your Teachable account to access lesson activities.
+            Sign in with your Teachable account to access the app.
           </Typography>
 
           {errorMessage ? (
