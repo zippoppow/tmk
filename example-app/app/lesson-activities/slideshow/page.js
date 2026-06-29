@@ -72,21 +72,41 @@ export default function LessonActivitySlideshowPage() {
 	const [transitionIntent, setTransitionIntent] = useState('');
 	const hasInstalledHistoryGuard = useRef(false);
 	const iframeRef = useRef(null);
+	const fullscreenContainerRef = useRef(null);
 	const [iframeHeight, setIframeHeight] = useState('82vh');
 	const flushMessageCounterRef = useRef(0);
 	const FLUSH_DRAFT_MESSAGE = 'TMK_FLUSH_LOCAL_DRAFT';
 	const FLUSH_DRAFT_ACK_MESSAGE = 'TMK_FLUSH_LOCAL_DRAFT_ACK';
 	const handleFullscreen = () => {
-		const iframe = iframeRef.current;
-		if (!iframe) return;
-		const container = iframe.parentElement;
+		const container = fullscreenContainerRef.current;
 		if (container && container.requestFullscreen) {
 			setIsIframeFullscreen(true);
 			container.requestFullscreen();
-		} else if (iframe.requestFullscreen) {
+			return;
+		}
+
+		const iframe = iframeRef.current;
+		if (iframe && iframe.requestFullscreen) {
 			setIsIframeFullscreen(true);
 			iframe.requestFullscreen();
 		}
+	};
+
+	const handleExitFullscreen = async () => {
+		if (typeof document === 'undefined') {
+			return;
+		}
+
+		if (document.fullscreenElement && typeof document.exitFullscreen === 'function') {
+			try {
+				await document.exitFullscreen();
+			} catch {
+				setIsIframeFullscreen(false);
+			}
+			return;
+		}
+
+		setIsIframeFullscreen(false);
 	};
 
 	const adjustIframeHeight = useCallback(() => {
@@ -95,7 +115,9 @@ export default function LessonActivitySlideshowPage() {
 
 		try {
 			if (typeof window !== 'undefined') {
-				const viewportTarget = Math.max(520, window.innerHeight - 170);
+				const viewportPadding = isIframeFullscreen ? 120 : 170;
+				const minHeight = isIframeFullscreen ? 420 : 520;
+				const viewportTarget = Math.max(minHeight, window.innerHeight - viewportPadding);
 				setIframeHeight((currentHeight) => {
 					const nextHeight = `${viewportTarget}px`;
 					return currentHeight === nextHeight ? currentHeight : nextHeight;
@@ -104,7 +126,7 @@ export default function LessonActivitySlideshowPage() {
 		} catch {
 			// Ignore cross-document measurement issues and keep existing height.
 		}
-	}, []);
+	}, [isIframeFullscreen]);
 
 	useEffect(() => {
 		setIsClient(true);
@@ -564,6 +586,7 @@ export default function LessonActivitySlideshowPage() {
 			}
 
 			setIsIframeFullscreen(isFullscreenNow);
+			adjustIframeHeight();
 		};
 		document.addEventListener('fullscreenchange', handleFullscreenChange);
 
@@ -679,43 +702,73 @@ export default function LessonActivitySlideshowPage() {
 			}}
 		>
 			<Container maxWidth="xl">
-				<Paper sx={{ p: 1.5, borderRadius: 2.5, mb: 1.2 }}>
-					{isTransitionSaving && (
-						<Typography sx={{ mb: 1, color: '#4b5563', fontSize: '0.9rem', fontWeight: 600 }}>
-							{transitionStatusLabel}
+				<Box
+					ref={fullscreenContainerRef}
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						gap: 1.2,
+						height: isIframeFullscreen ? '100dvh' : 'auto',
+						width: '100%',
+						backgroundColor: isIframeFullscreen ? '#edf2ff' : 'transparent',
+						p: isIframeFullscreen ? 1 : 0,
+						boxSizing: 'border-box',
+					}}
+				>
+					<Paper sx={{ p: 1.5, borderRadius: 2.5, mb: 1.2 }}>
+						{isTransitionSaving && (
+							<Typography sx={{ mb: 1, color: '#4b5563', fontSize: '0.9rem', fontWeight: 600 }}>
+								{transitionStatusLabel}
+							</Typography>
+						)}
+						<Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'stretch', md: 'center' }}>
+							<Button variant="outlined" onClick={handleExitSlideshow} disabled={isTransitionSaving} sx={{ textTransform: 'none' }}>
+								{isTransitionSaving && transitionIntent === 'exit' ? 'Saving...' : backLabel}
+							</Button>
+							<Typography sx={{ flex: 1, fontWeight: 700 }}>
+								{slideshow.projectName} · Slide {safeIndex + 1} of {totalSlides}
+							</Typography>
+							<Button variant="outlined" disabled={safeIndex === 0 || isTransitionSaving} onClick={goToPrevious} sx={{ textTransform: 'none' }}>
+								{isTransitionSaving && transitionIntent === 'previous' ? 'Saving...' : 'Previous'}
+							</Button>
+							<Button variant="contained" disabled={safeIndex >= totalSlides - 1 || isTransitionSaving} onClick={goToNext} sx={{ textTransform: 'none' }}>
+								{isTransitionSaving && transitionIntent === 'next' ? 'Saving...' : 'Next'}
+							</Button>
+							<Button variant="outlined" onClick={handleFullscreen} disabled={isTransitionSaving} sx={{ textTransform: 'none', ml: { xs: 0, md: 1 } }}>
+								Fullscreen
+							</Button>
+							{isIframeFullscreen && (
+								<Button
+									variant="outlined"
+									color="warning"
+									onClick={handleExitFullscreen}
+									disabled={isTransitionSaving}
+									sx={{ textTransform: 'none' }}
+								>
+									Exit Fullscreen
+								</Button>
+							)}
+						</Stack>
+						<Typography sx={{ mt: 1, fontSize: '0.9rem', color: '#4b5563' }}>
+							{currentSlide.activityName} ({currentSlide.activityType})
 						</Typography>
-					)}
-					<Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'stretch', md: 'center' }}>
-						<Button variant="outlined" onClick={handleExitSlideshow} disabled={isTransitionSaving} sx={{ textTransform: 'none' }}>
-							{isTransitionSaving && transitionIntent === 'exit' ? 'Saving...' : backLabel}
-						</Button>
-						<Typography sx={{ flex: 1, fontWeight: 700 }}>
-							{slideshow.projectName} · Slide {safeIndex + 1} of {totalSlides}
-						</Typography>
-						<Button variant="outlined" disabled={safeIndex === 0 || isTransitionSaving} onClick={goToPrevious} sx={{ textTransform: 'none' }}>
-							{isTransitionSaving && transitionIntent === 'previous' ? 'Saving...' : 'Previous'}
-						</Button>
-						<Button variant="contained" disabled={safeIndex >= totalSlides - 1 || isTransitionSaving} onClick={goToNext} sx={{ textTransform: 'none' }}>
-							{isTransitionSaving && transitionIntent === 'next' ? 'Saving...' : 'Next'}
-						</Button>
-						<Button variant="outlined" onClick={handleFullscreen} disabled={isTransitionSaving} sx={{ textTransform: 'none', ml: { xs: 0, md: 1 } }}>
-							Fullscreen
-						</Button>
-					</Stack>
-					<Typography sx={{ mt: 1, fontSize: '0.9rem', color: '#4b5563' }}>
-						{currentSlide.activityName} ({currentSlide.activityType})
-					</Typography>
-				</Paper>
+					</Paper>
 
-				<Paper sx={{ borderRadius: 2.5, overflow: 'hidden', border: '1px solid #dbe2f0' }}>
-					<iframe
-						title={`Lesson activity slide ${safeIndex + 1}`}
-						src={currentSlideSrc}
-						style={{ width: '100%', height: iframeHeight, border: 0, background: '#fff' }}
-						ref={iframeRef}
-						allow="fullscreen"
-					/>
-				</Paper>
+					<Paper sx={{ borderRadius: 2.5, overflow: 'hidden', border: '1px solid #dbe2f0', flex: isIframeFullscreen ? 1 : 'none' }}>
+						<iframe
+							title={`Lesson activity slide ${safeIndex + 1}`}
+							src={currentSlideSrc}
+							style={{
+								width: '100%',
+								height: isIframeFullscreen ? '100%' : iframeHeight,
+								border: 0,
+								background: '#fff',
+							}}
+							ref={iframeRef}
+							allow="fullscreen"
+						/>
+					</Paper>
+				</Box>
 			</Container>
 		</Box>
 	);
