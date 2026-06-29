@@ -39,7 +39,7 @@ const AUTH_HINT_COOKIE = 'tmk_auth_hint';
 const DIY_ACCESS_HINT_COOKIE = 'tmk_diy_access_hint';
 const AUTH_HINT_MAX_AGE_SECONDS = 60 * 60 * 12;
 const TMK_API_AUTH_HEADER = 'x-api-key';
-const AUTH_DEBUG_ENABLED = process.env.NODE_ENV !== 'production';
+const AUTH_DEBUG_ENABLED = String(process.env.NEXT_PUBLIC_TMK_AUTH_DEBUG || '').trim() === '1';
 const DIY_ACCESS_STORAGE_KEY = 'tmk-diy-access-by-email';
 const DIY_LAST_AUTH_USER_KEY = 'tmk-diy-last-auth-user';
 const UTILITIES_TOKEN_STORAGE_KEY = 'tmk-utilities-api-access-token';

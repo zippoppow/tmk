@@ -153,6 +153,12 @@ TEACHABLE_OPTIONAL_SCOPES="courses:read"
 TEACHABLE_POST_LOGOUT_REDIRECT=/
 ```
 
+Auth debug logging is disabled by default. To enable verbose auth helper logs only when needed, set:
+
+```bash
+NEXT_PUBLIC_TMK_AUTH_DEBUG=1
+```
+
 Example local-dev callback patterns:
 
 ```bash
