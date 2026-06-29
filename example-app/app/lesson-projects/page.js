@@ -151,6 +151,9 @@ export default function LessonProjectsPage() {
 	const [cloudMessage, setCloudMessage] = useState('');
 	const [cloudMessageSeverity, setCloudMessageSeverity] = useState('error');
 	const [projectNameInput, setProjectNameInput] = useState('');
+	const [isAddActivityDialogOpen, setIsAddActivityDialogOpen] = useState(false);
+	const [newActivityNameInput, setNewActivityNameInput] = useState('');
+	const [targetProjectIdForNewActivity, setTargetProjectIdForNewActivity] = useState('');
 	const [reconcileDialogOpen, setReconcileDialogOpen] = useState(false);
 	const [initialLocalProjects, setInitialLocalProjects] = useState([]);
 	const [initialCloudProjects, setInitialCloudProjects] = useState([]);
@@ -872,23 +875,48 @@ export default function LessonProjectsPage() {
 		}
 	};
 
-	const handleNewActivity = (projectId) => {
+	const handleOpenAddActivityDialog = (projectId) => {
 		if (!hasDiyAccess) {
 			showNotice('warning', 'Active DIY course enrollment is required to add lesson activities.');
+			return;
+		}
+
+		setTargetProjectIdForNewActivity(String(projectId || ''));
+		setNewActivityNameInput('');
+		setIsAddActivityDialogOpen(true);
+	};
+
+	const handleCloseAddActivityDialog = () => {
+		setIsAddActivityDialogOpen(false);
+		setNewActivityNameInput('');
+		setTargetProjectIdForNewActivity('');
+	};
+
+	const handleConfirmAddActivity = () => {
+		const projectId = String(targetProjectIdForNewActivity || '').trim();
+		if (!projectId) {
+			handleCloseAddActivityDialog();
+			return;
+		}
+
+		const requestedName = String(newActivityNameInput || '').trim();
+		if (!requestedName) {
+			showNotice('info', 'Enter a lesson activity name to continue.');
 			return;
 		}
 
 		const projects = getAllStoredProjects();
 		const project = projects.find((item) => item.id === projectId);
 		if (!project) {
+			handleCloseAddActivityDialog();
+			showNotice('error', 'Project not found.');
 			return;
 		}
 
 		const requestedType = newActivityTypeByProjectId[projectId] || defaultActivityType;
-		const requestedName = String(window.prompt('Lesson activity name:', '') || '').trim();
 		const uniqueName = getUniqueLessonActivityName({
 			project,
-			requestedName: requestedName || `${project.name} ${requestedType}`,
+			requestedName,
 			formName: PROJECT_FORM_NAME,
 			normalizeLessonInputData,
 		});
@@ -908,6 +936,7 @@ export default function LessonProjectsPage() {
 
 		saveStoredProjects(projects);
 		loadLocalProjects();
+		handleCloseAddActivityDialog();
 		showNotice('success', `${requestedType} lesson activity added.`);
 	};
 
@@ -1633,7 +1662,7 @@ export default function LessonProjectsPage() {
 										))}
 									</Box>
 									<Stack direction="column" spacing={0.6}>
-										<Button size="small" variant="contained" color="success" onClick={() => handleNewActivity(selectedProject.id)} sx={{ textTransform: 'none' }}>
+												<Button size="small" variant="contained" color="success" onClick={() => handleOpenAddActivityDialog(selectedProject.id)} sx={{ textTransform: 'none' }}>
 											Add Activity
 										</Button>
 									</Stack>
@@ -1829,6 +1858,56 @@ export default function LessonProjectsPage() {
 					{notice.message}
 				</Alert>
 			</Snackbar>
+
+			<Dialog
+				open={isAddActivityDialogOpen}
+				onClose={handleCloseAddActivityDialog}
+				PaperProps={{
+					sx: {
+						minWidth: { xs: '90vw', sm: 420 },
+					},
+				}}
+			>
+				<DialogTitle sx={{ fontWeight: 700, fontSize: '1.1rem' }}>Add Activity</DialogTitle>
+				<DialogContent>
+					<Box sx={{ mt: 1, mb: 1.2 }}>Enter a name for this activity.</Box>
+					<Box
+						component="input"
+						autoFocus
+						placeholder="Lesson activity name..."
+						value={newActivityNameInput}
+						onChange={(event) => setNewActivityNameInput(event.target.value)}
+						onKeyDown={(event) => {
+							if (event.key === 'Enter' && String(newActivityNameInput || '').trim()) {
+								event.preventDefault();
+								handleConfirmAddActivity();
+							}
+						}}
+						sx={{
+							width: '100%',
+							height: 40,
+							border: '1px solid #9aa4b2',
+							borderRadius: 1,
+							backgroundColor: '#f6f9ff',
+							fontSize: '1rem',
+							px: 1.2,
+							outline: 'none',
+							'&:focus': {
+								borderColor: '#3f37c9',
+								boxShadow: '0 0 0 2px rgba(63,55,201,0.2)',
+							},
+						}}
+					/>
+				</DialogContent>
+				<DialogActions sx={{ gap: 1, p: 2 }}>
+					<Button variant="outlined" onClick={handleCloseAddActivityDialog}>
+						Cancel
+					</Button>
+					<Button variant="contained" color="primary" onClick={handleConfirmAddActivity} disabled={!String(newActivityNameInput || '').trim()}>
+						Add Activity
+					</Button>
+				</DialogActions>
+			</Dialog>
 
 			<Dialog
 				open={reconcileDialogOpen}
