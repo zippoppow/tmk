@@ -734,9 +734,11 @@ export default function LessonActivitySlideshowPage() {
 							<Button variant="contained" disabled={safeIndex >= totalSlides - 1 || isTransitionSaving} onClick={goToNext} sx={{ textTransform: 'none' }}>
 								{isTransitionSaving && transitionIntent === 'next' ? 'Saving...' : 'Next'}
 							</Button>
-							<Button variant="outlined" onClick={handleFullscreen} disabled={isTransitionSaving} sx={{ textTransform: 'none', ml: { xs: 0, md: 1 } }}>
-								Fullscreen
-							</Button>
+							{!isIframeFullscreen && (
+								<Button variant="outlined" onClick={handleFullscreen} disabled={isTransitionSaving} sx={{ textTransform: 'none', ml: { xs: 0, md: 1 } }}>
+									Fullscreen
+								</Button>
+							)}
 							{isIframeFullscreen && (
 								<Button
 									variant="outlined"
