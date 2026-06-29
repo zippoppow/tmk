@@ -80,14 +80,12 @@ export default function LessonActivitySlideshowPage() {
 	const handleFullscreen = () => {
 		const container = fullscreenContainerRef.current;
 		if (container && container.requestFullscreen) {
-			setIsIframeFullscreen(true);
 			container.requestFullscreen();
 			return;
 		}
 
 		const iframe = iframeRef.current;
 		if (iframe && iframe.requestFullscreen) {
-			setIsIframeFullscreen(true);
 			iframe.requestFullscreen();
 		}
 	};
@@ -475,8 +473,7 @@ export default function LessonActivitySlideshowPage() {
 
 			const isCloneDraft = Boolean(record.isSlideshowClone);
 			const sameSession = String(record.slideshowSessionId || '').trim() === String(slideshowSessionId || '').trim();
-			const savedToApi = Boolean(record.savedToApi);
-			return isCloneDraft && sameSession && !savedToApi;
+			return isCloneDraft && sameSession;
 		});
 	};
 
@@ -569,6 +566,19 @@ export default function LessonActivitySlideshowPage() {
 
 		const handleFullscreenChange = async () => {
 			const isFullscreenNow = Boolean(document.fullscreenElement);
+
+			// Before toggling fullscreen rendering mode (which reloads the iframe source),
+			// flush current slide draft so in-progress edits persist across the toggle.
+			if (!isIframeFullscreen && isFullscreenNow) {
+				setTransitionIntent('fullscreen-enter');
+				setIsTransitionSaving(true);
+				try {
+					await flushCurrentSlideDraft();
+				} finally {
+					setIsTransitionSaving(false);
+					setTransitionIntent('');
+				}
+			}
 
 			// When user exits fullscreen (commonly via Escape), flush pending draft changes
 			// before removing the fullscreen query flag, which reloads the iframe source.
@@ -683,6 +693,8 @@ export default function LessonActivitySlideshowPage() {
 			? 'Loading previous slide...'
 			: transitionIntent === 'next'
 				? 'Loading next slide...'
+				: transitionIntent === 'fullscreen-enter'
+					? 'Preparing fullscreen...'
 				: transitionIntent === 'exit'
 					? 'Leaving slideshow...'
 					: transitionIntent === 'fullscreen-exit'

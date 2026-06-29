@@ -339,9 +339,7 @@ export function useLessonActivityProject({
 				});
 				const existingDraft = paramLocalDraftId
 					? getStandaloneDraftByLocalId(paramLocalDraftId)
-					: paramActivityId
-						? getStandaloneDraftByActivityId(paramActivityId)
-						: existingCloneDraft;
+					: existingCloneDraft;
 
 				if (existingDraft) {
 					const resolvedLocalDraftId = String(existingDraft.localDraftId || paramLocalDraftId || createLessonActivityId()).trim();
