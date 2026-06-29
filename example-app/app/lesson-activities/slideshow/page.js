@@ -385,6 +385,9 @@ export default function LessonActivitySlideshowPage() {
 	const backLabel = isStandaloneMode ? 'Back to Lesson Activities' : 'Back to Lesson Projects';
 
 	const flushCurrentSlideDraft = useCallback(async () => {
+		// Slideshow mode is intentionally non-persistent: do not flush draft changes.
+		return;
+
 		if (typeof window === 'undefined') {
 			return;
 		}
@@ -501,7 +504,7 @@ export default function LessonActivitySlideshowPage() {
 		if (typeof window === 'undefined') {
 			setIsTransitionSaving(false);
 			setTransitionIntent('');
-			router.push(isStandaloneMode ? backRoute : '/lesson-projects?saved=project-activity');
+			router.push(isStandaloneMode ? backRoute : '/lesson-projects');
 			return;
 		}
 
@@ -517,7 +520,7 @@ export default function LessonActivitySlideshowPage() {
 		// 	cleanupUnsavedCloneDrafts(unsavedCloneDrafts);
 		// }
 
-		router.push(isStandaloneMode ? backRoute : '/lesson-projects?saved=project-activity');
+		router.push(isStandaloneMode ? backRoute : '/lesson-projects');
 	};
 
 	useEffect(() => {
@@ -682,14 +685,14 @@ export default function LessonActivitySlideshowPage() {
 
 	const transitionStatusLabel =
 		transitionIntent === 'previous'
-			? 'Saving... then going to previous slide'
+			? 'Loading previous slide...'
 			: transitionIntent === 'next'
-				? 'Saving... then going to next slide'
+				? 'Loading next slide...'
 				: transitionIntent === 'exit'
-					? 'Saving...'
+					? 'Leaving slideshow...'
 					: transitionIntent === 'fullscreen-exit'
-						? 'Saving...'
-					: 'Saving...';
+						? 'Exiting fullscreen...'
+					: 'Working...';
 
 	return (
 		<Box
