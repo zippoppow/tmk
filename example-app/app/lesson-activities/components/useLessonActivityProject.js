@@ -19,6 +19,7 @@ import {
 	writeFormSessionData,
 	DIY_PROJECTS_ENDPOINT,
 	getAllStoredProjects,
+	listStandaloneDrafts,
 	saveStoredProjects,
 	upsertStandaloneDraft,
 } from '../../components/lessonActivityHelpers';
@@ -239,10 +240,6 @@ export function useLessonActivityProject({
 	};
 
 	const flushLocalDraft = () => {
-		if (isPresentationCloneRef.current) {
-			return;
-		}
-
 		const normalizedInput = normalizeInput(latestDataRef.current);
 		persist(normalizedInput);
 
@@ -328,14 +325,23 @@ export function useLessonActivityProject({
 			const paramLocalDraftId = (url.searchParams.get('localDraftId') || '').trim();
 			const isSlideshowClone = url.searchParams.get('slideshowClone') === '1';
 			const cloneSeedKey = (url.searchParams.get('cloneSeedKey') || '').trim();
+			const slideshowSessionId = String(url.searchParams.get('slideshowSessionId') || '').trim();
 			isPresentationCloneRef.current = isSlideshowClone;
 
 			if (isSlideshowClone && cloneSeedKey) {
+				const existingCloneDraft = listStandaloneDrafts().find((record) => {
+					if (!record || typeof record !== 'object') {
+						return false;
+					}
+					return Boolean(record.isSlideshowClone)
+						&& String(record.cloneSeedKey || '').trim() === cloneSeedKey
+						&& String(record.slideshowSessionId || '').trim() === slideshowSessionId;
+				});
 				const existingDraft = paramLocalDraftId
 					? getStandaloneDraftByLocalId(paramLocalDraftId)
 					: paramActivityId
 						? getStandaloneDraftByActivityId(paramActivityId)
-						: null;
+						: existingCloneDraft;
 
 				if (existingDraft) {
 					const resolvedLocalDraftId = String(existingDraft.localDraftId || paramLocalDraftId || createLessonActivityId()).trim();
@@ -359,28 +365,25 @@ export function useLessonActivityProject({
 					const clonedActivityName = String(cloneSeed['lesson-name'] || defaultActivityName);
 					const clonedData = normalizeInput(cloneSeed['lesson-input-data'] || {});
 
-					// In presentation mode: load data into React state only, don't persist to localStorage
-					if (!isSlideshowClone) {
-						upsertStandaloneDraft({
-							localDraftId: resolvedLocalDraftId,
-							id: clonedActivityId,
-							'tmk-template': String(cloneSeed['tmk-template'] || formName || '').trim(),
-							formName,
-							'lesson-name': clonedActivityName,
-							'lesson-input-data': clonedData,
-							'created-at': Date.now(),
-							'modified-at': Date.now(),
-							isSlideshowClone: true,
-							slideshowSessionId: String(url.searchParams.get('slideshowSessionId') || '').trim(),
-							cloneSeedKey,
-							sourceType: cloneSeed.sourceType,
-							sourceProjectId: cloneSeed.sourceProjectId,
-							sourceActivityIndex: cloneSeed.sourceActivityIndex,
-							sourceActivityId: cloneSeed.sourceActivityId,
-							sourceLocalDraftId: cloneSeed.sourceLocalDraftId,
-							savedToApi: false,
-						});
-					}
+					upsertStandaloneDraft({
+						localDraftId: resolvedLocalDraftId,
+						id: clonedActivityId,
+						'tmk-template': String(cloneSeed['tmk-template'] || formName || '').trim(),
+						formName,
+						'lesson-name': clonedActivityName,
+						'lesson-input-data': clonedData,
+						'created-at': Date.now(),
+						'modified-at': Date.now(),
+						isSlideshowClone: true,
+						slideshowSessionId,
+						cloneSeedKey,
+						sourceType: cloneSeed.sourceType,
+						sourceProjectId: cloneSeed.sourceProjectId,
+						sourceActivityIndex: cloneSeed.sourceActivityIndex,
+						sourceActivityId: cloneSeed.sourceActivityId,
+						sourceLocalDraftId: cloneSeed.sourceLocalDraftId,
+						savedToApi: false,
+					});
 
 					setLocalDraftId(resolvedLocalDraftId);
 					setStandaloneActivityId(clonedActivityId);
@@ -440,21 +443,18 @@ export function useLessonActivityProject({
 						setActivityName(String(cloudActivity['lesson-name'] || defaultActivityName));
 						setData(normalizeInput(cloudActivity['lesson-input-data'] || {}));
 
-						// In presentation mode: don't persist cloud activity to localStorage
-						if (!isSlideshowClone) {
-							upsertStandaloneDraft({
-								...(draftForActivity || {}),
-								localDraftId: resolvedLocalDraftId,
-								id: String(cloudActivity.id || paramActivityId),
-								'tmk-template': String(cloudActivity['tmk-template'] || formName || '').trim(),
-								formName,
-								'lesson-name': String(cloudActivity['lesson-name'] || defaultActivityName),
-								'lesson-input-data': normalizeInput(cloudActivity['lesson-input-data'] || {}),
-								'created-at': Number(cloudActivity['created-at']) || Number(draftForActivity?.['created-at']) || Date.now(),
-								'modified-at': Date.now(),
-								savedToApi: true,
-							});
-						}
+						upsertStandaloneDraft({
+							...(draftForActivity || {}),
+							localDraftId: resolvedLocalDraftId,
+							id: String(cloudActivity.id || paramActivityId),
+							'tmk-template': String(cloudActivity['tmk-template'] || formName || '').trim(),
+							formName,
+							'lesson-name': String(cloudActivity['lesson-name'] || defaultActivityName),
+							'lesson-input-data': normalizeInput(cloudActivity['lesson-input-data'] || {}),
+							'created-at': Number(cloudActivity['created-at']) || Number(draftForActivity?.['created-at']) || Date.now(),
+							'modified-at': Date.now(),
+							savedToApi: true,
+						});
 					}
 				}
 
@@ -524,12 +524,6 @@ export function useLessonActivityProject({
 		const timeout = setTimeout(() => {
 			const normalizedInput = normalizeInput(data);
 			persist(normalizedInput);
-
-			// In presentation mode: skip saving to draft storage
-			// (allows only in-memory/temporary debounced updates)
-			if (isPresentationCloneRef.current) {
-				return;
-			}
 
 			if (projectId && Number.isInteger(activityIndex)) {
 				const projects = getAllStoredProjects();

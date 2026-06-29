@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, Container, Paper, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, Container, Paper, Stack, Typography } from '@mui/material';
 import {
 	deleteStandaloneDraftByLocalId,
 	getAllStoredProjects,
@@ -385,9 +385,6 @@ export default function LessonActivitySlideshowPage() {
 	const backLabel = isStandaloneMode ? 'Back to Lesson Activities' : 'Back to Lesson Projects';
 
 	const flushCurrentSlideDraft = useCallback(async () => {
-		// Slideshow mode is intentionally non-persistent: do not flush draft changes.
-		return;
-
 		if (typeof window === 'undefined') {
 			return;
 		}
@@ -499,28 +496,26 @@ export default function LessonActivitySlideshowPage() {
 	const handleExitSlideshow = async () => {
 		setTransitionIntent('exit');
 		setIsTransitionSaving(true);
-		await flushCurrentSlideDraft();
+		try {
+			await flushCurrentSlideDraft();
 
-		if (typeof window === 'undefined') {
+			if (typeof window === 'undefined') {
+				setIsTransitionSaving(false);
+				setTransitionIntent('');
+				router.push(isStandaloneMode ? backRoute : '/lesson-projects');
+				return;
+			}
+
+			const unsavedCloneDrafts = getUnsavedCloneDrafts();
+			if (unsavedCloneDrafts.length > 0) {
+				cleanupUnsavedCloneDrafts(unsavedCloneDrafts);
+			}
+
+			router.push(isStandaloneMode ? backRoute : '/lesson-projects');
+		} finally {
 			setIsTransitionSaving(false);
 			setTransitionIntent('');
-			router.push(isStandaloneMode ? backRoute : '/lesson-projects');
-			return;
 		}
-
-		// const unsavedCloneDrafts = getUnsavedCloneDrafts();
-
-		// if (unsavedCloneDrafts.length > 0) {
-		// 	const shouldExit = window.confirm(buildUnsavedExitMessage(unsavedCloneDrafts.length));
-		// 	if (!shouldExit) {
-		// 		setIsTransitionSaving(false);
-		// 		setTransitionIntent('');
-		// 		return;
-		// 	}
-		// 	cleanupUnsavedCloneDrafts(unsavedCloneDrafts);
-		// }
-
-		router.push(isStandaloneMode ? backRoute : '/lesson-projects');
 	};
 
 	useEffect(() => {
@@ -731,6 +726,18 @@ export default function LessonActivitySlideshowPage() {
 							<Typography sx={{ flex: 1, fontWeight: 700 }}>
 								{slideshow.projectName} · Slide {safeIndex + 1} of {totalSlides}
 							</Typography>
+							<Chip
+								label="Temporary slideshow edits"
+								size="small"
+								sx={{
+									height: 24,
+									fontSize: '0.72rem',
+									fontWeight: 700,
+									backgroundColor: '#fef3c7',
+									color: '#92400e',
+									border: '1px solid #f59e0b',
+								}}
+							/>
 							<Button variant="outlined" disabled={safeIndex === 0 || isTransitionSaving} onClick={goToPrevious} sx={{ textTransform: 'none' }}>
 								{isTransitionSaving && transitionIntent === 'previous' ? 'Saving...' : 'Previous'}
 							</Button>
