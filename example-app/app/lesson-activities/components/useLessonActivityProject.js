@@ -323,6 +323,7 @@ export function useLessonActivityProject({
 			const url = new URL(window.location.href);
 			const paramProjectId = url.searchParams.get('projectId') || '';
 			const paramActivityIndex = url.searchParams.get('activityIndex');
+			const parsedActivityIndex = Number(paramActivityIndex);
 			const paramActivityId = (url.searchParams.get('activityId') || '').trim();
 			const paramLocalDraftId = (url.searchParams.get('localDraftId') || '').trim();
 			const isSlideshowClone = url.searchParams.get('slideshowClone') === '1';
@@ -472,7 +473,7 @@ export function useLessonActivityProject({
 			setProjectId(paramProjectId);
 			const activities = getProjectLessonActivities(project, 'lesson-activities-project', (input) => input || {});
 
-			let resolvedIndex = Number.isInteger(paramActivityIndex) ? Number(paramActivityIndex) : -1;
+			let resolvedIndex = Number.isInteger(parsedActivityIndex) ? parsedActivityIndex : -1;
 			if (resolvedIndex < 0 && paramActivityId) {
 				resolvedIndex = activities.findIndex((activity) => String(activity?.id || '') === paramActivityId);
 			}
@@ -635,15 +636,34 @@ export function useLessonActivityProject({
 	};
 
 	const handleSave = async () => {
-		if (!projectId || !Number.isInteger(activityIndex)) {
+		const routeProjectId = typeof window !== 'undefined'
+			? String(new URL(window.location.href).searchParams.get('projectId') || '').trim()
+			: '';
+		const routeActivityIndexRaw = typeof window !== 'undefined'
+			? new URL(window.location.href).searchParams.get('activityIndex')
+			: null;
+		const routeActivityIndex = Number(routeActivityIndexRaw);
+		const resolvedProjectId = String(projectId || routeProjectId).trim();
+		const resolvedActivityIndex = Number.isInteger(activityIndex)
+			? activityIndex
+			: (Number.isInteger(routeActivityIndex) ? routeActivityIndex : null);
+
+		if (!resolvedProjectId || !Number.isInteger(resolvedActivityIndex)) {
 			showNotice('error', 'No project context available.');
 			return false;
+		}
+
+		if (!projectId && resolvedProjectId) {
+			setProjectId(resolvedProjectId);
+		}
+		if (!Number.isInteger(activityIndex) && Number.isInteger(resolvedActivityIndex)) {
+			setActivityIndex(resolvedActivityIndex);
 		}
 
 		setIsSaving(true);
 		try {
 			const projects = getAllStoredProjects();
-			const project = projects.find((item) => item.id === projectId);
+			const project = projects.find((item) => item.id === resolvedProjectId);
 			if (!project) {
 				showNotice('error', 'Project not found.');
 				setIsSaving(false);
@@ -651,18 +671,18 @@ export function useLessonActivityProject({
 			}
 
 			const activities = getProjectLessonActivities(project, 'lesson-activities-project', (input) => input || {});
-			if (!activities[activityIndex]) {
+			if (!activities[resolvedActivityIndex]) {
 				showNotice('error', 'Lesson activity not found.');
 				setIsSaving(false);
 				return false;
 			}
 
 			const normalizedInput = normalizeInput(data);
-			const activityId = String(activities[activityIndex].id || createLessonActivityId());
-			activities[activityIndex] = {
-				...activities[activityIndex],
+			const activityId = String(activities[resolvedActivityIndex].id || createLessonActivityId());
+			activities[resolvedActivityIndex] = {
+				...activities[resolvedActivityIndex],
 				id: activityId,
-				'lesson-name': activityName || activities[activityIndex]['lesson-name'] || defaultActivityName,
+				'lesson-name': activityName || activities[resolvedActivityIndex]['lesson-name'] || defaultActivityName,
 				'lesson-input-data': normalizedInput,
 				'modified-at': Date.now(),
 			};
@@ -678,7 +698,7 @@ export function useLessonActivityProject({
 			}
 
 			if (resolvedAuthUser) {
-				const persistedActivity = activities[activityIndex] || {};
+				const persistedActivity = activities[resolvedActivityIndex] || {};
 				const createdAtSource = persistedActivity['created-at'] || Date.now();
 
 				const activityResponse = await upsertLessonActivity(
@@ -722,7 +742,7 @@ export function useLessonActivityProject({
 		if (response.ok && activityResponse.ok) {
 			const result = await response.json().catch(() => null);
 			const updated = getAllStoredProjects();
-			const updatedProject = updated.find((item) => item.id === projectId);
+			const updatedProject = updated.find((item) => item.id === resolvedProjectId);
 			if (updatedProject) {
 				updatedProject.syncedAt = new Date().toISOString();
 				if (result?.id) {
