@@ -943,15 +943,15 @@ export default function LessonActivitiesPage() {
             await loadStandaloneActivities();
 
             if (failureCount === 0) {
-                showNotice('success', `Saved ${successCount} selected staged activit${successCount === 1 ? 'y' : 'ies'} to the backend.`);
+                showNotice('success', `Saved ${successCount} selected staged activit${successCount === 1 ? 'y' : 'ies'} to the cloud server.`);
             } else if (successCount > 0) {
-                showNotice('warning', `Saved ${successCount} selected staged activit${successCount === 1 ? 'y' : 'ies'}, but ${failureCount} failed.`);
+                showNotice('warning', `Saved ${successCount} selected staged activit${successCount === 1 ? 'y' : 'ies'} to the cloud server, but ${failureCount} failed.`);
             } else {
-                showNotice('error', 'Could not save selected staged activities. Please try again.');
+                showNotice('error', 'Could not save selected staged activities to the cloud server. Please try again.');
             }
         } catch (error) {
-            console.error('Failed to save selected staged activities:', error);
-            showNotice('error', 'Could not save selected staged activities. Please try again.');
+            console.error('Failed to save selected staged activities to the cloud server:', error);
+            showNotice('error', 'Could not save selected staged activities to the cloud server. Please try again.');
         } finally {
             setIsSavingAllStaged(false);
         }

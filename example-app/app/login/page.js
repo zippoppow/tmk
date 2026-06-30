@@ -76,10 +76,10 @@ function LoginPageContent() {
           }}
         >
           <Typography variant="h5" component="h1" sx={{ mb: 1, fontWeight: 600, color: '#1c2b3a' }}>
-            The Morphology Kit® DIY Login
+            The Morphology Kit<sup>®</sup> DIY Login
           </Typography>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-            Sign in with your Teachable account to access the app.
+            Sign in with your TheMorphologyKit.com account to access the app.
           </Typography>
 
           {errorMessage ? (
@@ -98,7 +98,7 @@ function LoginPageContent() {
               fontWeight: 600,
             }}
           >
-            Continue With Teachable
+            Continue With TheMorphologyKit.com
           </Button>
         </Paper>
       </Container>
