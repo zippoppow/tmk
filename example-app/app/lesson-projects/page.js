@@ -32,6 +32,7 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {
+	buildLessonActivityUpsertPayload,
 	clearFormSessionData,
 	createLessonActivityId,
 	DIY_PROJECTS_ENDPOINT,
@@ -43,11 +44,12 @@ import {
 	hardDeleteLessonActivityById,
 	listLessonActivities,
 	saveStoredProjects,
+	upsertLessonActivity,
 } from '../components/lessonActivityHelpers';
 import {
 	buildTeachableLogoutUrl,
+	fetchAuthenticatedUser,
 	fetchWithTmkToken,
-	fetchWithUserToken,
 	resolveTmkApiOrigin,
 } from '../components/authHelpers';
 import { useDiyAccess } from '../components/useDiyAccess';
@@ -139,11 +141,14 @@ export default function LessonProjectsPage() {
 			}
 			projects[idx].name = trimmed;
 			projects[idx].modifiedAtMs = Date.now();
+			projects[idx].syncedAt = null;
 			saveStoredProjects(projects);
 			loadLocalProjects();
 			handleEditProjectNameCancel();
-			if (isAuthenticated) {
-				await syncProjectToApi(projects[idx]);
+			const syncResult = await syncProjectMutationToApi(projects[idx], []);
+			if (syncResult.attempted && !syncResult.projectResult) {
+				showNotice('warning', 'Project name updated locally, but cloud sync failed.');
+				return;
 			}
 			showNotice('success', 'Project name updated.');
 		};
@@ -503,7 +508,15 @@ export default function LessonProjectsPage() {
 	};
 
 	const syncProjectToApi = async (project) => {
-		if (!isAuthenticated || !hasDiyAccess) {
+		if (!hasDiyAccess) {
+			return null;
+		}
+
+		let resolvedAuthUser = authUser;
+		if (!resolvedAuthUser) {
+			resolvedAuthUser = await fetchAuthenticatedUser().catch(() => null);
+		}
+		if (!resolvedAuthUser) {
 			return null;
 		}
 
@@ -546,6 +559,69 @@ export default function LessonProjectsPage() {
 			console.error('Project sync failed:', error);
 			return null;
 		}
+	};
+
+	const syncProjectMutationToApi = async (project, activityIdsToSync = null) => {
+		if (!hasDiyAccess) {
+			return { attempted: false, projectResult: null, activitySyncFailures: 0 };
+		}
+
+		let resolvedAuthUser = authUser;
+		if (!resolvedAuthUser) {
+			resolvedAuthUser = await fetchAuthenticatedUser().catch(() => null);
+		}
+		if (!resolvedAuthUser) {
+			return { attempted: false, projectResult: null, activitySyncFailures: 0 };
+		}
+
+		const shouldSyncSpecificActivities = Array.isArray(activityIdsToSync);
+		const activityIds = shouldSyncSpecificActivities
+			? new Set(activityIdsToSync.map((id) => String(id || '').trim()).filter(Boolean))
+			: null;
+		let activitySyncFailures = 0;
+
+		if (!shouldSyncSpecificActivities || activityIds.size > 0) {
+			const activities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
+			for (const activity of activities) {
+				const activityId = String(activity?.id || activity?.['lesson-activity-id'] || '').trim();
+				if (!activityId) {
+					continue;
+				}
+				if (shouldSyncSpecificActivities && !activityIds.has(activityId)) {
+					continue;
+				}
+
+				try {
+					const response = await upsertLessonActivity(
+						apiOrigin,
+						buildLessonActivityUpsertPayload({
+							id: activityId,
+							template: String(activity?.['tmk-template'] || PROJECT_FORM_NAME),
+							lessonName: String(activity?.['lesson-name'] || project?.name || 'Untitled Lesson Activity'),
+							lessonInputData: normalizeLessonInputData(activity?.['lesson-input-data'] || {}),
+							createdAt: activity?.['created-at'] || project?.createdAtMs || Date.now(),
+							modifiedAt: activity?.['modified-at'] || project?.modifiedAtMs || Date.now(),
+							extra: {
+								formName: String(activity?.['tmk-template'] || PROJECT_FORM_NAME),
+							},
+						})
+					);
+					if (!response.ok) {
+						activitySyncFailures += 1;
+					}
+				} catch (error) {
+					console.error('Lesson activity sync failed from project manager:', error);
+					activitySyncFailures += 1;
+				}
+			}
+		}
+
+		const projectResult = await syncProjectToApi(project);
+		return {
+			attempted: true,
+			projectResult,
+			activitySyncFailures,
+		};
 	};
 
 	const displayProjects = useMemo(() => {
@@ -701,7 +777,7 @@ export default function LessonProjectsPage() {
 		}
 	};
 
-	const handleDuplicateProject = (projectId) => {
+	const handleDuplicateProject = async (projectId) => {
 		if (!hasDiyAccess) {
 			showNotice('warning', 'Active DIY course enrollment is required to duplicate lesson projects.');
 			return;
@@ -753,7 +829,20 @@ export default function LessonProjectsPage() {
 			[duplicatedProject.id]: newActivityTypeByProjectId[projectId] || defaultActivityType,
 		}));
 		loadLocalProjects();
-		showNotice('success', `"${sourceProject.name}" duplicated as "${duplicateName}".`);
+
+		const syncResult = await syncProjectMutationToApi(
+			duplicatedProject,
+			duplicatedProject.lessonActivities.map((activity) => activity?.id)
+		);
+		if (!syncResult.attempted) {
+			showNotice('warning', `"${sourceProject.name}" duplicated as "${duplicateName}" locally. Log in to sync the copy to the cloud.`);
+			return;
+		}
+		if (!syncResult.projectResult || syncResult.activitySyncFailures > 0) {
+			showNotice('warning', `"${sourceProject.name}" duplicated as "${duplicateName}" locally, but cloud sync was incomplete.`);
+			return;
+		}
+		showNotice('success', `"${sourceProject.name}" duplicated as "${duplicateName}" and synced to the cloud.`);
 	};
 
 	const handleDeleteProject = async (projectId) => {
@@ -892,7 +981,7 @@ export default function LessonProjectsPage() {
 		setTargetProjectIdForNewActivity('');
 	};
 
-	const handleConfirmAddActivity = () => {
+	const handleConfirmAddActivity = async () => {
 		const projectId = String(targetProjectIdForNewActivity || '').trim();
 		if (!projectId) {
 			handleCloseAddActivityDialog();
@@ -937,7 +1026,17 @@ export default function LessonProjectsPage() {
 		saveStoredProjects(projects);
 		loadLocalProjects();
 		handleCloseAddActivityDialog();
-		showNotice('success', `${requestedType} lesson activity added.`);
+
+		const syncResult = await syncProjectMutationToApi(project, [snapshot.id]);
+		if (!syncResult.attempted) {
+			showNotice('warning', `${requestedType} lesson activity added locally. Log in to sync it to the cloud.`);
+			return;
+		}
+		if (!syncResult.projectResult || syncResult.activitySyncFailures > 0) {
+			showNotice('warning', `${requestedType} lesson activity added locally, but cloud sync was incomplete.`);
+			return;
+		}
+		showNotice('success', `${requestedType} lesson activity added and synced to the cloud.`);
 	};
 
 	const handleOpenActivity = (project, activity, activityIndex) => {
@@ -1032,7 +1131,7 @@ export default function LessonProjectsPage() {
 		return [...new Set(remapped)].sort((a, b) => a - b);
 	};
 
-	const handleMoveActivity = (projectId, fromIndex, toIndex) => {
+	const handleMoveActivity = async (projectId, fromIndex, toIndex) => {
 		if (!hasDiyAccess) {
 			showNotice('warning', 'Active DIY course enrollment is required to reorder lesson activities.');
 			return;
@@ -1067,6 +1166,10 @@ export default function LessonProjectsPage() {
 
 		saveStoredProjects(projects);
 		loadLocalProjects();
+		const syncResult = await syncProjectMutationToApi(project, []);
+		if (syncResult.attempted && !syncResult.projectResult) {
+			showNotice('warning', 'Lesson activities reordered locally, but cloud sync failed.');
+		}
 
 		setSelectedForSlideshowByProjectId((prev) => {
 			const current = Array.isArray(prev[projectId]) ? prev[projectId] : [];
@@ -1175,6 +1278,10 @@ export default function LessonProjectsPage() {
 
 		saveStoredProjects(projects);
 		loadLocalProjects();
+		const syncResult = await syncProjectMutationToApi(project, []);
+		if (syncResult.attempted && !syncResult.projectResult) {
+			showNotice('warning', 'Lesson activity deleted locally, but project cloud sync failed.');
+		}
 		setSelectedForSlideshowByProjectId((prev) => {
 			const current = Array.isArray(prev[projectId]) ? prev[projectId] : [];
 			return {
@@ -1559,14 +1666,14 @@ export default function LessonProjectsPage() {
 											</Button>
 										)}
 										{isAuthenticated && (
-											<Tooltip title="Save this project's current browser changes to the cloud.">
+											<Tooltip title="Save this project's changes to the cloud.">
 												<Button size="small" variant="contained" color="info" onClick={() => handleSyncProject(selectedProject.id)} sx={{ textTransform: 'none' }}>
 													Save Project Changes
 												</Button>
 											</Tooltip>
 										)}
 										{hasDiyAccess && (
-											<Tooltip title='Create a local copy of this project with duplicated activities. Use "Save Project Changes" if you also want to save the copy to the cloud.'>
+											<Tooltip title='Create a copy of this project with duplicated activities.'>
 												<Button size="small" variant="outlined" onClick={() => handleDuplicateProject(selectedProject.id)} sx={{ textTransform: 'none' }}>
 													Duplicate Project
 												</Button>

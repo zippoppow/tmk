@@ -1025,14 +1025,20 @@ export function useLessonActivityProject({
 		const normalizedInput = normalizeInput(data);
 		let lessonName = String(activityName || defaultActivityName).trim() || defaultActivityName;
 		let activityId = '';
+		let activityCreatedAt = Date.now();
+		let activityModifiedAt = Date.now();
+		const projects = getAllStoredProjects();
+		const touchedProjects = [];
 
 		if (projectId && Number.isInteger(activityIndex)) {
-			const sourceProject = getAllStoredProjects().find((item) => item.id === projectId && item.formName === 'lesson-activities-project');
+			const sourceProject = projects.find((item) => item.id === projectId && item.formName === 'lesson-activities-project');
 			const sourceActivities = sourceProject
 				? getProjectLessonActivities(sourceProject, 'lesson-activities-project', (input) => input || {})
 				: [];
 			const sourceActivity = sourceActivities[activityIndex] || null;
 			activityId = String(sourceActivity?.id || createLessonActivityId()).trim();
+			activityCreatedAt = Number(sourceActivity?.['created-at']) || activityCreatedAt;
+			activityModifiedAt = Date.now();
 			lessonName = String(activityName || sourceActivity?.['lesson-name'] || defaultActivityName).trim() || defaultActivityName;
 
 			if (sourceProject && sourceActivity) {
@@ -1047,6 +1053,9 @@ export function useLessonActivityProject({
 				sourceProject.lessonActivities = sourceActivities;
 				sourceProject.modifiedAtMs = Date.now();
 				sourceProject.syncedAt = null;
+				if (!touchedProjects.includes(sourceProject)) {
+					touchedProjects.push(sourceProject);
+				}
 			}
 		} else {
 			const urlActivityId = typeof window !== 'undefined'
@@ -1058,9 +1067,7 @@ export function useLessonActivityProject({
 			}
 		}
 
-		const projects = getAllStoredProjects();
 		const fingerprint = `${formName}::${lessonName}::${JSON.stringify(normalizedInput)}`;
-		const touchedProjects = [];
 		let addedCount = 0;
 		let updatedCount = 0;
 		let duplicateCount = 0;
@@ -1131,6 +1138,7 @@ export function useLessonActivityProject({
 		loadAvailableLessonProjects();
 
 		let syncFailureCount = 0;
+		let activitySyncFailed = false;
 		let resolvedAuthUser = authUser;
 		if (!resolvedAuthUser) {
 			resolvedAuthUser = await fetchAuthenticatedUser();
@@ -1140,6 +1148,28 @@ export function useLessonActivityProject({
 		}
 
 		if (resolvedAuthUser) {
+			try {
+				const activityResponse = await upsertLessonActivity(
+					projectApiOrigin,
+					buildLessonActivityUpsertPayload({
+						id: activityId,
+						template: formName,
+						lessonName,
+						lessonInputData: normalizedInput,
+						createdAt: activityCreatedAt,
+						modifiedAt: activityModifiedAt,
+						extra: {
+							formName,
+						},
+					})
+				);
+				if (!activityResponse.ok) {
+					activitySyncFailed = true;
+				}
+			} catch {
+				activitySyncFailed = true;
+			}
+
 			for (const project of touchedProjects) {
 				try {
 					const payload = buildDiyProjectsPayload({
@@ -1178,8 +1208,9 @@ export function useLessonActivityProject({
 			return;
 		}
 
-		if (syncFailureCount > 0) {
-			showNotice('warning', `Added or updated activity in ${addedCount + updatedCount} project${addedCount + updatedCount === 1 ? '' : 's'}, but ${syncFailureCount} cloud sync operation${syncFailureCount === 1 ? '' : 's'} failed.`);
+		if (syncFailureCount > 0 || activitySyncFailed) {
+			const failureCount = syncFailureCount + (activitySyncFailed ? 1 : 0);
+			showNotice('warning', `Added or updated activity in ${addedCount + updatedCount} project${addedCount + updatedCount === 1 ? '' : 's'}, but ${failureCount} cloud sync operation${failureCount === 1 ? '' : 's'} failed.`);
 			return;
 		}
 
