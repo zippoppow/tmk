@@ -1691,7 +1691,7 @@ export default function LessonProjectsPage() {
 					</Box>
 				</Paper>
 				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
-					<Box sx={{ pt: 1, mt: 1, pb: 2, mb: 1 }}>
+					{/* <Box sx={{ pt: 1, mt: 1, pb: 2, mb: 1 }}>
 						{isAuthenticated ? (
 							<Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end" flexWrap="wrap">
 									<Stack direction="row" spacing={0.6}>
@@ -1717,7 +1717,7 @@ export default function LessonProjectsPage() {
 								Login with Teachable to sync projects.
 							</Typography>
 						)}
-					</Box>
+					</Box> */}
 					<Typography sx={{ fontSize: '2rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 0 }}>
 						Your Lesson Activity Projects
 					</Typography>
