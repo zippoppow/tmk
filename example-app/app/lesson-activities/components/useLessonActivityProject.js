@@ -902,6 +902,11 @@ export function useLessonActivityProject({
 				});
 
 			if (!response.ok) {
+				if (response.status === 404 && shouldUpdateStandalone) {
+					showNotice('error', 'Cloud activity id was not found (404). Please refresh lesson activities and reopen the saved record.');
+					setIsSaving(false);
+					return false;
+				}
 				showNotice('error', 'Could not save standalone lesson activity.');
 				setIsSaving(false);
 				return false;

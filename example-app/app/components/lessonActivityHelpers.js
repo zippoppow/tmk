@@ -680,7 +680,31 @@ function normalizeSingleLessonActivityPayload(payload) {
 		return null;
 	}
 
+	if (payload['lesson-activity'] && typeof payload['lesson-activity'] === 'object' && !Array.isArray(payload['lesson-activity'])) {
+		return payload['lesson-activity'];
+	}
+
+	if (payload.lessonActivity && typeof payload.lessonActivity === 'object' && !Array.isArray(payload.lessonActivity)) {
+		return payload.lessonActivity;
+	}
+
+	if (payload.lesson_activity && typeof payload.lesson_activity === 'object' && !Array.isArray(payload.lesson_activity)) {
+		return payload.lesson_activity;
+	}
+
 	if (payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data)) {
+		if (payload.data['lesson-activity'] && typeof payload.data['lesson-activity'] === 'object' && !Array.isArray(payload.data['lesson-activity'])) {
+			return payload.data['lesson-activity'];
+		}
+
+		if (payload.data.lessonActivity && typeof payload.data.lessonActivity === 'object' && !Array.isArray(payload.data.lessonActivity)) {
+			return payload.data.lessonActivity;
+		}
+
+		if (payload.data.lesson_activity && typeof payload.data.lesson_activity === 'object' && !Array.isArray(payload.data.lesson_activity)) {
+			return payload.data.lesson_activity;
+		}
+
 		return payload.data;
 	}
 
