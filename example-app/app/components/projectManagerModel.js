@@ -83,7 +83,7 @@ export function normalizeCloudProjects(payload, formName, normalizeLessonInputDa
 	const diyProjects = extractDiyProjectsFromResponse(payload);
 	const normalized = [];
 
-	diyProjects.forEach((project, projectIndex) => {
+	diyProjects.forEach((project) => {
 		const activities = Array.isArray(project['lesson-activities']) ? project['lesson-activities'] : [];
 		if (activities.length === 0) {
 			return;
@@ -100,18 +100,21 @@ export function normalizeCloudProjects(payload, formName, normalizeLessonInputDa
 
 		const lessonActivities = activities
 			.filter((activity) => activity && activity['lesson-input-data'])
-			.map((activity) => ({
-				id: String(activity.id || activity['lesson-activity-id'] || createLessonActivityId()),
-				'tmk-template': String(activity['tmk-template'] || ''),
-				'lesson-name': String(activity['lesson-name'] || project['project-name'] || ''),
-				'created-at': Number.isFinite(Number(activity['created-at']))
-					? Number(activity['created-at'])
-					: Date.now(),
-				'modified-at': Number.isFinite(Number(activity['modified-at']))
-					? Number(activity['modified-at'])
-					: Date.now(),
-				'lesson-input-data': normalizeLessonInputData(activity['lesson-input-data']),
-			}));
+			.map((activity) => {
+				const activityId = String(activity.id || activity['lesson-activity-id'] || '').trim();
+				return {
+					...(activityId ? { id: activityId, 'lesson-activity-id': activityId } : {}),
+					'tmk-template': String(activity['tmk-template'] || ''),
+					'lesson-name': String(activity['lesson-name'] || project['project-name'] || ''),
+					'created-at': Number.isFinite(Number(activity['created-at']))
+						? Number(activity['created-at'])
+						: (Number.isFinite(Number(createdAtRaw)) ? Number(createdAtRaw) : 0),
+					'modified-at': Number.isFinite(Number(activity['modified-at']))
+						? Number(activity['modified-at'])
+						: (Number.isFinite(Number(modifiedAtRaw)) ? Number(modifiedAtRaw) : 0),
+					'lesson-input-data': normalizeLessonInputData(activity['lesson-input-data']),
+				};
+			});
 
 		if (lessonActivities.length === 0) {
 			return;
@@ -128,7 +131,7 @@ export function normalizeCloudProjects(payload, formName, normalizeLessonInputDa
 		).trim();
 
 		normalized.push({
-			id: remoteId || `cloud_${projectIndex}_${String(project['project-name'] || 'project')}`,
+			id: remoteId || '',
 			remoteId: remoteId || null,
 			source: 'cloud',
 			name: String(project['project-name'] || latest['lesson-name'] || 'Untitled Cloud Project'),
@@ -179,6 +182,12 @@ export function buildDiyProjectsPayload({ project, formName, normalizeLessonInpu
 	return {
 		'diy-projects': [
 			{
+				...(String(project?.remoteId || project?.id || '').trim()
+					? {
+						id: String(project?.remoteId || project?.id || '').trim(),
+						'project-id': String(project?.remoteId || project?.id || '').trim(),
+					}
+					: {}),
 				'project-name': projectName,
 				'created-at': createdAtMs,
 				'modified-at': modifiedAtMs,

@@ -11,4 +11,6 @@ function handle(request, { params }) {
 }
 
 export const GET = handle;
+export const PUT = handle;
+export const DELETE = handle;
 export const OPTIONS = handle;

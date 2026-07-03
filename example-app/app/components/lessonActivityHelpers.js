@@ -51,7 +51,68 @@ export function clearFormSessionData(formName, storageKey = DEFAULT_SESSION_STOR
 
 export function getAllStoredProjects(storageKey = PROJECTS_STORAGE_KEY) {
 	try {
-		return JSON.parse(window.localStorage.getItem(storageKey) || '[]');
+		const parsed = JSON.parse(window.localStorage.getItem(storageKey) || '[]');
+		if (!Array.isArray(parsed)) {
+			return [];
+		}
+
+		let mutated = false;
+		const usedProjectIds = new Set();
+
+		parsed.forEach((project) => {
+			if (!project || typeof project !== 'object') {
+				return;
+			}
+
+			let projectId = String(project.id || '').trim();
+			if (!projectId || usedProjectIds.has(projectId)) {
+				do {
+					projectId = createProjectId();
+				} while (usedProjectIds.has(projectId));
+				project.id = projectId;
+				mutated = true;
+			}
+			usedProjectIds.add(projectId);
+
+			const lessonActivities = Array.isArray(project.lessonActivities)
+				? project.lessonActivities
+				: (Array.isArray(project['lesson-activities']) ? project['lesson-activities'] : null);
+			if (!Array.isArray(lessonActivities)) {
+				return;
+			}
+
+			const usedLessonActivityIds = new Set();
+			lessonActivities.forEach((activity) => {
+				if (!activity || typeof activity !== 'object') {
+					return;
+				}
+
+				let activityId = String(activity.id || activity['lesson-activity-id'] || '').trim();
+				if (!activityId || usedLessonActivityIds.has(activityId)) {
+					do {
+						activityId = createLessonActivityId();
+					} while (usedLessonActivityIds.has(activityId));
+					mutated = true;
+				}
+
+				if (String(activity.id || '').trim() !== activityId) {
+					activity.id = activityId;
+					mutated = true;
+				}
+				if (String(activity['lesson-activity-id'] || '').trim() !== activityId) {
+					activity['lesson-activity-id'] = activityId;
+					mutated = true;
+				}
+
+				usedLessonActivityIds.add(activityId);
+			});
+		});
+
+		if (mutated) {
+			saveStoredProjects(parsed, storageKey);
+		}
+
+		return parsed;
 	} catch {
 		return [];
 	}
@@ -525,11 +586,6 @@ export function isStandaloneLessonActivity(record) {
 	return !isProjectLinkedLessonActivity(record);
 }
 
-function toEpochMs(value) {
-	const num = Number(value);
-	return Number.isFinite(num) ? num : Date.now();
-}
-
 function normalizeLessonInputObject(value) {
 	if (!value || typeof value !== 'object' || Array.isArray(value)) {
 		return {};
@@ -539,26 +595,60 @@ function normalizeLessonInputObject(value) {
 
 export function buildLessonActivityUpsertPayload({
 	id,
+	clientRef,
 	template,
 	lessonName,
 	lessonInputData,
+	associations,
 	createdAt,
 	modifiedAt,
 	extra = {},
 }) {
-	const resolvedId = String(id || createLessonActivityId()).trim();
+	const resolvedId = String(id || '').trim();
+	const resolvedClientRef = String(clientRef || extra?.client_ref || extra?.clientRef || '').trim();
 	const resolvedTemplate = String(template || '').trim() || 'unknown-template';
 	const resolvedLessonName = String(lessonName || '').trim() || 'Untitled Lesson Activity';
+	const rawAssociations = Array.isArray(associations)
+		? associations
+		: (Array.isArray(extra?.associations) ? extra.associations : []);
+	const normalizedAssociations = rawAssociations
+		.map((association) => {
+			if (!association || typeof association !== 'object') {
+				return null;
+			}
+			const containerId = String(association['container-id'] || association.containerId || '').trim();
+			if (!containerId) {
+				return null;
+			}
+			const positionRaw = association.position;
+			const position = Number.isFinite(Number(positionRaw)) ? Number(positionRaw) : undefined;
+			return {
+				'container-id': containerId,
+				...(typeof position === 'number' ? { position } : {}),
+			};
+		})
+		.filter(Boolean);
 
-	return {
-		...extra,
-		id: resolvedId,
+	void createdAt;
+	void modifiedAt;
+
+	const payload = {
 		'tmk-template': resolvedTemplate,
 		'lesson-name': resolvedLessonName,
 		'lesson-input-data': normalizeLessonInputObject(lessonInputData),
-		'created-at': toEpochMs(createdAt),
-		'modified-at': toEpochMs(modifiedAt),
 	};
+
+	if (resolvedId) {
+		payload.id = resolvedId;
+	}
+	if (resolvedClientRef) {
+		payload.client_ref = resolvedClientRef;
+	}
+	if (normalizedAssociations.length > 0) {
+		payload.associations = normalizedAssociations;
+	}
+
+	return payload;
 }
 
 function normalizeLessonActivityPayload(payload) {
@@ -605,12 +695,33 @@ function normalizeSingleLessonActivityPayload(payload) {
 	return null;
 }
 
-export async function upsertLessonActivity(apiOrigin, record) {
+export function extractLessonActivityFromResponsePayload(payload) {
+	return normalizeSingleLessonActivityPayload(payload);
+}
+
+export async function createLessonActivity(apiOrigin, record) {
 	return fetchWithUserToken(apiOrigin, LESSON_ACTIVITIES_ENDPOINT, {
-		method: 'PUT',
+		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(record),
 	});
+}
+
+export async function updateLessonActivityById(apiOrigin, id, record) {
+	const activityId = String(id || '').trim();
+	if (!activityId) {
+		return new Response(null, { status: 400, statusText: 'Missing lesson activity id' });
+	}
+
+	return fetchWithUserToken(
+		apiOrigin,
+		`${LESSON_ACTIVITIES_ENDPOINT}/${encodeURIComponent(activityId)}`,
+		{
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(record),
+		}
+	);
 }
 
 export async function listLessonActivities(apiOrigin) {
@@ -646,14 +757,13 @@ export async function fetchLessonActivityById(apiOrigin, id) {
 }
 
 export async function deleteLessonActivityById(apiOrigin, id) {
-	if (!id) {
+	const activityId = String(id || '').trim();
+	if (!activityId) {
 		return new Response(null, { status: 400, statusText: 'Missing lesson activity id' });
 	}
 
-	return fetchWithUserToken(apiOrigin, LESSON_ACTIVITIES_ENDPOINT, {
+	return fetchWithUserToken(apiOrigin, `${LESSON_ACTIVITIES_ENDPOINT}/${encodeURIComponent(activityId)}`, {
 		method: 'DELETE',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ id }),
 	});
 }
 

@@ -5,17 +5,19 @@ import { useRouter } from 'next/navigation';
 import {
 	buildLessonActivityUpsertPayload,
 	clearFormSessionData,
+	createLessonActivity,
 	createLessonActivityId,
 	deleteLessonActivityById,
 	deleteStandaloneDraftByActivityId,
 	deleteStandaloneDraftByLocalId,
+	extractLessonActivityFromResponsePayload,
 	fetchLessonActivityById,
 	getStandaloneDraftByActivityId,
 	getStandaloneDraftByLocalId,
 	getSlideshowCloneSeed,
 	deleteSlideshowCloneSeed,
-	upsertLessonActivity,
 	readFormSessionData,
+	updateLessonActivityById,
 	writeFormSessionData,
 	DIY_PROJECTS_ENDPOINT,
 	getAllStoredProjects,
@@ -33,7 +35,6 @@ import {
 	resolveTmkApiOrigin,
 } from '../../components/authHelpers';
 import {
-	buildDiyProjectsPayload,
 	getProjectLessonActivities,
 } from '../../components/projectManagerModel';
 
@@ -116,6 +117,88 @@ export function useLessonActivityProject({
 			.filter((project) => !currentProjectId || project.id !== currentProjectId);
 		setAvailableLessonProjects(projects);
 		return projects;
+	};
+
+	const buildDiyProjectsCollectionPayload = (projects) => {
+		return {
+			'diy-projects': projects.map((project) => {
+				const now = Date.now();
+				const createdAtMs = Number.isFinite(project?.createdAtMs) ? project.createdAtMs : now;
+				const modifiedAtMs = Number.isFinite(project?.modifiedAtMs) ? project.modifiedAtMs : now;
+				const projectName = String(project?.name || '').trim() || 'Untitled Project';
+				const projectId = String(project?.remoteId || project?.id || '').trim();
+				const lessonActivities = getProjectLessonActivities(project, 'lesson-activities-project', (input) => input || {});
+
+				return {
+					...(projectId ? { id: projectId, 'project-id': projectId } : {}),
+					'project-name': projectName,
+					'created-at': createdAtMs,
+					'modified-at': modifiedAtMs,
+					'lesson-activities': lessonActivities.map((activity) => {
+						const activityId = String(activity?.id || activity?.['lesson-activity-id'] || '').trim();
+						return {
+							...(activityId ? { id: activityId, 'lesson-activity-id': activityId } : {}),
+							'tmk-template': String(activity?.['tmk-template'] || 'lesson-activities-project'),
+							'lesson-name': String(activity?.['lesson-name'] || projectName),
+							'created-at': Number.isFinite(Number(activity?.['created-at']))
+								? Number(activity['created-at'])
+								: createdAtMs,
+							'modified-at': Number.isFinite(Number(activity?.['modified-at']))
+								? Number(activity['modified-at'])
+								: modifiedAtMs,
+							'lesson-input-data': activity?.['lesson-input-data'] && typeof activity['lesson-input-data'] === 'object' && !Array.isArray(activity['lesson-input-data'])
+								? activity['lesson-input-data']
+								: {},
+						};
+					}),
+				};
+			}),
+		};
+	};
+
+	const syncAllLessonProjectsToCloud = async () => {
+		const lessonProjects = getAllStoredProjects().filter(
+			(project) => String(project?.formName || '').trim() === 'lesson-activities-project'
+		);
+
+		if (lessonProjects.length === 0) {
+			const deleteResponse = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, {
+				method: 'DELETE',
+			});
+			return deleteResponse.ok || deleteResponse.status === 404;
+		}
+
+		const payload = buildDiyProjectsCollectionPayload(lessonProjects);
+		const response = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload),
+		});
+
+		if (!response.ok) {
+			const errorText = await response.text().catch(() => '');
+			console.warn('DIY project collection sync failed from lesson activity save', {
+				status: response.status,
+				body: errorText.slice(0, 500),
+			});
+			return false;
+		}
+
+		const syncedAtIso = new Date().toISOString();
+		const allProjects = getAllStoredProjects();
+		let updatedAny = false;
+		allProjects.forEach((project) => {
+			if (String(project?.formName || '').trim() !== 'lesson-activities-project') {
+				return;
+			}
+			project.syncedAt = syncedAtIso;
+			updatedAny = true;
+		});
+		if (updatedAny) {
+			saveStoredProjects(allProjects);
+		}
+
+		return true;
 	};
 
 	const persist = (nextData) => {
@@ -693,65 +776,40 @@ export function useLessonActivityProject({
 				const persistedActivity = activities[resolvedActivityIndex] || {};
 				const createdAtSource = persistedActivity['created-at'] || Date.now();
 
-				const activityResponse = await upsertLessonActivity(
-					projectApiOrigin,
-					buildLessonActivityUpsertPayload({
-						id: activityId,
-						template: formName,
-						lessonName: activityName || persistedActivity['lesson-name'] || defaultActivityName,
-						lessonInputData: normalizedInput,
-						createdAt: createdAtSource,
-						modifiedAt: Date.now(),
-						extra: {
-							formName,
-						},
-					})
-				);
+				const payload = buildLessonActivityUpsertPayload({
+					id: activityId,
+					template: formName,
+					lessonName: activityName || persistedActivity['lesson-name'] || defaultActivityName,
+					lessonInputData: normalizedInput,
+					createdAt: createdAtSource,
+					modifiedAt: Date.now(),
+					extra: {
+						formName,
+					},
+				});
+
+				const activityResponse = await updateLessonActivityById(projectApiOrigin, activityId, {
+					...payload,
+					id: undefined,
+					client_ref: undefined,
+				});
 
 				project.syncedAt = null;
 				saveStoredProjects(projects);
 
-				const payload = buildDiyProjectsPayload({
-					project,
-					formName: 'lesson-activities-project',
-					normalizeLessonInputData: (input) => input || {},
-				});
+				const projectSyncOk = await syncAllLessonProjectsToCloud();
 
-			const response = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, {
-			method: 'PUT',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(payload),
-		});
-
-			if (!response.ok) {
-				const errorText = await response.text().catch(() => '');
-				console.warn('DIY project sync failed from lesson activity save', {
-					status: response.status,
-					body: errorText.slice(0, 500),
-				});
-			}
-
-		if (response.ok && activityResponse.ok) {
-			const result = await response.json().catch(() => null);
-			const updated = getAllStoredProjects();
-			const updatedProject = updated.find((item) => item.id === resolvedProjectId);
-			if (updatedProject) {
-				updatedProject.syncedAt = new Date().toISOString();
-				if (result?.id) {
-					updatedProject.remoteId = result.id;
-				}
-				saveStoredProjects(updated);
-			}
+		if (projectSyncOk && activityResponse.ok) {
 			showNotice('success', 'Lesson activity saved to database.');
 			return true;
 		}
-				if (!activityResponse.ok && response.ok) {
+				if (!activityResponse.ok && projectSyncOk) {
 					saveStoredProjects(projects);
 					showNotice('warning', 'Saved locally and project synced, but activity record save failed.');
 					return true;
 				}
 
-				if (activityResponse.ok && !response.ok) {
+				if (activityResponse.ok && !projectSyncOk) {
 					saveStoredProjects(projects);
 					showNotice('warning', 'Saved locally and activity saved to database, but project sync failed.');
 					return true;
@@ -817,20 +875,31 @@ export function useLessonActivityProject({
 				setStandaloneActivityId(activityId);
 			}
 
-			const response = await upsertLessonActivity(
-				projectApiOrigin,
-				buildLessonActivityUpsertPayload({
-					id: activityId,
-					template: formName,
-					lessonName: activityName || defaultActivityName,
-					lessonInputData: normalizedInput,
-					createdAt: Number(getStandaloneDraftByLocalId(localDraftId)?.['created-at']) || Date.now(),
-					modifiedAt: Date.now(),
-					extra: {
-						formName,
-					},
+			const existingDraft = getStandaloneDraftByLocalId(localDraftId);
+			const shouldUpdateStandalone = hadExistingId && existingDraft?.savedToApi !== false;
+			const payload = buildLessonActivityUpsertPayload({
+				id: activityId,
+				template: formName,
+				lessonName: activityName || defaultActivityName,
+				lessonInputData: normalizedInput,
+				createdAt: Number(existingDraft?.['created-at']) || Date.now(),
+				modifiedAt: Date.now(),
+				extra: {
+					formName,
+				},
+			});
+
+			const response = shouldUpdateStandalone
+				? await updateLessonActivityById(projectApiOrigin, activityId, {
+					...payload,
+					id: undefined,
+					client_ref: undefined,
 				})
-			);
+				: await createLessonActivity(projectApiOrigin, {
+					...payload,
+					client_ref: activityId,
+					id: undefined,
+				});
 
 			if (!response.ok) {
 				showNotice('error', 'Could not save standalone lesson activity.');
@@ -838,11 +907,21 @@ export function useLessonActivityProject({
 				return false;
 			}
 
+			let resolvedActivityId = activityId;
+			if (!shouldUpdateStandalone) {
+				const responsePayload = await response.json().catch(() => ({}));
+				const savedRecord = extractLessonActivityFromResponsePayload(responsePayload);
+				const canonicalId = String(savedRecord?.id || '').trim();
+				if (canonicalId) {
+					resolvedActivityId = canonicalId;
+				}
+			}
+
 			persist(normalizedInput);
 			persistStandaloneDraftRecord({
 				nextData: normalizedInput,
 				nextActivityName: activityName || defaultActivityName,
-				nextActivityId: activityId,
+				nextActivityId: resolvedActivityId,
 				markSaved: true,
 			});
 
@@ -853,10 +932,10 @@ export function useLessonActivityProject({
 			clearFormSessionData(formName);
 
 
-			setStandaloneActivityId(activityId);
+			setStandaloneActivityId(resolvedActivityId);
 			setLocalDraftId('');
 			const url = new URL(window.location.href);
-			url.searchParams.set('activityId', activityId);
+			url.searchParams.set('activityId', resolvedActivityId);
 			url.searchParams.delete('localDraftId');
 			window.history.replaceState({}, '', url.toString());
 			showNotice('success', 'Standalone lesson activity saved.');
@@ -1028,7 +1107,6 @@ export function useLessonActivityProject({
 		let activityCreatedAt = Date.now();
 		let activityModifiedAt = Date.now();
 		const projects = getAllStoredProjects();
-		const touchedProjects = [];
 
 		if (projectId && Number.isInteger(activityIndex)) {
 			const sourceProject = projects.find((item) => item.id === projectId && item.formName === 'lesson-activities-project');
@@ -1053,9 +1131,6 @@ export function useLessonActivityProject({
 				sourceProject.lessonActivities = sourceActivities;
 				sourceProject.modifiedAtMs = Date.now();
 				sourceProject.syncedAt = null;
-				if (!touchedProjects.includes(sourceProject)) {
-					touchedProjects.push(sourceProject);
-				}
 			}
 		} else {
 			const urlActivityId = typeof window !== 'undefined'
@@ -1103,9 +1178,6 @@ export function useLessonActivityProject({
 				project.lessonActivities = activities;
 				project.modifiedAtMs = now;
 				project.syncedAt = null;
-				if (!touchedProjects.includes(project)) {
-					touchedProjects.push(project);
-				}
 				duplicateCount += 1;
 				updatedCount += 1;
 				return;
@@ -1125,7 +1197,6 @@ export function useLessonActivityProject({
 			];
 			project.modifiedAtMs = now;
 			project.syncedAt = null;
-			touchedProjects.push(project);
 			addedCount += 1;
 		});
 
@@ -1149,20 +1220,30 @@ export function useLessonActivityProject({
 
 		if (resolvedAuthUser) {
 			try {
-				const activityResponse = await upsertLessonActivity(
-					projectApiOrigin,
-					buildLessonActivityUpsertPayload({
-						id: activityId,
-						template: formName,
-						lessonName,
-						lessonInputData: normalizedInput,
-						createdAt: activityCreatedAt,
-						modifiedAt: activityModifiedAt,
-						extra: {
-							formName,
-						},
+				const payload = buildLessonActivityUpsertPayload({
+					id: activityId,
+					template: formName,
+					lessonName,
+					lessonInputData: normalizedInput,
+					createdAt: activityCreatedAt,
+					modifiedAt: activityModifiedAt,
+					extra: {
+						formName,
+					},
+				});
+
+				const shouldUpdateActivity = Boolean(projectId);
+				const activityResponse = shouldUpdateActivity
+					? await updateLessonActivityById(projectApiOrigin, activityId, {
+						...payload,
+						id: undefined,
+						client_ref: undefined,
 					})
-				);
+					: await createLessonActivity(projectApiOrigin, {
+						...payload,
+						client_ref: activityId,
+						id: undefined,
+					});
 				if (!activityResponse.ok) {
 					activitySyncFailed = true;
 				}
@@ -1170,24 +1251,9 @@ export function useLessonActivityProject({
 				activitySyncFailed = true;
 			}
 
-			for (const project of touchedProjects) {
-				try {
-					const payload = buildDiyProjectsPayload({
-						project,
-						formName: 'lesson-activities-project',
-						normalizeLessonInputData: (input) => input || {},
-					});
-					const response = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, {
-						method: 'PUT',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify(payload),
-					});
-					if (!response.ok) {
-						syncFailureCount += 1;
-					}
-				} catch {
-					syncFailureCount += 1;
-				}
+			const projectSyncOk = await syncAllLessonProjectsToCloud();
+			if (!projectSyncOk) {
+				syncFailureCount += 1;
 			}
 		}
 

@@ -28,6 +28,7 @@ import {
 import {
     buildLessonActivityUpsertPayload,
     clearFormSessionData,
+    createLessonActivity,
     createLessonActivityId,
     deleteStandaloneDraftByActivityId,
     deleteStandaloneDraftByLocalId,
@@ -38,7 +39,7 @@ import {
     isStandaloneLessonActivity,
     listStandaloneDrafts,
     listLessonActivities,
-    upsertLessonActivity,
+    updateLessonActivityById,
     upsertStandaloneDraft,
 } from '../components/lessonActivityHelpers';
 import { DIY_LESSON_ACTIVITY_TYPES } from '../../data/diy/diy-lesson-activity-types';
@@ -423,6 +424,11 @@ export default function LessonActivitiesPage() {
             const apiOrigin = resolveTmkApiOrigin();
             const localRecords = initialLocalStandaloneActivities;
             const cloudRecords = initialCloudStandaloneActivities;
+            const cloudRecordIds = new Set(
+                cloudRecords
+                    .map((record) => String(record?.id || '').trim())
+                    .filter(Boolean)
+            );
             const syncedIds = new Set();
 
             for (const record of localRecords) {
@@ -448,9 +454,20 @@ export default function LessonActivitiesPage() {
                     },
                 });
 
-                const response = await upsertLessonActivity(apiOrigin, payload);
+                const shouldUpdate = Boolean(record?.savedToApi) && cloudRecordIds.has(activityId);
+                const response = shouldUpdate
+                    ? await updateLessonActivityById(apiOrigin, activityId, {
+                        ...payload,
+                        id: undefined,
+                        client_ref: undefined,
+                    })
+                    : await createLessonActivity(apiOrigin, {
+                        ...payload,
+                        client_ref: activityId,
+                        id: undefined,
+                    });
                 if (!response.ok) {
-                    throw new Error(`Failed to upsert standalone activity: ${activityId}`);
+                    throw new Error(`Failed to save standalone activity: ${activityId}`);
                 }
 
                 upsertStandaloneDraft({
@@ -927,7 +944,18 @@ export default function LessonActivitiesPage() {
                     },
                 });
 
-                const response = await upsertLessonActivity(apiOrigin, payload);
+                const shouldUpdate = Boolean(record?.savedToApi) && Boolean(record?.id);
+                const response = shouldUpdate
+                    ? await updateLessonActivityById(apiOrigin, activityId, {
+                        ...payload,
+                        id: undefined,
+                        client_ref: undefined,
+                    })
+                    : await createLessonActivity(apiOrigin, {
+                        ...payload,
+                        client_ref: activityId,
+                        id: undefined,
+                    });
                 if (!response.ok) {
                     failureCount += 1;
                     continue;

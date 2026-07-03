@@ -34,6 +34,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {
 	buildLessonActivityUpsertPayload,
 	clearFormSessionData,
+	createLessonActivity,
 	createLessonActivityId,
 	DIY_PROJECTS_ENDPOINT,
 	deleteStandaloneDraftByActivityId,
@@ -44,7 +45,7 @@ import {
 	hardDeleteLessonActivityById,
 	listLessonActivities,
 	saveStoredProjects,
-	upsertLessonActivity,
+	updateLessonActivityById,
 } from '../components/lessonActivityHelpers';
 import {
 	buildTeachableLogoutUrl,
@@ -54,7 +55,6 @@ import {
 } from '../components/authHelpers';
 import { useDiyAccess } from '../components/useDiyAccess';
 import {
-	buildDiyProjectsPayload,
 	createLessonActivitySnapshot,
 	createLocalProjectRecord,
 	getProjectLessonActivities,
@@ -239,9 +239,11 @@ export default function LessonProjectsPage() {
 				const createdAtMs = Number.isFinite(project?.createdAtMs) ? project.createdAtMs : now;
 				const modifiedAtMs = Number.isFinite(project?.modifiedAtMs) ? project.modifiedAtMs : now;
 				const projectName = String(project?.name || '').trim() || 'Untitled Project';
+				const projectId = String(project?.remoteId || project?.id || '').trim();
 				const lessonActivities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
 
 				return {
+					...(projectId ? { id: projectId, 'project-id': projectId } : {}),
 					'project-name': projectName,
 					'created-at': createdAtMs,
 					'modified-at': modifiedAtMs,
@@ -299,9 +301,60 @@ export default function LessonProjectsPage() {
 			const activities = Array.isArray(project?.lessonActivities) ? project.lessonActivities : [];
 			return new Set(
 				activities
-					.map((activity) => String(activity?.id || '').trim())
+					.map((activity) => String(activity?.id || activity?.['lesson-activity-id'] || '').trim())
 					.filter(Boolean)
 			);
+		};
+		const buildActivityIdentityKey = (activity) => {
+			const type = String(activity?.['tmk-template'] || '').trim();
+			const name = String(activity?.['lesson-name'] || '').trim();
+			const createdAt = String(activity?.['created-at'] || '').trim();
+			const inputData = JSON.stringify(normalizeLessonInputData(activity?.['lesson-input-data'] || {}));
+			return `${type}|${name}|${createdAt}|${inputData}`;
+		};
+		const mergeCloudActivitiesWithStableIds = (existingProject, cloudActivities) => {
+			const localActivities = Array.isArray(existingProject?.lessonActivities)
+				? existingProject.lessonActivities
+				: [];
+
+			const localIdByIdentity = new Map();
+			localActivities.forEach((activity) => {
+				const identityKey = buildActivityIdentityKey(activity);
+				if (!identityKey || localIdByIdentity.has(identityKey)) {
+					return;
+				}
+				const activityId = String(activity?.id || activity?.['lesson-activity-id'] || '').trim();
+				if (activityId) {
+					localIdByIdentity.set(identityKey, activityId);
+				}
+			});
+
+			const usedIds = new Set(
+				localActivities
+					.map((activity) => String(activity?.id || activity?.['lesson-activity-id'] || '').trim())
+					.filter(Boolean)
+			);
+
+			return (Array.isArray(cloudActivities) ? cloudActivities : []).map((activity) => {
+				const explicitId = String(activity?.id || activity?.['lesson-activity-id'] || '').trim();
+				let stableId = explicitId;
+				if (!stableId) {
+					const identityKey = buildActivityIdentityKey(activity);
+					stableId = localIdByIdentity.get(identityKey) || '';
+				}
+				if (!stableId) {
+					do {
+						stableId = createLessonActivityId();
+					} while (usedIds.has(stableId));
+				}
+				usedIds.add(stableId);
+
+				return {
+					...activity,
+					id: stableId,
+					'lesson-activity-id': stableId,
+				};
+			});
 		};
 		const buildActivityFingerprint = (project) => {
 			const activities = Array.isArray(project?.lessonActivities) ? project.lessonActivities : [];
@@ -381,7 +434,7 @@ export default function LessonProjectsPage() {
 
 			if (existing) {
 				existing.name = name || existing.name;
-				existing.lessonActivities = cloudActivities;
+				existing.lessonActivities = mergeCloudActivitiesWithStableIds(existing, cloudActivities);
 				if (cloudRemoteId) {
 					existing.remoteId = cloudRemoteId;
 					byRemoteId.set(cloudRemoteId, existing);
@@ -396,7 +449,7 @@ export default function LessonProjectsPage() {
 			}
 
 			const created = createLocalProjectRecord(name, PROJECT_FORM_NAME);
-			created.lessonActivities = cloudActivities;
+			created.lessonActivities = mergeCloudActivitiesWithStableIds(null, cloudActivities);
 			if (cloudRemoteId) {
 				created.remoteId = cloudRemoteId;
 			}
@@ -507,7 +560,7 @@ export default function LessonProjectsPage() {
 		}
 	};
 
-	const syncProjectToApi = async (project) => {
+	const syncProjectToApi = async () => {
 		if (!hasDiyAccess) {
 			return null;
 		}
@@ -521,11 +574,24 @@ export default function LessonProjectsPage() {
 		}
 
 		try {
-			const payload = buildDiyProjectsPayload({
-				project,
-				formName: PROJECT_FORM_NAME,
-				normalizeLessonInputData,
-			});
+			const lessonProjects = getStoredLessonProjects();
+			if (lessonProjects.length === 0) {
+				const deleteResponse = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, {
+					method: 'DELETE',
+				});
+				if (!deleteResponse.ok && deleteResponse.status !== 404) {
+					const errorText = await deleteResponse.text().catch(() => '');
+					console.warn('DIY project clear failed', {
+						status: deleteResponse.status,
+						body: errorText.slice(0, 500),
+					});
+					return null;
+				}
+
+				return { cleared: true };
+			}
+
+			const payload = buildDiyProjectsCollectionPayload(lessonProjects);
 			const response = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
@@ -542,14 +608,17 @@ export default function LessonProjectsPage() {
 			}
 
 			const result = await response.json();
+			const syncedAtIso = new Date().toISOString();
 			const projects = getAllStoredProjects();
-			const index = projects.findIndex((item) => item.id === project.id);
-			if (index !== -1) {
-				projects[index].syncedAt = new Date().toISOString();
-				projects[index].modifiedAtMs = Date.now();
-				if (result?.id) {
-					projects[index].remoteId = result.id;
+			let updatedAny = false;
+			projects.forEach((item) => {
+				if (item?.formName !== PROJECT_FORM_NAME) {
+					return;
 				}
+				item.syncedAt = syncedAtIso;
+				updatedAny = true;
+			});
+			if (updatedAny) {
 				saveStoredProjects(projects);
 				loadLocalProjects();
 			}
@@ -592,20 +661,29 @@ export default function LessonProjectsPage() {
 				}
 
 				try {
-					const response = await upsertLessonActivity(
-						apiOrigin,
-						buildLessonActivityUpsertPayload({
-							id: activityId,
-							template: String(activity?.['tmk-template'] || PROJECT_FORM_NAME),
-							lessonName: String(activity?.['lesson-name'] || project?.name || 'Untitled Lesson Activity'),
-							lessonInputData: normalizeLessonInputData(activity?.['lesson-input-data'] || {}),
-							createdAt: activity?.['created-at'] || project?.createdAtMs || Date.now(),
-							modifiedAt: activity?.['modified-at'] || project?.modifiedAtMs || Date.now(),
-							extra: {
-								formName: String(activity?.['tmk-template'] || PROJECT_FORM_NAME),
-							},
+					const payload = buildLessonActivityUpsertPayload({
+						id: activityId,
+						template: String(activity?.['tmk-template'] || PROJECT_FORM_NAME),
+						lessonName: String(activity?.['lesson-name'] || project?.name || 'Untitled Lesson Activity'),
+						lessonInputData: normalizeLessonInputData(activity?.['lesson-input-data'] || {}),
+						createdAt: activity?.['created-at'] || project?.createdAtMs || Date.now(),
+						modifiedAt: activity?.['modified-at'] || project?.modifiedAtMs || Date.now(),
+						extra: {
+							formName: String(activity?.['tmk-template'] || PROJECT_FORM_NAME),
+						},
+					});
+
+					const response = shouldSyncSpecificActivities
+						? await createLessonActivity(apiOrigin, {
+							...payload,
+							client_ref: activityId,
+							id: undefined,
 						})
-					);
+						: await updateLessonActivityById(apiOrigin, activityId, {
+							...payload,
+							id: undefined,
+							client_ref: undefined,
+						});
 					if (!response.ok) {
 						activitySyncFailures += 1;
 					}
@@ -616,7 +694,7 @@ export default function LessonProjectsPage() {
 			}
 		}
 
-		const projectResult = await syncProjectToApi(project);
+		const projectResult = await syncProjectToApi();
 		return {
 			attempted: true,
 			projectResult,
@@ -768,7 +846,7 @@ export default function LessonProjectsPage() {
 		loadLocalProjects();
 
 		if (isAuthenticated) {
-			const result = await syncProjectToApi(created);
+			const result = await syncProjectToApi();
 			if (result) {
 				showNotice('success', `"${trimmedName}" created and synced to cloud.`);
 			} else {
@@ -1308,7 +1386,7 @@ export default function LessonProjectsPage() {
 			return;
 		}
 
-		const result = await syncProjectToApi(project);
+		const result = await syncProjectToApi();
 		if (result) {
 			showNotice('success', `"${project.name}" synced to cloud.`);
 			await loadCloudProjects();
