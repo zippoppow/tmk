@@ -126,8 +126,18 @@ export function createProjectId() {
 	return `proj_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
+export function isTemporaryLocalProjectId(id) {
+	const normalizedId = String(id || '').trim();
+	return Boolean(normalizedId) && normalizedId.startsWith('proj_');
+}
+
 export function createLessonActivityId() {
 	return `la_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+export function isTemporaryLocalLessonActivityId(id) {
+	const normalizedId = String(id || '').trim();
+	return Boolean(normalizedId) && normalizedId.startsWith('la_');
 }
 
 function readStandaloneDraftMap(storageKey = STANDALONE_ACTIVITY_DRAFTS_STORAGE_KEY) {

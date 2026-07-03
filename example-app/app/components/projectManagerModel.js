@@ -1,5 +1,15 @@
 import { createLessonActivityId, createProjectId, extractDiyProjectsFromResponse } from './lessonActivityHelpers';
 
+function isTemporaryLocalProjectId(id) {
+	const normalizedId = String(id || '').trim();
+	return Boolean(normalizedId) && normalizedId.startsWith('proj_');
+}
+
+function isTemporaryLocalLessonActivityId(id) {
+	const normalizedId = String(id || '').trim();
+	return Boolean(normalizedId) && normalizedId.startsWith('la_');
+}
+
 export function getProjectLessonActivities(project, formName, normalizeLessonInputData) {
 	if (project && Array.isArray(project.lessonActivities) && project.lessonActivities.length > 0) {
 		return project.lessonActivities;
@@ -182,19 +192,29 @@ export function buildDiyProjectsPayload({ project, formName, normalizeLessonInpu
 	return {
 		'diy-projects': [
 			{
-				...(String(project?.remoteId || project?.id || '').trim()
-					? {
-						id: String(project?.remoteId || project?.id || '').trim(),
-						'project-id': String(project?.remoteId || project?.id || '').trim(),
-					}
-					: {}),
+				...(() => {
+					const projectIdCandidate = String(project?.remoteId || project?.id || '').trim();
+					const canonicalProjectId = projectIdCandidate && !isTemporaryLocalProjectId(projectIdCandidate)
+						? projectIdCandidate
+						: '';
+					const projectClientRef = !canonicalProjectId && projectIdCandidate ? projectIdCandidate : '';
+					return {
+						...(canonicalProjectId ? { id: canonicalProjectId } : {}),
+						...(projectClientRef ? { client_ref: projectClientRef } : {}),
+					};
+				})(),
 				'project-name': projectName,
 				'created-at': createdAtMs,
 				'modified-at': modifiedAtMs,
 				'lesson-activities': normalizedActivities.map((activity) => {
-					const activityId = String(activity?.id || activity?.['lesson-activity-id'] || '').trim();
+					const activityIdCandidate = String(activity?.id || activity?.['lesson-activity-id'] || '').trim();
+					const canonicalActivityId = activityIdCandidate && !isTemporaryLocalLessonActivityId(activityIdCandidate)
+						? activityIdCandidate
+						: '';
+					const activityClientRef = !canonicalActivityId && activityIdCandidate ? activityIdCandidate : '';
 					return {
-						...(activityId ? { id: activityId, 'lesson-activity-id': activityId } : {}),
+						...(canonicalActivityId ? { id: canonicalActivityId } : {}),
+						...(activityClientRef ? { client_ref: activityClientRef } : {}),
 						'tmk-template': String(activity['tmk-template'] || formName),
 						'lesson-name': String(activity['lesson-name'] || projectName),
 						'created-at': Number.isFinite(Number(activity['created-at']))

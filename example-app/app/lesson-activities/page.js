@@ -34,9 +34,11 @@ import {
     deleteStandaloneDraftByLocalId,
     DIY_PROJECTS_ENDPOINT,
     deleteLessonActivityById,
+    extractLessonActivityFromResponsePayload,
     extractDiyProjectsFromResponse,
     getAllStoredProjects,
     isStandaloneLessonActivity,
+    isTemporaryLocalLessonActivityId,
     listStandaloneDrafts,
     listLessonActivities,
     updateLessonActivityById,
@@ -454,7 +456,8 @@ export default function LessonActivitiesPage() {
                     },
                 });
 
-                const shouldUpdate = Boolean(record?.savedToApi) && cloudRecordIds.has(activityId);
+                const hasCanonicalId = Boolean(activityId) && !isTemporaryLocalLessonActivityId(activityId);
+                const shouldUpdate = hasCanonicalId && cloudRecordIds.has(activityId);
                 const response = shouldUpdate
                     ? await updateLessonActivityById(apiOrigin, activityId, {
                         ...payload,
@@ -470,9 +473,21 @@ export default function LessonActivitiesPage() {
                     throw new Error(`Failed to save standalone activity: ${activityId}`);
                 }
 
+                let resolvedActivityId = activityId;
+                if (!shouldUpdate) {
+                    const responsePayload = await response.json().catch(() => ({}));
+                    const savedRecord = extractLessonActivityFromResponsePayload(responsePayload);
+                    const canonicalId = String(savedRecord?.id || '').trim();
+                    if (canonicalId && !isTemporaryLocalLessonActivityId(canonicalId)) {
+                        resolvedActivityId = canonicalId;
+                    } else {
+                        throw new Error(`Create succeeded without canonical lesson activity id: ${activityId}`);
+                    }
+                }
+
                 upsertStandaloneDraft({
                     ...record,
-                    id: activityId,
+                    id: resolvedActivityId,
                     formName: template,
                     'tmk-template': template,
                     'lesson-name': lessonName,
@@ -482,7 +497,7 @@ export default function LessonActivitiesPage() {
                     savedToApi: true,
                 });
 
-                syncedIds.add(activityId);
+                syncedIds.add(resolvedActivityId);
             }
 
             for (const record of cloudRecords) {
@@ -944,7 +959,8 @@ export default function LessonActivitiesPage() {
                     },
                 });
 
-                const shouldUpdate = Boolean(record?.savedToApi) && Boolean(record?.id);
+                const hasCanonicalId = Boolean(activityId) && !isTemporaryLocalLessonActivityId(activityId);
+                const shouldUpdate = hasCanonicalId;
                 const response = shouldUpdate
                     ? await updateLessonActivityById(apiOrigin, activityId, {
                         ...payload,
@@ -961,7 +977,23 @@ export default function LessonActivitiesPage() {
                     continue;
                 }
 
-                deleteStandaloneDraftByActivityId(activityId);
+                let resolvedActivityId = activityId;
+                if (!shouldUpdate) {
+                    const responsePayload = await response.json().catch(() => ({}));
+                    const savedRecord = extractLessonActivityFromResponsePayload(responsePayload);
+                    const canonicalId = String(savedRecord?.id || '').trim();
+                    if (canonicalId && !isTemporaryLocalLessonActivityId(canonicalId)) {
+                        resolvedActivityId = canonicalId;
+                    } else {
+                        failureCount += 1;
+                        continue;
+                    }
+                }
+
+                if (resolvedActivityId !== activityId) {
+                    deleteStandaloneDraftByActivityId(activityId);
+                }
+                deleteStandaloneDraftByActivityId(resolvedActivityId);
                 if (record?.localDraftId) {
                     deleteStandaloneDraftByLocalId(String(record.localDraftId));
                 }

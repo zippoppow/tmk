@@ -38,11 +38,14 @@ import {
 	createLessonActivityId,
 	DIY_PROJECTS_ENDPOINT,
 	deleteStandaloneDraftByActivityId,
+	extractLessonActivityFromResponsePayload,
 	formatActivityDate,
 	formatProjectDate,
 	getLessonActivityProjectAssociation,
 	getAllStoredProjects,
 	hardDeleteLessonActivityById,
+	isTemporaryLocalLessonActivityId,
+	isTemporaryLocalProjectId,
 	listLessonActivities,
 	saveStoredProjects,
 	updateLessonActivityById,
@@ -239,18 +242,28 @@ export default function LessonProjectsPage() {
 				const createdAtMs = Number.isFinite(project?.createdAtMs) ? project.createdAtMs : now;
 				const modifiedAtMs = Number.isFinite(project?.modifiedAtMs) ? project.modifiedAtMs : now;
 				const projectName = String(project?.name || '').trim() || 'Untitled Project';
-				const projectId = String(project?.remoteId || project?.id || '').trim();
+				const projectIdCandidate = String(project?.remoteId || project?.id || '').trim();
+				const canonicalProjectId = projectIdCandidate && !isTemporaryLocalProjectId(projectIdCandidate)
+					? projectIdCandidate
+					: '';
+				const projectClientRef = !canonicalProjectId && projectIdCandidate ? projectIdCandidate : '';
 				const lessonActivities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
 
 				return {
-					...(projectId ? { id: projectId, 'project-id': projectId } : {}),
+					...(canonicalProjectId ? { id: canonicalProjectId } : {}),
+					...(projectClientRef ? { client_ref: projectClientRef } : {}),
 					'project-name': projectName,
 					'created-at': createdAtMs,
 					'modified-at': modifiedAtMs,
 					'lesson-activities': lessonActivities.map((activity) => {
-						const activityId = String(activity?.id || activity?.['lesson-activity-id'] || '').trim();
+						const activityIdCandidate = String(activity?.id || activity?.['lesson-activity-id'] || '').trim();
+						const canonicalActivityId = activityIdCandidate && !isTemporaryLocalLessonActivityId(activityIdCandidate)
+							? activityIdCandidate
+							: '';
+						const activityClientRef = !canonicalActivityId && activityIdCandidate ? activityIdCandidate : '';
 						return {
-							...(activityId ? { id: activityId, 'lesson-activity-id': activityId } : {}),
+							...(canonicalActivityId ? { id: canonicalActivityId } : {}),
+							...(activityClientRef ? { client_ref: activityClientRef } : {}),
 							'tmk-template': String(activity?.['tmk-template'] || PROJECT_FORM_NAME),
 							'lesson-name': String(activity?.['lesson-name'] || projectName),
 							'created-at': Number.isFinite(Number(activity?.['created-at']))
@@ -648,6 +661,7 @@ export default function LessonProjectsPage() {
 			? new Set(activityIdsToSync.map((id) => String(id || '').trim()).filter(Boolean))
 			: null;
 		let activitySyncFailures = 0;
+		let projectActivityIdsUpdated = false;
 
 		if (!shouldSyncSpecificActivities || activityIds.size > 0) {
 			const activities = getProjectLessonActivities(project, PROJECT_FORM_NAME, normalizeLessonInputData);
@@ -672,8 +686,10 @@ export default function LessonProjectsPage() {
 							formName: String(activity?.['tmk-template'] || PROJECT_FORM_NAME),
 						},
 					});
+					const hasCanonicalActivityId = !isTemporaryLocalLessonActivityId(activityId);
+					const shouldCreateActivity = shouldSyncSpecificActivities || !hasCanonicalActivityId;
 
-					const response = shouldSyncSpecificActivities
+					const response = shouldCreateActivity
 						? await createLessonActivity(apiOrigin, {
 							...payload,
 							client_ref: activityId,
@@ -686,11 +702,42 @@ export default function LessonProjectsPage() {
 						});
 					if (!response.ok) {
 						activitySyncFailures += 1;
+						continue;
+					}
+
+					if (shouldCreateActivity) {
+						const responsePayload = await response.json().catch(() => ({}));
+						const savedRecord = extractLessonActivityFromResponsePayload(responsePayload);
+						const canonicalId = String(savedRecord?.id || '').trim();
+						if (!canonicalId || isTemporaryLocalLessonActivityId(canonicalId)) {
+							activitySyncFailures += 1;
+							continue;
+						}
+						if (canonicalId && canonicalId !== activityId && !isTemporaryLocalLessonActivityId(canonicalId)) {
+							activity.id = canonicalId;
+							activity['lesson-activity-id'] = canonicalId;
+							projectActivityIdsUpdated = true;
+						}
 					}
 				} catch (error) {
 					console.error('Lesson activity sync failed from project manager:', error);
 					activitySyncFailures += 1;
 				}
+			}
+		}
+
+		if (projectActivityIdsUpdated) {
+			const allProjects = getAllStoredProjects();
+			const projectIndex = allProjects.findIndex((item) => item.id === project.id && item.formName === PROJECT_FORM_NAME);
+			if (projectIndex >= 0) {
+				allProjects[projectIndex] = {
+					...allProjects[projectIndex],
+					lessonActivities: Array.isArray(project.lessonActivities)
+						? project.lessonActivities.map((activity) => ({ ...activity }))
+						: [],
+				};
+				saveStoredProjects(allProjects);
+				loadLocalProjects();
 			}
 		}
 

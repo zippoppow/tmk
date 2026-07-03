@@ -16,6 +16,8 @@ import {
 	getStandaloneDraftByLocalId,
 	getSlideshowCloneSeed,
 	deleteSlideshowCloneSeed,
+	isTemporaryLocalLessonActivityId,
+	isTemporaryLocalProjectId,
 	readFormSessionData,
 	updateLessonActivityById,
 	writeFormSessionData,
@@ -126,18 +128,28 @@ export function useLessonActivityProject({
 				const createdAtMs = Number.isFinite(project?.createdAtMs) ? project.createdAtMs : now;
 				const modifiedAtMs = Number.isFinite(project?.modifiedAtMs) ? project.modifiedAtMs : now;
 				const projectName = String(project?.name || '').trim() || 'Untitled Project';
-				const projectId = String(project?.remoteId || project?.id || '').trim();
+				const projectIdCandidate = String(project?.remoteId || project?.id || '').trim();
+				const canonicalProjectId = projectIdCandidate && !isTemporaryLocalProjectId(projectIdCandidate)
+					? projectIdCandidate
+					: '';
+				const projectClientRef = !canonicalProjectId && projectIdCandidate ? projectIdCandidate : '';
 				const lessonActivities = getProjectLessonActivities(project, 'lesson-activities-project', (input) => input || {});
 
 				return {
-					...(projectId ? { id: projectId, 'project-id': projectId } : {}),
+					...(canonicalProjectId ? { id: canonicalProjectId } : {}),
+					...(projectClientRef ? { client_ref: projectClientRef } : {}),
 					'project-name': projectName,
 					'created-at': createdAtMs,
 					'modified-at': modifiedAtMs,
 					'lesson-activities': lessonActivities.map((activity) => {
-						const activityId = String(activity?.id || activity?.['lesson-activity-id'] || '').trim();
+						const activityIdCandidate = String(activity?.id || activity?.['lesson-activity-id'] || '').trim();
+						const canonicalActivityId = activityIdCandidate && !isTemporaryLocalLessonActivityId(activityIdCandidate)
+							? activityIdCandidate
+							: '';
+						const activityClientRef = !canonicalActivityId && activityIdCandidate ? activityIdCandidate : '';
 						return {
-							...(activityId ? { id: activityId, 'lesson-activity-id': activityId } : {}),
+							...(canonicalActivityId ? { id: canonicalActivityId } : {}),
+							...(activityClientRef ? { client_ref: activityClientRef } : {}),
 							'tmk-template': String(activity?.['tmk-template'] || 'lesson-activities-project'),
 							'lesson-name': String(activity?.['lesson-name'] || projectName),
 							'created-at': Number.isFinite(Number(activity?.['created-at']))
@@ -775,6 +787,8 @@ export function useLessonActivityProject({
 			if (resolvedAuthUser) {
 				const persistedActivity = activities[resolvedActivityIndex] || {};
 				const createdAtSource = persistedActivity['created-at'] || Date.now();
+				const hasCanonicalActivityId = Boolean(activityId) && !isTemporaryLocalLessonActivityId(activityId);
+				let activitySaveOk = false;
 
 				const payload = buildLessonActivityUpsertPayload({
 					id: activityId,
@@ -788,28 +802,52 @@ export function useLessonActivityProject({
 					},
 				});
 
-				const activityResponse = await updateLessonActivityById(projectApiOrigin, activityId, {
-					...payload,
-					id: undefined,
-					client_ref: undefined,
-				});
+				const activityResponse = hasCanonicalActivityId
+					? await updateLessonActivityById(projectApiOrigin, activityId, {
+						...payload,
+						id: undefined,
+						client_ref: undefined,
+					})
+					: await createLessonActivity(projectApiOrigin, {
+						...payload,
+						id: undefined,
+						client_ref: activityId,
+					});
+
+				activitySaveOk = activityResponse.ok;
+
+				if (!hasCanonicalActivityId && activityResponse.ok) {
+					const activityPayload = await activityResponse.json().catch(() => ({}));
+					const savedActivity = extractLessonActivityFromResponsePayload(activityPayload);
+					const canonicalId = String(savedActivity?.id || '').trim();
+					if (!canonicalId || isTemporaryLocalLessonActivityId(canonicalId)) {
+						activitySaveOk = false;
+					} else if (canonicalId !== activityId) {
+						activities[resolvedActivityIndex] = {
+							...activities[resolvedActivityIndex],
+							id: canonicalId,
+							'lesson-activity-id': canonicalId,
+						};
+						project.lessonActivities = activities;
+					}
+				}
 
 				project.syncedAt = null;
 				saveStoredProjects(projects);
 
 				const projectSyncOk = await syncAllLessonProjectsToCloud();
 
-		if (projectSyncOk && activityResponse.ok) {
+		if (projectSyncOk && activitySaveOk) {
 			showNotice('success', 'Lesson activity saved to database.');
 			return true;
 		}
-				if (!activityResponse.ok && projectSyncOk) {
+				if (!activitySaveOk && projectSyncOk) {
 					saveStoredProjects(projects);
-					showNotice('warning', 'Saved locally and project synced, but activity record save failed.');
+					showNotice('warning', 'Saved locally and project synced, but activity canonical id was not returned.');
 					return true;
 				}
 
-				if (activityResponse.ok && !projectSyncOk) {
+				if (activitySaveOk && !projectSyncOk) {
 					saveStoredProjects(projects);
 					showNotice('warning', 'Saved locally and activity saved to database, but project sync failed.');
 					return true;
@@ -876,7 +914,8 @@ export function useLessonActivityProject({
 			}
 
 			const existingDraft = getStandaloneDraftByLocalId(localDraftId);
-			const shouldUpdateStandalone = hadExistingId && existingDraft?.savedToApi !== false;
+			const hasCanonicalStandaloneId = Boolean(activityId) && !isTemporaryLocalLessonActivityId(activityId);
+			const shouldUpdateStandalone = hadExistingId && hasCanonicalStandaloneId;
 			const payload = buildLessonActivityUpsertPayload({
 				id: activityId,
 				template: formName,
@@ -917,8 +956,12 @@ export function useLessonActivityProject({
 				const responsePayload = await response.json().catch(() => ({}));
 				const savedRecord = extractLessonActivityFromResponsePayload(responsePayload);
 				const canonicalId = String(savedRecord?.id || '').trim();
-				if (canonicalId) {
+				if (canonicalId && !isTemporaryLocalLessonActivityId(canonicalId)) {
 					resolvedActivityId = canonicalId;
+				} else {
+					showNotice('error', 'Create succeeded but canonical activity id was not returned. Please retry.');
+					setIsSaving(false);
+					return false;
 				}
 			}
 
@@ -1109,6 +1152,7 @@ export function useLessonActivityProject({
 		const normalizedInput = normalizeInput(data);
 		let lessonName = String(activityName || defaultActivityName).trim() || defaultActivityName;
 		let activityId = '';
+		let originalTemporaryActivityId = '';
 		let activityCreatedAt = Date.now();
 		let activityModifiedAt = Date.now();
 		const projects = getAllStoredProjects();
@@ -1142,6 +1186,9 @@ export function useLessonActivityProject({
 				? String(new URL(window.location.href).searchParams.get('activityId') || '').trim()
 				: '';
 			activityId = String(standaloneActivityId || urlActivityId || createLessonActivityId()).trim();
+			if (activityId && isTemporaryLocalLessonActivityId(activityId)) {
+				originalTemporaryActivityId = activityId;
+			}
 			if (activityId && activityId !== standaloneActivityId) {
 				setStandaloneActivityId(activityId);
 			}
@@ -1225,6 +1272,7 @@ export function useLessonActivityProject({
 
 		if (resolvedAuthUser) {
 			try {
+				let remappedCanonicalId = false;
 				const payload = buildLessonActivityUpsertPayload({
 					id: activityId,
 					template: formName,
@@ -1237,7 +1285,7 @@ export function useLessonActivityProject({
 					},
 				});
 
-				const shouldUpdateActivity = Boolean(projectId);
+				const shouldUpdateActivity = Boolean(activityId) && !isTemporaryLocalLessonActivityId(activityId);
 				const activityResponse = shouldUpdateActivity
 					? await updateLessonActivityById(projectApiOrigin, activityId, {
 						...payload,
@@ -1251,6 +1299,36 @@ export function useLessonActivityProject({
 					});
 				if (!activityResponse.ok) {
 					activitySyncFailed = true;
+				} else if (!shouldUpdateActivity) {
+					const responsePayload = await activityResponse.json().catch(() => ({}));
+					const savedActivity = extractLessonActivityFromResponsePayload(responsePayload);
+					const canonicalId = String(savedActivity?.id || '').trim();
+					if (!canonicalId || isTemporaryLocalLessonActivityId(canonicalId)) {
+						activitySyncFailed = true;
+					} else if (canonicalId !== activityId) {
+						projects.forEach((project) => {
+							if (!Array.isArray(project?.lessonActivities)) {
+								return;
+							}
+							project.lessonActivities = project.lessonActivities.map((activity) => {
+								const existingId = String(activity?.id || '').trim();
+								if (!existingId || existingId !== activityId) {
+									return activity;
+								}
+								return {
+									...activity,
+									id: canonicalId,
+									'lesson-activity-id': canonicalId,
+								};
+							});
+						});
+						activityId = canonicalId;
+						remappedCanonicalId = true;
+					}
+				}
+
+				if (remappedCanonicalId) {
+					saveStoredProjects(projects);
 				}
 			} catch {
 				activitySyncFailed = true;
@@ -1265,6 +1343,9 @@ export function useLessonActivityProject({
 		handleCloseAddToProjectDialog();
 
 		if (!projectId) {
+			if (originalTemporaryActivityId) {
+				deleteStandaloneDraftByActivityId(originalTemporaryActivityId);
+			}
 			deleteStandaloneDraftByActivityId(activityId);
 			if (localDraftId) {
 				deleteStandaloneDraftByLocalId(localDraftId);
