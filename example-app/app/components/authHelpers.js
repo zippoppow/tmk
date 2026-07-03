@@ -886,20 +886,52 @@ export async function fetchAuthenticatedUser() {
 		: null;
 
 	try {
-		// Build full TMK API URL directly (not through example-app proxy)
+		const requestCandidates = [];
+		const sameOriginBase = typeof window !== 'undefined' ? window.location.origin : '';
+		if (sameOriginBase) {
+			requestCandidates.push(new URL(OAUTH_ENDPOINTS.me, sameOriginBase).toString());
+		}
+
 		const apiOrigin = resolveTmkApiOrigin();
-		const meUrl = new URL(OAUTH_ENDPOINTS.me, apiOrigin);
-		const mePath = addTeachableSessionToPath(meUrl.toString());
-		authDebug('fetchAuthenticatedUser -> request', {
-			url: mePath,
-			method: 'GET',
-			timeoutMs: AUTH_ME_TIMEOUT_MS,
-		});
-		const response = await fetch(mePath, {
-			method: 'GET',
-			cache: 'no-store',
-			signal: controller?.signal,
-		});
+		if (apiOrigin) {
+			requestCandidates.push(new URL(OAUTH_ENDPOINTS.me, apiOrigin).toString());
+		}
+
+		const uniqueCandidates = [...new Set(requestCandidates)];
+		let response = null;
+
+		for (const candidateUrl of uniqueCandidates) {
+			const mePath = addTeachableSessionToPath(candidateUrl);
+			authDebug('fetchAuthenticatedUser -> request', {
+				url: mePath,
+				method: 'GET',
+				timeoutMs: AUTH_ME_TIMEOUT_MS,
+			});
+
+			try {
+				response = await fetch(mePath, {
+					method: 'GET',
+					cache: 'no-store',
+					credentials: 'include',
+					signal: controller?.signal,
+				});
+			} catch (requestError) {
+				authDebug('fetchAuthenticatedUser candidate failed', {
+					url: mePath,
+					message: requestError?.message || String(requestError),
+				});
+				continue;
+			}
+
+			if (response?.ok) {
+				break;
+			}
+		}
+
+		if (!response) {
+			clearAuthStateHints();
+			return null;
+		}
 		authDebug('fetchAuthenticatedUser <- response', {
 			status: response.status,
 			ok: response.ok,
