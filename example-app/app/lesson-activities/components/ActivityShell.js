@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
 	Alert,
 	Box,
@@ -19,6 +18,7 @@ import {
 	TextField,
 	Typography,
 } from '@mui/material';
+import AppTopNav from '../../components/AppTopNav';
 import TmkLogo from '../../components/TmkLogo';
 
 export default function ActivityShell({
@@ -57,7 +57,6 @@ export default function ActivityShell({
 	setNotice,
 	handleDeleteProjectActivity,
 }) {
-	const router = useRouter();
 	const [isSlideshowMode, setIsSlideshowMode] = useState(false);
 	const [isSlideshowFullscreenMode, setIsSlideshowFullscreenMode] = useState(false);
 	const [isConfirmSaveDialogOpen, setIsConfirmSaveDialogOpen] = useState(false);
@@ -199,89 +198,56 @@ export default function ActivityShell({
 			`}</style>
 			<Container maxWidth="lg">
 				{!isSlideshowMode && (
-					<Box
-						sx={{
-							mb: 1.5,
-							display: 'flex',
-							flexDirection: { xs: 'column', sm: 'row' },
-							justifyContent: 'space-between',
-							gap: 1.5,
-						}}
-					>
-						<Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-							{!projectId && (
-								<Button
-									variant="outlined"
-									onClick={async () => {
-										await allowDebouncedLocalPersist();
-										router.push('/lesson-activities');
-									}}
-									sx={{
-										...outlinedControlButtonSx,
-										fontWeight: 700,
-									}}
-								>
-									Lesson Actvities Home
-								</Button>
-							)}
-							{projectId && (
-								<Button
-									variant="outlined"
-									color="primary"
-									disabled={isSaving}
-									onClick={handleSaveAndReturn}
-									sx={{ textTransform: 'none' }}
-								>
-									Back to Projects
-								</Button>
-							)}
-						</Stack>
-
-						<Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap sx={{ justifyContent: 'flex-end' }}>
+					<AppTopNav
+						title={title}
+						currentSection={projectId ? 'lesson-projects' : ''}
+						onAuthAction={handleLoginLogout}
+						authButtonLabel={authUser ? 'Logout' : 'Login'}
+						beforeNavigate={allowDebouncedLocalPersist}
+						leadingActions={projectId ? (
 							<Button
 								variant="outlined"
-								onClick={async () => {
-									await allowDebouncedLocalPersist();
-									router.push('/');
-								}}
-								sx={{
-									...outlinedControlButtonSx,
-									fontWeight: 700,
-								}}
+								color="primary"
+								disabled={isSaving}
+								onClick={handleSaveAndReturn}
+								sx={{ textTransform: 'none' }}
 							>
-								Back to Home
+								Back to Projects
 							</Button>
-							<Button variant="contained" onClick={handleLoginLogout} sx={{ textTransform: 'none' }}>
-								{authUser ? 'Logout from App' : 'Login'}
-							</Button>
-							<Box
-								sx={{
-									display: 'inline-flex',
-									alignItems: 'center',
-									px: 1.5,
-									py: 0.75,
-									borderRadius: 1,
-									backgroundColor: authUser ? '#d4edda' : authFromSuccessRedirect ? '#cce5ff' : '#fff3cd',
-									color: authUser ? '#155724' : authFromSuccessRedirect ? '#004085' : '#856404',
-									border: `1px solid ${authUser ? '#c3e6cb' : authFromSuccessRedirect ? '#b8daff' : '#ffeaa7'}`,
-									fontWeight: 700,
-									fontSize: '0.85rem',
-								}}
-							>
-								{authLabel}
-							</Box>
-							{!authLoading && !authUser && authFromSuccessRedirect && (
-								<Button
-									size="small"
-									variant="outlined"
-									sx={{ ...outlinedControlButtonSx, fontSize: '0.8rem' }}
-									onClick={runAuthCheck}
+						) : null}
+						rightContent={(
+							<>
+								<Box
+									sx={{
+										display: 'inline-flex',
+										alignItems: 'center',
+										px: 1.5,
+										py: 0.75,
+										borderRadius: 1,
+										backgroundColor: authUser ? '#d4edda' : authFromSuccessRedirect ? '#cce5ff' : '#fff3cd',
+										color: authUser ? '#155724' : authFromSuccessRedirect ? '#004085' : '#856404',
+										border: `1px solid ${authUser ? '#c3e6cb' : authFromSuccessRedirect ? '#b8daff' : '#ffeaa7'}`,
+										fontWeight: 700,
+										fontSize: '0.85rem',
+									}}
 								>
-									Retry session check
-								</Button>
-							)}
-						</Stack>
-					</Box>
+									{authLabel}
+								</Box>
+								{!authLoading && !authUser && authFromSuccessRedirect ? (
+									<Button
+										size="small"
+										variant="outlined"
+										sx={{ ...outlinedControlButtonSx, fontSize: '0.8rem' }}
+										onClick={runAuthCheck}
+									>
+										Retry session check
+									</Button>
+								) : null}
+							</>
+						)}
+						logoSx={{ maxWidth: 200 }}
+						titleSx={{ color: '#fff', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '0.08em', pl: 0 }}
+					/>
 				)}
 
 				{projectId && !isSlideshowMode && !isSlideshowFullscreenMode && (

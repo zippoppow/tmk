@@ -8,6 +8,7 @@ import {
     fetchWithTmkToken,
     resolveTmkApiOrigin,
 } from '../components/authHelpers';
+import AppTopNav from '../components/AppTopNav';
 import {
     Alert,
     Container,
@@ -46,7 +47,6 @@ import {
 } from '../components/lessonActivityHelpers';
 import { DIY_LESSON_ACTIVITY_TYPES } from '../../data/diy/diy-lesson-activity-types';
 import LessonActivitySelector from '../components/LessonActivitySelector';
-import TmkLogo from '../components/TmkLogo';
 
 export default function LessonActivitiesPage() {
 
@@ -1115,32 +1115,21 @@ export default function LessonActivitiesPage() {
             }}
         >
             <Container maxWidth="xl">
-                <Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' }, alignItems: 'flex-end', pr: { xs: 0, md: 5 } }}>
-                    <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 1 }}>
-                        <TmkLogo sx={{ mb: 2 }} routeToHome />
-                        <Typography sx={{ fontSize: '3rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 1, pl: 2 }}>
-                            Lesson Activities
-                        </Typography>
-                    </Stack>
-                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} sx={{ mb: 1, ml: 'auto' }}>
-                        <Button variant="outlined" onClick={() => router.push('/')} sx={{ textTransform: 'none' }}>
-                            Back to Home
-                        </Button>
-                        <Button
-                            variant="contained"
-                            onClick={() => {
-                                if (isAuthenticated) {
-                                    handleLogout();
-                                    return;
-                                }
-                                window.location.href = '/login?next=/lesson-activities';
-                            }}
-                            sx={{ textTransform: 'none' }}
-                        >
-                            {isAuthenticated ? 'Logout from App' : 'Login'}
-                        </Button>
-                    </Stack>
-                </Box>
+                <AppTopNav
+                    title="Lesson Activities"
+                    currentSection="lesson-activities"
+                    onAuthAction={() => {
+                        if (isAuthenticated) {
+                            handleLogout();
+                            return;
+                        }
+                        window.location.href = '/login?next=/lesson-activities';
+                    }}
+                    authButtonLabel={isAuthenticated ? 'Logout' : 'Login'}
+                    containerSx={{ pr: { xs: 0, md: 5 } }}
+                    logoSx={{ mb: 2 }}
+                    titleSx={{ mb: 1 }}
+                />
 
                 {!hasDiyAccess && (
                     <Alert severity="warning" sx={{ mb: 2 }}>

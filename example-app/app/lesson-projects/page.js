@@ -56,6 +56,7 @@ import {
 	fetchWithTmkToken,
 	resolveTmkApiOrigin,
 } from '../components/authHelpers';
+import AppTopNav from '../components/AppTopNav';
 import { useDiyAccess } from '../components/useDiyAccess';
 import {
 	createLessonActivitySnapshot,
@@ -65,7 +66,6 @@ import {
 	normalizeCloudProjects,
 } from '../components/projectManagerModel';
 import { DIY_LESSON_ACTIVITY_TYPES } from '../../data/diy/diy-lesson-activity-types';
-import TmkLogo from '../components/TmkLogo';
 
 
 //Note: TBD - consider implementing pagination or lazy loading if users have many projects/activities, 
@@ -1651,32 +1651,21 @@ export default function LessonProjectsPage() {
 			}}
 		>
 			<Container maxWidth="xl">
-				<Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' }, alignItems: 'flex-end', pr: { xs: 0, md: 5 } }}>
-					<Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 1 }}>
-						<TmkLogo sx={{ mb: 2 }} routeToHome />
-						<Typography sx={{ fontSize: '3rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 1, pl: 2 }}>
-							Projects
-						</Typography>
-					</Stack>
-					<Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} sx={{ mb: 1, ml: 'auto' }}>
-						<Button variant="outlined" onClick={() => router.push('/')} sx={{ textTransform: 'none' }}>
-							Back to Home
-						</Button>
-						<Button
-							variant="contained"
-							onClick={() => {
-								if (isAuthenticated) {
-									window.location.href = buildTeachableLogoutUrl('/');
-									return;
-								}
-								window.location.href = '/login?next=/lesson-projects';
-							}}
-							sx={{ textTransform: 'none' }}
-						>
-							{isAuthenticated ? 'Logout from App' : 'Login'}
-						</Button>
-					</Stack>
-				</Box>
+				<AppTopNav
+					title="Projects"
+					currentSection="lesson-projects"
+					onAuthAction={() => {
+						if (isAuthenticated) {
+							window.location.href = buildTeachableLogoutUrl('/');
+							return;
+						}
+						window.location.href = '/login?next=/lesson-projects';
+					}}
+					authButtonLabel={isAuthenticated ? 'Logout' : 'Login'}
+					containerSx={{ pr: { xs: 0, md: 5 } }}
+					logoSx={{ mb: 2 }}
+					titleSx={{ mb: 1 }}
+				/>
 				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
 					<Box>
 							<Typography sx={{ fontSize: '1.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>Create a Project</Typography>

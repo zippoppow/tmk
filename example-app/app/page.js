@@ -6,6 +6,7 @@ import { useDiyAccess } from './components/useDiyAccess';
 import {
     buildTeachableLogoutUrl,
 } from './components/authHelpers';
+import AppTopNav from './components/AppTopNav';
 import {
     Alert,
     Container,
@@ -20,7 +21,6 @@ import {
 } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import TmkLogo from './components/TmkLogo';
 
 export default function HomePage() {
     const router = useRouter();
@@ -68,8 +68,6 @@ export default function HomePage() {
         return null;
     }
 
-    const displayName = user?.profile?.name || user?.name || user?.profile?.email || user?.email || 'User';
-
   return (
       <Box sx={{
                 minHeight: '100vh',
@@ -82,22 +80,17 @@ export default function HomePage() {
             }}
         >
         <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <TmkLogo sx={{ mb: 0 }} priority routeToHome />
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <Typography variant="h2" component="h1">
-                       DASHBOARD
-                    </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <AppTopNav
+                title="Dashboard"
+                currentSection="dashboard"
+                onAuthAction={handleLogout}
+                authButtonLabel="Logout"
+                rightContent={(
                     <Typography variant="body1">
-                        Welcome, {displayName}
+                        Welcome, {user?.profile?.name || user?.name || user?.profile?.email || user?.email || 'User'}
                     </Typography>
-                    <Button variant="outlined" onClick={handleLogout}>
-                        Logout from App
-                    </Button>
-                </Box>
-          </Box>
+                )}
+          />
 
           <Grid container spacing={{ xs: 2, md: 3 }} alignItems="flex-start" sx={{ mb: 4 }}>
                 {(enrollmentLoading || !hasDiyAccess) && (
