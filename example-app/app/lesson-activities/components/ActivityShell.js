@@ -63,6 +63,17 @@ export default function ActivityShell({
 	const [isConfirmSaveDialogOpen, setIsConfirmSaveDialogOpen] = useState(false);
 	const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
 	const pendingDeleteHandlerRef = useRef(null);
+	const dialogPaperSx = {
+		minWidth: { xs: '90vw', sm: 400 },
+	};
+	const dialogTitleSx = {
+		fontWeight: 700,
+		fontSize: '1.1rem',
+	};
+	const dialogActionsSx = {
+		gap: 1,
+		p: 2,
+	};
 	const outlinedControlButtonSx = {
 		textTransform: 'none',
 		bgcolor: '#fff',
@@ -510,16 +521,14 @@ export default function ActivityShell({
 				open={isConfirmDeleteDialogOpen}
 				onClose={() => setIsConfirmDeleteDialogOpen(false)}
 				PaperProps={{
-					sx: {
-						minWidth: { xs: '90vw', sm: 400 },
-					},
+					sx: dialogPaperSx,
 				}}
 			>
-				<DialogTitle sx={{ fontWeight: 700, fontSize: '1.1rem' }}>Confirm Delete</DialogTitle>
+				<DialogTitle sx={dialogTitleSx}>Confirm Delete</DialogTitle>
 				<DialogContent>
 					<Box sx={{ mt: 1 }}>Are you sure you want to delete this activity? This cannot be undone.</Box>
 				</DialogContent>
-				<DialogActions sx={{ gap: 1, p: 2 }}>
+				<DialogActions sx={dialogActionsSx}>
 					<Button
 						variant="outlined"
 						onClick={() => setIsConfirmDeleteDialogOpen(false)}
@@ -541,16 +550,14 @@ export default function ActivityShell({
 				open={isConfirmSaveDialogOpen}
 				onClose={() => setIsConfirmSaveDialogOpen(false)}
 				PaperProps={{
-					sx: {
-						minWidth: { xs: '90vw', sm: 400 },
-					},
+					sx: dialogPaperSx,
 				}}
 			>
-				<DialogTitle sx={{ fontWeight: 700, fontSize: '1.1rem' }}>Confirm Save</DialogTitle>
+				<DialogTitle sx={dialogTitleSx}>Confirm Save</DialogTitle>
 				<DialogContent>
 					<Box sx={{ mt: 1 }}>Are you sure you want to save your changes?</Box>
 				</DialogContent>
-				<DialogActions sx={{ gap: 1, p: 2 }}>
+				<DialogActions sx={dialogActionsSx}>
 					<Button
 						variant="outlined"
 						onClick={() => setIsConfirmSaveDialogOpen(false)}
@@ -573,9 +580,13 @@ export default function ActivityShell({
 				onClose={handleCloseAddToProjectDialog}
 				fullWidth
 				maxWidth="sm"
+				PaperProps={{
+					sx: dialogPaperSx,
+				}}
 			>
-				<DialogTitle>Add Activity To Projects</DialogTitle>
+				<DialogTitle sx={dialogTitleSx}>Add Activity To Projects</DialogTitle>
 				<DialogContent>
+					<Box sx={{ mt: 1 }}>
 					<TextField
 						select
 						fullWidth
@@ -609,8 +620,9 @@ export default function ActivityShell({
 							</MenuItem>
 						)}
 					</TextField>
+					</Box>
 				</DialogContent>
-				<DialogActions>
+				<DialogActions sx={dialogActionsSx}>
 					<Button onClick={handleCloseAddToProjectDialog} sx={{ textTransform: 'none' }}>
 						Cancel
 					</Button>

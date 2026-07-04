@@ -15,6 +15,10 @@ import {
   Stack,
   Snackbar,
   Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
 } from '@mui/material';
 import {
   clearFormSessionData,
@@ -50,6 +54,7 @@ export default function ConstructorPage() {
   const [loading, setLoading] = useState(true);
   const [authUser, setAuthUser] = useState(null);
   const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
+  const [isClearSessionDialogOpen, setIsClearSessionDialogOpen] = useState(false);
   const contentRef = useRef(null);
   const apiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
 
@@ -172,10 +177,11 @@ export default function ConstructorPage() {
   };
 
   const handleClearSession = () => {
-    if (!window.confirm('Clear all saved data for this exercise?')) {
-      return;
-    }
+    setIsClearSessionDialogOpen(true);
+  };
 
+  const handleConfirmClearSession = () => {
+    setIsClearSessionDialogOpen(false);
     clearFormSessionData(FORM_NAME);
     handleClear();
     showNotice('info', 'Saved data cleared.');
@@ -422,6 +428,36 @@ export default function ConstructorPage() {
           {notice.message}
         </Alert>
       </Snackbar>
+
+      <Dialog
+        open={isClearSessionDialogOpen}
+        onClose={() => setIsClearSessionDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            minWidth: { xs: '90vw', sm: 400 },
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: '1.1rem' }}>Confirm Clear Saved Data</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 1 }}>Are you sure you want to clear all saved data for this exercise?</Box>
+        </DialogContent>
+        <DialogActions sx={{ gap: 1, p: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setIsClearSessionDialogOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleConfirmClearSession}
+          >
+            Clear
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

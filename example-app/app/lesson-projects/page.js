@@ -174,15 +174,54 @@ export default function LessonProjectsPage() {
 	const [draggingActivityIndexByProjectId, setDraggingActivityIndexByProjectId] = useState({});
 	const [dragOverActivityIndexByProjectId, setDragOverActivityIndexByProjectId] = useState({});
 	const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
+	const [confirmActionDialogOpen, setConfirmActionDialogOpen] = useState(false);
+	const [confirmActionDialogTitle, setConfirmActionDialogTitle] = useState('Confirm Action');
+	const [confirmActionDialogMessage, setConfirmActionDialogMessage] = useState('Are you sure you want to continue?');
+	const [confirmActionDialogConfirmLabel, setConfirmActionDialogConfirmLabel] = useState('Confirm');
+	const [isConfirmActionSubmitting, setIsConfirmActionSubmitting] = useState(false);
 	const hasLoadedSelectedProjectFromStorage = useRef(false);
 	const hasAppliedRequestedActivityType = useRef(false);
 	const hasCheckedInitialReconcile = useRef(false);
+	const pendingConfirmActionRef = useRef(null);
 
 	const apiOrigin = useMemo(() => resolveTmkApiOrigin(), []);
 	const isAuthenticated = Boolean(authUser);
 
 	const showNotice = (severity, message) => {
 		setNotice({ open: true, severity, message });
+	};
+
+	const openConfirmActionDialog = ({ title, message, confirmLabel, onConfirm }) => {
+		pendingConfirmActionRef.current = typeof onConfirm === 'function' ? onConfirm : null;
+		setConfirmActionDialogTitle(title || 'Confirm Action');
+		setConfirmActionDialogMessage(message || 'Are you sure you want to continue?');
+		setConfirmActionDialogConfirmLabel(confirmLabel || 'Confirm');
+		setConfirmActionDialogOpen(true);
+	};
+
+	const closeConfirmActionDialog = () => {
+		if (isConfirmActionSubmitting) {
+			return;
+		}
+		setConfirmActionDialogOpen(false);
+		pendingConfirmActionRef.current = null;
+	};
+
+	const handleConfirmActionDialog = async () => {
+		const action = pendingConfirmActionRef.current;
+		setConfirmActionDialogOpen(false);
+		pendingConfirmActionRef.current = null;
+
+		if (typeof action !== 'function') {
+			return;
+		}
+
+		setIsConfirmActionSubmitting(true);
+		try {
+			await action();
+		} finally {
+			setIsConfirmActionSubmitting(false);
+		}
 	};
 
 	const setCloudStatus = (message, severity = 'error') => {
@@ -970,7 +1009,7 @@ export default function LessonProjectsPage() {
 		showNotice('success', `"${sourceProject.name}" duplicated as "${duplicateName}" and synced to the cloud.`);
 	};
 
-	const handleDeleteProject = async (projectId) => {
+	const handleDeleteProject = async (projectId, confirmed = false) => {
 		if (!hasDiyAccess) {
 			showNotice('warning', 'Active DIY course enrollment is required to manage lesson projects.');
 			return;
@@ -981,8 +1020,13 @@ export default function LessonProjectsPage() {
 			return;
 		}
 
-		const shouldDelete = window.confirm(`Delete "${project.name}"? This cannot be undone.`);
-		if (!shouldDelete) {
+		if (!confirmed) {
+			openConfirmActionDialog({
+				title: 'Confirm Delete',
+				message: `Are you sure you want to delete "${project.name}"? This cannot be undone.`,
+				confirmLabel: 'Delete',
+				onConfirm: () => handleDeleteProject(projectId, true),
+			});
 			return;
 		}
 
@@ -1363,7 +1407,7 @@ export default function LessonProjectsPage() {
 
 
 
-	const handleDeleteActivity = async (projectId, activityIndex) => {
+	const handleDeleteActivity = async (projectId, activityIndex, confirmed = false) => {
 		if (!hasDiyAccess) {
 			showNotice('warning', 'Active DIY course enrollment is required to manage lesson activities.');
 			return;
@@ -1382,10 +1426,13 @@ export default function LessonProjectsPage() {
 			return;
 		}
 
-		const shouldDelete = window.confirm(
-			`Delete lesson activity "${activity['lesson-name'] || 'Unnamed'}" from "${project.name}"?`
-		);
-		if (!shouldDelete) {
+		if (!confirmed) {
+			openConfirmActionDialog({
+				title: 'Confirm Delete',
+				message: `Are you sure you want to delete lesson activity "${activity['lesson-name'] || 'Unnamed'}" from "${project.name}"?`,
+				confirmLabel: 'Delete',
+				onConfirm: () => handleDeleteActivity(projectId, activityIndex, true),
+			});
 			return;
 		}
 
@@ -2092,6 +2139,38 @@ export default function LessonProjectsPage() {
 			</Snackbar>
 
 			<Dialog
+				open={confirmActionDialogOpen}
+				onClose={closeConfirmActionDialog}
+				PaperProps={{
+					sx: {
+						minWidth: { xs: '90vw', sm: 400 },
+					},
+				}}
+			>
+				<DialogTitle sx={{ fontWeight: 700, fontSize: '1.1rem' }}>{confirmActionDialogTitle}</DialogTitle>
+				<DialogContent>
+					<Box sx={{ mt: 1 }}>{confirmActionDialogMessage}</Box>
+				</DialogContent>
+				<DialogActions sx={{ gap: 1, p: 2 }}>
+					<Button
+						variant="outlined"
+						onClick={closeConfirmActionDialog}
+						disabled={isConfirmActionSubmitting}
+					>
+						Cancel
+					</Button>
+					<Button
+						variant="contained"
+						color="error"
+						onClick={handleConfirmActionDialog}
+						disabled={isConfirmActionSubmitting}
+					>
+						{isConfirmActionSubmitting ? 'Working...' : confirmActionDialogConfirmLabel}
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			<Dialog
 				open={isAddActivityDialogOpen}
 				onClose={handleCloseAddActivityDialog}
 				PaperProps={{
@@ -2146,8 +2225,13 @@ export default function LessonProjectsPage() {
 				onClose={isApplyingInitialSync ? undefined : handleKeepLocalOnly}
 				fullWidth
 				maxWidth="md"
+				PaperProps={{
+					sx: {
+						minWidth: { xs: '90vw', sm: 400 },
+					},
+				}}
 			>
-				<DialogTitle>Local vs Cloud Project Differences Found</DialogTitle>
+				<DialogTitle sx={{ fontWeight: 700, fontSize: '1.1rem' }}>Local vs Cloud Project Differences Found</DialogTitle>
 				<DialogContent dividers>
 					<Typography sx={{ fontSize: '0.95rem', mb: 1.5 }}>
 						We found differences between your browser's local projects and your projects stored on the cloud server.
@@ -2194,14 +2278,15 @@ export default function LessonProjectsPage() {
 						</Box>
 					</Stack>
 				</DialogContent>
-				<DialogActions>
-					<Button onClick={handleKeepLocalOnly} disabled={isApplyingInitialSync} variant="outlined">
+				<DialogActions sx={{ gap: 1, p: 2 }}>
+					<Button onClick={handleKeepLocalOnly} disabled={isApplyingInitialSync} variant="outlined" sx={{ textTransform: 'none' }}>
 						Keep local only
 					</Button>
 					<Button
 						onClick={handleApplyLocalToCloud}
 						variant="contained"
 						disabled={isApplyingInitialSync}
+						sx={{ textTransform: 'none' }}
 					>
 						{isApplyingInitialSync ? 'Syncing...' : 'Sync local to cloud'}
 					</Button>
@@ -2210,6 +2295,7 @@ export default function LessonProjectsPage() {
 						variant="outlined"
 						color="warning"
 						disabled={isApplyingInitialSync}
+						sx={{ textTransform: 'none' }}
 					>
 						Sync cloud to local
 					</Button>
