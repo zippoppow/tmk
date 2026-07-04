@@ -493,6 +493,12 @@ export function useLessonActivityProject({
 			}
 
 			if (!paramProjectId) {
+				if (!cancelled) {
+					setProjectId('');
+					setActivityIndex(null);
+					setProjectName('');
+				}
+
 				if (paramLocalDraftId) {
 					setLocalDraftId(paramLocalDraftId);
 				}
@@ -1342,7 +1348,12 @@ export function useLessonActivityProject({
 
 		handleCloseAddToProjectDialog();
 
-		if (!projectId) {
+		const routeProjectId = typeof window !== 'undefined'
+			? String(new URL(window.location.href).searchParams.get('projectId') || '').trim()
+			: '';
+		const hasProjectContext = Boolean(String(projectId || routeProjectId).trim());
+
+		if (!hasProjectContext) {
 			if (originalTemporaryActivityId) {
 				deleteStandaloneDraftByActivityId(originalTemporaryActivityId);
 			}
@@ -1355,7 +1366,7 @@ export function useLessonActivityProject({
 			setStandaloneActivityId('');
 		}
 
-		if (!projectId) {
+		if (!hasProjectContext) {
 			router.push('/lesson-projects?saved=added-to-project');
 			return;
 		}
