@@ -220,7 +220,7 @@ export default function ActivityShell({
 								<Box
 									sx={{
 										display: 'inline-flex',
-										alignItems: 'center',
+										alignItems: 'flex-end',
 										px: 1.5,
 										py: 0.75,
 										borderRadius: 1,

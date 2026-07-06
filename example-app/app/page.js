@@ -85,7 +85,7 @@ export default function HomePage() {
                 currentSection="dashboard"
                 onAuthAction={handleLogout}
                 authButtonLabel="Logout"
-                rightContent={(
+                leadingActions={(
                     <Typography variant="body1">
                         Welcome, {user?.profile?.name || user?.name || user?.profile?.email || user?.email || 'User'}
                     </Typography>

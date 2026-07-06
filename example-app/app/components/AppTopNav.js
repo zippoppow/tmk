@@ -56,7 +56,7 @@ export default function AppTopNav({
 								textTransform: 'uppercase',
 								color: '#000',
 								fontWeight: 700,
-								pl: 2,
+								pl: 5,
 								...titleSx,
 							}}
 						>

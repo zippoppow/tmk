@@ -9,8 +9,8 @@ const lato = Lato({
 });
 
 export const metadata = {
-  title: 'The Morphology Kit® DIY',
-  description: 'Tools and resources for creating your own morphology-based lesson activities based on The Morphology Kit® Latin Progression lesson activities.',
+  title: 'The Morphology Kit® DIY: multicomponent lesson activity builder for morphology-based instruction',
+  description: 'Tools and resources for creating your own morphology-based lesson activities based on The Morphology Kit® Framework.',
 };
 
 export default function RootLayout({ children }) {
@@ -32,7 +32,7 @@ export default function RootLayout({ children }) {
             }}
           >
             <span>
-              Copyright {currentYear} The Morphology Kit DIY. All rights reserved.{' '}
+              Copyright {currentYear} Sound Literacy Solutions LLC. All rights reserved.{' '}
             </span>
             <Link href="/copyright" style={{ color: '#1d4ed8', textDecoration: 'none', fontWeight: 700 }}>
               View Copyright Policy
