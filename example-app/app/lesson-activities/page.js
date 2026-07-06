@@ -1131,13 +1131,11 @@ export default function LessonActivitiesPage() {
                     titleSx={{ mb: 1 }}
                 />
 
-                <Box sx={{ minHeight: { xs: 0, md: 64 }, mb: 2 }}>
-                    {!hasDiyAccess && (
-                        <Alert severity="warning">
-                            Active enrollment in the DIY course is required to access Lesson Activities and Lesson Projects.
-                        </Alert>
-                    )}
-                </Box>
+                {!hasDiyAccess && (
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                        Active enrollment in the DIY course is required to access Lesson Activities and Lesson Projects.
+                    </Alert>
+                )}
 
                 <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
                     <Typography sx={{ fontSize: '1.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>

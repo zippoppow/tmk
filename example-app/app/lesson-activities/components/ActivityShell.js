@@ -217,48 +217,6 @@ export default function ActivityShell({
 								Back to Projects
 							</Button>
 						) : null}
-						rightContent={(
-							<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
-								<Box
-									sx={{
-										display: 'inline-flex',
-										alignItems: 'center',
-										px: 1.5,
-										py: 0.75,
-										borderRadius: 1,
-										minHeight: 34,
-										maxWidth: { xs: '100%', md: 300 },
-										whiteSpace: 'nowrap',
-										overflow: 'hidden',
-										textOverflow: 'ellipsis',
-										backgroundColor: authUser ? '#d4edda' : authFromSuccessRedirect ? '#cce5ff' : '#fff3cd',
-										color: authUser ? '#155724' : authFromSuccessRedirect ? '#004085' : '#856404',
-										border: `1px solid ${authUser ? '#c3e6cb' : authFromSuccessRedirect ? '#b8daff' : '#ffeaa7'}`,
-										fontWeight: 700,
-										fontSize: '0.85rem',
-									}}
-								>
-									{authLabel}
-								</Box>
-								<Button
-									size="small"
-									variant="outlined"
-									sx={{
-										...outlinedControlButtonSx,
-										fontSize: '0.8rem',
-										minHeight: 34,
-										minWidth: 146,
-										visibility: showRetrySessionCheck ? 'visible' : 'hidden',
-									}}
-									onClick={runAuthCheck}
-									disabled={!showRetrySessionCheck}
-									aria-hidden={!showRetrySessionCheck}
-									tabIndex={showRetrySessionCheck ? 0 : -1}
-								>
-									Retry session check
-								</Button>
-							</Stack>
-						)}
 						logoSx={{ maxWidth: 200 }}
 						titleSx={{ color: '#fff', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '0.08em', pl: 0 }}
 					/>

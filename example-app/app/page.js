@@ -92,9 +92,9 @@ export default function HomePage() {
                 )}
           />
 
-          <Box sx={{ minHeight: { xs: 0, md: 90 }, mb: 2 }}>
-                {(enrollmentLoading || !hasDiyAccess) && (
-                    enrollmentLoading ? (
+          {(enrollmentLoading || !hasDiyAccess) && (
+                <Box sx={{ mb: 2 }}>
+                    {enrollmentLoading ? (
                         <Alert severity="info" sx={{ alignItems: 'center' }}>
                             <Box sx={{ width: '100%' }}>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
@@ -109,9 +109,9 @@ export default function HomePage() {
                             If you believe you should have access, please contact support or visit the{' '}
                             <a href="https://themorphologykit.com/p/diy" target="_blank" rel="noopener noreferrer">The Morphology Kit® DIY Course page</a> to enroll.
                         </Alert>
-                    )
-                )}
-          </Box>
+                    )}
+                </Box>
+          )}
 
           <Grid container spacing={{ xs: 2, md: 3 }} alignItems="flex-start" sx={{ mb: 4 }}>
                 {/* Left column: Lesson Activities + Standalone */}
