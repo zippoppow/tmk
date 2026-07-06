@@ -1239,7 +1239,7 @@ export default function LessonActivitiesPage() {
                         Create a Lesson Activity
                     </Typography>
                     <Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 2, maxWidth: 800 }}>
-                        Choose a lesson activity type to create and manage standalone activities.
+                        Choose a lesson activity type, then create and manage activities with your lesson content.
                     </Typography>
                     {hasDiyAccess ? (
                         <LessonActivitySelector activities={lessonActivities} onOpen={handleCreateNewActivity} />
@@ -1255,7 +1255,7 @@ export default function LessonActivitiesPage() {
                         Your Standalone Lesson Activities
                     </Typography>
                     <Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 4 }}>
-                        Select, open, present, or remove your standalone lesson activities. Staged activities are local-only drafts. Saved activities are synced to the API.
+                        Select, open, present, or remove your standalone lesson activities. Staged activities are local-only drafts stored in your browser's "local storage." Saved activities are synced to the cloud server.
                     </Typography>
                     {!hasDiyAccess ? (
                         <Typography sx={{ color: '#666', fontSize: '0.95rem' }}>Active DIY enrollment required.</Typography>
@@ -1267,8 +1267,8 @@ export default function LessonActivitiesPage() {
                         </Typography>
                     ) : (
                         <Stack spacing={3} sx={{ width: '100%', minWidth: 0 }}>
-                            <Typography sx={{ fontSize: '1.6rem', fontWeight: 700, color: '#2f3a4a' }}>
-                                Staged Locally
+                            <Typography sx={{ fontSize: '1.8rem', fontWeight: 700, color: '#2f3a4a' }}>
+                                Your Staged Activities
                             </Typography>
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="flex-end" alignItems={{ xs: 'stretch', sm: 'center' }}>
                                 <Stack direction="row" spacing={0.4} alignItems="center" sx={{ mr: { xs: 0, sm: 1 } }}>
@@ -1429,10 +1429,9 @@ export default function LessonActivitiesPage() {
                                     </Box>
                                 );
                             })}
-
                             {isAuthenticated && hasDiyAccess && (
                                 <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center" flexWrap="wrap" sx={{ pt: 1 }}>
-                                    <Typography sx={{ fontSize: '0.88rem', color: '#374151' }}>
+                                    <Typography sx={{ fontSize: '1rem', color: '#374151' }}>
                                         Sort saved by:
                                     </Typography>
                                     <Button
@@ -1478,9 +1477,8 @@ export default function LessonActivitiesPage() {
                                     )}
                                 </Stack>
                             )}
-
-                            <Typography sx={{ fontSize: '1.6rem', fontWeight: 700, color: '#2f3a4a', pt: 1 }}>
-                                Saved
+                            <Typography sx={{ fontSize: '1.8rem', fontWeight: 700, color: '#2f3a4a', pt: .5 }}>
+                                Your Saved Activities
                             </Typography>
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="flex-end" alignItems={{ xs: 'stretch', sm: 'center' }}>
                                 <Stack direction="row" spacing={0.4} alignItems="center" sx={{ mr: { xs: 0, sm: 1 } }}>
@@ -1526,7 +1524,7 @@ export default function LessonActivitiesPage() {
                             </Stack>
                             {savedStandaloneActivities.length === 0 && (
                                 <Typography sx={{ color: '#7a8190', fontSize: '0.92rem' }}>
-                                    No saved standalone activities.
+                                    No saved activities.
                                 </Typography>
                             )}
                             {savedStandaloneActivities.map((activity, index) => {
