@@ -90,6 +90,7 @@ export default function ActivityShell({
 			: authFromSuccessRedirect
 				? 'Login flow completed — verifying session…'
 				: 'Not logged in';
+	const showRetrySessionCheck = !authLoading && !authUser && authFromSuccessRedirect;
 	const licenseLabel = authUser?.email ? `Licensed for use to: ${authUser.email}` : '';
 	const openAddToProjectDialog = typeof handleOpenAddToProjectDialog === 'function'
 		? handleOpenAddToProjectDialog
@@ -204,6 +205,8 @@ export default function ActivityShell({
 						onAuthAction={handleLoginLogout}
 						authButtonLabel={authUser ? 'Logout' : 'Login'}
 						beforeNavigate={allowDebouncedLocalPersist}
+						reserveLeadingActionsSpace
+						reserveRightContentSpace
 						leadingActions={projectId ? (
 							<Button
 								variant="outlined"
@@ -216,14 +219,19 @@ export default function ActivityShell({
 							</Button>
 						) : null}
 						rightContent={(
-							<>
+							<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
 								<Box
 									sx={{
 										display: 'inline-flex',
-										alignItems: 'flex-end',
+										alignItems: 'center',
 										px: 1.5,
 										py: 0.75,
 										borderRadius: 1,
+										minHeight: 34,
+										maxWidth: { xs: '100%', md: 300 },
+										whiteSpace: 'nowrap',
+										overflow: 'hidden',
+										textOverflow: 'ellipsis',
 										backgroundColor: authUser ? '#d4edda' : authFromSuccessRedirect ? '#cce5ff' : '#fff3cd',
 										color: authUser ? '#155724' : authFromSuccessRedirect ? '#004085' : '#856404',
 										border: `1px solid ${authUser ? '#c3e6cb' : authFromSuccessRedirect ? '#b8daff' : '#ffeaa7'}`,
@@ -233,17 +241,24 @@ export default function ActivityShell({
 								>
 									{authLabel}
 								</Box>
-								{!authLoading && !authUser && authFromSuccessRedirect ? (
-									<Button
-										size="small"
-										variant="outlined"
-										sx={{ ...outlinedControlButtonSx, fontSize: '0.8rem' }}
-										onClick={runAuthCheck}
-									>
-										Retry session check
-									</Button>
-								) : null}
-							</>
+								<Button
+									size="small"
+									variant="outlined"
+									sx={{
+										...outlinedControlButtonSx,
+										fontSize: '0.8rem',
+										minHeight: 34,
+										minWidth: 146,
+										visibility: showRetrySessionCheck ? 'visible' : 'hidden',
+									}}
+									onClick={runAuthCheck}
+									disabled={!showRetrySessionCheck}
+									aria-hidden={!showRetrySessionCheck}
+									tabIndex={showRetrySessionCheck ? 0 : -1}
+								>
+									Retry session check
+								</Button>
+							</Stack>
 						)}
 						logoSx={{ maxWidth: 200 }}
 						titleSx={{ color: '#fff', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '0.08em', pl: 0 }}
