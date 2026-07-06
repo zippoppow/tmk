@@ -205,7 +205,6 @@ export default function ActivityShell({
 						onAuthAction={handleLoginLogout}
 						authButtonLabel={authUser ? 'Logout' : 'Login'}
 						beforeNavigate={allowDebouncedLocalPersist}
-						reserveLeadingActionsSpace
 						reserveRightContentSpace
 						leadingActions={projectId ? (
 							<Button

@@ -13,7 +13,7 @@ export default function AppTopNav({
 	rightContent = null,
 	leadingActions = null,
 	reserveLeadingActionsSpace = false,
-	reserveRightContentSpace = true,
+	reserveRightContentSpace = false,
 	containerSx,
 	titleSx,
 	logoSx,
