@@ -200,7 +200,6 @@ export default function ActivityShell({
 			<Container maxWidth="lg">
 				{!isSlideshowMode && (
 					<AppTopNav
-						title={title}
 						currentSection={projectId ? 'lesson-projects' : ''}
 						onAuthAction={handleLoginLogout}
 						authButtonLabel={authUser ? 'Logout' : 'Login'}
@@ -218,7 +217,6 @@ export default function ActivityShell({
 							</Button>
 						) : null}
 						logoSx={{ maxWidth: 200 }}
-						titleSx={{ color: '#fff', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '0.08em', pl: 0 }}
 					/>
 				)}
 

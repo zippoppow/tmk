@@ -133,8 +133,9 @@ export default function AppTopNav({
 				spacing={1}
 				sx={{
 					gridArea: 'account',
-					justifySelf: { xs: 'stretch', md: 'end' },
-					alignItems: { xs: 'stretch', md: 'center' },
+					justifySelf: 'end',
+					justifyContent: 'flex-end',
+					alignItems: { xs: 'flex-end', md: 'center' },
 					minWidth: { xs: 0, md: 280 },
 					minHeight: 40,
 				}}
@@ -146,9 +147,9 @@ export default function AppTopNav({
 					sx={{
 						display: 'flex',
 						alignItems: 'center',
-						justifyContent: { xs: 'flex-start', md: 'flex-end' },
+						justifyContent: 'flex-end',
 						minHeight: 36,
-						minWidth: { xs: '100%', md: reserveRightContentSpace ? 190 : 0 },
+						minWidth: { xs: reserveRightContentSpace ? 190 : 0, md: reserveRightContentSpace ? 190 : 0 },
 						visibility: hasRightContent ? 'visible' : reserveRightContentSpace ? 'hidden' : 'visible',
 					}}
 				>
