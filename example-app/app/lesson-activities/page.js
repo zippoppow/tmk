@@ -75,8 +75,6 @@ export default function LessonActivitiesPage() {
     const [isApplyingStandaloneSync, setIsApplyingStandaloneSync] = useState(false);
     const [notice, setNotice] = useState({ open: false, severity: 'success', message: '' });
     const [activitySortBy, setActivitySortBy] = useState('date-modified');
-    const [draggingStagedIndex, setDraggingStagedIndex] = useState(-1);
-    const [dragOverStagedIndex, setDragOverStagedIndex] = useState(-1);
     const [draggingSavedIndex, setDraggingSavedIndex] = useState(-1);
     const [dragOverSavedIndex, setDragOverSavedIndex] = useState(-1);
     const { hasDiyAccess, authUser: user, loading: authLoading } = useDiyAccess();
@@ -628,12 +626,7 @@ export default function LessonActivitiesPage() {
 
             if (!user || !hasDiyAccess) {
                 setSavedStandaloneActivities([]);
-                setStagedStandaloneActivities(
-                    sortStandaloneRecords(
-                        localDraftRecords.filter((record) => !String(record?.id || '').trim()),
-                        activitySortBy
-                    )
-                );
+                setStagedStandaloneActivities(localDraftRecords.filter((record) => !String(record?.id || '').trim()));
                 return;
             }
 
@@ -641,18 +634,13 @@ export default function LessonActivitiesPage() {
             const savedRecords = await fetchCloudStandaloneActivities(apiOrigin);
             const classified = classifyStandaloneActivities(localDraftRecords, savedRecords);
             setSavedStandaloneActivities(sortStandaloneRecords(classified.saved, activitySortBy));
-            setStagedStandaloneActivities(sortStandaloneRecords(classified.staged, activitySortBy));
+            setStagedStandaloneActivities(classified.staged);
         } catch (error) {
             // eslint-disable-next-line no-console
             console.error('Failed to load standalone lesson activities:', error);
             const localDraftRecords = getLocalStandaloneDraftRecords();
             setSavedStandaloneActivities([]);
-            setStagedStandaloneActivities(
-                sortStandaloneRecords(
-                    localDraftRecords.filter((record) => !String(record?.id || '').trim()),
-                    activitySortBy
-                )
-            );
+            setStagedStandaloneActivities(localDraftRecords.filter((record) => !String(record?.id || '').trim()));
         } finally {
             setStandaloneLoading(false);
         }
@@ -779,88 +767,59 @@ export default function LessonActivitiesPage() {
         return normalizedRecords;
     };
 
-    const applySortToStandaloneLists = (nextSortBy) => {
+    const applySortToSavedStandaloneActivities = (nextSortBy) => {
         setActivitySortBy(nextSortBy);
-        setStagedStandaloneActivities((prev) => sortStandaloneRecords(prev, nextSortBy));
         setSavedStandaloneActivities((prev) => sortStandaloneRecords(prev, nextSortBy));
     };
 
-    const handleMoveStandaloneActivity = (listName, fromIndex, toIndex) => {
-        const isStagedList = listName === 'staged';
-        const list = isStagedList ? stagedStandaloneActivities : savedStandaloneActivities;
-        if (fromIndex < 0 || fromIndex >= list.length || toIndex < 0 || toIndex >= list.length || fromIndex === toIndex) {
+    const handleMoveSavedStandaloneActivity = (fromIndex, toIndex) => {
+        if (fromIndex < 0 || fromIndex >= savedStandaloneActivities.length || toIndex < 0 || toIndex >= savedStandaloneActivities.length || fromIndex === toIndex) {
             return;
         }
 
-        const reordered = [...list];
+        const reordered = [...savedStandaloneActivities];
         const [moved] = reordered.splice(fromIndex, 1);
         reordered.splice(toIndex, 0, moved);
 
-        if (isStagedList) {
-            setStagedStandaloneActivities(reordered);
-            setDragOverStagedIndex(-1);
-            setDraggingStagedIndex(-1);
-        } else {
-            setSavedStandaloneActivities(reordered);
-            setDragOverSavedIndex(-1);
-            setDraggingSavedIndex(-1);
-        }
+        setSavedStandaloneActivities(reordered);
+        setDragOverSavedIndex(-1);
+        setDraggingSavedIndex(-1);
 
         setActivitySortBy('manual');
     };
 
-    const handleStandaloneDragStart = (listName, index, event) => {
+    const handleSavedStandaloneDragStart = (index, event) => {
         if (!hasDiyAccess) {
             return;
         }
 
-        if (listName === 'staged') {
-            setDraggingStagedIndex(index);
-            setDragOverStagedIndex(index);
-        } else {
-            setDraggingSavedIndex(index);
-            setDragOverSavedIndex(index);
-        }
+        setDraggingSavedIndex(index);
+        setDragOverSavedIndex(index);
 
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData('text/plain', String(index));
     };
 
-    const handleStandaloneDragOver = (listName, targetIndex, event) => {
+    const handleSavedStandaloneDragOver = (targetIndex, event) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
-        if (listName === 'staged') {
-            setDragOverStagedIndex(targetIndex);
-            return;
-        }
         setDragOverSavedIndex(targetIndex);
     };
 
-    const handleStandaloneDrop = (listName, targetIndex, event) => {
+    const handleSavedStandaloneDrop = (targetIndex, event) => {
         event.preventDefault();
         const payload = event.dataTransfer.getData('text/plain');
-        const fallbackSource = listName === 'staged' ? draggingStagedIndex : draggingSavedIndex;
         const sourceIndex = Number.parseInt(payload, 10);
-        const resolvedSourceIndex = Number.isInteger(sourceIndex) ? sourceIndex : fallbackSource;
+        const resolvedSourceIndex = Number.isInteger(sourceIndex) ? sourceIndex : draggingSavedIndex;
         if (Number.isInteger(resolvedSourceIndex)) {
-            handleMoveStandaloneActivity(listName, resolvedSourceIndex, targetIndex);
-            return;
-        }
-        if (listName === 'staged') {
-            setDragOverStagedIndex(-1);
-            setDraggingStagedIndex(-1);
+            handleMoveSavedStandaloneActivity(resolvedSourceIndex, targetIndex);
             return;
         }
         setDragOverSavedIndex(-1);
         setDraggingSavedIndex(-1);
     };
 
-    const handleStandaloneDragEnd = (listName) => {
-        if (listName === 'staged') {
-            setDragOverStagedIndex(-1);
-            setDraggingStagedIndex(-1);
-            return;
-        }
+    const handleSavedStandaloneDragEnd = () => {
         setDragOverSavedIndex(-1);
         setDraggingSavedIndex(-1);
     };
@@ -1292,56 +1251,6 @@ export default function LessonActivitiesPage() {
                 </Paper>
 
                 <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
-                    {isAuthenticated && hasDiyAccess && (
-                        <Box sx={{ mb: 2.5 }}>
-                            <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center" flexWrap="wrap">
-                                <Typography sx={{ fontSize: '0.88rem', color: '#374151' }}>
-                                    Sort by:
-                                </Typography>
-                                <Button
-                                    size="small"
-                                    variant={activitySortBy === 'alphabetical' ? 'contained' : 'outlined'}
-                                    onClick={() => applySortToStandaloneLists('alphabetical')}
-                                    sx={{ textTransform: 'none' }}
-                                >
-                                    Alphabetical
-                                </Button>
-                                <Button
-                                    size="small"
-                                    variant={activitySortBy === 'date-modified' ? 'contained' : 'outlined'}
-                                    onClick={() => applySortToStandaloneLists('date-modified')}
-                                    sx={{ textTransform: 'none' }}
-                                >
-                                    Date Modified
-                                </Button>
-                                <Button
-                                    size="small"
-                                    variant={activitySortBy === 'activity-type' ? 'contained' : 'outlined'}
-                                    onClick={() => applySortToStandaloneLists('activity-type')}
-                                    sx={{ textTransform: 'none' }}
-                                >
-                                    Activity Type
-                                </Button>
-                                {activitySortBy === 'manual' && (
-                                    <>
-                                        <Chip
-                                            size="small"
-                                            label="Manual order"
-                                            sx={{ height: 24, fontSize: '0.74rem', bgcolor: '#eef2ff', color: '#3730a3' }}
-                                        />
-                                        <Button
-                                            size="small"
-                                            variant="text"
-                                            onClick={() => applySortToStandaloneLists('date-modified')}
-                                            sx={{ textTransform: 'none' }}
-                                        >
-                                            Reset to Date Modified
-                                        </Button>
-                                    </>
-                                )}
-                            </Stack>
-                        </Box>
-                    )}
                     <Typography sx={{ fontSize: '2rem', textTransform: 'uppercase', color: '#000', fontWeight: 700, mb: 0 }}>
                         Your Standalone Lesson Activities
                     </Typography>
@@ -1429,39 +1338,15 @@ export default function LessonActivitiesPage() {
                                 return (
                                     <Box
                                         key={String(localDraftId || `${activityName}-${index}`)}
-                                        onDragOver={(event) => handleStandaloneDragOver('staged', index, event)}
-                                        onDrop={(event) => handleStandaloneDrop('staged', index, event)}
                                         sx={{
                                             border: '1px solid',
                                             borderColor: '#060279',
                                             borderRadius: 2,
                                             p: 1.5,
-                                            backgroundColor: dragOverStagedIndex === index ? '#dbeafe' : '#eeeff9',
-                                            opacity: draggingStagedIndex === index ? 0.7 : 1,
+                                            backgroundColor: '#eeeff9',
                                         }}
                                     >
                                         <Stack direction="row" alignItems="center" spacing={0.8}>
-                                            <Button
-                                                size="small"
-                                                draggable={hasDiyAccess}
-                                                onDragStart={(event) => handleStandaloneDragStart('staged', index, event)}
-                                                onDragEnd={() => handleStandaloneDragEnd('staged')}
-                                                disabled={!hasDiyAccess}
-                                                aria-label={`Drag to reorder ${activityName}`}
-                                                sx={{
-                                                    minWidth: 32,
-                                                    width: 32,
-                                                    height: 32,
-                                                    p: 0,
-                                                    border: '1px solid #cbd5e1',
-                                                    borderRadius: 1,
-                                                    backgroundColor: '#fff',
-                                                    color: '#334155',
-                                                    cursor: hasDiyAccess ? 'grab' : 'not-allowed',
-                                                }}
-                                            >
-                                                <DragIndicatorIcon fontSize="small" />
-                                            </Button>
                                             <Stack direction="column" spacing={0.2} sx={{ flex: 1, minWidth: 0 }}>
                                                 <Typography sx={{ fontSize: '1.2rem', fontWeight: 700, fontStyle: 'italic' }} noWrap title={activityName}>
                                                     ACTIVITY: {activityName}
@@ -1545,6 +1430,55 @@ export default function LessonActivitiesPage() {
                                 );
                             })}
 
+                            {isAuthenticated && hasDiyAccess && (
+                                <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center" flexWrap="wrap" sx={{ pt: 1 }}>
+                                    <Typography sx={{ fontSize: '0.88rem', color: '#374151' }}>
+                                        Sort saved by:
+                                    </Typography>
+                                    <Button
+                                        size="small"
+                                        variant={activitySortBy === 'alphabetical' ? 'contained' : 'outlined'}
+                                        onClick={() => applySortToSavedStandaloneActivities('alphabetical')}
+                                        sx={{ textTransform: 'none' }}
+                                    >
+                                        Alphabetical
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        variant={activitySortBy === 'date-modified' ? 'contained' : 'outlined'}
+                                        onClick={() => applySortToSavedStandaloneActivities('date-modified')}
+                                        sx={{ textTransform: 'none' }}
+                                    >
+                                        Date Modified
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        variant={activitySortBy === 'activity-type' ? 'contained' : 'outlined'}
+                                        onClick={() => applySortToSavedStandaloneActivities('activity-type')}
+                                        sx={{ textTransform: 'none' }}
+                                    >
+                                        Activity Type
+                                    </Button>
+                                    {activitySortBy === 'manual' && (
+                                        <>
+                                            <Chip
+                                                size="small"
+                                                label="Manual order"
+                                                sx={{ height: 24, fontSize: '0.74rem', bgcolor: '#eef2ff', color: '#3730a3' }}
+                                            />
+                                            <Button
+                                                size="small"
+                                                variant="text"
+                                                onClick={() => applySortToSavedStandaloneActivities('date-modified')}
+                                                sx={{ textTransform: 'none' }}
+                                            >
+                                                Reset to Date Modified
+                                            </Button>
+                                        </>
+                                    )}
+                                </Stack>
+                            )}
+
                             <Typography sx={{ fontSize: '1.6rem', fontWeight: 700, color: '#2f3a4a', pt: 1 }}>
                                 Saved
                             </Typography>
@@ -1606,8 +1540,8 @@ export default function LessonActivitiesPage() {
                                 return (
                                     <Box
                                         key={String(activity?.id || `${activityName}-${index}`)}
-                                        onDragOver={(event) => handleStandaloneDragOver('saved', index, event)}
-                                        onDrop={(event) => handleStandaloneDrop('saved', index, event)}
+                                        onDragOver={(event) => handleSavedStandaloneDragOver(index, event)}
+                                        onDrop={(event) => handleSavedStandaloneDrop(index, event)}
                                         sx={{
                                             border: '1px solid',
                                             borderColor: '#060279',
@@ -1621,8 +1555,8 @@ export default function LessonActivitiesPage() {
                                             <Button
                                                 size="small"
                                                 draggable={hasDiyAccess}
-                                                onDragStart={(event) => handleStandaloneDragStart('saved', index, event)}
-                                                onDragEnd={() => handleStandaloneDragEnd('saved')}
+                                                onDragStart={(event) => handleSavedStandaloneDragStart(index, event)}
+                                                onDragEnd={handleSavedStandaloneDragEnd}
                                                 disabled={!hasDiyAccess}
                                                 aria-label={`Drag to reorder ${activityName}`}
                                                 sx={{
