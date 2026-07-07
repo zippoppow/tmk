@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AUTH_BYPASS_ENABLED, AUTH_BYPASS_USER, clearLocalAuthState, exchangeTeachableSessionForTmkToken, fetchAuthenticatedUser, initializeDiySession } from './authHelpers';
+import { AUTH_BYPASS_ENABLED, AUTH_BYPASS_USER, clearLocalAuthState, exchangeTeachableSessionForTmkToken, fetchAuthenticatedUser, getTeachableSessionHandoff, initializeDiySession } from './authHelpers';
 
 const DIY_COURSE_ID = '2944218';
 const DIY_ACCESS_STORAGE_KEY = 'tmk-diy-access-by-email';
@@ -18,6 +18,23 @@ function hasBrowserCookie(name) {
   const escapedName = String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const cookiePattern = new RegExp(`(?:^|;\\s*)${escapedName}=`);
   return cookiePattern.test(document.cookie || '');
+}
+
+function hasTeachableBootstrapContext() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const url = new URL(window.location.href);
+  if ((url.searchParams.get('teachable_session') || '').trim()) {
+    return true;
+  }
+
+  if (url.searchParams.get('auth') === 'success') {
+    return true;
+  }
+
+  return Boolean(getTeachableSessionHandoff());
 }
 
 function isFreshTimestamp(value, now = Date.now()) {
@@ -154,7 +171,7 @@ function writeStoredAuthUser(userData, checkedAt = Date.now()) {
 
 function getInitialStoredState() {
   const now = Date.now();
-  if (!hasBrowserCookie('tmk_api_refresh')) {
+  if (!hasBrowserCookie('tmk_api_refresh') && !hasTeachableBootstrapContext()) {
     return {
       storedUser: null,
       storedAccess: null,
@@ -202,7 +219,7 @@ export function useDiyAccess() {
     let cancelled = false;
 
     async function checkAccess() {
-      if (!hasBrowserCookie('tmk_api_refresh')) {
+      if (!hasBrowserCookie('tmk_api_refresh') && !hasTeachableBootstrapContext()) {
         if (!cancelled) {
           clearLocalAuthState();
           setUser(null);
