@@ -97,6 +97,10 @@ function summarizeHeaders(headersLike) {
 	return summary;
 }
 
+function hasRecentRefreshFailure() {
+	return lastRefreshFailureAt > 0 && (Date.now() - lastRefreshFailureAt) < REFRESH_FAILURE_COOLDOWN_MS;
+}
+
 function toIdString(value) {
 	if (value === null || value === undefined) {
 		return '';
@@ -735,6 +739,11 @@ export async function fetchWithTmkToken(endpoint, init = {}) {
 		const token = await getUserAccessToken();
 		if (token) {
 			headers.set('Authorization', `Bearer ${token}`);
+		} else if (hasRecentRefreshFailure()) {
+			authDebug('fetchWithTmkToken: recent refresh failure, returning unauthorized without request', {
+				endpoint,
+			});
+			return new Response(null, { status: 401, statusText: 'Unauthorized' });
 		}
 
 		const requestInit = {
@@ -818,6 +827,12 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 		const token = await getUserAccessToken(apiOrigin);
 		if (token) {
 			headers.set('Authorization', `Bearer ${token}`);
+		} else if (hasRecentRefreshFailure()) {
+			authDebug('fetchWithUserToken: recent refresh failure, returning unauthorized without request', {
+				origin,
+				endpoint,
+			});
+			return new Response(null, { status: 401, statusText: 'Unauthorized' });
 		}
 
 		const requestInit = {
@@ -1070,6 +1085,11 @@ export async function fetchProxyWithUserToken(endpoint, init = {}) {
 
 		if (token) {
 			headers.set('Authorization', `Bearer ${token}`);
+		} else if (hasRecentRefreshFailure()) {
+			authDebug('fetchProxyWithUserToken: recent refresh failure, returning unauthorized without request', {
+				endpoint,
+			});
+			return new Response(null, { status: 401, statusText: 'Unauthorized' });
 		} else {
 			authDebug('fetchProxyWithUserToken: token refresh failed or no token available', {
 				endpoint,
