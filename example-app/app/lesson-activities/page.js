@@ -6,8 +6,10 @@ import { useRouter } from 'next/navigation';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import {
     buildTeachableLogoutUrl,
+    clearLocalAuthState,
     fetchWithTmkToken,
     resolveTmkApiOrigin,
+    UnauthorizedSessionError,
 } from '../components/authHelpers';
 import AppTopNav from '../components/AppTopNav';
 import {
@@ -83,6 +85,15 @@ export default function LessonActivitiesPage() {
         setNotice({ open: true, severity, message });
     };
 
+    const handleUnauthorizedSession = () => {
+        clearLocalAuthState();
+        setSavedStandaloneActivities([]);
+        setStagedStandaloneActivities([]);
+        setSelectedSavedActivityIds([]);
+        setSelectedStagedLocalDraftIds([]);
+        router.replace('/login?next=/lesson-activities');
+    };
+
     const openConfirmActionDialog = ({ title, message, confirmLabel, onConfirm }) => {
         pendingConfirmActionRef.current = typeof onConfirm === 'function' ? onConfirm : null;
         setConfirmActionDialogTitle(title || 'Confirm Action');
@@ -121,6 +132,7 @@ export default function LessonActivitiesPage() {
     }, []);
 
     const isAuthenticated = Boolean(user);
+    const lessonActivities = DIY_LESSON_ACTIVITY_TYPES;
 
     const normalizeActivityInputData = (value) => {
         if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -216,6 +228,9 @@ export default function LessonActivitiesPage() {
 
         try {
             const projectResponse = await fetchWithTmkToken(DIY_PROJECTS_ENDPOINT, { method: 'GET', headers: {} });
+            if (!projectResponse.ok && (projectResponse.status === 401 || projectResponse.status === 403)) {
+                throw new UnauthorizedSessionError('Your session expired. Please log in again.', projectResponse.status);
+            }
             if (projectResponse.ok) {
                 const projectPayload = await projectResponse.json().catch(() => ({}));
                 const projects = extractDiyProjectsFromResponse(projectPayload);
@@ -242,6 +257,9 @@ export default function LessonActivitiesPage() {
                 projectActivityKeys = new Set([...projectActivityKeys, ...keys]);
             }
         } catch (projectError) {
+            if (projectError instanceof UnauthorizedSessionError) {
+                throw projectError;
+            }
             // eslint-disable-next-line no-console
             console.error('Failed to load diy-project associations for standalone filter:', projectError);
         }
@@ -636,6 +654,10 @@ export default function LessonActivitiesPage() {
             setSavedStandaloneActivities(sortStandaloneRecords(classified.saved, activitySortBy));
             setStagedStandaloneActivities(classified.staged);
         } catch (error) {
+            if (error instanceof UnauthorizedSessionError || error?.status === 401 || error?.status === 403) {
+                handleUnauthorizedSession();
+                return;
+            }
             // eslint-disable-next-line no-console
             console.error('Failed to load standalone lesson activities:', error);
             const localDraftRecords = getLocalStandaloneDraftRecords();
@@ -666,40 +688,6 @@ export default function LessonActivitiesPage() {
         setSelectedStagedLocalDraftIds((prev) => prev.filter((id) => validStagedDraftIds.has(String(id || '').trim())));
     }, [savedStandaloneActivities, stagedStandaloneActivities]);
 
-    const handleLogout = () => {
-        window.location.href = buildTeachableLogoutUrl('/');
-    };
-
-    if (!isMounted) {
-        return null;
-    }
-
-    if (authLoading) {
-        return (
-            <Box
-                sx={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: 'rgba(76, 76, 76, 0.09)',
-                    zIndex: 9999,
-                }}
-            >
-                <Stack alignItems="center" spacing={2}>
-                    <CircularProgress size={60} />
-                    <Typography sx={{ color: '#aa34e5', fontSize: '1.1rem' }}>Checking login...</Typography>
-                </Stack>
-            </Box>
-        );
-    }
-
-    const lessonActivities = DIY_LESSON_ACTIVITY_TYPES;
-
     const formatLastModifiedTimestamp = (value) => {
         const numeric = Number(value);
         if (!Number.isFinite(numeric) || numeric <= 0) {
@@ -719,19 +707,19 @@ export default function LessonActivitiesPage() {
         }
     };
 
-    const getActivityPath = (activityRecord) => {
+    function getActivityPath(activityRecord) {
         const templateName = String(activityRecord?.['tmk-template'] || activityRecord?.formName || '').trim();
         const match = lessonActivities.find((activity) => activity.path.endsWith(`/${templateName}`));
         return match?.path || null;
-    };
+    }
 
-    const getActivityTypeLabel = (templateName) => {
+    function getActivityTypeLabel(templateName) {
         const normalizedTemplate = String(templateName || '').trim();
         const match = lessonActivities.find((activity) => activity.path.endsWith(`/${normalizedTemplate}`));
         return match?.label || normalizedTemplate || 'Unknown';
-    };
+    }
 
-    const sortStandaloneRecords = (records, sortBy) => {
+    function sortStandaloneRecords(records, sortBy) {
         const normalizedRecords = Array.isArray(records) ? [...records] : [];
 
         if (sortBy === 'alphabetical') {
@@ -765,7 +753,39 @@ export default function LessonActivitiesPage() {
         }
 
         return normalizedRecords;
+    }
+
+    const handleLogout = () => {
+        window.location.href = buildTeachableLogoutUrl('/');
     };
+
+    if (!isMounted) {
+        return null;
+    }
+
+    if (authLoading) {
+        return (
+            <Box
+                sx={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(76, 76, 76, 0.09)',
+                    zIndex: 9999,
+                }}
+            >
+                <Stack alignItems="center" spacing={2}>
+                    <CircularProgress size={60} />
+                    <Typography sx={{ color: '#aa34e5', fontSize: '1.1rem' }}>Checking login...</Typography>
+                </Stack>
+            </Box>
+        );
+    }
 
     const applySortToSavedStandaloneActivities = (nextSortBy) => {
         setActivitySortBy(nextSortBy);

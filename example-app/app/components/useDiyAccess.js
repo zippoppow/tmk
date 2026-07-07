@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AUTH_BYPASS_ENABLED, AUTH_BYPASS_USER, exchangeTeachableSessionForTmkToken, fetchAuthenticatedUser, initializeDiySession } from './authHelpers';
+import { AUTH_BYPASS_ENABLED, AUTH_BYPASS_USER, clearLocalAuthState, exchangeTeachableSessionForTmkToken, fetchAuthenticatedUser, initializeDiySession } from './authHelpers';
 
 const DIY_COURSE_ID = '2944218';
 const DIY_ACCESS_STORAGE_KEY = 'tmk-diy-access-by-email';
@@ -173,7 +173,7 @@ export function useDiyAccess() {
   });
   const [loading, setLoading] = useState(() => {
     if (AUTH_BYPASS_ENABLED) return false;
-    return !Boolean(initialStoredState?.hasFreshCache);
+    return true;
   });
 
   useEffect(() => {
@@ -183,16 +183,7 @@ export function useDiyAccess() {
     let cancelled = false;
 
     async function checkAccess() {
-      const { storedUser: cachedUser, storedAccess: cachedAccess, hasCachedState, hasFreshCache } = getInitialStoredState();
-
-      if (hasFreshCache) {
-        if (!cancelled) {
-          setUser(cachedUser);
-          setHasDiyAccess(cachedAccess);
-          setLoading(false);
-        }
-        return;
-      }
+      const { storedUser: cachedUser, storedAccess: cachedAccess, hasCachedState } = getInitialStoredState();
 
       if (!hasCachedState) {
         setLoading(true);
@@ -211,14 +202,9 @@ export function useDiyAccess() {
 
         if (!userData) {
           if (!cancelled) {
-            // If we have no live session but do have cached access from a prior
-            // successful login, keep the cached state so navigation still works.
-            if (!cachedUser) {
-              setUser(null);
-            }
-            if (cachedAccess === null) {
-              setHasDiyAccess(false);
-            }
+            clearLocalAuthState();
+            setUser(null);
+            setHasDiyAccess(false);
           }
           return;
         }

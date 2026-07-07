@@ -1,4 +1,4 @@
-import { fetchWithUserToken } from './authHelpers';
+import { createUnauthorizedSessionError, fetchWithUserToken, isUnauthorizedStatus } from './authHelpers';
 import {
 	DEFAULT_SESSION_STORAGE_KEY,
 	DIY_PROJECTS_ENDPOINT,
@@ -764,6 +764,9 @@ export async function listLessonActivities(apiOrigin) {
 	});
 
 	if (!response.ok) {
+		if (isUnauthorizedStatus(response.status)) {
+			throw createUnauthorizedSessionError(response.status);
+		}
 		return [];
 	}
 

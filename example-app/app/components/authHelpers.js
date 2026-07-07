@@ -47,6 +47,22 @@ const LEGACY_AUTH_HINT_SESSION_KEY = 'tmk_teachable_auth_hint';
 const LEGACY_AUTH_EMAIL_SESSION_KEY = 'tmk_teachable_user_email';
 const AUTH_ME_TIMEOUT_MS = 10000;
 
+export class UnauthorizedSessionError extends Error {
+	constructor(message = 'Unauthorized session', status = 401) {
+		super(message);
+		this.name = 'UnauthorizedSessionError';
+		this.status = status;
+	}
+}
+
+export function isUnauthorizedStatus(status) {
+	return status === 401 || status === 403;
+}
+
+export function createUnauthorizedSessionError(status, message = 'Your session expired. Please log in again.') {
+	return new UnauthorizedSessionError(message, status);
+}
+
 function authDebug(label, payload) {
 	if (!AUTH_DEBUG_ENABLED) {
 		return;
