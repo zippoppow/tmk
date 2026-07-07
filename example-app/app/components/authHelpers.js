@@ -714,13 +714,13 @@ export async function getUserAccessToken(apiOrigin, forceRefresh = false) {
 		}
 	}
 
-	// If no cached token, try to refresh first, then exchange Teachable session.
+	// If no cached token, rely on refresh only.
 	const refreshed = await refreshUserAccessToken();
 	if (refreshed) {
 		return refreshed;
 	}
 
-	return exchangeTeachableSessionForTmkToken();
+	return '';
 }
 
 /**
@@ -764,8 +764,7 @@ export async function fetchWithTmkToken(endpoint, init = {}) {
 			endpoint,
 		});
 		const refreshed = await refreshUserAccessToken();
-		const recoveredToken = refreshed || (await exchangeTeachableSessionForTmkToken());
-		if (!recoveredToken) {
+		if (!refreshed) {
 			authDebug('fetchWithTmkToken: refresh failed', {
 				endpoint,
 			});
@@ -774,7 +773,7 @@ export async function fetchWithTmkToken(endpoint, init = {}) {
 			return response;
 		}
 
-		headers.set('Authorization', `Bearer ${recoveredToken}`);
+		headers.set('Authorization', `Bearer ${refreshed}`);
 		authDebug('fetchWithTmkToken: retrying with refreshed token', {
 			endpoint,
 		});
