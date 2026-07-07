@@ -52,6 +52,16 @@ export default function HomePage() {
         setIsMounted(true);
     }, []);
 
+    useEffect(() => {
+        if (!isMounted || enrollmentLoading) {
+            return;
+        }
+
+        if (!user) {
+            router.replace('/login?next=/');
+        }
+    }, [enrollmentLoading, isMounted, router, user]);
+
     const handleLogout = () => {
         window.location.href = buildTeachableLogoutUrl('/');
     };
@@ -64,8 +74,28 @@ export default function HomePage() {
         setActivePreviewIndex((currentIndex) => (currentIndex + 1) % previewImages.length);
     };
 
-    if (!isMounted || !user) {
-        return null;
+    if (!isMounted || enrollmentLoading || !user) {
+        return (
+            <Box
+                sx={{
+                    minHeight: '100vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    px: 2,
+                    backgroundImage:
+                        "linear-gradient(rgba(255, 255, 255, 0.8), rgba(255,255,255,0.86)), url('/branding/tmk_diy_cat.png')",
+                    backgroundSize: '65% auto',
+                    backgroundPosition: 'center calc(10%)',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundAttachment: { xs: 'scroll', md: 'fixed' },
+                }}
+            >
+                <Typography sx={{ color: '#153a73', fontSize: '1.05rem', textAlign: 'center' }}>
+                    {!isMounted || enrollmentLoading ? 'Checking login...' : 'Session expired. Redirecting to login...'}
+                </Typography>
+            </Box>
+        );
     }
 
   return (

@@ -1,11 +1,43 @@
 'use client';
 
 import { Box, Button, Container, Paper, Typography } from '@mui/material';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import TmkLogo from '../components/TmkLogo';
+import { useDiyAccess } from '../components/useDiyAccess';
 
 export default function CopyrightPage() {
 	const router = useRouter();
+	const { authUser, loading } = useDiyAccess();
+
+	useEffect(() => {
+		if (loading) {
+			return;
+		}
+
+		if (!authUser) {
+			router.replace('/login?next=/copyright');
+		}
+	}, [authUser, loading, router]);
+
+	if (loading || !authUser) {
+		return (
+			<Box
+				sx={{
+					minHeight: '100vh',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					background: 'linear-gradient(135deg, #f7f9ff 0%, #eef2ff 100%)',
+					px: 2,
+				}}
+			>
+				<Typography sx={{ color: '#153a73', fontSize: '1.05rem', textAlign: 'center' }}>
+					{loading ? 'Checking login...' : 'Session expired. Redirecting to login...'}
+				</Typography>
+			</Box>
+		);
+	}
 
 	return (
 		<Box

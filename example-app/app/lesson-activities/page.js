@@ -628,8 +628,13 @@ export default function LessonActivitiesPage() {
     };
 
     useEffect(() => {
+        if (!authLoading && !isAuthenticated) {
+            router.replace('/login?next=/lesson-activities');
+            return;
+        }
+
         if (!authLoading && isAuthenticated && !hasDiyAccess) {
-            router.replace('/');
+            router.replace('/login?next=/lesson-activities');
         }
     }, [authLoading, isAuthenticated, hasDiyAccess, router]);
 
@@ -782,6 +787,32 @@ export default function LessonActivitiesPage() {
                 <Stack alignItems="center" spacing={2}>
                     <CircularProgress size={60} />
                     <Typography sx={{ color: '#aa34e5', fontSize: '1.1rem' }}>Checking login...</Typography>
+                </Stack>
+            </Box>
+        );
+    }
+
+    if (!isAuthenticated || !hasDiyAccess) {
+        return (
+            <Box
+                sx={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(76, 76, 76, 0.09)',
+                    zIndex: 9999,
+                }}
+            >
+                <Stack alignItems="center" spacing={2}>
+                    <CircularProgress size={60} />
+                    <Typography sx={{ color: '#aa34e5', fontSize: '1.1rem' }}>
+                        {!isAuthenticated ? 'Session expired. Redirecting to login...' : 'Redirecting to login...'}
+                    </Typography>
                 </Stack>
             </Box>
         );
