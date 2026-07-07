@@ -213,8 +213,18 @@ export function useDiyAccess() {
         const now = Date.now();
         writeStoredAuthUser(userData, now);
 
-        // Exchange Teachable session for TMK API token
-        await exchangeTeachableSessionForTmkToken();
+        // Exchange Teachable session for TMK API token.
+        // If the exchange fails, the user no longer has a valid TMK session,
+        // even if /me still returned a Teachable identity.
+        const exchangedToken = await exchangeTeachableSessionForTmkToken();
+        if (!exchangedToken) {
+          if (!cancelled) {
+            clearLocalAuthState();
+            setUser(null);
+            setHasDiyAccess(false);
+          }
+          return;
+        }
 
         const rawEmail = String(userData.email || userData?.profile?.email || '').trim();
         const storedAccessEntry = readStoredDiyAccess(rawEmail, now);
