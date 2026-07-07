@@ -46,6 +46,7 @@ const UTILITIES_TOKEN_STORAGE_KEY = 'tmk-utilities-api-access-token';
 const LEGACY_AUTH_HINT_SESSION_KEY = 'tmk_teachable_auth_hint';
 const LEGACY_AUTH_EMAIL_SESSION_KEY = 'tmk_teachable_user_email';
 const AUTH_ME_TIMEOUT_MS = 10000;
+const REFRESH_FAILURE_COOLDOWN_MS = 10 * 1000;
 
 export class UnauthorizedSessionError extends Error {
 	constructor(message = 'Unauthorized session', status = 401) {
@@ -219,6 +220,8 @@ export function syncAuthStateHints(user) {
 
 let userAccessToken = '';
 let teachableSessionHandoff = '';
+let refreshInFlightPromise = null;
+let lastRefreshFailureAt = 0;
 
 const TMK_API_ACCESS_TOKEN_STORAGE_KEY = 'tmk-api-access-token';
 
@@ -319,6 +322,8 @@ export function captureTeachableSessionFromUrl() {
 export function clearLocalAuthState() {
 	userAccessToken = '';
 	teachableSessionHandoff = '';
+	refreshInFlightPromise = null;
+	lastRefreshFailureAt = 0;
 	clearAuthStateHints();
 
 	// Clear DIY session manager
@@ -495,6 +500,7 @@ export async function exchangeTeachableSessionForTmkToken() {
 	if (isAuthBypassMode()) {
 		userAccessToken = 'dev-bypass-token';
 		setStoredTmkApiAccessToken(userAccessToken);
+		lastRefreshFailureAt = 0;
 		return userAccessToken;
 	}
 
@@ -530,6 +536,9 @@ export async function exchangeTeachableSessionForTmkToken() {
 
 		userAccessToken = token || '';
 		setStoredTmkApiAccessToken(userAccessToken);
+		if (userAccessToken) {
+			lastRefreshFailureAt = 0;
+		}
 		return userAccessToken;
 	} catch (error) {
 		authDebug('exchangeTeachableSessionForTmkToken error', {
@@ -614,10 +623,24 @@ export async function refreshUserAccessToken() {
 	if (isAuthBypassMode()) {
 		userAccessToken = 'dev-bypass-token';
 		setStoredTmkApiAccessToken(userAccessToken);
+		lastRefreshFailureAt = 0;
 		return userAccessToken;
 	}
 
-	try {
+	if (refreshInFlightPromise) {
+		authDebug('refreshUserAccessToken joining in-flight request');
+		return refreshInFlightPromise;
+	}
+
+	if (lastRefreshFailureAt && Date.now() - lastRefreshFailureAt < REFRESH_FAILURE_COOLDOWN_MS) {
+		authDebug('refreshUserAccessToken skipped during cooldown', {
+			cooldownMsRemaining: REFRESH_FAILURE_COOLDOWN_MS - (Date.now() - lastRefreshFailureAt),
+		});
+		return '';
+	}
+
+	refreshInFlightPromise = (async () => {
+		try {
 		authDebug('refreshUserAccessToken -> request', {
 			url: USER_AUTH_ENDPOINTS.refresh,
 			method: 'POST',
@@ -636,6 +659,7 @@ export async function refreshUserAccessToken() {
 		if (!response.ok) {
 			userAccessToken = '';
 			setStoredTmkApiAccessToken('');
+			lastRefreshFailureAt = Date.now();
 			return '';
 		}
 
@@ -647,13 +671,24 @@ export async function refreshUserAccessToken() {
 		});
 		userAccessToken = token || '';
 		setStoredTmkApiAccessToken(userAccessToken);
+		if (userAccessToken) {
+			lastRefreshFailureAt = 0;
+		} else {
+			lastRefreshFailureAt = Date.now();
+		}
 		return userAccessToken;
-	} catch {
+		} catch {
 		authDebug('refreshUserAccessToken failed');
 		userAccessToken = '';
 		setStoredTmkApiAccessToken('');
+		lastRefreshFailureAt = Date.now();
 		return '';
-	}
+		} finally {
+			refreshInFlightPromise = null;
+		}
+	})();
+
+	return refreshInFlightPromise;
 }
 
 export async function getUserAccessToken(apiOrigin, forceRefresh = false) {
