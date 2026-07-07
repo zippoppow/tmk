@@ -47,7 +47,7 @@ export default function IntroPage() {
 	}, []);
 
 	const router = useRouter();
-	const { hasDiyAccess, loading: diyLoading } = useDiyAccess();
+	const { authUser: diyAuthUser, hasDiyAccess, loading: diyLoading } = useDiyAccess();
 	const [isMounted, setIsMounted] = useState(false);
 
 	useEffect(() => {
@@ -55,10 +55,19 @@ export default function IntroPage() {
 	}, []);
 
 	useEffect(() => {
-		if (!diyLoading && !hasDiyAccess) {
-			router.replace('/');
+		if (diyLoading) {
+			return;
 		}
-	}, [diyLoading, hasDiyAccess, router]);
+
+		if (!diyAuthUser) {
+			router.replace('/login?next=/lesson-activities/intro');
+			return;
+		}
+
+		if (!hasDiyAccess) {
+			router.replace('/lesson-activities');
+		}
+	}, [diyAuthUser, diyLoading, hasDiyAccess, router]);
 
 	const {
 		data,
@@ -107,8 +116,27 @@ export default function IntroPage() {
 		return null;
 	}
 
-	if (diyLoading) {
-		return null;
+	if (diyLoading || !diyAuthUser || !hasDiyAccess) {
+		return (
+			<Box
+				sx={{
+					minHeight: '100vh',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+					px: 2,
+				}}
+			>
+				<Typography sx={{ color: '#fff', fontSize: '1.05rem', textAlign: 'center' }}>
+					{diyLoading
+						? 'Checking login...'
+						: !diyAuthUser
+							? 'Session expired. Redirecting to login...'
+							: 'Redirecting to lesson activities...'}
+				</Typography>
+			</Box>
+		);
 	}
 
 	const handleWordChange = (index, value) => {
