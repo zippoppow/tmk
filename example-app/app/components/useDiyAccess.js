@@ -10,6 +10,16 @@ function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
 }
 
+function hasBrowserCookie(name) {
+  if (typeof document === 'undefined' || !name) {
+    return false;
+  }
+
+  const escapedName = String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const cookiePattern = new RegExp(`(?:^|;\\s*)${escapedName}=`);
+  return cookiePattern.test(document.cookie || '');
+}
+
 function isFreshTimestamp(value, now = Date.now()) {
   const checkedAt = Number(value);
   if (!Number.isFinite(checkedAt) || checkedAt <= 0) {
@@ -144,6 +154,15 @@ function writeStoredAuthUser(userData, checkedAt = Date.now()) {
 
 function getInitialStoredState() {
   const now = Date.now();
+  if (!hasBrowserCookie('tmk_api_refresh')) {
+    return {
+      storedUser: null,
+      storedAccess: null,
+      hasCachedState: false,
+      hasFreshCache: false,
+    };
+  }
+
   const storedUserEntry = readStoredAuthUser(now);
   const storedUser = storedUserEntry?.user || null;
   const storedEmail = String(storedUser?.email || storedUser?.profile?.email || '').trim();
@@ -183,6 +202,16 @@ export function useDiyAccess() {
     let cancelled = false;
 
     async function checkAccess() {
+      if (!hasBrowserCookie('tmk_api_refresh')) {
+        if (!cancelled) {
+          clearLocalAuthState();
+          setUser(null);
+          setHasDiyAccess(false);
+          setLoading(false);
+        }
+        return;
+      }
+
       const { storedUser: cachedUser, storedAccess: cachedAccess, hasCachedState } = getInitialStoredState();
 
       if (!hasCachedState) {
