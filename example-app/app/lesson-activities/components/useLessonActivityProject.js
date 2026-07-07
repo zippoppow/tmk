@@ -720,6 +720,15 @@ export function useLessonActivityProject({
 		loadAvailableLessonProjects();
 	}, []);
 
+	useEffect(() => {
+		if (authLoading || authUser || typeof window === 'undefined') {
+			return;
+		}
+
+		const nextPath = `${window.location.pathname}${window.location.search}` || '/lesson-activities';
+		router.replace(`/login?next=${encodeURIComponent(nextPath)}`);
+	}, [authLoading, authUser, router]);
+
 	const handleLoginLogout = () => {
 		if (authUser) {
 			window.location.href = buildTeachableLogoutUrl('/');
