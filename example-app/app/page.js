@@ -91,7 +91,6 @@ export default function HomePage() {
                     </Typography>
                 )}
           />
-
           {(enrollmentLoading || !hasDiyAccess) && (
                 <Box sx={{ mb: 2 }}>
                     {enrollmentLoading ? (
