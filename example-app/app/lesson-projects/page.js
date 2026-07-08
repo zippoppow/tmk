@@ -8,7 +8,6 @@ import {
 	Button,
 	Checkbox,
 	Chip,
-	CircularProgress,
 	Container,
 	Dialog,
 	DialogActions,
@@ -16,6 +15,7 @@ import {
 	DialogTitle,
 	Divider,
 	IconButton,
+	LinearProgress,
 	Paper,
 	Table,
 	TableBody,
@@ -1621,56 +1621,6 @@ export default function LessonProjectsPage() {
 		return null;
 	}
 
-	if (authLoading) {
-		return (
-			<Box
-				sx={{
-					position: 'fixed',
-					top: 0,
-					left: 0,
-					right: 0,
-					bottom: 0,
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: 'rgba(76, 76, 76, 0.2)',
-					zIndex: 9999,
-				}}
-			>
-				<Stack alignItems="center" spacing={2}>
-					<CircularProgress size={60} />
-					<Typography sx={{ color: '#aa34e5', fontSize: '1.1rem' }}>Checking login...</Typography>
-				</Stack>
-			</Box>
-		);
-	}
-
-	if (!isAuthenticated || !hasDiyAccess) {
-		return (
-			<Box
-				sx={{
-					position: 'fixed',
-					top: 0,
-					left: 0,
-					right: 0,
-					bottom: 0,
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center',
-					backgroundColor: 'rgba(76, 76, 76, 0.2)',
-					zIndex: 9999,
-				}}
-			>
-				<Stack alignItems="center" spacing={2}>
-					<CircularProgress size={60} />
-					<Typography sx={{ color: '#aa34e5', fontSize: '1.1rem' }}>
-						{!isAuthenticated ? 'Session expired. Redirecting to login...' : 'Redirecting to login...'}
-					</Typography>
-				</Stack>
-			</Box>
-		);
-	}
-
 	return (
 		<Box
 			component="main"
@@ -1697,6 +1647,20 @@ export default function LessonProjectsPage() {
 					logoSx={{ mb: 2 }}
 					titleSx={{ mb: 1 }}
 				/>
+				{(authLoading || !isAuthenticated || !hasDiyAccess) && (
+					<Alert severity="info" sx={{ mb: 2, alignItems: 'center' }}>
+						<Box sx={{ width: '100%' }}>
+							<Typography variant="body2" sx={{ mb: 1 }}>
+								{authLoading
+									? 'Checking login...'
+									: !isAuthenticated
+										? 'Session expired. Redirecting to login...'
+										: 'Redirecting to login...'}
+							</Typography>
+							<LinearProgress color="info" />
+						</Box>
+					</Alert>
+				)}
 				<Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2.5, mb: 2 }}>
 					<Box>
 							<Typography sx={{ fontSize: '1.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#000', mb: 0.5 }}>Create a Project</Typography>

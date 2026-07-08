@@ -18,11 +18,11 @@ import {
     Box,
     Checkbox,
     Chip,
-    CircularProgress,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
+    LinearProgress,
     Typography,
     Button,
     Paper,
@@ -768,56 +768,6 @@ export default function LessonActivitiesPage() {
         return null;
     }
 
-    if (authLoading) {
-        return (
-            <Box
-                sx={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: 'rgba(76, 76, 76, 0.09)',
-                    zIndex: 9999,
-                }}
-            >
-                <Stack alignItems="center" spacing={2}>
-                    <CircularProgress size={60} />
-                    <Typography sx={{ color: '#aa34e5', fontSize: '1.1rem' }}>Checking login...</Typography>
-                </Stack>
-            </Box>
-        );
-    }
-
-    if (!isAuthenticated || !hasDiyAccess) {
-        return (
-            <Box
-                sx={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: 'rgba(76, 76, 76, 0.09)',
-                    zIndex: 9999,
-                }}
-            >
-                <Stack alignItems="center" spacing={2}>
-                    <CircularProgress size={60} />
-                    <Typography sx={{ color: '#aa34e5', fontSize: '1.1rem' }}>
-                        {!isAuthenticated ? 'Session expired. Redirecting to login...' : 'Redirecting to login...'}
-                    </Typography>
-                </Stack>
-            </Box>
-        );
-    }
-
     const applySortToSavedStandaloneActivities = (nextSortBy) => {
         setActivitySortBy(nextSortBy);
         setSavedStandaloneActivities((prev) => sortStandaloneRecords(prev, nextSortBy));
@@ -1279,6 +1229,21 @@ export default function LessonActivitiesPage() {
                     titleSx={{ mb: 1 }}
                 />
 
+                {(authLoading || !isAuthenticated || !hasDiyAccess) && (
+                    <Alert severity="info" sx={{ mb: 2, alignItems: 'center' }}>
+                        <Box sx={{ width: '100%' }}>
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                                {authLoading
+                                    ? 'Checking login...'
+                                    : !isAuthenticated
+                                        ? 'Session expired. Redirecting to login...'
+                                        : 'Redirecting to login...'}
+                            </Typography>
+                            <LinearProgress color="info" />
+                        </Box>
+                    </Alert>
+                )}
+
                 {!hasDiyAccess && (
                     <Alert severity="warning" sx={{ mb: 2 }}>
                         Active enrollment in the DIY course is required to access Lesson Activities and Lesson Projects.
@@ -1292,7 +1257,7 @@ export default function LessonActivitiesPage() {
                     <Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 2, maxWidth: 800 }}>
                         Choose a lesson activity type, then create and manage activities with your lesson content.
                     </Typography>
-                    {hasDiyAccess ? (
+                    {hasDiyAccess && isAuthenticated && !authLoading ? (
                         <LessonActivitySelector activities={lessonActivities} onOpen={handleCreateNewActivity} />
                     ) : (
                         <Button variant="contained" disabled>
@@ -1308,7 +1273,7 @@ export default function LessonActivitiesPage() {
                     <Typography sx={{ color: '#151618', fontSize: '0.95rem', mb: 4 }}>
                         Select, open, present, or remove your standalone lesson activities. Staged activities are local-only drafts stored in your browser's "local storage." Saved activities are synced to the cloud server.
                     </Typography>
-                    {!hasDiyAccess ? (
+                    {!hasDiyAccess || !isAuthenticated || authLoading ? (
                         <Typography sx={{ color: '#666', fontSize: '0.95rem' }}>Active DIY enrollment required.</Typography>
                     ) : standaloneLoading ? (
                         <Typography sx={{ color: '#999', fontSize: '0.83rem', mt: 1 }}>Loading lesson activities...</Typography>

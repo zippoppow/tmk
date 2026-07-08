@@ -74,15 +74,15 @@ export default function HomePage() {
         setActivePreviewIndex((currentIndex) => (currentIndex + 1) % previewImages.length);
     };
 
-    if (!isMounted || enrollmentLoading || !user) {
+    if (!isMounted) {
+        return null;
+    }
+
+    if (enrollmentLoading || !user) {
         return (
             <Box
                 sx={{
                     minHeight: '100vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    px: 2,
                     backgroundImage:
                         "linear-gradient(rgba(255, 255, 255, 0.8), rgba(255,255,255,0.86)), url('/branding/tmk_diy_cat.png')",
                     backgroundSize: '65% auto',
@@ -91,9 +91,18 @@ export default function HomePage() {
                     backgroundAttachment: { xs: 'scroll', md: 'fixed' },
                 }}
             >
-                <Typography sx={{ color: '#153a73', fontSize: '1.05rem', textAlign: 'center' }}>
-                    {!isMounted || enrollmentLoading ? 'Checking login...' : 'Session expired. Redirecting to login...'}
-                </Typography>
+                <Container maxWidth="lg" sx={{ py: 4 }}>
+                    <Box sx={{ mb: 2 }}>
+                        <Alert severity="info" sx={{ alignItems: 'center' }}>
+                            <Box sx={{ width: '100%' }}>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                    {enrollmentLoading ? 'Checking login...' : 'Session expired. Redirecting to login...'}
+                                </Typography>
+                                <LinearProgress color="info" />
+                            </Box>
+                        </Alert>
+                    </Box>
+                </Container>
             </Box>
         );
     }
