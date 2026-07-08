@@ -1786,6 +1786,25 @@ export default function LessonProjectsPage() {
 										</option>
 									))}
 								</Box>
+								<Alert
+									severity="info"
+									icon={false}
+									sx={{
+										m: 0,
+										py: 0.4,
+										px: 1.25,
+										borderRadius: 1,
+										whiteSpace: 'nowrap',
+										alignSelf: { xs: 'flex-start', md: 'center' },
+										'& .MuiAlert-message': {
+											py: 0,
+											fontSize: '0.82rem',
+											fontWeight: 600,
+										},
+									}}
+								>
+									Total Projects: {displayProjects.length}
+								</Alert>
 							</Stack>
 						)}
 
