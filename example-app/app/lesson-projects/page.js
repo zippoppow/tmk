@@ -58,6 +58,7 @@ import {
 } from '../components/authHelpers';
 import AppTopNav from '../components/AppTopNav';
 import { useDiyAccess } from '../components/useDiyAccess';
+import { useAuthTransition } from '../components/useAuthTransition';
 import {
 	createLessonActivitySnapshot,
 	createLocalProjectRecord,
@@ -100,6 +101,7 @@ function isValidLessonActivityType(activityType) {
 export default function LessonProjectsPage() {
 	const router = useRouter();
 	const { user: authUser, hasDiyAccess, loading: authLoading } = useDiyAccess();
+	const { active: authTransitionActive, message: authTransitionMessage } = useAuthTransition();
 	const [isMounted, setIsMounted] = useState(false);
 	const [localProjects, setLocalProjects] = useState([]);
 	const [editingProjectId, setEditingProjectId] = useState(null);
@@ -1647,12 +1649,14 @@ export default function LessonProjectsPage() {
 					logoSx={{ mb: 2 }}
 					titleSx={{ mb: 1 }}
 				/>
-				{(authLoading || !isAuthenticated || !hasDiyAccess) && (
+				{(authLoading || !isAuthenticated || !hasDiyAccess || authTransitionActive) && (
 					<Alert severity="info" sx={{ mb: 2, alignItems: 'center' }}>
 						<Box sx={{ width: '100%' }}>
 							<Typography variant="body2" sx={{ mb: 1 }}>
 								{authLoading
 									? 'Checking login...'
+									: authTransitionActive
+										? (authTransitionMessage || 'Checking login...')
 									: !isAuthenticated
 										? 'Session expired. Redirecting to login...'
 										: 'Redirecting to login...'}

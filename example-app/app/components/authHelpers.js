@@ -14,6 +14,10 @@ import {
 	startTeachableSessionValidityScheduler,
 	stopTeachableSessionValidityScheduler,
 } from '../lib/teachableSessionValidityScheduler';
+import {
+	beginAuthTransition,
+	endAuthTransition,
+} from '../lib/authTransitionStore';
 
 export {
 	AUTH_BYPASS_ENABLED,
@@ -230,6 +234,7 @@ let userAccessToken = '';
 let teachableSessionHandoff = '';
 let refreshInFlightPromise = null;
 let lastRefreshFailureAt = 0;
+let logoutInFlightPromise = null;
 
 const TMK_API_ACCESS_TOKEN_STORAGE_KEY = 'tmk-api-access-token';
 
@@ -465,6 +470,20 @@ export async function logoutAndRedirect(redirectTo = '/login') {
 	window.location.href = redirectTo || '/login';
 }
 
+function triggerLogoutRedirect() {
+	if (typeof window === 'undefined') {
+		return;
+	}
+
+	if (logoutInFlightPromise) {
+		return;
+	}
+
+	logoutInFlightPromise = logoutAndRedirect('/login').finally(() => {
+		logoutInFlightPromise = null;
+	});
+}
+
 function getAccessTokenFromPayload(payload) {
 	if (!payload || typeof payload !== 'object') {
 		return '';
@@ -544,6 +563,7 @@ export async function exchangeTeachableSessionForTmkToken() {
 	}
 
 	try {
+		beginAuthTransition('Checking login...');
 		const exchangePath = addTeachableSessionToPath('/api/auth/teachable/exchange');
 		authDebug('exchangeTeachableSessionForTmkToken -> request', {
 			url: exchangePath,
@@ -586,6 +606,8 @@ export async function exchangeTeachableSessionForTmkToken() {
 		userAccessToken = '';
 		setStoredTmkApiAccessToken('');
 		return '';
+	} finally {
+		endAuthTransition();
 	}
 }
 
@@ -687,6 +709,7 @@ export async function refreshUserAccessToken() {
 
 	refreshInFlightPromise = (async () => {
 		try {
+		beginAuthTransition('Checking login...');
 		authDebug('refreshUserAccessToken -> request', {
 			url: USER_AUTH_ENDPOINTS.refresh,
 			method: 'POST',
@@ -706,6 +729,9 @@ export async function refreshUserAccessToken() {
 			userAccessToken = '';
 			setStoredTmkApiAccessToken('');
 			lastRefreshFailureAt = Date.now();
+			if (isUnauthorizedStatus(response.status)) {
+				triggerLogoutRedirect();
+			}
 			return '';
 		}
 
@@ -721,6 +747,7 @@ export async function refreshUserAccessToken() {
 			lastRefreshFailureAt = 0;
 		} else {
 			lastRefreshFailureAt = Date.now();
+			triggerLogoutRedirect();
 		}
 		return userAccessToken;
 		} catch {
@@ -730,6 +757,7 @@ export async function refreshUserAccessToken() {
 		lastRefreshFailureAt = Date.now();
 		return '';
 		} finally {
+			endAuthTransition();
 			refreshInFlightPromise = null;
 		}
 	})();
@@ -785,6 +813,7 @@ export async function fetchWithTmkToken(endpoint, init = {}) {
 			authDebug('fetchWithTmkToken: recent refresh failure, returning unauthorized without request', {
 				endpoint,
 			});
+			triggerLogoutRedirect();
 			return new Response(null, { status: 401, statusText: 'Unauthorized' });
 		}
 
@@ -819,6 +848,7 @@ export async function fetchWithTmkToken(endpoint, init = {}) {
 			authDebug('fetchWithTmkToken: refresh failed', {
 				endpoint,
 			});
+			triggerLogoutRedirect();
 			// Return the original auth failure instead of retrying unauthenticated,
 			// which can surface as misleading 404s on user-scoped routes.
 			return response;
@@ -874,6 +904,7 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 				origin,
 				endpoint,
 			});
+			triggerLogoutRedirect();
 			return new Response(null, { status: 401, statusText: 'Unauthorized' });
 		}
 
@@ -917,6 +948,9 @@ export async function fetchWithUserToken(apiOrigin, endpoint, init = {}) {
 					ok: response.ok,
 					statusText: response.statusText,
 				});
+			}
+			if (isUnauthorizedStatus(response.status)) {
+				triggerLogoutRedirect();
 			}
 			return response;
 		}
@@ -1131,6 +1165,7 @@ export async function fetchProxyWithUserToken(endpoint, init = {}) {
 			authDebug('fetchProxyWithUserToken: recent refresh failure, returning unauthorized without request', {
 				endpoint,
 			});
+			triggerLogoutRedirect();
 			return new Response(null, { status: 401, statusText: 'Unauthorized' });
 		} else {
 			authDebug('fetchProxyWithUserToken: token refresh failed or no token available', {
@@ -1173,10 +1208,14 @@ export async function fetchProxyWithUserToken(endpoint, init = {}) {
 			if (headers.has('Authorization')) {
 				headers.delete('Authorization');
 			}
-			return fetch(endpoint, {
+			const fallbackResponse = await fetch(endpoint, {
 				...init,
 				headers,
 			});
+			if (isUnauthorizedStatus(fallbackResponse.status)) {
+				triggerLogoutRedirect();
+			}
+			return fallbackResponse;
 		}
 
 		headers.set('Authorization', `Bearer ${refreshed}`);

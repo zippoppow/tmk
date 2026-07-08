@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDiyAccess } from './components/useDiyAccess';
+import { useAuthTransition } from './components/useAuthTransition';
 import {
     logoutAndRedirect,
 } from './components/authHelpers';
@@ -28,6 +29,7 @@ export default function HomePage() {
     const [activePreviewIndex, setActivePreviewIndex] = useState(0);
     const [isCarouselOpen, setIsCarouselOpen] = useState(false);
     const { hasDiyAccess, authUser: user, loading: enrollmentLoading } = useDiyAccess();
+    const { active: authTransitionActive, message: authTransitionMessage } = useAuthTransition();
 
     const previewImages = useMemo(
         () => [
@@ -168,6 +170,18 @@ export default function HomePage() {
                     </Typography>
                 )}
           />
+          {authTransitionActive && (
+                <Box sx={{ mb: 2 }}>
+                    <Alert severity="info" sx={{ alignItems: 'center' }}>
+                        <Box sx={{ width: '100%' }}>
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                                {authTransitionMessage || 'Checking login...'}
+                            </Typography>
+                            <LinearProgress color="info" />
+                        </Box>
+                    </Alert>
+                </Box>
+          )}
           {(enrollmentLoading || !hasDiyAccess) && (
                 <Box sx={{ mb: 2 }}>
                     {enrollmentLoading ? (

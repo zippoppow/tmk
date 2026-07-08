@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useDiyAccess } from '../components/useDiyAccess';
+import { useAuthTransition } from '../components/useAuthTransition';
 import { useRouter } from 'next/navigation';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import {
@@ -80,6 +81,7 @@ export default function LessonActivitiesPage() {
     const [draggingSavedIndex, setDraggingSavedIndex] = useState(-1);
     const [dragOverSavedIndex, setDragOverSavedIndex] = useState(-1);
     const { hasDiyAccess, authUser: user, loading: authLoading } = useDiyAccess();
+    const { active: authTransitionActive, message: authTransitionMessage } = useAuthTransition();
 
     const showNotice = (severity, message) => {
         setNotice({ open: true, severity, message });
@@ -1229,12 +1231,14 @@ export default function LessonActivitiesPage() {
                     titleSx={{ mb: 1 }}
                 />
 
-                {(authLoading || !isAuthenticated || !hasDiyAccess) && (
+                {(authLoading || !isAuthenticated || !hasDiyAccess || authTransitionActive) && (
                     <Alert severity="info" sx={{ mb: 2, alignItems: 'center' }}>
                         <Box sx={{ width: '100%' }}>
                             <Typography variant="body2" sx={{ mb: 1 }}>
                                 {authLoading
                                     ? 'Checking login...'
+                                    : authTransitionActive
+                                        ? (authTransitionMessage || 'Checking login...')
                                     : !isAuthenticated
                                         ? 'Session expired. Redirecting to login...'
                                         : 'Redirecting to login...'}
