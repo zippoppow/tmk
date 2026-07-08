@@ -37,6 +37,31 @@ function hasTeachableBootstrapContext() {
   return Boolean(getTeachableSessionHandoff());
 }
 
+async function fetchAppSessionVerification() {
+  if (typeof window === 'undefined') {
+    return { authenticated: false };
+  }
+
+  try {
+    const response = await fetch('/api/session/verify', {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      return { authenticated: false };
+    }
+
+    const payload = await response.json().catch(() => ({}));
+    return {
+      authenticated: payload?.authenticated === true,
+    };
+  } catch {
+    return { authenticated: false };
+  }
+}
+
 function isFreshTimestamp(value, now = Date.now()) {
   const checkedAt = Number(value);
   if (!Number.isFinite(checkedAt) || checkedAt <= 0) {
@@ -219,7 +244,10 @@ export function useDiyAccess() {
     let cancelled = false;
 
     async function checkAccess() {
-      if (!hasBrowserCookie('tmk_api_refresh') && !hasTeachableBootstrapContext()) {
+      const hasBootstrapContext = hasTeachableBootstrapContext();
+      const appSessionState = await fetchAppSessionVerification();
+
+      if (!appSessionState.authenticated && !hasBootstrapContext) {
         if (!cancelled) {
           clearLocalAuthState();
           setUser(null);

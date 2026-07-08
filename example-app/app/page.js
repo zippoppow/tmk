@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDiyAccess } from './components/useDiyAccess';
 import {
-    buildTeachableLogoutUrl,
+    logoutAndRedirect,
 } from './components/authHelpers';
 import AppTopNav from './components/AppTopNav';
 import {
@@ -62,8 +62,8 @@ export default function HomePage() {
         }
     }, [enrollmentLoading, isMounted, router, user]);
 
-    const handleLogout = () => {
-        window.location.href = buildTeachableLogoutUrl('/');
+    const handleLogout = async () => {
+        await logoutAndRedirect('/login');
     };
 
     const handlePreviousPreview = () => {

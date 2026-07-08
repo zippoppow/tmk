@@ -28,7 +28,7 @@ import {
 	upsertStandaloneDraft,
 } from '../../components/lessonActivityHelpers';
 import {
-	buildTeachableLogoutUrl,
+	logoutAndRedirect,
 	buildTeachableStartUrl,
 	captureTeachableSessionFromUrl,
 	fetchAuthenticatedUser,
@@ -731,7 +731,7 @@ export function useLessonActivityProject({
 
 	const handleLoginLogout = () => {
 		if (authUser) {
-			window.location.href = buildTeachableLogoutUrl('/');
+			void logoutAndRedirect('/login');
 			return;
 		}
 		window.location.href = buildTeachableStartUrl(window.location.href);

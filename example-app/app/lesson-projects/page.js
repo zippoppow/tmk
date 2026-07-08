@@ -51,7 +51,7 @@ import {
 	updateLessonActivityById,
 } from '../components/lessonActivityHelpers';
 import {
-	buildTeachableLogoutUrl,
+	logoutAndRedirect,
 	fetchAuthenticatedUser,
 	fetchWithTmkToken,
 	resolveTmkApiOrigin,
@@ -1635,13 +1635,13 @@ export default function LessonProjectsPage() {
 				<AppTopNav
 					title="Projects"
 					currentSection="lesson-projects"
-					onAuthAction={() => {
-						if (isAuthenticated) {
-							window.location.href = buildTeachableLogoutUrl('/');
-							return;
-						}
-						window.location.href = '/login?next=/lesson-projects';
-					}}
+						onAuthAction={() => {
+							if (isAuthenticated) {
+								void logoutAndRedirect('/login');
+								return;
+							}
+							window.location.href = '/login?next=/lesson-projects';
+						}}
 					authButtonLabel={isAuthenticated ? 'Logout' : 'Login'}
 					containerSx={{ pr: { xs: 0, md: 5 } }}
 					logoSx={{ mb: 2 }}

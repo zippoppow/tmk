@@ -5,7 +5,7 @@ import { useDiyAccess } from '../components/useDiyAccess';
 import { useRouter } from 'next/navigation';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import {
-    buildTeachableLogoutUrl,
+    logoutAndRedirect,
     clearLocalAuthState,
     fetchWithTmkToken,
     resolveTmkApiOrigin,
@@ -761,7 +761,7 @@ export default function LessonActivitiesPage() {
     }
 
     const handleLogout = () => {
-        window.location.href = buildTeachableLogoutUrl('/');
+        void logoutAndRedirect('/login');
     };
 
     if (!isMounted) {

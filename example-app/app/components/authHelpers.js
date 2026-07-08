@@ -10,6 +10,10 @@ import {
 import * as diySessionManager from '../lib/diySessionManager';
 import * as diyJwtRefreshScheduler from '../lib/diyJwtRefreshScheduler';
 import * as teachableReVerificationScheduler from '../lib/teachableReVerificationScheduler';
+import {
+	startTeachableSessionValidityScheduler,
+	stopTeachableSessionValidityScheduler,
+} from '../lib/teachableSessionValidityScheduler';
 
 export {
 	AUTH_BYPASS_ENABLED,
@@ -336,6 +340,7 @@ export function clearLocalAuthState() {
 	// Stop background schedulers
 	diyJwtRefreshScheduler.stopDiyJwtRefreshScheduler();
 	teachableReVerificationScheduler.stopTeachableReVerificationScheduler();
+	stopTeachableSessionValidityScheduler();
 
 	if (typeof window === 'undefined') {
 		return;
@@ -428,6 +433,36 @@ export function buildTeachableLogoutUrl(redirectTo) {
 		logoutUrl.searchParams.set(TEACHABLE_SESSION_PARAM, session);
 	}
 	return logoutUrl.toString();
+}
+
+async function invalidateServerSessions() {
+	if (typeof window === 'undefined') {
+		return;
+	}
+
+	const requests = [
+		fetch('/api/session/logout', {
+			method: 'POST',
+			credentials: 'include',
+		}),
+		fetch(OAUTH_ENDPOINTS.logout, {
+			method: 'POST',
+			credentials: 'include',
+		}),
+	];
+
+	await Promise.allSettled(requests);
+}
+
+export async function logoutAndRedirect(redirectTo = '/login') {
+	clearLocalAuthState();
+	await invalidateServerSessions();
+
+	if (typeof window === 'undefined') {
+		return;
+	}
+
+	window.location.href = redirectTo || '/login';
 }
 
 function getAccessTokenFromPayload(payload) {
@@ -568,6 +603,9 @@ export async function initializeDiySession(user, hasDiyAccess) {
 		teachableReVerificationScheduler.startTeachableReVerificationScheduler(() => {
 			authDebug('Enrollment loss detected, disabling DIY access');
 		});
+		startTeachableSessionValidityScheduler(() => {
+			void logoutAndRedirect('/login');
+		});
 		return true;
 	}
 
@@ -611,6 +649,10 @@ export async function initializeDiySession(user, hasDiyAccess) {
 		diyJwtRefreshScheduler.startDiyJwtRefreshScheduler();
 		teachableReVerificationScheduler.startTeachableReVerificationScheduler(() => {
 			authDebug('Enrollment status updated (checked via Teachable API)');
+		});
+		startTeachableSessionValidityScheduler(() => {
+			authDebug('Teachable session lost; redirecting to login');
+			void logoutAndRedirect('/login');
 		});
 
 		authDebug('DIY session initialized successfully');

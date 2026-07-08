@@ -26,7 +26,7 @@ import {
   writeFormSessionData,
 } from '../../components/lessonActivityHelpers';
 import {
-  buildTeachableLogoutUrl,
+  logoutAndRedirect,
   buildTeachableStartUrl,
   fetchAuthenticatedUser,
   resolveTmkApiOrigin,
@@ -193,7 +193,7 @@ export default function ConstructorPage() {
 
   const handleLoginLogout = () => {
     if (authUser) {
-      window.location.href = buildTeachableLogoutUrl('/');
+      void logoutAndRedirect('/login');
       return;
     }
 
