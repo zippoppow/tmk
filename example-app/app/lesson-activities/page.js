@@ -1445,99 +1445,107 @@ export default function LessonActivitiesPage() {
                                     </Box>
                                 );
                             })}
-                            {isAuthenticated && hasDiyAccess && (
-                                <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center" flexWrap="wrap" sx={{ pt: 1 }}>
-                                    <Typography sx={{ fontSize: '1rem', color: '#374151' }}>
-                                        Sort saved by:
-                                    </Typography>
-                                    <Button
-                                        size="small"
-                                        variant={activitySortBy === 'alphabetical' ? 'contained' : 'outlined'}
-                                        onClick={() => applySortToSavedStandaloneActivities('alphabetical')}
-                                        sx={{ textTransform: 'none' }}
-                                    >
-                                        Alphabetical
-                                    </Button>
-                                    <Button
-                                        size="small"
-                                        variant={activitySortBy === 'date-modified' ? 'contained' : 'outlined'}
-                                        onClick={() => applySortToSavedStandaloneActivities('date-modified')}
-                                        sx={{ textTransform: 'none' }}
-                                    >
-                                        Date Modified
-                                    </Button>
-                                    <Button
-                                        size="small"
-                                        variant={activitySortBy === 'activity-type' ? 'contained' : 'outlined'}
-                                        onClick={() => applySortToSavedStandaloneActivities('activity-type')}
-                                        sx={{ textTransform: 'none' }}
-                                    >
-                                        Activity Type
-                                    </Button>
-                                    {activitySortBy === 'manual' && (
-                                        <>
-                                            <Chip
-                                                size="small"
-                                                label="Manual order"
-                                                sx={{ height: 24, fontSize: '0.74rem', bgcolor: '#eef2ff', color: '#3730a3' }}
-                                            />
-                                            <Button
-                                                size="small"
-                                                variant="text"
-                                                onClick={() => applySortToSavedStandaloneActivities('date-modified')}
-                                                sx={{ textTransform: 'none' }}
-                                            >
-                                                Reset to Date Modified
-                                            </Button>
-                                        </>
-                                    )}
-                                </Stack>
-                            )}
                             <Typography sx={{ fontSize: '1.8rem', fontWeight: 700, color: '#2f3a4a', pt: .5 }}>
                                 Your Saved Activities
                             </Typography>
-                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="flex-end" alignItems={{ xs: 'stretch', sm: 'center' }}>
-                                <Stack direction="row" spacing={0.4} alignItems="center" sx={{ mr: { xs: 0, sm: 1 } }}>
-                                    <Checkbox
-                                        size="small"
-                                        checked={isAllSavedSelected}
-                                        indeterminate={isSavedPartiallySelected}
-                                        onChange={handleToggleSelectAllSavedActivities}
-                                        disabled={selectableSavedIds.length === 0}
-                                        inputProps={{ 'aria-label': 'Select all saved activities' }}
-                                    />
-                                    <Typography sx={{ fontSize: '0.88rem', color: '#374151' }}>Select All Saved</Typography>
+                            {isAuthenticated && hasDiyAccess && (
+                                <Stack
+                                    direction={{ xs: 'column-reverse', md: 'row' }}
+                                    spacing={1}
+                                    justifyContent="space-between"
+                                    alignItems={{ xs: 'stretch', md: 'center' }}
+                                    sx={{ pt: 0.5 }}
+                                >
+                                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                                        <Typography sx={{ fontSize: '1rem', color: '#374151' }}>
+                                            Sort saved by:
+                                        </Typography>
+                                        <Button
+                                            size="small"
+                                            variant={activitySortBy === 'alphabetical' ? 'contained' : 'outlined'}
+                                            onClick={() => applySortToSavedStandaloneActivities('alphabetical')}
+                                            sx={{ textTransform: 'none' }}
+                                        >
+                                            Alphabetical
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            variant={activitySortBy === 'date-modified' ? 'contained' : 'outlined'}
+                                            onClick={() => applySortToSavedStandaloneActivities('date-modified')}
+                                            sx={{ textTransform: 'none' }}
+                                        >
+                                            Date Modified
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            variant={activitySortBy === 'activity-type' ? 'contained' : 'outlined'}
+                                            onClick={() => applySortToSavedStandaloneActivities('activity-type')}
+                                            sx={{ textTransform: 'none' }}
+                                        >
+                                            Activity Type
+                                        </Button>
+                                        {activitySortBy === 'manual' && (
+                                            <>
+                                                <Chip
+                                                    size="small"
+                                                    label="Manual order"
+                                                    sx={{ height: 24, fontSize: '0.74rem', bgcolor: '#eef2ff', color: '#3730a3' }}
+                                                />
+                                                <Button
+                                                    size="small"
+                                                    variant="text"
+                                                    onClick={() => applySortToSavedStandaloneActivities('date-modified')}
+                                                    sx={{ textTransform: 'none' }}
+                                                >
+                                                    Reset to Date Modified
+                                                </Button>
+                                            </>
+                                        )}
+                                    </Stack>
+                                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="flex-end" alignItems={{ xs: 'stretch', sm: 'center' }}>
+                                        <Stack direction="row" spacing={0.4} alignItems="center" sx={{ mr: { xs: 0, sm: 1 } }}>
+                                            <Checkbox
+                                                size="small"
+                                                checked={isAllSavedSelected}
+                                                indeterminate={isSavedPartiallySelected}
+                                                onChange={handleToggleSelectAllSavedActivities}
+                                                disabled={selectableSavedIds.length === 0}
+                                                inputProps={{ 'aria-label': 'Select all saved activities' }}
+                                            />
+                                            <Typography sx={{ fontSize: '0.88rem', color: '#374151' }}>Select All Saved</Typography>
+                                        </Stack>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            onClick={handleLaunchSavedSlideshow}
+                                            disabled={selectedSavedActivityIds.length === 0}
+                                            sx={{
+                                                textTransform: 'none',
+                                                color: '#3f37c9',
+                                                borderColor: '#3f37c9',
+                                                backgroundColor: '#fff',
+                                                '&:hover': {
+                                                    color: '#fff',
+                                                    borderColor: '#2f2a99',
+                                                    backgroundColor: '#3f37c9',
+                                                },
+                                            }}
+                                        >
+                                            Present Selected Saved
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            color="error"
+                                            onClick={handleDeleteSelectedSavedActivities}
+                                            disabled={isDeletingSelectedSaved || selectedSavedActivityIds.length === 0}
+                                            sx={{ textTransform: 'none' }}
+                                        >
+                                            {isDeletingSelectedSaved ? 'Deleting Selected...' : 'Delete Selected'}
+                                        </Button>
+                                    </Stack>
                                 </Stack>
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    onClick={handleLaunchSavedSlideshow}
-                                    disabled={selectedSavedActivityIds.length === 0}
-                                    sx={{
-                                        textTransform: 'none',
-                                        color: '#3f37c9',
-                                        borderColor: '#3f37c9',
-                                        backgroundColor: '#fff',
-                                        '&:hover': {
-                                            color: '#fff',
-                                            borderColor: '#2f2a99',
-                                            backgroundColor: '#3f37c9',
-                                        },
-                                    }}
-                                >
-                                    Present Selected Saved
-                                </Button>
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    color="error"
-                                    onClick={handleDeleteSelectedSavedActivities}
-                                    disabled={isDeletingSelectedSaved || selectedSavedActivityIds.length === 0}
-                                    sx={{ textTransform: 'none' }}
-                                >
-                                    {isDeletingSelectedSaved ? 'Deleting Selected...' : 'Delete Selected'}
-                                </Button>
-                            </Stack>
+                            )}
                             {savedStandaloneActivities.length === 0 && (
                                 <Typography sx={{ color: '#7a8190', fontSize: '0.92rem' }}>
                                     No saved activities.
