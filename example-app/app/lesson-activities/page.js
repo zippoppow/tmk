@@ -1458,7 +1458,7 @@ export default function LessonActivitiesPage() {
                                 >
                                     <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                                         <Typography sx={{ fontSize: '1rem', color: '#374151' }}>
-                                            Sort saved by:
+                                            Sort by:
                                         </Typography>
                                         <Button
                                             size="small"
@@ -1497,7 +1497,7 @@ export default function LessonActivitiesPage() {
                                                     onClick={() => applySortToSavedStandaloneActivities('date-modified')}
                                                     sx={{ textTransform: 'none' }}
                                                 >
-                                                    Reset to Date Modified
+                                                    Reset Sort
                                                 </Button>
                                             </>
                                         )}
