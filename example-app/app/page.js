@@ -80,30 +80,68 @@ export default function HomePage() {
 
     if (enrollmentLoading || !user) {
         return (
-            <Box
-                sx={{
-                    minHeight: '100vh',
-                    backgroundImage:
-                        "linear-gradient(rgba(255, 255, 255, 0.8), rgba(255,255,255,0.86)), url('/branding/tmk_diy_cat.png')",
-                    backgroundSize: '65% auto',
-                    backgroundPosition: 'center calc(10%)',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundAttachment: { xs: 'scroll', md: 'fixed' },
-                }}
-            >
-                <Container maxWidth="lg" sx={{ py: 4 }}>
-                    <Box sx={{ mb: 2 }}>
-                        <Alert severity="info" sx={{ alignItems: 'center' }}>
-                            <Box sx={{ width: '100%' }}>
-                                <Typography variant="body2" sx={{ mb: 1 }}>
-                                    {enrollmentLoading ? 'Checking login...' : 'Session expired. Redirecting to login...'}
-                                </Typography>
-                                <LinearProgress color="info" />
-                            </Box>
-                        </Alert>
-                    </Box>
-                </Container>
-            </Box>
+      <Box sx={{
+                minHeight: '100vh',
+                backgroundImage:
+                    "linear-gradient(rgba(255, 255, 255, 0.8), rgba(255,255,255,0.86)), url('/branding/tmk_diy_cat.png')",
+                backgroundSize: '65% auto',
+                backgroundPosition: 'center calc(10%)',
+                backgroundRepeat: 'no-repeat',
+                backgroundAttachment: { xs: 'scroll', md: 'fixed' },
+            }}
+        >
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          <AppTopNav
+                title="Dashboard"
+                currentSection="dashboard"
+                authButtonLabel="Login"
+                leadingActions={(
+                    <Typography variant="body1">
+                        Welcome
+                    </Typography>
+                )}
+          />
+          <Box sx={{ mb: 2 }}>
+              <Alert severity="info" sx={{ alignItems: 'center' }}>
+                  <Box sx={{ width: '100%' }}>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                          {enrollmentLoading ? 'Checking login...' : 'Session expired. Redirecting to login...'}
+                      </Typography>
+                      <LinearProgress color="info" />
+                  </Box>
+              </Alert>
+          </Box>
+
+          <Grid container spacing={{ xs: 2, md: 3 }} alignItems="flex-start" sx={{ mb: 4 }}>
+              <Grid item xs={12} md={6}>
+                  <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #224c88', opacity: 0.6 }}>
+                      <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                          Lesson Activities
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                          Loading your session...
+                      </Typography>
+                      <Button variant="contained" disabled>
+                          Go to Lesson Activities
+                      </Button>
+                  </Paper>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                  <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #224c88', opacity: 0.6 }}>
+                      <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                          Projects (Sequences of Activities)
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                          Loading your session...
+                      </Typography>
+                      <Button variant="contained" disabled>
+                          Go to Projects
+                      </Button>
+                  </Paper>
+              </Grid>
+          </Grid>
+        </Container>
+      </Box>
         );
     }
 
