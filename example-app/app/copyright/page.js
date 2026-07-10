@@ -62,7 +62,7 @@ export default function CopyrightPage() {
 					</Typography>
 
 					<Typography sx={{ color: '#374151', mb: 2 }}>
-						All Morphology Kit(R) DIY Latin Progression templates and materials are protected by copyright law. Purchase of these templates grants the purchaser a single-user license for educational use with their own students only.
+						All Morphology Kit<sup>®</sup> DIY App templates and materials are protected by copyright law. Purchase of these templates grants the purchaser a single-user license for educational use with their own students only.
 					</Typography>
 
 					<Typography sx={{ color: '#374151', mb: 2 }}>
