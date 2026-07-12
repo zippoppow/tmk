@@ -71,10 +71,12 @@ export default function CopyrightPage() {
 
 					<Typography component="ul" sx={{ color: '#374151', pl: 3, mb: 2 }}>
 						<li>
-							Materials may be used only by the purchaser in their own classroom, tutoring practice, or instructional setting.
+							Materials may be used only by the purchaser in their own classroom, tutoring practice, or instructional setting. 
+							
 						</li>
 						<li>
-							Materials created using these templates are for personal instructional use only.
+							Materials created using these templates are for personal instructional use only. Yes, you may make copies of your downloaded PDF files for your students only. 
+							Please do not share with other instructors.
 						</li>
 					</Typography>
 
