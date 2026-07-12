@@ -156,7 +156,7 @@ export default function PrivacyPage() {
 						Email: the-team@themorphologykit.com
 					</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
-						Website: https://framework.themorphologykit.com
+						Website: https://themorphologykit.com
 					</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
 						Thank you for being a part of The Morphology Kit® DIY App community. We are committed to protecting your privacy and ensuring a secure and enriching experience.
