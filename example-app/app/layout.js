@@ -1,7 +1,7 @@
 import { Lato } from 'next/font/google';
 import Link from 'next/link';
 import Providers from './providers';
-import { Typography } from '@mui/material';
+import { Stack, Typography } from '@mui/material';
 
 const lato = Lato({
   subsets: ['latin'],
@@ -46,15 +46,15 @@ export default function RootLayout({ children }) {
                 },
               }}
             >
-              <Typography>
+              <Typography variant="body2">
                 Copyright {currentYear} Sound Literacy Solutions LLC. All rights reserved.{' '}
               </Typography>
-              <Typography>
+              <Typography variant="body2">
                 <Link href="/copyright" style={{ color: '#1d4ed8', textDecoration: 'none', fontWeight: 700 }}>
                   Copyright Policy
                 </Link>
               </Typography>
-              <Typography>
+              <Typography variant="body2">
                 <Link href="/privacy" style={{ color: '#1d4ed8', textDecoration: 'none', fontWeight: 700 }}>
                   Privacy Statement
                 </Link>
