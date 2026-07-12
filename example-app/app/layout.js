@@ -35,7 +35,10 @@ export default function RootLayout({ children }) {
               Copyright {currentYear} Sound Literacy Solutions LLC. All rights reserved.{' '}
             </span>
             <Link href="/copyright" style={{ color: '#1d4ed8', textDecoration: 'none', fontWeight: 700 }}>
-              View Copyright Policy
+              Copyright Policy
+            </Link>
+            <Link href="/privacy" style={{ color: '#1d4ed8', textDecoration: 'none', fontWeight: 700 }}>
+              Privacy Statement
             </Link>
           </footer>
         </Providers>

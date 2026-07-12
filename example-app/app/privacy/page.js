@@ -58,7 +58,7 @@ export default function PrivacyPage() {
 
 				<Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2, border: '1px solid #dbe2f0' }}>
 					<Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
-						Privacy Policy
+						Privacy Statement
 					</Typography>
 
 					<Typography sx={{ color: '#374151', mb: 2 }}>
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
 					<Typography sx={{ color: '#374151', mb: 2 }}>
 						Welcome to The Morphology Kit® DIY App, an enrollee-only web application designed exclusively for literacy instructors to create morphology-based lesson activities tailored to their instructional needs. Your privacy is important to us, and this Privacy Statement outlines our practices regarding the collection, use, and protection of your information.
 					</Typography>
-					<Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
+					<Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
 						Data Collection
 					</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
@@ -90,15 +90,15 @@ export default function PrivacyPage() {
 					</Typography>
 
 					<Typography sx={{ color: '#374151', mb: 2 }}>
-						All other contact information is stored on Teachable.com's system, and we are not liable for its management.
+						All other contact information is stored on Teachable.com's system, and we are not liable for its management. By providing your email address, you consent to the collection and use of your information as described in this Privacy Statement.
 					</Typography>
-					<Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
+					<Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
 						Data Usage and Sharing
 					</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
 						We use the collected data to improve the functionality and user experience of the application. We do not sell or share your personal information with third parties, except as required by law or to provide the services you request.
 					</Typography>
-					<Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
+					<Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
 						Data Usage
 					</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
@@ -114,9 +114,9 @@ export default function PrivacyPage() {
 					</Typography>
 
 					<Typography sx={{ color: '#374151', mb: 2 }}>
-						Please note that we are not liable for the management of contact information stored on Teachable.com's system, as it is handled by their system.
+						Please note that we are not liable for the management of contact information stored on Teachable.com's system, as it is handled by their system. We will not use your personal information for any other purposes without obtaining your consent first.
 					</Typography>
-					<Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
+					<Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
 						Data Security
 					</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
@@ -128,24 +128,25 @@ export default function PrivacyPage() {
 						<li>Regular security assessments to identify and mitigate risks</li>
 					</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
-						As a user, you have certain rights regarding your personal information, including:
+						While we strive to protect your information, please be aware that no method of transmission over the internet or method of electronic storage is 100% secure. Therefore, we cannot guarantee absolute security. In the event of a data breach, we will notify you and any applicable regulators as required by law.
 					</Typography>
-					<Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
+					<Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
 						User Rights
 					</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
-						We take data security seriously and implement appropriate technical and organizational measures to protect your personal information. This includes:
+						As a user, you have certain rights regarding your personal information, including:
 					</Typography>
 					<Typography component="ul" sx={{ color: '#374151', pl: 3, mb: 2 }}>
 						<li>The right to access and obtain a copy of your data</li>
 						<li>The right to request correction of any inaccurate or incomplete data</li>
 						<li>The right to request deletion of your personal information, subject to legal obligations</li>
 						<li>The right to withdraw consent for data processing at any time</li>
+						<li>The right to lodge a complaint with a supervisory authority if you believe that your rights have been violated</li>
 					</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
 						If you wish to exercise any of these rights, please contact us using the information provided below.
 					</Typography>
-					<Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
+					<Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
 						Contact Us
 					</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
