@@ -81,9 +81,6 @@ export default function PrivacyPage() {
 						<li>We do not store your IP address.</li>
 					</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
-						Certain account registration and payment information is collected and maintained by Teachable under its own Privacy Policy. We encourage you to review Teachable's Privacy Policy for information about how it collects, uses, and protects your personal information.
-					</Typography>
-					<Typography sx={{ color: '#374151', mb: 2 }}>
 						We process your information:
 					</Typography>
 					<Typography component="ul" sx={{ color: '#374151', pl: 3, mb: 2 }}>
@@ -95,7 +92,10 @@ export default function PrivacyPage() {
 					</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
 						Where required by law, we rely on your consent or our legitimate interests as the legal basis for processing.
-					</Typography>	
+					</Typography>
+					<Typography sx={{ color: '#374151', mb: 2 }}>
+						Certain account registration and payment information is collected and maintained by Teachable under its own Privacy Policy. We encourage you to review Teachable's Privacy Policy for information about how it collects, uses, and protects your personal information.
+					</Typography>
 					<Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
 						Data Usage and Sharing
 					</Typography>
@@ -108,7 +108,6 @@ export default function PrivacyPage() {
 					<Typography sx={{ color: '#374151', mb: 2 }}>
 						We use the collected data for the following purposes:
 					</Typography>
-
 					<Typography component="ul" sx={{ color: '#374151', pl: 3, mb: 2 }}>
 						<li>To provide and maintain our services</li>
 						<li>To improve our application and develop new features</li>
@@ -122,13 +121,10 @@ export default function PrivacyPage() {
 					<Typography sx={{ color: '#374151', mb: 2 }}>
 						We use cookies and similar technologies (e.g., browser local storage) to:
 					</Typography>
-					<Typography sx={{ color: '#374151', mb: 2 }}>
+					<Typography component="ul" sx={{ color: '#374151', pl: 3, mb: 2 }}>
 						<li>keep you logged in</li>
 						<li>remember your preferences</li>
 						<li>improve site performance</li>
-					</Typography>
-					<Typography sx={{ color: '#374151', mb: 2 }}>
-						Certain account and purchase information is collected and maintained by Teachable under its own Privacy Policy. We encourage you to review Teachable's Privacy Policy to understand how that information is handled.
 					</Typography>
 					<Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>Data Retention</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
@@ -165,12 +161,6 @@ export default function PrivacyPage() {
 					</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
 						We do not use your personal information for automated decision-making or profiling that produces legal or similarly significant effects.
-					</Typography>
-					<Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
-						Changes to this Privacy Statement
-					</Typography>
-					<Typography sx={{ color: '#374151', mb: 2 }}>
-						We may update this Privacy Statement from time to time. When we make material changes, we will update the Effective Date and provide notice through the application or by email where appropriate.
 					</Typography>
 					<Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
 						International Transfers
@@ -238,6 +228,12 @@ export default function PrivacyPage() {
 					</Typography>
 					<Typography sx={{ color: '#374151', mb: 2 }}>
 						Thank you for being a part of The Morphology Kit® DIY App community. We are committed to protecting your privacy and ensuring a secure and enriching experience.
+					</Typography>
+					<Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
+						Changes to this Privacy Statement
+					</Typography>
+					<Typography sx={{ color: '#374151', mb: 2 }}>
+						We may update this Privacy Statement from time to time. When we make material changes, we will update the Effective Date and provide notice through the application or by email where appropriate.
 					</Typography>
 				</Paper>
 			</Container>
